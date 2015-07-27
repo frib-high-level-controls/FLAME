@@ -15,42 +15,39 @@ struct LinearMachine;
 
 struct LinearMatrixState : public StateBase
 {
-    LinearMatrixState(const Config& c)
-        :StateBase(c)
-        ,state(boost::numeric::ublas::identity_matrix<double>(2))
-    {}
+    LinearMatrixState(const Config& c);
     virtual ~LinearMatrixState();
 
-    typedef boost::numeric::ublas::matrix<double> value_t;
+    typedef boost::numeric::ublas::matrix<double,
+                    boost::numeric::ublas::row_major,
+                    boost::numeric::ublas::bounded_array<double, 4>
+    > value_t;
 
-    virtual void show(std::ostream& strm) const
-    {
-        strm<<"State: "<<state<<"\n";
-    }
+    virtual void show(std::ostream& strm) const;
 
     value_t state;
 
-    static const char* type_name() {return "Linear1DTransfer";}
+    static const char* type_name();
+
+    virtual bool getArray(unsigned idx, ArrayInfo& Info);
 };
 
 struct LinearVectorState : public StateBase
 {
-    LinearVectorState(const Config& c)
-        :StateBase(c)
-        ,state(2, 0.0)
-    {}
+    LinearVectorState(const Config& c);
     virtual ~LinearVectorState();
 
-    typedef boost::numeric::ublas::vector<double> value_t;
+    typedef boost::numeric::ublas::vector<double,
+                    boost::numeric::ublas::bounded_array<double, 2>
+    > value_t;
 
-    virtual void show(std::ostream& strm) const
-    {
-        strm<<"State: "<<state<<"\n";
-    }
+    virtual void show(std::ostream& strm) const;
 
     value_t state;
 
-    static const char* type_name() {return "Linear1D";}
+    static const char* type_name();
+
+    virtual bool getArray(unsigned idx, ArrayInfo& Info);
 };
 
 template<typename State>

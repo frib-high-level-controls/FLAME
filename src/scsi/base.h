@@ -15,23 +15,29 @@
 
 #include "util.h"
 
-extern "C" {
-struct PyObject;
-}
-
+/** @brief A wrapper around map<string,any> to hold configuration information
+ */
 struct Config
 {
     bool has(const std::string& s) const;
 
     boost::any getAny(const std::string& s) const;
     boost::any getAny(const std::string& s, const boost::any& def) const;
+    //! Set value with implicit cast to @class boost::any
     void setAny(const std::string& s, const boost::any& val);
 
+    /** @brief Fetch value assocated with name and cast to type T
+     * @throws key_error if name is not valid
+     * @throws boost::bad_any_cast if the value associated with name can't be cast to type T
+     */
     template<typename T>
-    T get(const std::string& s) const
+    T get(const std::string& name) const
     {
-        return boost::any_cast<T>(getAny(s));
+        return boost::any_cast<T>(getAny(name));
     }
+    /** @brief @see get()
+     * @returns the value assocated with name, or the provided default value
+     */
     template<typename T>
     T get(const std::string& s, typename boost::call_traits<T>::param_type def) const
     {
@@ -42,6 +48,7 @@ struct Config
         }
         return def;
     }
+    //! Set value with explicit type
     template<typename T>
     void set(const std::string& s, typename boost::call_traits<T>::param_type V)
     {
@@ -57,18 +64,41 @@ private:
 
 std::ostream& operator<<(std::ostream&, const Config& c);
 
+/** @brief The abstract base class for all simulation state objects.
+ *
+ * Represents the state of some bunch of particles moving through a @class Machine
+ */
 struct StateBase : public boost::noncopyable
 {
     virtual ~StateBase();
 
-    virtual PyObject* py() {return NULL;}
-
+    //! Index of @class ElementBase in @class Machine which will follow this one.
+    //! May be altered by ElementBase::advance()
     size_t next_elem;
 
     virtual void show(std::ostream&) const {}
 
+    struct ArrayInfo {
+        ArrayInfo() :name(), ptr(NULL), ndim(0) {}
+        std::string name;
+        double *ptr;
+        int ndim;
+        size_t dim[5];
+    };
+
+    /** @brief Introspect named parameter of the derived class
+     * @param idx The index of the parameter
+     * @param Info mailbox to be filled with information about this paramter
+     * @return true if the parameter and Info was filled in, otherwise false
+     *
+     * To introspect call this with index increasing from zero until false is returned.
+     */
+    virtual bool getArray(unsigned idx, ArrayInfo& Info) {return false;}
+
+    //! Mailbox to hold the python interpreter object wrapping us.
+    void *pyptr;
 protected:
-    StateBase(const Config& c) :next_elem(0) {}
+    StateBase(const Config& c) :next_elem(0), pyptr(0) {}
 };
 
 struct ElementVoid : public boost::noncopyable
@@ -78,14 +108,16 @@ struct ElementVoid : public boost::noncopyable
 
     virtual const char* type_name() const =0;
 
+    //! Called after all Elements are constructed
     virtual void peek(const std::vector<ElementVoid*>&) {}
 
+    //! Propogate the given State through this Element
     virtual void advance(StateBase& s) const =0;
 
     inline const Config& conf() const {return p_conf;}
 
-    const std::string name;
-    const size_t index;
+    const std::string name; //!< Name of this element (unique in its @class Machine)
+    const size_t index; //!< Index of this element (unique in its @class Machine)
 
     virtual void show(std::ostream&) const;
 
@@ -95,10 +127,12 @@ private:
 
 struct Machine : public boost::noncopyable
 {
-    Machine(Config& c);
+    Machine(const Config& c);
     ~Machine();
 
-    void propogate(StateBase* S, size_t max=-1) const;
+    void propogate(StateBase* S,
+                   size_t start=0,
+                   size_t max=-1) const;
 
     StateBase* allocState(Config& c) const;
 
