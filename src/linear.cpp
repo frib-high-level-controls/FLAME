@@ -1,21 +1,23 @@
 
 #include "scsi/linear.h"
+#include "scsi/state/vector.h"
+#include "scsi/state/matrix.h"
 
-LinearMatrixState::LinearMatrixState(const Config& c)
+MatrixState::MatrixState(const Config& c)
     :StateBase(c)
     ,state(boost::numeric::ublas::identity_matrix<double>(2))
 {}
 
-LinearMatrixState::~LinearMatrixState() {}
+MatrixState::~MatrixState() {}
 
-void LinearMatrixState::show(std::ostream& strm) const
+void MatrixState::show(std::ostream& strm) const
 {
     strm<<"State: "<<state<<"\n";
 }
 
-const char* LinearMatrixState::type_name() {return "Linear1DTransfer";}
+const char* MatrixState::type_name() {return "TransferMatrix";}
 
-bool LinearMatrixState::getArray(unsigned idx, ArrayInfo& Info) {
+bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0,0);
@@ -27,21 +29,21 @@ bool LinearMatrixState::getArray(unsigned idx, ArrayInfo& Info) {
     return false;
 }
 
-LinearVectorState::LinearVectorState(const Config& c)
+VectorState::VectorState(const Config& c)
     :StateBase(c)
     ,state(2, 0.0)
 {}
 
-LinearVectorState::~LinearVectorState() {}
+VectorState::~VectorState() {}
 
-void LinearVectorState::show(std::ostream& strm) const
+void VectorState::show(std::ostream& strm) const
 {
     strm<<"State: "<<state<<"\n";
 }
 
-const char* LinearVectorState::type_name() {return "Linear1D";}
+const char* VectorState::type_name() {return "Vector";}
 
-bool LinearVectorState::getArray(unsigned idx, ArrayInfo& Info) {
+bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0);
@@ -54,15 +56,15 @@ bool LinearVectorState::getArray(unsigned idx, ArrayInfo& Info) {
 
 void registerLinear()
 {
-    Machine::registerState<LinearVectorState>();
-    Machine::registerState<LinearMatrixState>();
+    Machine::registerState<VectorState>();
+    Machine::registerState<MatrixState>();
 
-    Machine::registerElement<LinearDrift<LinearVectorState> >("drift");
-    Machine::registerElement<LinearDrift<LinearMatrixState> >("drift");
+    Machine::registerElement<LinearDrift<VectorState> >("drift");
+    Machine::registerElement<LinearDrift<MatrixState> >("drift");
 
-    Machine::registerElement<LinearThinDipole<LinearVectorState> >("dipole");
-    Machine::registerElement<LinearThinDipole<LinearMatrixState> >("dipole");
+    Machine::registerElement<LinearThinDipole<VectorState> >("dipole");
+    Machine::registerElement<LinearThinDipole<MatrixState> >("dipole");
 
-    Machine::registerElement<LinearThinQuad<LinearVectorState> >("quad");
-    Machine::registerElement<LinearThinQuad<LinearMatrixState> >("quad");
+    Machine::registerElement<LinearThinQuad<VectorState> >("quad");
+    Machine::registerElement<LinearThinQuad<MatrixState> >("quad");
 }

@@ -92,6 +92,8 @@ struct StateBase : public boost::noncopyable
      * @return true if the parameter and Info was filled in, otherwise false
      *
      * To introspect call this with index increasing from zero until false is returned.
+     *
+     * @note This method requires that parameter storage be stable for the lifetime of the object
      */
     virtual bool getArray(unsigned idx, ArrayInfo& Info) {return false;}
 

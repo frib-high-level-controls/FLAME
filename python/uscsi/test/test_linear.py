@@ -8,7 +8,7 @@ from .. import Machine
 class testBasic(unittest.TestCase):
   def setUp(self):
     self.M = Machine({
-      'sim-type':'Linear1D',
+      'sim-type':'Vector',
       'elements':[
         {'name':'elem0', 'type':'drift', 'length':1.0},
       ],
@@ -44,7 +44,7 @@ class testBasic(unittest.TestCase):
 class TestMatrix(unittest.TestCase):
   def setUp(self):
     self.M = Machine({
-      'sim-type':'Linear1DTransfer',
+      'sim-type':'TransferMatrix',
       'elements':[
         {'name':'elem0', 'type':'drift', 'length':1.0},
         {'name':'elem1', 'type':'drift', 'length':1.0},

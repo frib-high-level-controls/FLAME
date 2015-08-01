@@ -1,4 +1,5 @@
 include_directories(
+  ${Boost_INCLUDE_DIRS}
   ${PYTHON_INCLUDE_PATH}
   ${NUMPY_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../../src
@@ -44,8 +45,6 @@ endforeach()
 add_custom_target(testdata ALL
   DEPENDS ${PY_BIN}
 )
-
-message(STATUS "XXX ${PY_BIN}")
 
 if(HAVE_NOSE)
   add_test(

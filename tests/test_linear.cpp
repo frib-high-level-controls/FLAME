@@ -5,6 +5,8 @@
 #include <boost/numeric/ublas/io.hpp>
 
 #include <scsi/linear.h>
+#include <scsi/state/vector.h>
+#include <scsi/state/matrix.h>
 
 static const double pi = 3.141592653589793;
 
@@ -60,7 +62,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Machine\n"<<sim<<"\n";
 
         Config C;
-        LinearVectorState I(C);
+        VectorState I(C);
         I.state[0] = 1.0;
         I.state[1] = 1e-3;
 
@@ -79,7 +81,7 @@ int main(int argc, char *argv[]) {
         Machine sim(conf);
 
         Config C;
-        LinearMatrixState I(C);
+        MatrixState I(C);
 
         std::cout << " Initial: " << I.state << "\n";
 

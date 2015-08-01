@@ -11,58 +11,15 @@
 #include "base.h"
 
 template<typename State>
-struct LinearMachine;
-
-struct LinearMatrixState : public StateBase
-{
-    LinearMatrixState(const Config& c);
-    virtual ~LinearMatrixState();
-
-    typedef boost::numeric::ublas::matrix<double,
-                    boost::numeric::ublas::row_major,
-                    boost::numeric::ublas::bounded_array<double, 4>
-    > value_t;
-
-    virtual void show(std::ostream& strm) const;
-
-    value_t state;
-
-    static const char* type_name();
-
-    virtual bool getArray(unsigned idx, ArrayInfo& Info);
-};
-
-struct LinearVectorState : public StateBase
-{
-    LinearVectorState(const Config& c);
-    virtual ~LinearVectorState();
-
-    typedef boost::numeric::ublas::vector<double,
-                    boost::numeric::ublas::bounded_array<double, 2>
-    > value_t;
-
-    virtual void show(std::ostream& strm) const;
-
-    value_t state;
-
-    static const char* type_name();
-
-    virtual bool getArray(unsigned idx, ArrayInfo& Info);
-};
-
-template<typename State>
 struct LinearElementBase : public ElementVoid
 {
     typedef State state_t;
-    typedef LinearMachine<State> machine_t;
 
     LinearElementBase(const Config& c)
         :ElementVoid(c)
         ,transfer(2,2)
     {}
     ~LinearElementBase() {}
-
-    virtual void snoop(const machine_t& L) {}
 
     virtual void advance(StateBase& s) const
     {
