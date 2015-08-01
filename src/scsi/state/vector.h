@@ -13,6 +13,9 @@
 struct VectorState : public StateBase
 {
     enum {maxsize=6};
+    enum param_t {
+        L_X, P_X, L_Y, P_Y, L_Z, P_Z
+    };
 
     VectorState(const Config& c);
     virtual ~VectorState();
@@ -24,8 +27,6 @@ struct VectorState : public StateBase
     virtual void show(std::ostream& strm) const;
 
     value_t state;
-
-    static const char* type_name();
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 };

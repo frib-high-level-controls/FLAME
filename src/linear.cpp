@@ -5,7 +5,7 @@
 
 MatrixState::MatrixState(const Config& c)
     :StateBase(c)
-    ,state(boost::numeric::ublas::identity_matrix<double>(2))
+    ,state(boost::numeric::ublas::identity_matrix<double>(6))
 {}
 
 MatrixState::~MatrixState() {}
@@ -14,8 +14,6 @@ void MatrixState::show(std::ostream& strm) const
 {
     strm<<"State: "<<state<<"\n";
 }
-
-const char* MatrixState::type_name() {return "TransferMatrix";}
 
 bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
@@ -31,7 +29,7 @@ bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
 
 VectorState::VectorState(const Config& c)
     :StateBase(c)
-    ,state(2, 0.0)
+    ,state(6, 0.0)
 {}
 
 VectorState::~VectorState() {}
@@ -40,8 +38,6 @@ void VectorState::show(std::ostream& strm) const
 {
     strm<<"State: "<<state<<"\n";
 }
-
-const char* VectorState::type_name() {return "Vector";}
 
 bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
@@ -56,15 +52,15 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
 
 void registerLinear()
 {
-    Machine::registerState<VectorState>();
-    Machine::registerState<MatrixState>();
+    Machine::registerState<VectorState>("Vector");
+    Machine::registerState<MatrixState>("TransferMatrix");
 
-    Machine::registerElement<LinearDrift<VectorState> >("drift");
-    Machine::registerElement<LinearDrift<MatrixState> >("drift");
+    Machine::registerElement<LinearDrift<VectorState> >("Vector", "drift");
+    Machine::registerElement<LinearDrift<MatrixState> >("TransferMatrix", "drift");
 
-    Machine::registerElement<LinearThinDipole<VectorState> >("dipole");
-    Machine::registerElement<LinearThinDipole<MatrixState> >("dipole");
+    Machine::registerElement<LinearThinDipole<VectorState> >("Vector", "dipole");
+    Machine::registerElement<LinearThinDipole<MatrixState> >("TransferMatrix", "dipole");
 
-    Machine::registerElement<LinearThinQuad<VectorState> >("quad");
-    Machine::registerElement<LinearThinQuad<MatrixState> >("quad");
+    Machine::registerElement<LinearThinQuad<VectorState> >("Vector", "quad");
+    Machine::registerElement<LinearThinQuad<MatrixState> >("TransferMatrix", "quad");
 }

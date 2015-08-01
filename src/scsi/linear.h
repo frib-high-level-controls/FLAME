@@ -10,6 +10,10 @@
 
 #include "base.h"
 
+/** @brief An Element based on a simple Transfer matrix
+ *
+ * x' = M * x
+ */
 template<typename State>
 struct LinearElementBase : public ElementVoid
 {
@@ -17,7 +21,7 @@ struct LinearElementBase : public ElementVoid
 
     LinearElementBase(const Config& c)
         :ElementVoid(c)
-        ,transfer(2,2)
+        ,transfer(boost::numeric::ublas::identity_matrix<double>(6))
     {}
     ~LinearElementBase() {}
 
@@ -51,8 +55,7 @@ struct LinearDrift : LinearElementBase<State>
     LinearDrift(const Config& c)
         :base_t(c)
     {
-        this->transfer = boost::numeric::ublas::identity_matrix<double>(2);
-        this->transfer(0,1) = c.get<double>("length");
+        this->transfer(State::L_Z, State::P_Z) = c.get<double>("length");
     }
 
     virtual const char* type_name() const {return "drift";}
@@ -67,12 +70,13 @@ struct LinearThinDipole : LinearElementBase<State>
     {
         double angle = c.get<double>("angle"), // in rad.
                P = c.get<double>("radius", 1.0),
+               off = c.get<bool>("vertical", false) ? State::L_Y : State::L_X ,
                cos = ::cos(angle),
                sin = ::sin(angle);
 
-        this->transfer(0,0) = this->transfer(1,1) = cos;
-        this->transfer(0,1) = P*sin;
-        this->transfer(1,0) = -sin/P;
+        this->transfer(off,off) = this->transfer(off+1,off+1) = cos;
+        this->transfer(off,off+1) = P*sin;
+        this->transfer(off+1,off) = -sin/P;
     }
 
     virtual const char* type_name() const {return "dipole";}
@@ -85,28 +89,33 @@ struct LinearThinQuad : LinearElementBase<State>
     LinearThinQuad(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("length"),
-               K = c.get<double>("strength", 1.0),
-               sK, sKL, cos, sin;
+        double L  = c.get<double>("length"),
+               K  = c.get<double>("strength", 1.0),
+               sK = sqrt(K),
+               sKL=sK*L,
+               cos = ::cos(sKL),
+               sin = ::sin(sKL),
+               cosh = ::cosh(sKL),
+               sinh = ::sinh(sKL);
+        unsigned Fdir, Ddir;
 
         if(K<0.0) {
-            // defocus
-            K = -K;
-            sK = sqrt(K);
-            sKL = sK*L;
-            cos = ::cosh(sKL);
-            sin = ::sinh(sKL);
+            // defocus in X, focus in Y
+            Fdir = State::L_Y;
+            Ddir = State::L_X;
         } else {
-            // focusing
-            sK = sqrt(K);
-            sKL = sK*L;
-            cos = ::cos(sKL);
-            sin = ::sin(sKL);
+            // focus in X, defocus in Y
+            Fdir = State::L_X;
+            Ddir = State::L_Y;
         }
 
-        this->transfer(0,0) = this->transfer(1,1) = cos;
-        this->transfer(0,1) = sin/sK;
-        this->transfer(1,0) = sK*sin;
+        this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
+        this->transfer(Fdir,Fdir+1) = sin/sK;
+        this->transfer(Fdir+1,Fdir) = sK*sin;
+
+        this->transfer(Ddir,Ddir) = this->transfer(Ddir+1,Ddir+1) = cosh;
+        this->transfer(Ddir,Ddir+1) = sinh/sK;
+        this->transfer(Ddir+1,Ddir) = sK*sinh;
     }
 
     virtual const char* type_name() const {return "quad";}

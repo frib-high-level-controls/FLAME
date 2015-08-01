@@ -138,9 +138,14 @@ struct Machine : public boost::noncopyable
 
     StateBase* allocState(Config& c) const;
 
+    inline const std::string& simtype() const {return p_simtype;}
+
     typedef std::vector<ElementVoid*> p_elements_t;
+    typedef std::map<std::string, ElementVoid*> p_lookup_t;
 private:
     p_elements_t p_elements;
+    p_lookup_t p_lookup;
+    std::string p_simtype;
 
     typedef StateBase* (*state_builder_t)(const Config& c);
     typedef ElementVoid* (*element_builder_t)(const Config& c);
@@ -174,16 +179,15 @@ private:
 public:
 
     template<typename State>
-    static void registerState()
+    static void registerState(const char *name)
     {
-        p_registerState(State::type_name(), &state_builder_impl<State>::build);
+        p_registerState(name, &state_builder_impl<State>::build);
     }
 
     template<typename Element>
-    static void registerElement(const char *name)
+    static void registerElement(const char *sname, const char *ename)
     {
-        typedef typename Element::state_t state_t;
-        p_registerElement(state_t::type_name(), name, &element_builder_impl<Element>::build);
+        p_registerElement(sname, ename, &element_builder_impl<Element>::build);
     }
 
     friend std::ostream& operator<<(std::ostream&, const Machine& m);

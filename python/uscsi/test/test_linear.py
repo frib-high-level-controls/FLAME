@@ -19,12 +19,12 @@ class testBasic(unittest.TestCase):
 
     S = self.M.allocState({})
 
-    S.state[:] = [1, 1e-3]
-    assert_aequal(S.state, [1.000, 1e-3])
+    S.state[:] = [0, 0, 0, 0, 1, 1e-3]
+    assert_aequal(S.state, [0, 0, 0, 0, 1.000, 1e-3])
 
     self.M.propogate(S)
 
-    assert_aequal(S.state, [1.001, 1e-3])
+    assert_aequal(S.state, [0, 0, 0, 0, 1.001, 1e-3])
 
   def test_gc(self):
     "See that State attributes have appropriate lifetime"
@@ -58,8 +58,22 @@ class TestMatrix(unittest.TestCase):
 
     S = self.M.allocState({})
 
-    assert_aequal(S.state, [[1,0],[0,1]])
+    assert_aequal(S.state, [
+      [1, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 1, 0],
+      [0, 0, 0, 0, 0, 1],
+    ])
 
     self.M.propogate(S)
 
-    assert_aequal(S.state, [[1,2], [0,1]])
+    assert_aequal(S.state, [
+      [1, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 1, 2],
+      [0, 0, 0, 0, 0, 1],
+    ])

@@ -13,6 +13,9 @@
 struct MatrixState : public StateBase
 {
     enum {maxsize=6};
+    enum param_t {
+        L_X, P_X, L_Y, P_Y, L_Z, P_Z
+    };
 
     MatrixState(const Config& c);
     virtual ~MatrixState();
@@ -25,8 +28,6 @@ struct MatrixState : public StateBase
     virtual void show(std::ostream& strm) const;
 
     value_t state;
-
-    static const char* type_name();
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 };
