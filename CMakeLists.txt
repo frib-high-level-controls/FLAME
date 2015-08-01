@@ -29,8 +29,10 @@ message(STATUS "Boost libs in ${Boost_LIBRARY_DIRS}")
 find_package(PythonInterp 2.7)
 
 if(PYTHONINTERP_FOUND)
+  # Find headers to go with this interpreter version
   find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH})
 
+  # find the numpy headers
   execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/pyconfig.py
     OUTPUT_VARIABLE _NUMPY_DIRS
     OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -43,6 +45,7 @@ if(PYTHONINTERP_FOUND)
 endif()
 
 if(PYTHONLIBS_FOUND)
+  # find appropriate boost_python library
   find_library(Boost_PYTHON_LIBRARY
     "boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}"
     PATHS ${Boost_LIBRARY_DIRS}
@@ -52,7 +55,25 @@ if(PYTHONLIBS_FOUND)
   message(STATUS "Boost python ${Boost_PYTHON_LIBRARY}")
 endif()
 
+if(PYTHONINTERP_FOUND)
+  # see if nosetests test runner is available
+  execute_process(
+    COMMAND ${PYTHON_EXECUTABLE} -m nose -V
+    OUTPUT_QUIET
+    ERROR_QUIET
+    RESULT_VARIABLE _HAVE_NOSE
+  )
+  if(_HAVE_NOSE)
+    message(STATUS "Can't find nosetests, not running tests")
+    set(HAVE_NOSE NO)
+  else()
+    set(HAVE_NOSE YES)
+  endif()
+endif()
+
 add_subdirectory(src)
+
+enable_testing()
 
 if(USE_PYTHON AND NUMPY_INCLUDE_DIRS AND Boost_PYTHON_LIBRARY)
   message(STATUS "Building python support")
@@ -61,5 +82,4 @@ else()
   message(STATUS "Omitting python support")
 endif()
 
-enable_testing()
-add_subdirectory(test)
+add_subdirectory(tests)
