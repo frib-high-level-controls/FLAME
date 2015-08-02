@@ -23,7 +23,7 @@ struct LinearElementBase : public ElementVoid
         :ElementVoid(c)
         ,transfer(boost::numeric::ublas::identity_matrix<double>(6))
     {}
-    ~LinearElementBase() {}
+    virtual ~LinearElementBase() {}
 
     virtual void advance(StateBase& s) const
     {
@@ -57,6 +57,7 @@ struct LinearDrift : LinearElementBase<State>
     {
         this->transfer(State::L_Z, State::P_Z) = c.get<double>("length");
     }
+    virtual ~LinearDrift() {}
 
     virtual const char* type_name() const {return "drift";}
 };
@@ -78,6 +79,7 @@ struct LinearThinDipole : LinearElementBase<State>
         this->transfer(off,off+1) = P*sin;
         this->transfer(off+1,off) = -sin/P;
     }
+    virtual ~LinearThinDipole() {}
 
     virtual const char* type_name() const {return "dipole";}
 };
@@ -117,6 +119,7 @@ struct LinearThinQuad : LinearElementBase<State>
         this->transfer(Ddir,Ddir+1) = sinh/sK;
         this->transfer(Ddir+1,Ddir) = sK*sinh;
     }
+    virtual ~LinearThinQuad() {}
 
     virtual const char* type_name() const {return "quad";}
 };

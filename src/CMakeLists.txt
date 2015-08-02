@@ -5,9 +5,14 @@ include_directories(
 add_library(uscsi_core STATIC
   scsi/util.h
   scsi/base.h
-  scsi/linear.h
+  base.cpp
+
   scsi/state/vector.h
   scsi/state/matrix.h
-  base.cpp
+
   linear.cpp
+  scsi/linear.h
+
+  moment.cpp
+  scsi/moment.h
 )
