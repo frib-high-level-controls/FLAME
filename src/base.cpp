@@ -134,7 +134,7 @@ Machine::~Machine()
 }
 
 void
-Machine::propogate(StateBase* S, size_t start, size_t max) const
+Machine::propagate(StateBase* S, size_t start, size_t max) const
 {
     const size_t nelem = p_elements.size();
 

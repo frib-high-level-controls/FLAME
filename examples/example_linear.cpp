@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 
         std::cout << " Initial: " << *state << "\n";
 
-        sim.propogate(state.get());
+        sim.propagate(state.get());
 
         std::cout << " Final: " << *state << "\n";
     }
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
         std::cout << " Initial: " << *state << "\n";
 
-        sim.propogate(state.get());
+        sim.propagate(state.get());
 
         std::cout << " Final: " << *state << "\n";
     }
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
 
         std::cout << " Initial: " << *state << "\n";
 
-        sim.propogate(state.get());
+        sim.propagate(state.get());
 
         std::cout << " Final: " << *state << "\n";
     }

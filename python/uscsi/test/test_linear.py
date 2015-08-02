@@ -23,7 +23,7 @@ class testBasic(unittest.TestCase):
     S.state[:] = [0, 0, 0, 0, 1, 1e-3]
     assert_aequal(S.state, [0, 0, 0, 0, 1.000, 1e-3])
 
-    self.M.propogate(S)
+    self.M.propagate(S)
 
     assert_aequal(S.state, [0, 0, 0, 0, 1.001, 1e-3])
 
@@ -39,8 +39,8 @@ class testBasic(unittest.TestCase):
     self.assertIsNot(R(), None)
 
   def test_err(self):
-    "Try to propogate the something which is not a State"
-    self.assertRaises(TypeError, self.M.propogate, None)
+    "Try to propagate the something which is not a State"
+    self.assertRaises(TypeError, self.M.propagate, None)
 
 class TestMatrix(unittest.TestCase):
   def setUp(self):
@@ -68,7 +68,7 @@ class TestMatrix(unittest.TestCase):
       [0, 0, 0, 0, 0, 1],
     ])
 
-    self.M.propogate(S)
+    self.M.propagate(S)
 
     assert_aequal(S.state, [
       [1, 0, 0, 0, 0, 0],
@@ -98,6 +98,6 @@ class testGeneric(unittest.TestCase):
 
         S = M.allocState({})
 
-        M.propogate(S)
+        M.propagate(S)
 
         assert_aequal(S.state, T)

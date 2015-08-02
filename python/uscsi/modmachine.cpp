@@ -37,9 +37,9 @@ struct PyMachine : public boost::noncopyable
         return ret;
     }
 
-    void propogate(PyObject* state, size_t start, size_t max)
+    void propagate(PyObject* state, size_t start, size_t max)
     {
-        machine->propogate(unwrapstate(state), start, max);
+        machine->propagate(unwrapstate(state), start, max);
     }
 };
 void registerModMachine(void)
@@ -49,7 +49,7 @@ void registerModMachine(void)
     class_<PyMachine, boost::noncopyable>("Machine", init<const bp::dict&>())
             .def("__str__", &PyMachine::tostring)
             .def("allocState", &PyMachine::allocState)
-            .def("propogate", &PyMachine::propogate,
+            .def("propagate", &PyMachine::propagate,
                  (arg("state"), arg("start")=0, arg("max")=(size_t)-1))
             ;
 

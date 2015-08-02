@@ -10,7 +10,7 @@
 #include "base.h"
 #include "state/matrix.h"
 
-/** @brief An Element which propogates the statistical moments of a bunch
+/** @brief An Element which propagates the statistical moments of a bunch
  *
  */
 struct MomentElementBase : public ElementVoid

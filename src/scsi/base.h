@@ -146,7 +146,7 @@ struct Machine : public boost::noncopyable
      * @param max The maximum number of elements through which the state will be passed
      * @throws std::exception sub-classes for various errors.  If an exception is through then the state of S is undefined.
      */
-    void propogate(StateBase* S,
+    void propagate(StateBase* S,
                    size_t start=0,
                    size_t max=-1) const;
 
