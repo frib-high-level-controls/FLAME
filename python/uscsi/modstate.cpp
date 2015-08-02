@@ -6,6 +6,8 @@
 #include <boost/python/class.hpp>
 #include <boost/python/errors.hpp>
 
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
 
 #include "scsi/base.h"
@@ -37,7 +39,7 @@ struct PyState : public boost::noncopyable
             npy_intp dims[5];
             memcpy(dims, info.dim, sizeof(dims));
 
-            PyObject *obj = PyArray_New(&PyArray_Type, info.ndim, dims, NPY_FLOAT64,
+            PyObject *obj = PyArray_New(&PyArray_Type, info.ndim, dims, NPY_DOUBLE,
                                         NULL, info.ptr, sizeof(*info.ptr), NPY_CARRAY, pyobj);
             if(!obj)
                 throw std::runtime_error("Failed to wrap array");
@@ -122,9 +124,6 @@ StateBase* unwrapstate(PyObject* py)
 void registerModState(void)
 {
     using namespace boost::python;
-
-    if (_import_array() < 0)
-        throw std::runtime_error("Failed to import numpy");
 
     object so = class_<PyState, boost::noncopyable>("State")
             .def("__str__", &PyState::tostring)

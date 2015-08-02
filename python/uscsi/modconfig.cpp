@@ -4,11 +4,16 @@
 
 //#include <boost/python.hpp>
 #include <boost/python/def.hpp>
+#include <boost/python/class.hpp>
 #include <boost/python/extract.hpp>
 #include <boost/python/dict.hpp>
 #include <boost/python/list.hpp>
 #include <boost/python/return_value_policy.hpp>
-#include <boost/python/return_opaque_pointer.hpp>
+#include <boost/python/manage_new_object.hpp>
+
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
+#include <numpy/ndarrayobject.h>
 
 #include "scsi/base.h"
 
@@ -78,6 +83,16 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
             continue;
         else if(XnS<std::string>(ret, name, value))
             continue;
+        else if(PyArray_Check(value.ptr()))
+        {
+            bp::object arr(bp::handle<>(PyArray_ContiguousFromAny(value.ptr(), NPY_DOUBLE, 0, 2)));
+            double *buf = (double*)PyArray_DATA(arr.ptr());
+            std::vector<double> temp(PyArray_SIZE(arr.ptr()));
+            std::copy(buf, buf+temp.size(), temp.begin());
+
+            ret.setAny(name, temp);
+            continue;
+        }
 
         {
             bp::extract<bp::dict> E(value);
@@ -135,5 +150,7 @@ void registerModConfig(void)
     using namespace boost::python;
 
     def("dictshow", showConfig);
-    def("dict2conf", dict2conf, return_value_policy<return_opaque_pointer>());
+    def("dict2conf", dict2conf, return_value_policy<bp::manage_new_object>());
+
+    class_<Config, boost::noncopyable>("Config", no_init);
 }

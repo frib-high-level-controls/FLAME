@@ -27,6 +27,7 @@ set(PY_SRC
   __init__.py
   test/__init__.py
   test/test_linear.py
+  test/test_config.py
 )
 
 # Copy .py files to the binary dir in order to run unit-tests
