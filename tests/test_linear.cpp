@@ -8,8 +8,6 @@
 #include <scsi/state/vector.h>
 #include <scsi/state/matrix.h>
 
-static const double pi = 3.141592653589793;
-
 int main(int argc, char *argv[]) {
 
     registerLinear();

@@ -65,8 +65,11 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
             value = bp::object(bp::handle<>(bp::borrowed(PyTuple_GetItem(item, 1))));
 
             Py_DECREF(item);
+            bp::extract<std::string> X(K);
+            if(!X.check())
+                throw std::runtime_error("keys must be strings");
 
-            name = bp::extract<std::string>(K);
+            name = X();
         }
 
         if(XnS<int>(ret, name, value))

@@ -100,8 +100,15 @@ struct StateBase : public boost::noncopyable
     //! Mailbox to hold the python interpreter object wrapping us.
     void *pyptr;
 protected:
-    StateBase(const Config& c) :next_elem(0), pyptr(0) {}
+    StateBase(const Config& c);
 };
+
+inline
+std::ostream& operator<<(std::ostream& strm, const StateBase& s)
+{
+    s.show(strm);
+    return strm;
+}
 
 struct ElementVoid : public boost::noncopyable
 {
@@ -132,10 +139,23 @@ struct Machine : public boost::noncopyable
     Machine(const Config& c);
     ~Machine();
 
+    /** @brief Pass the given bunch State through this Machine.
+     *
+     * @param S The initial state, will be updated with the final state
+     * @param start The index of the first Element to the state will pass through
+     * @param max The maximum number of elements through which the state will be passed
+     * @throws std::exception sub-classes for various errors.  If an exception is through then the state of S is undefined.
+     */
     void propogate(StateBase* S,
                    size_t start=0,
                    size_t max=-1) const;
 
+    /** @brief Allocate (with "operator new") an appropriate State object
+     *
+     * @param c Configuration describing the initial state
+     * @return A pointer to the new state (never NULL).  The caller takes responsibility for deleteing.
+     * @throws std::exception sub-classes for various errors, mostly incorrect Config.
+     */
     StateBase* allocState(Config& c) const;
 
     inline const std::string& simtype() const {return p_simtype;}
@@ -196,5 +216,6 @@ public:
 std::ostream& operator<<(std::ostream&, const Machine& m);
 
 void registerLinear();
+void registerMoment();
 
 #endif // SCSI_BASE_H

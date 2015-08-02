@@ -64,6 +64,8 @@ std::ostream& operator<<(std::ostream& strm, const Config& c)
     return strm;
 }
 
+StateBase::StateBase(const Config&) :next_elem(0), pyptr(0) {}
+
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)
