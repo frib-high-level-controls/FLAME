@@ -82,4 +82,4 @@ else()
   message(STATUS "Omitting python support")
 endif()
 
-add_subdirectory(tests)
+add_subdirectory(examples)

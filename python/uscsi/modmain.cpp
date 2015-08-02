@@ -29,4 +29,5 @@ BOOST_PYTHON_MODULE(_internal)
 
     // add States and Elements
     registerLinear();
+    registerMoment();
 }

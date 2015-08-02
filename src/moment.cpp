@@ -27,15 +27,23 @@ void MomentElementBase::advance(StateBase& s) const
 }
 
 namespace {
-struct NOOPMomentElement : MomentElementBase
+struct GenericMomentElement : MomentElementBase
 {
-    NOOPMomentElement(const Config& c)
+    GenericMomentElement(const Config& c)
         :MomentElementBase(c)
     {
-        // leave the default (identity)
+        try{
+            const std::vector<double>& I = c.get<const std::vector<double>&>("initial");
+            if(I.size()<transfer.data().size())
+                throw std::invalid_argument("Initial transfer size too big");
+            std::copy(I.begin(), I.end(), transfer.data().begin());
+        }catch(key_error&){
+        }catch(boost::bad_any_cast&){
+        }
     }
+    virtual ~GenericMomentElement() {}
 
-    virtual const char* type_name() const {return "noop";}
+    virtual const char* type_name() const {return "generic";}
 };
 }
 
@@ -43,5 +51,5 @@ void registerMoment()
 {
     Machine::registerState<MatrixState>("MomentMatrix");
 
-    Machine::registerElement<NOOPMomentElement >("MomentMatrix", "noop");
+    Machine::registerElement<GenericMomentElement >("MomentMatrix", "generic");
 }
