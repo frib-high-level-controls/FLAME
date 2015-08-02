@@ -148,6 +148,22 @@ struct LinearThinQuad : LinearElementBase<State>
 
     virtual const char* type_name() const {return "quad";}
 };
+template<typename State>
+struct LinearGeneric : LinearElementBase<State>
+{
+    typedef LinearElementBase<State> base_t;
+    LinearGeneric(const Config& c)
+        :base_t(c)
+    {
+        std::vector<double> I = c.get<std::vector<double> >("transfer");
+        if(I.size()<this->transfer.data().size())
+            throw std::invalid_argument("Initial transfer size too big");
+        std::copy(I.begin(), I.end(), this->transfer.data().begin());
+    }
+    virtual ~LinearGeneric() {}
+
+    virtual const char* type_name() const {return "generic";}
+};
 
 } // namespace
 
@@ -164,4 +180,7 @@ void registerLinear()
 
     Machine::registerElement<LinearThinQuad<VectorState> >("Vector", "quad");
     Machine::registerElement<LinearThinQuad<MatrixState> >("TransferMatrix", "quad");
+
+    Machine::registerElement<LinearGeneric<VectorState> >("Vector", "generic");
+    Machine::registerElement<LinearGeneric<MatrixState> >("TransferMatrix", "generic");
 }

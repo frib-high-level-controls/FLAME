@@ -85,6 +85,8 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
             continue;
         else if(PyArray_Check(value.ptr()))
         {
+            if(PyArray_NDIM(value.ptr())!=2)
+                throw std::runtime_error("ndarray ndim!=2");
             bp::object arr(bp::handle<>(PyArray_ContiguousFromAny(value.ptr(), NPY_DOUBLE, 0, 2)));
             double *buf = (double*)PyArray_DATA(arr.ptr());
             std::vector<double> temp(PyArray_SIZE(arr.ptr()));

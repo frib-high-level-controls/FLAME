@@ -1,5 +1,6 @@
 
 import unittest
+import numpy
 from numpy import testing as NT
 from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 
@@ -77,3 +78,26 @@ class TestMatrix(unittest.TestCase):
       [0, 0, 0, 0, 1, 2],
       [0, 0, 0, 0, 0, 1],
     ])
+
+class testGeneric(unittest.TestCase):
+    def test_generic(self):
+        T = numpy.asfarray([
+          [1, 0, 1, 0, 1, 0],
+          [0, 1, 0, 1, 0, 1],
+          [1, 0, 1, 0, 1, 0],
+          [0, 1, 0, 1, 0, 1],
+          [1, 0, 1, 0, 1, 0],
+          [0, 1, 0, 1, 0, 1],
+        ])
+        M = Machine({
+          'sim-type':'TransferMatrix',
+          'elements':[
+            {'name':'elem0', 'type':'generic', 'transfer':T},
+          ],
+        })
+
+        S = M.allocState({})
+
+        M.propogate(S)
+
+        assert_aequal(S.state, T)
