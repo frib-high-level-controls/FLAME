@@ -2,7 +2,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-add_library(uscsi_core STATIC
+add_library(uscsi_core SHARED
   scsi/util.h
   scsi/base.h
   base.cpp
