@@ -63,17 +63,14 @@ struct PyState : public boost::noncopyable
     {
         char *sname;
 #if PY_MAJOR_VERSION >= 3
-        PyObject *data = PyUnicode_AsEncodedString(name, "ascii", "Encoding error:");
-        if(!data)
+        bp::object data(bp::handle<>(PyUnicode_AsASCIIString(name)));
+        if(!data.ptr())
             return NULL;
-        sname = PyUnicode_AS_DATA(data);
+        sname = const_cast<char*>(PyBytes_AsString(data.ptr()));
 #else
         sname = PyString_AsString(name);
 #endif
         PyObject *ret = getattr(obj, sname);
-#if PY_MAJOR_VERSION >= 3
-        Py_DECREF(data);
-#endif
         return ret;
     }
 

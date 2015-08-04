@@ -60,8 +60,19 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
     if(depth>3)
         throw std::runtime_error("too deep for Dict2Config");
 
-    PyObject* it(O.iteritems().ptr()), *item;
-    while( !!(item=PyIter_Next(it)) )
+    bp::object it;
+#if PY_MAJOR_VERSION >= 3
+    {
+        // it seems that in python 3 land it is necessary to create an
+        // intermediate "set-like" object to iterate a dict as tuples...
+        bp::object temp(O.items());
+        it = bp::object(bp::handle<>(PyObject_GetIter(temp.ptr())));
+    }
+#else
+    it = bp::object(O.iteritems());
+#endif
+    PyObject *item;
+    while( !!(item=PyIter_Next(it.ptr())) )
     {
         std::string name;
         bp::object value;

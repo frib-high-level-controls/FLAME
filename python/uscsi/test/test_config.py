@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import unittest
 
 from .._internal import dictshow, dict2conf
@@ -15,7 +17,7 @@ class testGood(unittest.TestCase):
                 A = dictshow(dict2conf(I))
                 self.assertEqual(A, E)
             except:
-                print 'Error on', I, E
+                print('Error on', I, E)
                 raise
 
     def test_fail(self):

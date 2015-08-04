@@ -10,6 +10,8 @@ apt-get install libboost-dev libboost-system-dev libboost-python-dev \
  python-dev cmake python-nose python-numpy build-essential git
 ```
 
+Supports python 2.6, 2.7, and 3.4
+
 Building
 ========
 
@@ -20,6 +22,12 @@ mkdir build
 cd build
 cmake ..
 make
+```
+
+To build with a specific python version, call cmake with:
+
+```sh
+cmake .. -DPYTHON_EXECUTABLE=/usr/bin/python3.4
 ```
 
 Running tests
