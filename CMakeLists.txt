@@ -26,7 +26,7 @@ endif()
 
 message(STATUS "Boost libs in ${Boost_LIBRARY_DIRS}")
 
-find_package(PythonInterp 2.7)
+find_package(PythonInterp 2.6)
 
 if(PYTHONINTERP_FOUND)
   # Find headers to go with this interpreter version
@@ -58,7 +58,7 @@ endif()
 if(PYTHONINTERP_FOUND)
   # see if nosetests test runner is available
   execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} -m nose -V
+    COMMAND ${PYTHON_EXECUTABLE} -m nose.core -V
     OUTPUT_QUIET
     ERROR_QUIET
     RESULT_VARIABLE _HAVE_NOSE

@@ -50,7 +50,7 @@ add_custom_target(testdata ALL
 if(HAVE_NOSE)
   add_test(
     NAME nosetest
-    COMMAND ${PYTHON_EXECUTABLE} -m nose uscsi
+    COMMAND ${PYTHON_EXECUTABLE} -m nose.core uscsi
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
   )
 endif()
