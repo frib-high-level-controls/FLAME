@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.2)
 
 project("uscsi" C CXX)
 
@@ -18,7 +18,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
   endif()
 endif()
 
-find_package(Boost 1.49.0 COMPONENTS system)
+find_package(Boost 1.42.0 COMPONENTS system)
 
 if(NOT Boost_FOUND)
   message(SEND_ERROR "Boost is required")
@@ -29,33 +29,38 @@ message(STATUS "Boost libs in ${Boost_LIBRARY_DIRS}")
 find_package(PythonInterp 2.6)
 
 if(PYTHONINTERP_FOUND)
-  # Find headers to go with this interpreter version
-  find_package(PythonLibs ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH})
-
-  # find the numpy headers
-  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/pyconfig.py
-    OUTPUT_VARIABLE _NUMPY_DIRS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
+  # Introspect this interpreter
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/pyconfig.py ${CMAKE_CURRENT_BINARY_DIR}/pyconfig.cmake
+    RESULT_VARIABLE _PY_CONFIG
   )
+  if(_PY_CONFIG)
+    message(STATUS "Failed to fetch build information for ${PYTHON_EXECUTABLE}")
+  else()
+    include(${CMAKE_CURRENT_BINARY_DIR}/pyconfig.cmake)
+    message(STATUS "Python version ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
+  endif()
+endif()
+
+if(Python_FOUND)
+  message(STATUS "Python version ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
+
   find_path(NUMPY_INCLUDE_DIRS numpy/numpyconfig.h
-    PATHS ${_NUMPY_DIRS}
+    PATHS ${Python_INCLUDE_DIRS}
     NO_DEFAULT_PATH
   )
   message(STATUS "Numpy headers ${NUMPY_INCLUDE_DIRS}")
-endif()
 
-if(PYTHONLIBS_FOUND)
   # find appropriate boost_python library
   find_library(Boost_PYTHON_LIBRARY
-    "boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}"
+    NAMES
+      "boost_python-mt-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}"
+      "boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}"
     PATHS ${Boost_LIBRARY_DIRS}
     NO_DEFAULT_PATH
   )
 
   message(STATUS "Boost python ${Boost_PYTHON_LIBRARY}")
-endif()
 
-if(PYTHONINTERP_FOUND)
   # see if nosetests test runner is available
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -m nose.core -V
