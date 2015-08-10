@@ -37,13 +37,11 @@ if(PYTHONINTERP_FOUND)
     message(STATUS "Failed to fetch build information for ${PYTHON_EXECUTABLE}")
   else()
     include(${CMAKE_CURRENT_BINARY_DIR}/pyconfig.cmake)
-    message(STATUS "Python version ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
+    message(STATUS "Python version ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}.${Python_VERSION_PATCH}")
   endif()
 endif()
 
 if(Python_FOUND)
-  message(STATUS "Python version ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
-
   find_path(NUMPY_INCLUDE_DIRS numpy/numpyconfig.h
     PATHS ${Python_INCLUDE_DIRS}
     NO_DEFAULT_PATH
@@ -53,8 +51,8 @@ if(Python_FOUND)
   # find appropriate boost_python library
   find_library(Boost_PYTHON_LIBRARY
     NAMES
-      "boost_python-mt-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}"
-      "boost_python-py${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}"
+      "boost_python-mt-py${Python_VERSION_MAJOR}${Python_VERSION_MINOR}"
+      "boost_python-py${Python_VERSION_MAJOR}${Python_VERSION_MINOR}"
     PATHS ${Boost_LIBRARY_DIRS}
     NO_DEFAULT_PATH
   )
