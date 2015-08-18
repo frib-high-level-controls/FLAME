@@ -1,5 +1,5 @@
 # Terminal type is: 0 - X11, 1 - PS, 2 - PNG, 3 - JPG
-term_type = 1;
+term_type = 0;
 
 # On-axis long. E-field [V/m] vs. z [mm].
 file1 = "axisData_41.txt";
