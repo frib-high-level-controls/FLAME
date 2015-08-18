@@ -1,5 +1,5 @@
 # Terminal type is: 0 - X11, 1 - PS, 2 - PNG, 3 - JPG
-term_type = 0;
+term_type = 1;
 
 # On-axis long. E-field [V/m] vs. z [mm].
 file1 = "axisData_41.txt";
@@ -7,12 +7,14 @@ file1 = "axisData_41.txt";
 # Transverse higher order E-field [V/m] ([V] for dipole) vs. z [mm].
 # Dipole.
 file2 = "Multipole41/CaviMlp_EDipole_41.txt";
-#  First half of defocusing component.
+# First half of defocusing component.
 file3 = "Multipole41/CaviMlp_EFocus1_41.txt";
-#  Second half of defocusing component.
+# Second half of defocusing component.
 file4 = "Multipole41/CaviMlp_EFocus2_41.txt";
+# Quadrupole.
 file5 = "Multipole41/CaviMlp_EQuad_41.txt";
 
+# Tranverse higher order H-field [A/m] ([A] for dipole) vs. z [mm]
 file6 = "Multipole41/CaviMlp_HDipole_41.txt";
 file7 = "Multipole41/CaviMlp_HMono_41.txt";
 file8 = "Multipole41/CaviMlp_HQuad_41.txt";
@@ -42,7 +44,7 @@ if (term_type == 2) set output "cavity_1.png"
 if (term_type == 3) set output "cavity_1.jpg"
 
 set title "Cavity Fundamental Mode: axisData";
-set xlabel "z [cm]"; set ylabel "E_=? [MV/m]";
+set xlabel "z [cm]"; set ylabel "E_{/Symbol \174\174} [MV/m]";
 plot file1 using (1e-1*$1):(1e-6*$2) notitle with lines ls 1;
 
 if (term_type == 0) pause mouse "click on graph to cont.\n";
@@ -55,23 +57,19 @@ set multiplot;
 
 set size 0.5, 0.5; set origin 0.0, 0.5;
 set title "Cavity Mode: EDipole";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [MV]";
+set xlabel "r [cm]"; set ylabel "E_{/Symbol \\136} [MV]";
 plot file2 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 set origin 0.5, 0.5;
-set title "Cavity: EFocus1";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [MV/m]";
-plot file3 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
+set title "Cavity Mode: EQuad";
+set xlabel "r [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
+plot file5 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 set origin 0.0, 0.0;
-set title "Cavity: EFocus2";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [MV/m]";
-plot file4 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
-
-set origin 0.5, 0.0;
-set title "Cavity Mode: EQuad";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [MV/m]";
-plot file5 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
+set title "Cavity: EFocus1 & EFocus2";
+set xlabel "r [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
+plot file3 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3, \
+     file4 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 unset multiplot;
 if (term_type == 0) pause mouse "click on graph to cont.\n";
@@ -84,17 +82,17 @@ set multiplot;
 
 set size 0.5, 0.5; set origin 0.0, 0.5;
 set title "Cavity Mode: HDipole";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [kV?]";
+set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [A]";
 plot file6 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 set origin 0.5, 0.5;
 set title "Cavity Mode: HMono";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [kV?]";
+set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [A/m]";
 plot file7 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 set origin 0.0, 0.0;
 set title "Cavity Mode: HQuad";
-set xlabel "r [cm]"; set ylabel "E_{perp}? [kV?]";
+set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [A/m]";
 plot file8 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 unset multiplot;
@@ -108,13 +106,13 @@ set multiplot;
 
 set size 1.0, 0.5; set origin 0.0, 0.5;
 set title "Cavity Thin Lens Model: Longitudinal Kick";
-set xlabel "z [cm]"; set ylabel "{/Symbol q}_=? [mrad?]";
+set xlabel "z [cm]"; set ylabel "{/Symbol q}_{/Symbol \174\174} [mrad?]";
 set xrange [-13:];
 plot file9 using (1e-1*$1):($4) notitle with impulses ls 1;
 
 set origin 0.0, 0.0;
 set title "Transverse Kick";
-set xlabel "z [cm]"; set ylabel "{/Symbol q}_=? [mrad?]";
+set xlabel "z [cm]"; set ylabel "{/Symbol q}_{/Symbol \\136} [mrad?]";
 set xrange [-13:];
 plot file9 using (1e-1*$1):($6) axis x1y2 notitle with impulses ls 3;
 
