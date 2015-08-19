@@ -82,17 +82,17 @@ set multiplot;
 
 set size 0.5, 0.5; set origin 0.0, 0.5;
 set title "Cavity Mode: HDipole";
-set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [A]";
+set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [kA]";
 plot file6 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 set origin 0.5, 0.5;
 set title "Cavity Mode: HMono";
-set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [A/m]";
+set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [kA/m]";
 plot file7 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 set origin 0.0, 0.0;
 set title "Cavity Mode: HQuad";
-set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [A/m]";
+set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [kA/m]";
 plot file8 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 unset multiplot;
@@ -102,19 +102,10 @@ if (term_type == 1) set output "cavity_4.ps"
 if (term_type == 2) set output "cavity_4.png"
 if (term_type == 3) set output "cavity_4.jpg"
 
-set multiplot;
-
-set size 1.0, 0.5; set origin 0.0, 0.5;
-set title "Cavity Thin Lens Model: Longitudinal Kick";
-set xlabel "z [cm]"; set ylabel "{/Symbol q}_{/Symbol \174\174} [mrad?]";
-set xrange [-13:];
-plot file9 using (1e-1*$1):($4) notitle with impulses ls 1;
-
-set origin 0.0, 0.0;
-set title "Transverse Kick";
-set xlabel "z [cm]"; set ylabel "{/Symbol q}_{/Symbol \\136} [mrad?]";
-set xrange [-13:];
-plot file9 using (1e-1*$1):($6) axis x1y2 notitle with impulses ls 3;
-
-unset multiplot;
+set size 1.0, 1.0; set origin 0.0, 0.0;
+set title "Cavity Thin Lens Model: {/Symbol \\362}Eds,  {/Symbol \\362}Hds";
+set xlabel "z [cm]";
+set ylabel "[MV, MV/m, MA, MA/m]";
+set yrange [-0.01:];
+plot file9 using (1e-1*($1+$4/2.0)):6:(1e-1*$4) notitle with boxes ls 1;
 if (term_type == 0) pause mouse "click on graph to cont.\n";
