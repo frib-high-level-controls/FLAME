@@ -57,17 +57,17 @@ set multiplot;
 
 set size 0.5, 0.5; set origin 0.0, 0.5;
 set title "Cavity Mode: EDipole";
-set xlabel "r [cm]"; set ylabel "E_{/Symbol \\136} [MV]";
+set xlabel "z [cm]"; set ylabel "E_{/Symbol \\136} [MV]";
 plot file2 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 set origin 0.5, 0.5;
 set title "Cavity Mode: EQuad";
-set xlabel "r [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
+set xlabel "z [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
 plot file5 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 set origin 0.0, 0.0;
 set title "Cavity: EFocus1 & EFocus2";
-set xlabel "r [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
+set xlabel "z [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
 plot file3 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3, \
      file4 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
@@ -82,17 +82,17 @@ set multiplot;
 
 set size 0.5, 0.5; set origin 0.0, 0.5;
 set title "Cavity Mode: HDipole";
-set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [kA]";
+set xlabel "z [cm]"; set ylabel "H_{/Symbol \\136} [kA]";
 plot file6 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 set origin 0.5, 0.5;
 set title "Cavity Mode: HMono";
-set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [kA/m]";
+set xlabel "z [cm]"; set ylabel "H_{/Symbol \\136} [kA/m]";
 plot file7 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 set origin 0.0, 0.0;
 set title "Cavity Mode: HQuad";
-set xlabel "r [cm]"; set ylabel "H_{/Symbol \\136} [kA/m]";
+set xlabel "z [cm]"; set ylabel "H_{/Symbol \\136} [kA/m]";
 plot file8 using (1e-1*$1):(1e-3*$2) notitle with lines ls 3;
 
 unset multiplot;
@@ -107,5 +107,5 @@ set title "Cavity Thin Lens Model: {/Symbol \\362}Eds,  {/Symbol \\362}Hds";
 set xlabel "z [cm]";
 set ylabel "[MV, MV/m, MA, MA/m]";
 set yrange [-0.01:];
-plot file9 using (1e-1*($1+$4/2.0)):6:(1e-1*$4) notitle with boxes ls 1;
+plot file9 using (1e-1*($1+$4/2.0)):6:(1e-1*$4) notitle with boxes ls 3;
 if (term_type == 0) pause mouse "click on graph to cont.\n";
