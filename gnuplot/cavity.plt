@@ -1,24 +1,30 @@
+# Script to plot the cavity multipole field maps.
+#
+# Author: Johan Bengtsson.
+
+home_dir = '/home/bengtsson/FRIB/Cavity Model/';
+
 # Terminal type is: 0 - X11, 1 - PS, 2 - PNG, 3 - JPG
 term_type = 0;
 
 # On-axis long. E-field [V/m] vs. z [mm].
-file1 = "axisData_41.txt";
+file1 = home_dir."axisData_41.txt";
 
 # Transverse higher order E-field [V/m] ([V] for dipole) vs. z [mm].
 # Dipole.
-file2 = "Multipole41/CaviMlp_EDipole_41.txt";
+file2 = home_dir."Multipole41/CaviMlp_EDipole_41.txt";
 # First half of defocusing component.
-file3 = "Multipole41/CaviMlp_EFocus1_41.txt";
+file3 = home_dir."Multipole41/CaviMlp_EFocus1_41.txt";
 # Second half of defocusing component.
-file4 = "Multipole41/CaviMlp_EFocus2_41.txt";
+file4 = home_dir."Multipole41/CaviMlp_EFocus2_41.txt";
 # Quadrupole.
-file5 = "Multipole41/CaviMlp_EQuad_41.txt";
+file5 = home_dir."Multipole41/CaviMlp_EQuad_41.txt";
 
 # Tranverse higher order H-field [A/m] ([A] for dipole) vs. z [mm]
-file6 = "Multipole41/CaviMlp_HDipole_41.txt";
-file7 = "Multipole41/CaviMlp_HMono_41.txt";
-file8 = "Multipole41/CaviMlp_HQuad_41.txt";
-file9 = "Multipole41/thinlenlon_41.txt";
+file6 = home_dir."Multipole41/CaviMlp_HDipole_41.txt";
+file7 = home_dir."Multipole41/CaviMlp_HMono_41.txt";
+file8 = home_dir."Multipole41/CaviMlp_HQuad_41.txt";
+file9 = home_dir."Multipole41/thinlenlon_41.txt";
 
 if (term_type == 0) set terminal x11;
 if (term_type == 1) set terminal postscript landscape enhanced color solid \
