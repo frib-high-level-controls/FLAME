@@ -2,7 +2,9 @@ import math
 import numpy
 import scipy.integrate
 
-# Module to obtained the integrated field from the cavity field maps.
+# Module to evaluate the integrated field from the cavity multipole field maps.
+#
+# Author: Johan Bengtsson.
 
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
@@ -15,9 +17,11 @@ def rd_hom(file_name):
 
 
 def integrate_hom(file_name):
-    xy = rd_hom(file_name)
-
+    # Methods: 'trapz', 'simps', and 'romb'.
     method = 'trapz'
+
+    xy = rd_hom(home_dir+file_name)
+
     if method == 'trapz':
         integ = numpy.trapz(xy[:, 1], xy[:, 0])
     elif method == 'simps':
@@ -41,14 +45,15 @@ def integrate_hom(file_name):
     return integ
 
 
-Edip    = integrate_hom(home_dir+'CaviMlp_EDipole_41.txt')
-Equad   = integrate_hom(home_dir+'CaviMlp_EQuad_41.txt')
-Efocus1 = integrate_hom(home_dir+'CaviMlp_EFocus1_41.txt')
-Efocus2 = integrate_hom(home_dir+'CaviMlp_EFocus2_41.txt')
+Edip    = integrate_hom('CaviMlp_EDipole_41.txt')
+Equad   = integrate_hom('CaviMlp_EQuad_41.txt')
+Efocus1 = integrate_hom('CaviMlp_EFocus1_41.txt')
+Efocus2 = integrate_hom('CaviMlp_EFocus2_41.txt')
 
-Hdip    = integrate_hom(home_dir+'CaviMlp_HDipole_41.txt')
-Hmono   = integrate_hom(home_dir+'CaviMlp_HMono_41.txt')
-Hquad   = integrate_hom(home_dir+'CaviMlp_HQuad_41.txt')
+Hdip    = integrate_hom('CaviMlp_HDipole_41.txt')
+Hmono   = integrate_hom('CaviMlp_HMono_41.txt')
+Hquad   = integrate_hom('CaviMlp_HQuad_41.txt')
+
 print
 print 'Efocus2 = %18.15f [MV/m]' % (1e-6*Efocus2)
 print 'Edip    = %18.15f [MV]'   % (1e-6*Edip)
