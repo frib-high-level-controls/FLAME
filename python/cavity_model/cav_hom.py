@@ -8,7 +8,6 @@ home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
 
 def rd_hom(file_name):
-
     xy = numpy.loadtxt(file_name)
     # z-axis is in [mm].
     xy[:,0] *= 1e-3
@@ -17,7 +16,6 @@ def rd_hom(file_name):
 
 def integrate_hom(file_name):
     xy = rd_hom(file_name)
-    print len(xy[:, 0])
 
     method = 'trapz'
     if method == 'trapz':
