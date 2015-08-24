@@ -6,8 +6,6 @@ import scipy.integrate
 #
 # Author: Johan Bengtsson.
 
-home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
-
 
 def rd_hom(file_name):
     xy = numpy.loadtxt(file_name)
@@ -17,7 +15,7 @@ def rd_hom(file_name):
 
 
 def integrate_hom(file_name):
-    # Methods: 'trapz', 'simps', and 'romb'.
+    # Method: 'trapz', 'simps', and 'romb'.
     method = 'trapz'
 
     xy = rd_hom(home_dir+file_name)
@@ -44,6 +42,8 @@ def integrate_hom(file_name):
         integ = scipy.integrate.romb(xy[:, 1], dx=h)
     return integ
 
+
+home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
 Edip    = integrate_hom('CaviMlp_EDipole_41.txt')
 Equad   = integrate_hom('CaviMlp_EQuad_41.txt')
