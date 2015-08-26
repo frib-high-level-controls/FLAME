@@ -17,27 +17,27 @@ int main(int argc, char *argv[]) {
     std::cout << "Setup a pair of drifts\n";
     {
         std::cout << "Building description\n";
-        std::list<boost::any> elements;
+        Config::vector_t elements;
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "drift1");
             E.set<std::string>("type", "drift");
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "drift2");
             E.set<std::string>("type", "drift");
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
-        conf.setAny("elements", elements);
+        conf.set<Config::vector_t>("elements", elements);
     }
 
     // Start with 3d (size()==6) vector state
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
             I[3] = 1e-3;
             I[4] = 1.0;
             I[5] = 1e-3;
-            C.setAny("initial", I);
+            C.set<std::vector<double> >("initial", I);
             state.reset(sim.allocState(C));
         }
 
@@ -96,57 +96,57 @@ int main(int argc, char *argv[]) {
 
     {
         std::cout << "Building description\n";
-        std::list<boost::any> elements;
+        Config::vector_t elements;
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "quad1");
             E.set<std::string>("type", "quad");
             E.set<double>("strength", 1e-3);
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "drift1");
             E.set<std::string>("type", "drift");
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "quad2");
             E.set<std::string>("type", "quad");
             E.set<double>("strength", -2e-3);
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "drift2");
             E.set<std::string>("type", "drift");
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
         {
-            Config E;
+            elements.push_back(Config());
+            Config& E = elements.back();
+
             E.set<std::string>("name", "quad3");
             E.set<std::string>("type", "quad");
             E.set<double>("strength", 1e-3);
             E.set<double>("length", 1.0);
-
-            elements.push_back(E);
         }
 
-        conf.setAny("elements", elements);
+        conf.set<Config::vector_t>("elements", elements);
     }
 
     std::cout << "Config:\n" << conf;

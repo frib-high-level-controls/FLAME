@@ -32,7 +32,7 @@ struct GenericMomentElement : MomentElementBase
     GenericMomentElement(const Config& c)
         :MomentElementBase(c)
     {
-        const std::vector<double>& I = c.get<const std::vector<double>&>("transfer");
+        const std::vector<double>& I = c.get<std::vector<double> >("transfer");
         if(I.size()<transfer.data().size())
             throw std::invalid_argument("Initial transfer size too big");
         std::copy(I.begin(), I.end(), transfer.data().begin());

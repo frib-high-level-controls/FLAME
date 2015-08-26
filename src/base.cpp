@@ -6,64 +6,6 @@
 
 StateBase::~StateBase() {}
 
-bool
-Config::has(const std::string &s) const
-{
-    return p_props.find(s)!=p_props.end();
-}
-
-
-boost::any
-Config::getAny(const std::string& s) const
-{
-    map_t::const_iterator it = p_props.find(s);
-    if(it==p_props.end())
-        throw key_error(s);
-    return it->second;
-}
-
-boost::any
-Config::getAny(const std::string& s, const boost::any &def) const
-{
-    map_t::const_iterator it = p_props.find(s);
-    if(it==p_props.end())
-        return def;
-    else
-        return it->second;
-}
-
-void
-Config::setAny(const std::string& s, const boost::any& val)
-{
-    p_props[s] = val;
-}
-
-std::ostream& operator<<(std::ostream& strm, const Config& c)
-{
-    for(Config::map_t::const_iterator it=c.p_props.begin(), end=c.p_props.end();
-        it!=end; ++it)
-    {
-        try{
-            typedef std::list<boost::any> sub_t;
-            const sub_t& sub = boost::any_cast<const sub_t&>(it->second);
-            strm<<">>> "<<it->first<<"\n";
-            for(sub_t::const_iterator it2=sub.begin(), end=sub.end(); it2!=end; ++it2)
-            {
-                try{
-                    const Config& sc = boost::any_cast<const Config&>(*it2);
-                    strm<<sc<<"\n";
-                }catch(boost::bad_any_cast&){
-                    strm<<it2->type().name()<<"\n";
-                }
-            }
-            strm<<"<<<\n";
-        }catch(boost::bad_any_cast&){
-            strm<<"Name: '"<<it->first<<"' type "<<it->second.type().name()<<"\n";
-        }
-    }
-    return strm;
-}
-
 StateBase::StateBase(const Config&) :next_elem(0), pyptr(0) {}
 
 ElementVoid::ElementVoid(const Config& conf)
@@ -91,7 +33,7 @@ Machine::Machine(const Config& c)
 
     p_info = it->second;
 
-    typedef std::list<boost::any> elements_t;
+    typedef Config::vector_t elements_t;
     elements_t Es(c.get<elements_t>("elements"));
 
     p_elements_t result;

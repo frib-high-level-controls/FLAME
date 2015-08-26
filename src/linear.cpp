@@ -10,7 +10,7 @@ MatrixState::MatrixState(const Config& c)
     ,state(boost::numeric::ublas::identity_matrix<double>(6))
 {
     try{
-        const std::vector<double>& I = c.get<const std::vector<double>&>("initial");
+        const std::vector<double>& I = c.get<std::vector<double> >("initial");
         if(I.size()<state.data().size())
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.data().begin());
@@ -43,7 +43,7 @@ VectorState::VectorState(const Config& c)
     ,state(6, 0.0)
 {
     try{
-        const std::vector<double>& I = c.get<const std::vector<double>&>("initial");
+        const std::vector<double>& I = c.get<std::vector<double> >("initial");
         if(I.size()<state.size())
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.begin());
@@ -95,7 +95,7 @@ struct LinearThinDipole : LinearElementBase<State>
     {
         double angle = c.get<double>("angle"), // in rad.
                P = c.get<double>("radius", 1.0),
-               off = c.get<bool>("vertical", false) ? State::L_Y : State::L_X ,
+               off = c.get<double>("vertical", 0.0)!=0.0 ? State::L_Y : State::L_X ,
                cos = ::cos(angle),
                sin = ::sin(angle);
 

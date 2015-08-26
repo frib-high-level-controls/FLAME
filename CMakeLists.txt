@@ -24,6 +24,19 @@ if(NOT Boost_FOUND)
   message(SEND_ERROR "Boost is required")
 endif()
 
+find_program(LEX_EXECUTABLE flex
+  DOC "Location of lexer genereator"
+)
+find_program(YACC_EXECUTABLE bison
+  DOC "Location of parser generator"
+)
+message(STATUS "FLEX ${LEX_EXECUTABLE}")
+message(STATUS "BISON ${YACC_EXECUTABLE}")
+
+if(NOT LEX_EXECUTABLE OR NOT YACC_EXECUTABLE)
+  message(SEND_ERROR "Missing flex or bison")
+endif()
+
 message(STATUS "Boost libs in ${Boost_LIBRARY_DIRS}")
 
 find_package(PythonInterp 2.6)
