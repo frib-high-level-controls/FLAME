@@ -13,13 +13,22 @@ def rd_hom(file_name):
     xy[:,0] *= 1e-3
     return xy
 
+def trapezoidal(y, x):
+    n = len(x)
+    integ = 0.0
+    for k in range(0, n-1, 1):
+        integ += (y[k+1]+y[k])/2.0*(x[k+1]-x[k])
+    return integ
+
 
 def integrate_hom(file_name):
-    # Method: 'trapz', 'simps', and 'romb'.
-    method = 'trapz'
+    # Method: 'trapezoidal', 'trapz', 'simps', and 'romb'.
+    method = 'trapezoidal'
 
     xy = rd_hom(file_name)
 
+    if method == 'trapezoidal':
+        integ = trapezoidal(xy[:, 1], xy[:, 0])
     if method == 'trapz':
         integ = numpy.trapz(xy[:, 1], xy[:, 0])
     elif method == 'simps':
@@ -41,6 +50,15 @@ def integrate_hom(file_name):
             (n+npad, len(xy[:, 0]), n, k, npad, h)
         integ = scipy.integrate.romb(xy[:, 1], dx=h)
     return integ
+
+
+def transit_time_fact():
+    xy = rd_hom(file_name)
+
+    if method == 'trapz':
+        integ = numpy.trapz(xy[:, 1], xy[:, 0])
+    return integ
+
 
 
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
