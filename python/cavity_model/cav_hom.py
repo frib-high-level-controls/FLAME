@@ -80,8 +80,9 @@ def get_cavity(file_name, f, beta):
 #    print '\nlambda %7.5f [m] = ' % (lambda_)
     [T, Tp, S, Sp, EML, em_center] = \
         get_transit_time_factors(z, EM, beta, lambda_)
-    print 'EM center = %18.15f, T = %18.15f, S = %18.15f, EML = %18.15f' % \
-        (1e3*em_center, T, S, 1e-6*EML)
+    name = file_name.split('_')[1]
+    print 'EM center = %18.15f, T = %18.15f, S = %18.15f, EML = %18.15f %s' % \
+        (1e3*em_center, T, S, 1e-6*EML, name)
     return [em_center, T, Tp, S, Sp, EML]
 
 
@@ -165,7 +166,9 @@ def get_cav(cav, f, beta):
             +-2.013750e+11*math.pow(arg,5)+7.942886e+09*math.pow(arg,4) \
             +-2.070369e+08*math.pow(arg,3)+3.438044e+06*math.pow(arg,2) \
             +-3.299673e+04*math.pow(arg,1)+1.394183e+02;
-    print '                                T = %18.15f, S = %18.15f' % (T, S)
+    name = cav.split('_')[1]
+    print '                                T = %18.15f, S = %18.15f %s' % \
+        (T, S, name)
     return S, T
 
 
@@ -174,19 +177,19 @@ home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 f_cav = 80.5e6; beta = 0.041
 
 print
-get_cav('CaviMlp_EFocus2', f_cav, beta)
+get_cav('CaviMlp_EFocus1', f_cav, beta)
 get_cav('CaviMlp_EDipole', f_cav, beta)
 get_cav('CaviMlp_HDipole', f_cav, beta)
 get_cav('CaviMlp_HMono',   f_cav, beta)
 get_cav('CaviMlp_HQuad',   f_cav, beta)
 get_cav('CaviMlp_EQuad',   f_cav, beta)
-get_cav('CaviMlp_EFocus1', f_cav, beta)
+get_cav('CaviMlp_EFocus2', f_cav, beta)
 
 print
-get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_cav, beta)
+get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_cav, beta)
 get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_cav, beta)
 get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_cav, beta)
 get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_cav, beta)
 get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_cav, beta)
 get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_cav, beta)
-get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_cav, beta)
+get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_cav, beta)
