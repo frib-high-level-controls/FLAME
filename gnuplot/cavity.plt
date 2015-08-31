@@ -2,7 +2,7 @@
 #
 # Author: Johan Bengtsson.
 
-home_dir = '/home/bengtsson/FRIB/Cavity Model/';
+home_dir = "/home/bengtsson/FRIB/Cavity Model/";
 
 # Terminal type is: 0 - X11, 1 - PS, 2 - PNG, 3 - JPG
 term_type = 0;
