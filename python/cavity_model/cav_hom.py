@@ -2,9 +2,16 @@ import math
 import numpy
 import scipy.integrate
 import scipy.constants
+import re
 import os.path
 
-# Module to evaluate the cavity transit time factors the multipole field maps.
+# Module to:
+#
+#  1. Evaluate the cavity transit time factors from the multipole field maps.
+#
+#  2. Evaluate the polynomial fit of the transit time factors.
+#
+#  3. To propagate through a cavity.
 #
 # Author: Johan Bengtsson.
 
@@ -102,14 +109,12 @@ cav_transit_times_41 = {
 
 
 def get_cav(cav_hom, f, beta):
-    lambda_ = scipy.constants.c/f
-    arg = 2.0*math.pi/(beta*1e3*lambda_)
-    beta_min = 0.025
-    beta_max = 0.08
-    if beta_min < beta and beta < beta_max:
-        [T, S] = cav_transit_times_41[cav_hom](arg)
-        print '                                T = %18.15f, S = %18.15f %s' % \
-            (T, S, cav_hom)
+    beta_rng = [0.025, 0.08]
+    if beta_rng[0] <= beta and beta <= beta_rng[1]:
+        lambda_ = scipy.constants.c/f
+        [T, S] = cav_transit_times_41[cav_hom](2.0*math.pi/(beta*1e3*lambda_))
+        if False:
+            print 'T = %18.15f, S = %18.15f %s' % (T, S, cav_hom)
     else:
         print 'beta out of range: %5.3f [%5.3f, %5.3f]' % \
             (beta, beta_min, beta_max)
@@ -187,14 +192,64 @@ def get_cavity(file_name, f, beta):
 #    print '\nlambda %7.5f [m] = ' % (lambda_)
     [T, Tp, S, Sp, EML, em_center] = \
         get_transit_time_factors(z, EM, beta, lambda_)
-    name = file_name.split('_')[1]
-#    print 'EM center = %18.15f, T = %18.15f, S = %18.15f' \
-#        ', EML = %18.15f %s' % \
-#        (1e3*em_center, T, S, 1e-6*EML, name)
-#    print 'EM center = %18.15f, T = %18.15f, S = %18.15f' \
-#        ', Tp = %18.15f, Sp = %18.15f, EML = %18.15f %s' % \
-#        (1e3*em_center, T, S, Tp, Sp, 1e-6*EML, name)
+    cav_hom = file_name.split('_')[1]
+    arg = 2.0*math.pi/(beta*1e3*lambda_)
+    print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
+            (arg, 1e3*em_center, T, S, Tp, Sp, 1e-6*EML, cav_hom)
     return [em_center, T, Tp, S, Sp, EML]
+
+
+def prt_transit_times(file_name, n, f, beta_min, beta_max):
+    dbeta = (beta_max-beta_min)/(n-1)
+    cav_hom = file_name.split('_')[1]
+    outf = open(cav_hom+'.dat', 'w')
+    [z, EM] = rd_hom(file_name)
+    lambda_ = scipy.constants.c/f
+    for k in range(n):
+        beta = beta_min + k*dbeta
+        [T, Tp, S, Sp, EML, em_center] = \
+            get_transit_time_factors(z, EM, beta, lambda_)
+        [T_pol, S_pol] = get_cav(cav_hom, f, beta)
+        outf.write('%8.5f %8.5f %8.5f %8.5f %8.5f\n' % \
+                       (beta, T, T_pol, S, S_pol))
+    outf.close()
+
+
+def rd_tst_data(file_name):
+    inf = open(file_name, 'r')
+    line = inf.readline().strip('\r\n')
+    while line:
+        arg = float(re.split(r'[=(]', line)[1])
+        line = inf.readline().strip('\r\n')
+        tokens = re.split(r'[=,]', line)
+        [EM_center, T, S, EML, cav_hom] = \
+            [float(tokens[1]), float(tokens[3]), float(tokens[5]),
+             float(tokens[7]), tokens[8]]
+        line = inf.readline().strip('\r\n')
+        tokens = re.split(r'[=,]', line)
+        [Tp, Sp] = [float(tokens[1]), float(tokens[3])]
+        print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
+            (arg, EM_center, T, S, 1e-3*Tp, 1e-3*Sp, EML, cav_hom)
+        # Skip blank line.
+        line = inf.readline()
+        line = inf.readline().strip('\r\n')
+
+
+def rd_cav_tlm(file_name):
+    inf = open(file_name, 'r')
+    line = inf.readline().strip('\r\n')
+    # Loop until blank line.
+    while line:
+        if line.startswith('%'):
+            # Comment.
+            pass
+        else:
+            tokens = re.split(r'\s*', line)
+            [s, type, L, aper, ELM] = \
+                [1e-3*float(tokens[0]), tokens[1], 1e-3*float(tokens[3]),
+                 float(tokens[4]), float(tokens[5])]
+            print '%18.15f %8s %18.15f %18.15f %5.3f' % (s, type, L, ELM, aper)
+        line = inf.readline().strip('\r\n')
 
 
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
@@ -205,14 +260,25 @@ beta  =  0.041
 # HWR cavity.
 f_HWR = 322e6
 
+if False:
+    print
+    get_cav('EFocus1', f_QWR, beta)
+    get_cav('EDipole', f_QWR, beta)
+    get_cav('HDipole', f_QWR, beta)
+    get_cav('HMono',   f_QWR, beta)
+    get_cav('HQuad',   f_QWR, beta)
+    get_cav('EQuad',   f_QWR, beta)
+    get_cav('EFocus2', f_QWR, beta)
+
+rd_cav_tlm(home_dir+'thinlenlon_41.txt')
+exit(0)
+
 print
-get_cav('EFocus1', f_QWR, beta)
-get_cav('EDipole', f_QWR, beta)
-get_cav('HDipole', f_QWR, beta)
-get_cav('HMono',   f_QWR, beta)
-get_cav('HQuad',   f_QWR, beta)
-get_cav('EQuad',   f_QWR, beta)
-get_cav('EFocus2', f_QWR, beta)
+rd_tst_data(home_dir+'cross_check_41.dat')
+
+lambda_ = scipy.constants.c/f_QWR
+beta = 2.0*math.pi/(0.050887809949826*1e3*lambda_)
+print '\nbeta = %18.15f' % (beta)
 
 print
 get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
@@ -223,14 +289,11 @@ get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
 get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
 get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
 
-outf = open('transit_times.dat', 'w')
-beta_min = 0.025
-beta_max = 0.08
-n = 25
-dbeta = (beta_max-beta_min)/(n-1)
-for k in range(n):
-    beta = beta_min + k*dbeta
-    [em_center, T, Tp, S, Sp, EML] = \
-        get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
-    outf.write('%7.5f %7.5f %7.5f\n' % (beta, T, S))
-outf.close()
+if False:
+    prt_transit_times(home_dir+'CaviMlp_EFocus1_41.txt', 25, f_QWR, 0.025, 0.08)
+    prt_transit_times(home_dir+'CaviMlp_EDipole_41.txt', 25, f_QWR, 0.025, 0.08)
+    prt_transit_times(home_dir+'CaviMlp_HDipole_41.txt', 25, f_QWR, 0.025, 0.08)
+    prt_transit_times(home_dir+'CaviMlp_HMono_41.txt',   25, f_QWR, 0.025, 0.08)
+    prt_transit_times(home_dir+'CaviMlp_HQuad_41.txt',   25, f_QWR, 0.025, 0.08)
+    prt_transit_times(home_dir+'CaviMlp_EQuad_41.txt',   25, f_QWR, 0.025, 0.08)
+    prt_transit_times(home_dir+'CaviMlp_EFocus2_41.txt', 25, f_QWR, 0.025, 0.08)
