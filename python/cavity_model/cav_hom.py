@@ -215,6 +215,29 @@ def prt_transit_times(file_name, n, f, beta_min, beta_max):
     outf.close()
 
 
+def cav_tlm_41(home_dir, beta):
+    # QWR cavity.
+    f_QWR = 80.5e6
+    print
+    # Order based on e-m center.
+    get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
+
+    get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
+
+
+
 def rd_tst_data(file_name):
     inf = open(file_name, 'r')
     line = inf.readline().strip('\r\n')
@@ -254,7 +277,6 @@ def rd_cav_tlm(file_name):
 
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
-# QWR cavity.
 f_QWR = 80.5e6
 beta  =  0.041
 # HWR cavity.
@@ -270,24 +292,26 @@ if False:
     get_cav('EQuad',   f_QWR, beta)
     get_cav('EFocus2', f_QWR, beta)
 
-rd_cav_tlm(home_dir+'thinlenlon_41.txt')
-exit(0)
+if False:
+    rd_cav_tlm(home_dir+'thinlenlon_41.txt')
 
-print
-rd_tst_data(home_dir+'cross_check_41.dat')
+if False:
+    print
+    rd_tst_data(home_dir+'cross_check_41.dat')
 
-lambda_ = scipy.constants.c/f_QWR
-beta = 2.0*math.pi/(0.050887809949826*1e3*lambda_)
-print '\nbeta = %18.15f' % (beta)
+    lambda_ = scipy.constants.c/f_QWR
+    beta = 2.0*math.pi/(0.050887809949826*1e3*lambda_)
+    print '\nbeta = %18.15f' % (beta)
 
-print
-get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
-get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
-get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
-get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
-get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
-get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
-get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
+    print
+    get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
+    get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
+    cav_tlm_41(home_dir, beta)
 
 if False:
     prt_transit_times(home_dir+'CaviMlp_EFocus1_41.txt', 25, f_QWR, 0.025, 0.08)
