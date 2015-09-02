@@ -9,15 +9,15 @@ import os.path
 #
 #  1. Evaluate the cavity transit time factors from the multipole field maps.
 #
-#  2. Evaluate the polynomial fit of the transit time factors.
+#  2. Evaluate the transit time factors from the polynomial fits.
 #
 #  3. To propagate through a cavity.
 #
 # Author: Johan Bengtsson.
 
 
-# Cavity transit time factors [T, S] for the multipole modes vs.
-# 2pi/beta*lambda.
+# Polynomial fitsfor the cavity transit time factors [T, S] for the multipole
+# modes vs. 2pi/beta*lambda.
 
 
 def CaviMlp_EFocus1_41(arg):
@@ -184,7 +184,8 @@ def get_transit_time_factors(z, EM, beta, lambda_):
 
 
 def get_cav(file_name, f, beta):
-    # Compute: e-m center, transit time factors [T, T', S, S'], ???.
+    # Compute: e-m center, transit time factors [T, T', S, S'], and integrated
+    # field.
     [z, EM] = rd_hom(file_name)
     lambda_ = scipy.constants.c/f
     [T, Tp, S, Sp, EML, em_center] = \
@@ -213,18 +214,19 @@ def prt_cav_tlm(file_name, outf, s, f, beta, sgn):
     [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
     em_center = sgn*em_center
     L = math.fabs(s-em_center)
-    outf.write('%18.15f %8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
     s = em_center
-    outf.write('%18.15f %8s %18.15f %18.15f\n' % (s, cav_hom, 0.0, 1e-6*EML))
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, cav_hom, 0.0, 1e-6*EML))
     return s
 
 
 def prt_cav_tlm_41(home_dir, beta):
-    # Generate thin lens model for QWR cavity.
-    # Order or elements based on e-m center.
+    # Generate QWR cavity thin lens model.
+    # Thin lens kicks are located at the e-m centers.
     f_QWR = 80.5e6
     outf = open('tlm_cav_41.dat', 'w')
     s = -0.120
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'start', 0.0, 0.0))
     # 1st gap.
     s = prt_cav_tlm(home_dir+'CaviMlp_EFocus2_41.txt', outf, s, f_QWR, beta, -1)
     s = prt_cav_tlm(home_dir+'CaviMlp_EDipole_41.txt', outf, s, f_QWR, beta, -1)
@@ -242,7 +244,9 @@ def prt_cav_tlm_41(home_dir, beta):
     s = prt_cav_tlm(home_dir+'CaviMlp_EDipole_41.txt', outf, s, f_QWR, beta, 1)
     s = prt_cav_tlm(home_dir+'CaviMlp_EFocus2_41.txt', outf, s, f_QWR, beta, 1)
     L = 0.120 - s
-    outf.write('%18.15f %8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
+    s += L
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'end', 0.0, 0.0))
     outf.close()
 
 
