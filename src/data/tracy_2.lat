@@ -111,7 +111,7 @@ QM1: Quadrupole,L = 0.25,  K = -0.803148359390124,  N = Nquad, Method = Meth;
 QM2: Quadrupole,L = 0.283, K =  1.22229548513137,   N = Nquad, Method = Meth;  
 SQ:  Quadrupole,L = 0.1,   K =  0,                  N = Nquad, Method = Meth;  
 
- nu = [33.23, 16.33]
+ nu = [33.23, 16.33];
 QH2:  Quadrupole, L = 0.448,   K =  1.47131,  N = Nquad, Method = Meth;
 QH3:  Quadrupole, L = 0.275,   K = -1.70420,  N = Nquad, Method = Meth;
 
