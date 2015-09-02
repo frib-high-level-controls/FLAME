@@ -193,9 +193,9 @@ def get_cavity(file_name, f, beta):
     [T, Tp, S, Sp, EML, em_center] = \
         get_transit_time_factors(z, EM, beta, lambda_)
     cav_hom = file_name.split('_')[1]
-    arg = 2.0*math.pi/(beta*1e3*lambda_)
+    arg = 2.0*math.pi/(beta*lambda_)
     print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
-            (arg, 1e3*em_center, T, S, Tp, Sp, 1e-6*EML, cav_hom)
+        (1e-3*arg, 1e3*em_center, T, S, Tp, Sp, 1e-6*EML, cav_hom)
     return [em_center, T, Tp, S, Sp, EML]
 
 
