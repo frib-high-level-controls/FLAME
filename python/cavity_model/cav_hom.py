@@ -108,13 +108,11 @@ cav_transit_times_41 = {
     }
 
 
-def get_cav(cav_hom, f, beta):
+def get_cav_41(cav_hom, f, beta):
     beta_rng = [0.025, 0.08]
     if beta_rng[0] <= beta and beta <= beta_rng[1]:
         lambda_ = scipy.constants.c/f
         [T, S] = cav_transit_times_41[cav_hom](2.0*math.pi/(beta*1e3*lambda_))
-        if False:
-            print 'T = %18.15f, S = %18.15f %s' % (T, S, cav_hom)
     else:
         print 'beta out of range: %5.3f [%5.3f, %5.3f]' % \
             (beta, beta_min, beta_max)
@@ -185,17 +183,12 @@ def get_transit_time_factors(z, EM, beta, lambda_):
     return T, Tp, S, Sp, EML, em_center
 
 
-def get_cavity(file_name, f, beta):
+def get_cav(file_name, f, beta):
     # Compute: e-m center, transit time factors [T, T', S, S'], ???.
     [z, EM] = rd_hom(file_name)
     lambda_ = scipy.constants.c/f
-#    print '\nlambda %7.5f [m] = ' % (lambda_)
     [T, Tp, S, Sp, EML, em_center] = \
         get_transit_time_factors(z, EM, beta, lambda_)
-    cav_hom = file_name.split('_')[1]
-    arg = 2.0*math.pi/(beta*lambda_)
-    print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
-        (1e-3*arg, 1e3*em_center, T, S, Tp, Sp, 1e-6*EML, cav_hom)
     return [em_center, T, Tp, S, Sp, EML]
 
 
@@ -215,27 +208,50 @@ def prt_transit_times(file_name, n, f, beta_min, beta_max):
     outf.close()
 
 
-def cav_tlm_41(home_dir, beta):
-    # QWR cavity.
+def prt_cav_tlm(file_name, outf, s, f, beta, sgn):
+    cav_hom = file_name.split('_')[1]
+    [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
+    em_center = sgn*em_center
+    L = math.fabs(s-em_center)
+    outf.write('%18.15f %8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
+    s = em_center
+    outf.write('%18.15f %8s %18.15f %18.15f\n' % (s, cav_hom, 0.0, 1e-6*EML))
+    return s
+
+
+def prt_cav_tlm_41(home_dir, beta):
+    # Generate thin lens model for QWR cavity.
+    # Order or elements based on e-m center.
     f_QWR = 80.5e6
-    print
-    # Order based on e-m center.
-    get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
+    outf = open('tlm_cav_41.dat', 'w')
+    s = -0.120
+    # 1st gap.
+    s = prt_cav_tlm(home_dir+'CaviMlp_EFocus2_41.txt', outf, s, f_QWR, beta, -1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_EDipole_41.txt', outf, s, f_QWR, beta, -1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_HDipole_41.txt', outf, s, f_QWR, beta, -1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_HMono_41.txt',   outf, s, f_QWR, beta, -1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_HQuad_41.txt',   outf, s, f_QWR, beta, -1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_EQuad_41.txt',   outf, s, f_QWR, beta, -1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_EFocus1_41.txt', outf, s, f_QWR, beta, -1)
+    # 2nd gap.
+    s = prt_cav_tlm(home_dir+'CaviMlp_EFocus1_41.txt', outf, s, f_QWR, beta, 1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_EQuad_41.txt',   outf, s, f_QWR, beta, 1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_HQuad_41.txt',   outf, s, f_QWR, beta, 1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_HMono_41.txt',   outf, s, f_QWR, beta, 1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_HDipole_41.txt', outf, s, f_QWR, beta, 1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_EDipole_41.txt', outf, s, f_QWR, beta, 1)
+    s = prt_cav_tlm(home_dir+'CaviMlp_EFocus2_41.txt', outf, s, f_QWR, beta, 1)
+    L = 0.120 - s
+    outf.write('%18.15f %8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
+    outf.close()
 
-    get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
 
+def prt_get_cav(file_name, f, beta):
+    cav_hom = file_name.split('_')[1]
+    arg = 2.0*math.pi/(beta*lambda_)
+    [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
+    print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
+        (1e-3*arg, 1e3*em_center, T, S, Tp, Sp, 1e-6*EML, cav_hom)
 
 
 def rd_tst_data(file_name):
@@ -284,13 +300,13 @@ f_HWR = 322e6
 
 if False:
     print
-    get_cav('EFocus1', f_QWR, beta)
-    get_cav('EDipole', f_QWR, beta)
-    get_cav('HDipole', f_QWR, beta)
-    get_cav('HMono',   f_QWR, beta)
-    get_cav('HQuad',   f_QWR, beta)
-    get_cav('EQuad',   f_QWR, beta)
-    get_cav('EFocus2', f_QWR, beta)
+    get_cav_41('EFocus1', f_QWR, beta)
+    get_cav_41('EDipole', f_QWR, beta)
+    get_cav_41('HDipole', f_QWR, beta)
+    get_cav_41('HMono',   f_QWR, beta)
+    get_cav_41('HQuad',   f_QWR, beta)
+    get_cav_41('EQuad',   f_QWR, beta)
+    get_cav_41('EFocus2', f_QWR, beta)
 
 if False:
     rd_cav_tlm(home_dir+'thinlenlon_41.txt')
@@ -304,14 +320,15 @@ if False:
     print '\nbeta = %18.15f' % (beta)
 
     print
-    get_cavity(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
-    get_cavity(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
-    cav_tlm_41(home_dir, beta)
+    prt_get_cav(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
+    prt_get_cav(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
+    prt_get_cav(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
+    prt_get_cav(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
+    prt_get_cav(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
+    prt_get_cav(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
+    prt_get_cav(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
+
+prt_cav_tlm_41(home_dir, beta)
 
 if False:
     prt_transit_times(home_dir+'CaviMlp_EFocus1_41.txt', 25, f_QWR, 0.025, 0.08)
