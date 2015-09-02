@@ -16,11 +16,21 @@ import os.path
 # Author: Johan Bengtsson.
 
 
-# Polynomial fitsfor the cavity transit time factors [T, S] for the multipole
+# Constants:
+ps_dim = 6
+x_ = 0; px_ = 1; y_ = 2; py_ = 3; ct_ = 4; delta_ = 5
+
+# scipy.constants.c
+# scipy.constants.mu_0
+AU    = 931.49432 # MeV/u
+
+
+# ------------------------------------------------------------------------------
+# Polynomial fits for the cavity transit time factors [T, S] for the multipole
 # modes vs. 2pi/beta*lambda.
+# ------------------------------------------------------------------------------
 
-
-def CaviMlp_EFocus1_41(arg):
+def Cav_TS_EFocus1_41(arg):
     p_T = numpy.array([
             -7.316972e+14, 2.613462e+14, -4.112154e+13, 3.739846e+12,
             -2.165867e+11, 8.280687e+09, -2.089452e+08, 3.354464e+06,
@@ -31,7 +41,7 @@ def CaviMlp_EFocus1_41(arg):
             -3.299673e+04,  1.394183e+02])
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
-def CaviMlp_EFocus2_41(arg):
+def Cav_TS_EFocus2_41(arg):
     p_T = numpy.array([
             -1.499544e+11, 5.612073e+10, -9.246033e+09, 8.799404e+08,
             -5.330725e+07, 2.132552e+06, -5.619149e+04, 8.943931e+02,
@@ -42,7 +52,7 @@ def CaviMlp_EFocus2_41(arg):
             -2.585211e+00, 1.305154e-02])
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
-def CaviMlp_EDipole_41(arg):
+def Cav_TS_EDipole_41(arg):
     p_T = numpy.array([
             4.758398e+10, -1.656906e+10, 2.535541e+09, -2.237287e+08,
             1.255841e+07, -4.669147e+05, 1.125013e+04, -1.047651e+02,
@@ -53,7 +63,7 @@ def CaviMlp_EDipole_41(arg):
             5.884367e+00, -2.586200e-02])
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
-def CaviMlp_EQuad_41(arg):
+def Cav_TS_EQuad_41(arg):
     p_T = numpy.array([
             -1.578312e+11, 5.896915e+10, -9.691159e+09, 9.192347e+08,
             -5.544764e+07, 2.206120e+06, -5.779110e+04, 9.127945e+02,
@@ -64,7 +74,7 @@ def CaviMlp_EQuad_41(arg):
             -2.923507e+01, 1.248096e-01])
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
-def CaviMlp_HMono_41(arg):
+def Cav_TS_HMono_41(arg):
     p_T =numpy.array([
             -7.604796e+11, 4.632851e+11, -1.014721e+11, 1.165760e+10,
             -8.043084e+08, 3.518178e+07, -9.843253e+05, 1.697657e+04,
@@ -75,7 +85,7 @@ def CaviMlp_HMono_41(arg):
             -3.409550e+03, 1.452657e+01])
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
-def CaviMlp_HDipole_41(arg):
+def Cav_TS_HDipole_41(arg):
     p_T = numpy.array([
             7.869717e+11, -3.116216e+11, 5.414689e+10, -5.420826e+09,
             3.446369e+08, -1.442888e+07, 3.985674e+05, -7.117391e+03,
@@ -86,7 +96,7 @@ def CaviMlp_HDipole_41(arg):
             -2.441117e+02, 1.021102e+00])
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
-def CaviMlp_HQuad_41(arg):
+def Cav_TS_HQuad_41(arg):
     p_T = numpy.array([
             5.600545e+12, -2.005326e+12, 3.163675e+11, -2.885455e+10,
             1.676173e+09, -6.429625e+07, 1.627837e+06, -2.613724e+04,
@@ -98,15 +108,14 @@ def CaviMlp_HQuad_41(arg):
     return numpy.polyval(p_T, arg), numpy.polyval(p_S, arg)
 
 cav_transit_times_41 = {
-    'EFocus1' : CaviMlp_EFocus1_41,
-    'EFocus2' : CaviMlp_EFocus2_41,
-    'EDipole' : CaviMlp_EDipole_41,
-    'EQuad'   : CaviMlp_EQuad_41,
-    'HMono'   : CaviMlp_HMono_41,
-    'HDipole' : CaviMlp_HDipole_41,
-    'HQuad'   : CaviMlp_HQuad_41
+    'EFocus1' : Cav_TS_EFocus1_41,
+    'EFocus2' : Cav_TS_EFocus2_41,
+    'EDipole' : Cav_TS_EDipole_41,
+    'EQuad'   : Cav_TS_EQuad_41,
+    'HMono'   : Cav_TS_HMono_41,
+    'HDipole' : Cav_TS_HDipole_41,
+    'HQuad'   : Cav_TS_HQuad_41
     }
-
 
 def get_cav_41(cav_hom, f, beta):
     beta_rng = [0.025, 0.08]
@@ -118,6 +127,84 @@ def get_cav_41(cav_hom, f, beta):
             (beta, beta_min, beta_max)
         exit(1)
     return T, S
+
+# ------------------------------------------------------------------------------
+
+
+# ------------------------------------------------------------------------------
+# Cavity transverse thin lens model.
+# ------------------------------------------------------------------------------
+
+def M_drift(L):
+    M = numpy.identity(ps_dim)
+    M[x_, px_] = L
+    M[y_, py_] = L
+    return M
+
+def M_EFocus1_41(m, Z, V0, T, S, phi, Rm):
+    M = numpy.identity(ps_dim)
+    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm
+    M[py_, y_] = M[px_, x_]
+    return M
+
+def M_EFocus2_41(m, Z, V0, T, S, phi, Rm):
+    M = numpy.identity(ps_dim)
+    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm
+    M[py_, y_] = M[px_, x_]
+    return M
+
+def M_EDipole_41(L):
+    M = numpy.identity(ps_dim)
+    M[py_, delta_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))
+    return M
+
+def M_EQuad_41(L):
+    M = numpy.identity(ps_dim)
+    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm;
+    M[py_, y_] = -M[px_, x_]
+
+def M_HMono_41(L):
+    M = numpy.identity(ps_dim)
+    M[px_, x_] = \
+        -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
+        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/Rm
+    M[py_, y_] = M[px_, x_]
+    return M
+
+def M_HDipole_41(L):
+    M = numpy.identity(ps_dim)
+    M[py_, delta_] = \
+        -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
+        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))
+    return M
+
+def M_HQuad_41(L):
+    M = numpy.identity(ps_dim)
+    M[px_, x_] = \
+        -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
+        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/Rm
+    M[py_, y_] = -M[px_, x_]
+    return M
+
+def M_AccGap_41(L):
+    M = numpy.identity(ps_dim)
+    return M
+
+M_cav_41 = {
+    'drift'   : M_drift,
+    'EFocus1' : M_EFocus1_41,
+    'EFocus2' : M_EFocus2_41,
+    'EDipole' : M_EDipole_41,
+    'EQuad'   : M_EQuad_41,
+    'HMono'   : M_HMono_41,
+    'HDipole' : M_HDipole_41,
+    'HQuad'   : M_HQuad_41,
+    'AccGap'  : M_AccGap_41
+    }
+
+
+
+# ------------------------------------------------------------------------------
 
 
 def rd_hom(file_name):
@@ -298,9 +385,12 @@ def rd_cav_tlm(file_name):
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
 f_QWR = 80.5e6
+Rm    = 17.0
 beta  =  0.041
 # HWR cavity.
 f_HWR = 322e6
+Rm    = 17.0
+#beta  =  0.085
 
 if False:
     print
