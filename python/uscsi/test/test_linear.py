@@ -9,7 +9,7 @@ from .. import Machine
 class testBasic(unittest.TestCase):
   def setUp(self):
     self.M = Machine({
-      'sim-type':'Vector',
+      'sim_type':'Vector',
       'elements':[
         {'name':'elem0', 'type':'drift', 'length':1.0},
       ],
@@ -45,7 +45,7 @@ class testBasic(unittest.TestCase):
 class TestMatrix(unittest.TestCase):
   def setUp(self):
     self.M = Machine({
-      'sim-type':'TransferMatrix',
+      'sim_type':'TransferMatrix',
       'elements':[
         {'name':'elem0', 'type':'drift', 'length':1.0},
         {'name':'elem1', 'type':'drift', 'length':1.0},
@@ -90,7 +90,7 @@ class testGeneric(unittest.TestCase):
           [0, 1, 0, 1, 0, 1],
         ])
         M = Machine({
-          'sim-type':'TransferMatrix',
+          'sim_type':'TransferMatrix',
           'elements':[
             {'name':'elem0', 'type':'generic', 'transfer':T},
           ],

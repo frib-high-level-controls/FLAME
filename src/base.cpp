@@ -23,9 +23,10 @@ void ElementVoid::show(std::ostream& strm) const
 
 Machine::Machine(const Config& c)
     :p_elements()
+    ,p_trace(NULL)
     ,p_info()
 {
-    std::string type(c.get<std::string>("sim-type"));
+    std::string type(c.get<std::string>("sim_type"));
 
     p_state_infos_t::iterator it = p_state_infos.find(type);
     if(it==p_state_infos.end())
@@ -85,6 +86,8 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
         ElementVoid* E = p_elements[S->next_elem];
         S->next_elem++;
         E->advance(*S);
+        if(p_trace)
+            (*p_trace) << "After "<< i<< " " << *S;
     }
 }
 
@@ -119,7 +122,7 @@ void Machine::p_registerElement(const std::string& sname, const char *ename, ele
 
 std::ostream& operator<<(std::ostream& strm, const Machine& m)
 {
-    strm<<"sim-type: "<<m.p_info.name<<"\n#Elements: "<<m.p_elements.size()<<"\n";
+    strm<<"sim_type: "<<m.p_info.name<<"\n#Elements: "<<m.p_elements.size()<<"\n";
     for(Machine::p_elements_t::const_iterator it=m.p_elements.begin(),
         end=m.p_elements.end(); it!=end; ++it)
     {

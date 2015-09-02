@@ -1,0 +1,10 @@
+sim_type = "Vector";
+
+S: source, initial = [1, 1e-3, 1, 1e-3, 1, 1e-3];
+
+L = 1.0;
+D1: drift, length=L;
+D2: drift, length=L*2;
+
+test: LINE = (S, 3*D1, D2);
+USE: test;

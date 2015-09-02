@@ -3,9 +3,9 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../src
 )
 
-add_executable(example_linear
-  example_linear.cpp
+add_executable(run_uscsi
+  cli.cpp
 )
-target_link_libraries(example_linear
+target_link_libraries(run_uscsi
   uscsi_core
 )

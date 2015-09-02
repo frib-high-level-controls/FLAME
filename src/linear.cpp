@@ -73,6 +73,34 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
 namespace {
 
 template<typename State>
+struct LinearSource : LinearElementBase<State>
+{
+    typedef LinearElementBase<State> base_t;
+    LinearSource(const Config& c)
+        :base_t(c)
+        ,ivect(c.get<std::vector<double> >("initial",
+                                           std::vector<double>()))
+    {}
+
+    virtual void advance(StateBase& s) const
+    {
+        State& ST = static_cast<State&>(s);
+        if(ivect.size()==0)
+            return; // use defaults
+        // Replace state with our initial values
+        if(ST.state.data().size()!=ivect.size())
+            throw std::invalid_argument("Initial state size incorrect");
+        std::copy(ivect.begin(), ivect.end(), ST.state.data().begin());
+    }
+
+    std::vector<double> ivect;
+
+    virtual ~LinearSource() {}
+
+    virtual const char* type_name() const {return "source";}
+};
+
+template<typename State>
 struct LinearDrift : LinearElementBase<State>
 {
     typedef LinearElementBase<State> base_t;
@@ -171,6 +199,9 @@ void registerLinear()
 {
     Machine::registerState<VectorState>("Vector");
     Machine::registerState<MatrixState>("TransferMatrix");
+
+    Machine::registerElement<LinearSource<VectorState> >("Vector", "source");
+    Machine::registerElement<LinearSource<MatrixState> >("TransferMatrix", "source");
 
     Machine::registerElement<LinearDrift<VectorState> >("Vector", "drift");
     Machine::registerElement<LinearDrift<MatrixState> >("TransferMatrix", "drift");

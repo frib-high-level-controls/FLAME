@@ -112,12 +112,16 @@ struct Machine : public boost::noncopyable
 
     inline const std::string& simtype() const {return p_simtype;}
 
+    inline std::ostream* trace() const {return p_trace;}
+    void set_trace(std::ostream* v) {p_trace=v;}
+
     typedef std::vector<ElementVoid*> p_elements_t;
     typedef std::map<std::string, ElementVoid*> p_lookup_t;
 private:
     p_elements_t p_elements;
     p_lookup_t p_lookup;
     std::string p_simtype;
+    std::ostream* p_trace;
 
     typedef StateBase* (*state_builder_t)(const Config& c);
     typedef ElementVoid* (*element_builder_t)(const Config& c);
