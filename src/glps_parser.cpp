@@ -67,6 +67,11 @@ const char *glps_expr_type_name(glps_expr_type e)
     }
 }
 
+void glps_string_debug(FILE *fp, const string_t *s)
+{
+    fprintf(fp, "%s", s->str.c_str());
+}
+
 void glps_expr_debug(FILE *fp, const expr_t *E)
 {
     fprintf(fp, "%p type %s", E, glps_expr_type_name(E->etype));
@@ -81,6 +86,20 @@ void glps_expr_debug(FILE *fp, const expr_t *E)
             fprintf(fp, " oops %s", e.what());
         }
     }
+}
+
+string_t* glps_string_alloc(const char *s, size_t n)
+{
+    try{
+        return new string_t(s, n);
+    }catch(...){
+        return NULL;
+    }
+}
+
+void glps_string_cleanup(string_t* str)
+{
+    delete str;
 }
 
 void glps_expr_cleanup(expr_t* expr)
@@ -105,6 +124,8 @@ void glps_strlist_cleanup(strlist_t* pval)
 
 kvlist_t* glps_append_kv(parse_context *ctxt, kvlist_t* L, kv_t* V)
 {
+    std::auto_ptr<string_t> SN(V->key);
+    std::auto_ptr<expr_t> EV(V->value);
     if(!L) {
         try{
             L = new kvlist_t;
@@ -113,9 +134,7 @@ kvlist_t* glps_append_kv(parse_context *ctxt, kvlist_t* L, kv_t* V)
             return NULL;
         }
     }
-    L->map[V->key] = *V->value;
-    free(V->key);
-    glps_expr_cleanup(V->value);
+    L->map[V->key->str] = *V->value;
     return L;
 }
 
@@ -204,24 +223,26 @@ expr_t *glps_add_value(parse_context *ctxt, glps_expr_type t, ...)
             break;
         case glps_expr_var:
         {
-            char *name = va_arg(args, char*);
+            string_t *name = va_arg(args, string_t*);
+            std::auto_ptr<string_t> SN(name);
+
             parse_context::map_idx_t::const_iterator it;
 
             // var may actually be a variable name, or an element/line label
-            if((it=ctxt->var_idx.find(name))!=ctxt->var_idx.end()) {
+            if((it=ctxt->var_idx.find(name->str))!=ctxt->var_idx.end()) {
                 // expand variable
                 expr_t &E = ctxt->vars[it->second].expr;
 
                 ret->etype = E.etype;
                 ret->value = E.value;
 
-            } else if(ctxt->element_idx.find(name)!=ctxt->element_idx.end()) {
+            } else if(ctxt->element_idx.find(name->str)!=ctxt->element_idx.end()) {
                 strlist_t::list_t T(1);
-                T[0] = name;
+                T[0] = name->str;
                 ret->etype = glps_expr_line;
                 ret->value = T;
 
-            } else if((it=ctxt->line_idx.find(name))!=ctxt->line_idx.end()) {
+            } else if((it=ctxt->line_idx.find(name->str))!=ctxt->line_idx.end()) {
                 parse_line &L = ctxt->line[it->second];
                 ret->etype = glps_expr_line;
                 ret->value = L.names;
@@ -231,18 +252,17 @@ expr_t *glps_add_value(parse_context *ctxt, glps_expr_type t, ...)
                  * are defined before first use, which prevents definition
                  * loops from forming.
                  */
-                glps_error(ctxt->scanner, ctxt, "Variable/Label '%s' referenced before definition", name);
+                glps_error(ctxt->scanner, ctxt, "Variable/Label '%s' referenced before definition", name->str.c_str());
                 ret.reset();
             }
-            free(name);
         }
             break;
         case glps_expr_string:
         {
-            char *name = va_arg(args, char*);
+            string_t *name = va_arg(args, string_t*);
+            std::auto_ptr<string_t> SN(name);
             assert(name);
-            ret->value = name;
-            free(name);
+            ret->value = name->str;
         }
             break;
         case glps_expr_vector:
@@ -287,12 +307,13 @@ std::string glps_describe_op(const operation_t* op)
 
 }
 
-expr_t *glps_add_op(parse_context *ctxt, char *name, unsigned N, expr_t **args)
+expr_t *glps_add_op(parse_context *ctxt, string_t *name, unsigned N, expr_t **args)
 {
+    std::auto_ptr<string_t> SN(name);
     std::auto_ptr<expr_t> ret;
     try{
 
-        parse_context::operations_iterator_pair opit = ctxt->operations.equal_range(name);
+        parse_context::operations_iterator_pair opit = ctxt->operations.equal_range(name->str);
 
         const operation_t *op=NULL;
         for(;opit.first!=opit.second; ++opit.first)
@@ -342,24 +363,27 @@ expr_t *glps_add_op(parse_context *ctxt, char *name, unsigned N, expr_t **args)
 
 
     }catch(std::exception& e){
-        glps_error(ctxt->scanner, ctxt, "Exception evaluating expression op '%s': %s", name, e.what());
+        glps_error(ctxt->scanner, ctxt, "Exception evaluating expression op '%s': %s",
+                   name->str.c_str(), e.what());
         ret.reset(0);
     }
 
     while(N) glps_expr_cleanup(args[--N]);
-    free(name);
     return ret.release();
 }
 
 
-void glps_assign(parse_context *ctxt, char *name, expr_t*value)
+void glps_assign(parse_context *ctxt, string_t *name, expr_t*value)
 {
     assert(name);
     assert(value);
     try{
+        std::auto_ptr<string_t> SN(name);
+        std::auto_ptr<expr_t> VN(value);
+
         bool ok = false;
         parse_var V;
-        V.name = name;
+        V.name = name->str;
 
         switch(value->etype) {
         case glps_expr_vector:
@@ -372,13 +396,13 @@ void glps_assign(parse_context *ctxt, char *name, expr_t*value)
             break;
         default:
             glps_error(ctxt->scanner, ctxt, "expression type %d may not be assigned to variable '%s'",
-                       value->etype, name);
+                       value->etype, V.name.c_str());
 
         }
 
         if(ok) {
-            if(ctxt->var_idx.find(name)!=ctxt->var_idx.end()) {
-                glps_error(ctxt->scanner, ctxt, "Name '%s' already defined", name);
+            if(ctxt->var_idx.find(V.name)!=ctxt->var_idx.end()) {
+                glps_error(ctxt->scanner, ctxt, "Name '%s' already defined", V.name.c_str());
             } else {
                 ctxt->vars.push_back(V);
                 ctxt->var_idx[V.name] = ctxt->vars.size()-1;
@@ -386,65 +410,62 @@ void glps_assign(parse_context *ctxt, char *name, expr_t*value)
         }
 
     } catch(std::exception& e) {
-        glps_error(ctxt->scanner, ctxt, "Variable '%s' assignment error; %s", name, e.what());
+        glps_error(ctxt->scanner, ctxt, "Variable '%s' assignment error; %s", name->str.c_str(), e.what());
     }
-    free(name);
-    glps_expr_cleanup(value);
 }
 
-void glps_add_element(parse_context *ctxt, char *label, char *etype, kvlist_t *P)
+void glps_add_element(parse_context *ctxt, string_t *label, string_t *etype, kvlist_t *P)
 {
+    std::auto_ptr<string_t> SL(label), SE(etype);
     std::auto_ptr<kvlist_t> props(P);
     try{
         if(!P)
             props.reset(new kvlist_t);
-        if(ctxt->element_idx.find(label)!=ctxt->element_idx.end()) {
-            glps_error(ctxt->scanner, ctxt, "Name '%s' already used", label);
+        if(ctxt->element_idx.find(label->str)!=ctxt->element_idx.end()) {
+            glps_error(ctxt->scanner, ctxt, "Name '%s' already used", label->str.c_str());
         } else {
-            ctxt->elements.push_back(parse_element(label, etype, props->map));
-            ctxt->element_idx[label] = ctxt->elements.size()-1;
+            ctxt->elements.push_back(parse_element(label->str, etype->str, props->map));
+            ctxt->element_idx[label->str] = ctxt->elements.size()-1;
         }
 
     } catch(std::exception& e) {
-        glps_error(ctxt->scanner, ctxt, "Element '%s' definition error; %s", label, e.what());
+        glps_error(ctxt->scanner, ctxt, "Element '%s' definition error; %s", label->str.c_str(), e.what());
     }
-    free(label);
-    free(etype);
 }
 
-void glps_add_line(parse_context *ctxt, char *label, char *etype, strlist_t *N)
+void glps_add_line(parse_context *ctxt, string_t *label, string_t *etype, strlist_t *N)
 {
+    std::auto_ptr<string_t> SL(label), SE(etype);
     try{
         std::auto_ptr<strlist_t> names(N);
         if(!N)
             names.reset(new strlist_t);
 
-        if(strcasecmp(etype,"LINE")!=0) {
-            glps_error(ctxt->scanner, ctxt, "line-like definition %s with '%s' instead of 'LINE'", label, etype);
+        if(strcasecmp(etype->str.c_str(),"LINE")!=0) {
+            glps_error(ctxt->scanner, ctxt, "line-like definition %s with '%s' instead of 'LINE'",
+                       label->str.c_str(), etype->str.c_str());
 
-        } else if(ctxt->line_idx.find(label)!=ctxt->line_idx.end()) {
-            glps_error(ctxt->scanner, ctxt, "Name '%s' already used", label);
+        } else if(ctxt->line_idx.find(label->str)!=ctxt->line_idx.end()) {
+            glps_error(ctxt->scanner, ctxt, "Name '%s' already used", label->str.c_str());
 
         } else {
             // reverse order of elements
             std::reverse(names->list.begin(), names->list.end());
-            ctxt->line.push_back(parse_line(label, etype, names->list));
-            ctxt->line_idx[label] = ctxt->line.size()-1;
+            ctxt->line.push_back(parse_line(label->str, etype->str.c_str(), names->list));
+            ctxt->line_idx[label->str] = ctxt->line.size()-1;
         }
 
     } catch(std::exception& e) {
-        glps_error(ctxt->scanner, ctxt, "Line '%s' definition error; %s", label, e.what());
+        glps_error(ctxt->scanner, ctxt, "Line '%s' definition error; %s", label->str.c_str(), e.what());
     }
-    free(label);
-    free(etype);
 }
 
-void glps_command(parse_context* ctxt, char *kw)
+void glps_command(parse_context* ctxt, string_t *kw)
 {
-    if(strcmp(kw, "END")!=0) {
-        glps_error(ctxt->scanner, ctxt, "Undefined command '%s'", kw);
+    std::auto_ptr<string_t> SK(kw);
+    if(strcmp(kw->str.c_str(), "END")!=0) {
+        glps_error(ctxt->scanner, ctxt, "Undefined command '%s'", kw->str.c_str());
     }
-    free(kw);
 }
 
 namespace {

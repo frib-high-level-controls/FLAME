@@ -19,12 +19,12 @@ void yyerror (yacc_arg arg, const char* msg)
 %parse-param {yacc_arg parg}
 %lex-param {void *scanner}
 
-%union { char *string; }
-%destructor { free($$); $$ = NULL; } <string>
+%union { string_t *string; }
+%destructor { glps_string_cleanup($$); $$ = NULL; } <string>
 
 %token <string> KEYWORD STR
 
-%printer { fprintf(yyoutput, "%s", $$); } KEYWORD STR;
+%printer { glps_string_debug(yyoutput, $$); } KEYWORD STR;
 
 %union { double real; }
 %token <real> NUM
@@ -108,11 +108,11 @@ expr : NUM                  { $$ = glps_add_value(ctxt, glps_expr_number, $1); }
      | vector               { $$ = glps_add_value(ctxt, glps_expr_vector, $1); PCLR($1); PERR($$); }
      | STR                  { $$ = glps_add_value(ctxt, glps_expr_string, $1); PCLR($1); PERR($$); }
      | KEYWORD              { $$ = glps_add_value(ctxt, glps_expr_var, $1); PCLR($1); PERR($$); }
-     | expr '+' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, strdup("+"), 2, A); PCLR($1); PCLR($3); PERR($$); }
-     | expr '-' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, strdup("-"), 2, A); PCLR($1); PCLR($3); PERR($$); }
-     | expr '*' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, strdup("*"), 2, A); PCLR($1); PCLR($3); PERR($$); }
-     | expr '/' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, strdup("/"), 2, A); PCLR($1); PCLR($3); PERR($$); }
-     | '-' expr %prec NEG   { expr_t *A[1] = {$2}; $$ = glps_add_op(ctxt, strdup("-"), 1, A); PCLR($2); PERR($$); }
+     | expr '+' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, glps_string_alloc("+",1), 2, A); PCLR($1); PCLR($3); PERR($$); }
+     | expr '-' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, glps_string_alloc("-",1), 2, A); PCLR($1); PCLR($3); PERR($$); }
+     | expr '*' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, glps_string_alloc("*",1), 2, A); PCLR($1); PCLR($3); PERR($$); }
+     | expr '/' expr        { expr_t *A[2] = {$1,$3}; $$ = glps_add_op(ctxt, glps_string_alloc("/",1), 2, A); PCLR($1); PCLR($3); PERR($$); }
+     | '-' expr %prec NEG   { expr_t *A[1] = {$2}; $$ = glps_add_op(ctxt, glps_string_alloc("-",1), 1, A); PCLR($2); PERR($$); }
      | '(' expr ')'         { $$ = $2; PCLR($2); PERR($$); }
      | KEYWORD '(' expr ')' { expr_t *A[1] = {$3}; $$ = glps_add_op(ctxt, $1, 1, A); PCLR($1); PCLR($3); PERR($$); }
 

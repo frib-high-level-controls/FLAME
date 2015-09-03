@@ -32,6 +32,8 @@ typedef struct {
     parse_context *ctxt;
 } yacc_arg;
 
+typedef struct string_t string_t;
+
 typedef struct expr_t expr_t;
 
 typedef struct vector_t vector_t;
@@ -39,31 +41,35 @@ typedef struct kvlist_t kvlist_t;
 typedef struct strlist_t strlist_t;
 
 typedef struct {
-    char* key;
+    string_t* key;
     expr_t *value;
 } kv_t;
 
+string_t* glps_string_alloc(const char *, size_t);
+
+void glps_string_cleanup(string_t*);
 void glps_expr_cleanup(expr_t*);
 void glps_vector_cleanup(vector_t*);
 void glps_kvlist_cleanup(kvlist_t*);
 void glps_strlist_cleanup(strlist_t*);
 
 void glps_expr_debug(FILE *, const expr_t *);
+void glps_string_debug(FILE *, const string_t *);
 
 void glps_error(void *scan, parse_context *ctxt, const char*, ...) __attribute__((format(printf,3,4)));
 void glps_verror(void *scan, parse_context *ctxt, const char*, va_list);
 
-void glps_assign(parse_context*, char *, expr_t*);
-void glps_add_element(parse_context*, char *label, char *etype, kvlist_t*);
-void glps_add_line(parse_context*, char *label, char *etype, strlist_t*);
-void glps_command(parse_context*, char *kw);
+void glps_assign(parse_context*, string_t *, expr_t*);
+void glps_add_element(parse_context*, string_t *label, string_t *etype, kvlist_t*);
+void glps_add_line(parse_context*, string_t *label, string_t *etype, strlist_t*);
+void glps_command(parse_context*, string_t *kw);
 
 kvlist_t* glps_append_kv(parse_context *ctxt, kvlist_t*, kv_t*);
 strlist_t* glps_append_expr(parse_context *ctxt, strlist_t*, expr_t *);
 vector_t* glps_append_vector(parse_context *ctxt, vector_t*, expr_t *);
 
 expr_t *glps_add_value(parse_context *ctxt, glps_expr_type t, ...);
-expr_t *glps_add_op(parse_context *ctxt, char *, unsigned N, expr_t **);
+expr_t *glps_add_op(parse_context *ctxt, string_t *, unsigned N, expr_t **);
 
 #ifdef __cplusplus
 }
@@ -74,6 +80,14 @@ typedef boost::variant<
     std::string, // glps_expr_string,
     std::vector<std::string> // glps_expr_line
 > expr_value_t;
+
+struct string_t {
+    std::string str;
+    template<typename A>
+    string_t(A a) : str(a) {}
+    template<typename A, typename B>
+    string_t(A a, B b) : str(a,b) {}
+};
 
 struct expr_t {
     glps_expr_type etype;

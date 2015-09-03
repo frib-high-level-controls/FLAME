@@ -19,7 +19,7 @@
 %%
 
 [A-Za-z][A-Za-z0-9_]* {
-    yylval->string = strdup(yytext);
+    yylval->string = glps_string_alloc(yytext, yyleng);
     if(!yylval->string) {
         glps_error(yyscanner, yyextra, "Unable to allocate string '%s'", yytext);
         return EOF;
@@ -51,7 +51,7 @@
 
 <quote>\" {
   BEGIN(INITIAL);
-  yylval->string = strndup(yytext, yyleng-1);
+  yylval->string = glps_string_alloc(yytext, yyleng-1);
   if(!yylval->string) {
       glps_error(yyscanner, yyextra, "Unable to allocate string '%s'", yytext);
       yyterminate();

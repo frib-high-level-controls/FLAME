@@ -42,12 +42,12 @@ int main(int argc, char *argv[])
             printf("Number: %g\n", lval.real);
             break;
         case STR:
-            printf("String: \"%s\"\n", lval.string);
-            free(lval.string);
+            printf("String: \"%s\"\n", lval.string->str.c_str());
+            delete lval.string;
             break;
         case KEYWORD:
-            printf("KW: %s\n", lval.string);
-            free(lval.string);
+            printf("KW: %s\n", lval.string->str.c_str());
+            delete lval.string;
             break;
         case COMMENT:
             break;
