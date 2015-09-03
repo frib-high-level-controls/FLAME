@@ -16,9 +16,24 @@ Config::getAny(const std::string& name) const
 }
 
 void
-Config::setAny(const std::string& name, value_t& val)
+Config::setAny(const std::string& name, const value_t& val)
 {
     values[name] = val;
+}
+
+void
+Config::swapAny(const std::string& name, value_t& val)
+{
+    {
+        values_t::iterator it = values.find(name);
+        if(it!=values.end()) {
+            it->second.swap(val);
+            return;
+        }
+    }
+    std::pair<values_t::iterator, bool> ret = values.insert(std::make_pair(name,value_t()));
+    assert(ret.second);
+    ret.first->second.swap(val);
 }
 
 namespace {
@@ -116,7 +131,7 @@ struct store_ctxt_var : public boost::static_visitor<void>
     }
 };
 
-void assign_expr_to_Config(Config& conf, const std::string& name, const expr_t& expr)
+void assign_expr_to_Config(Config& conf, const std::string& name, expr_t& expr)
 {
     switch(expr.etype)
     {
@@ -124,10 +139,10 @@ void assign_expr_to_Config(Config& conf, const std::string& name, const expr_t& 
         conf.set<double>(name, boost::get<double>(expr.value));
         break;
     case glps_expr_string:
-        conf.set<std::string>(name, boost::get<std::string>(expr.value));
+        conf.swap<std::string>(name, boost::get<std::string>(expr.value));
         break;
     case glps_expr_vector:
-        conf.set<std::vector<double> >(name, boost::get<std::vector<double> >(expr.value));
+        conf.swap<std::vector<double> >(name, boost::get<std::vector<double> >(expr.value));
         break;
     default:
         throw std::logic_error("Context contained unresolved/illegal variable");
@@ -151,9 +166,10 @@ struct GLPSParser::Pvt {
     Config* fill_context(parse_context& ctxt)
     {
         std::auto_ptr<Config> ret(new Config);
+        ret->reserve(ctxt.vars.size()+2);
 
         // copy ctxt.vars to top level Config
-        for(parse_context::vars_t::const_iterator it=ctxt.vars.begin(), end=ctxt.vars.end();
+        for(parse_context::vars_t::iterator it=ctxt.vars.begin(), end=ctxt.vars.end();
             it!=end; ++it)
         {
             assign_expr_to_Config(*ret, it->name, it->expr);
@@ -193,30 +209,34 @@ struct GLPSParser::Pvt {
         }
 
         Config::vector_t elements;
-        elements.reserve(ctxt.line.size());
+        elements.resize(line->names.size());
 
         // copy in elements
+        size_t i = 0;
         for(strlist_t::list_t::const_iterator it=line->names.begin(), end=line->names.end();
             it!=end; ++it)
         {
-            elements.push_back(Config());
-            Config& next = elements.back();
+            Config& next = elements[i++];
             parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
 
+            next.reserve(elem.props.size()+2);
+
             // push elements properties
-            for(kvlist_t::map_t::const_iterator itx=elem.props.begin(), endx=elem.props.end();
+            for(kvlist_t::map_t::iterator itx=elem.props.begin(), endx=elem.props.end();
                 itx!=endx; ++itx)
             {
                 assign_expr_to_Config(next, itx->first, itx->second);
             }
 
             // special properties
-            next.set<std::string>("type", elem.etype);
-            next.set<std::string>("name", elem.label);
+            next.swap<std::string>("type", elem.etype);
+            next.swap<std::string>("name", elem.label);
+
+            elem.props.clear();
         }
 
-        ret->set<std::string>("name", line->label);
-        ret->set<Config::vector_t>("elements", elements);
+        ret->swap<std::string>("name", line->label);
+        ret->swap<Config::vector_t>("elements", elements);
 
         return ret.release();
     }
