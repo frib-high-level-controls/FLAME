@@ -2,7 +2,7 @@
 #
 # Author: Johan Bengtsson.
 
-home_dir = '/home/bengtsson/FRIB/Cavity Model/';
+home_dir = "/home/bengtsson/FRIB/Cavity Model/";
 
 # Terminal type is: 0 - X11, 1 - PS, 2 - PNG, 3 - JPG
 term_type = 0;
@@ -72,10 +72,14 @@ set xlabel "z [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
 plot file5 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 set origin 0.0, 0.0;
-set title "Cavity: EFocus1 & EFocus2";
+set title "Cavity: EFocus1";
 set xlabel "z [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
-plot file3 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3, \
-     file4 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
+plot file3 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
+
+set origin 0.5, 0.0;
+set title "Cavity: EFocus2";
+set xlabel "z [cm]"; set ylabel "E_{/Symbol \\136} [MV/m]";
+plot file4 using (1e-1*$1):(1e-6*$2) notitle with lines ls 3;
 
 unset multiplot;
 if (term_type == 0) pause mouse "click on graph to cont.\n";
