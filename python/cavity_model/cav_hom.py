@@ -20,9 +20,21 @@ import os.path
 ps_dim = 6
 x_ = 0; px_ = 1; y_ = 2; py_ = 3; ct_ = 4; delta_ = 5
 
-# scipy.constants.c
-# scipy.constants.mu_0
-AU    = 931.49432 # MeV/u
+# scipy.constants.c    = 3.141592653589793
+# scipy.constants.mu_0 = 1.256637061435917e-06
+AU = 931.49432 # MeV/u
+
+
+class cavity:
+    param = {
+        'EFocus1' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
+        'EFocus2' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
+        'EDipole' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
+        'EQuad'   : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
+        'HMono'   : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
+        'HDipole' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
+        'HQuad'   : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0')
+        }
 
 
 # ------------------------------------------------------------------------------
@@ -135,35 +147,35 @@ def get_cav_41(cav_hom, f, beta):
 # Cavity transverse thin lens model.
 # ------------------------------------------------------------------------------
 
-def M_drift(L):
+def M_drift(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[x_, px_] = L
     M[y_, py_] = L
     return M
 
-def M_EFocus1_41(m, Z, V0, T, S, phi, Rm):
+def M_EFocus1_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_EFocus2_41(m, Z, V0, T, S, phi, Rm):
+def M_EFocus2_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_EDipole_41(L):
+def M_EDipole_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[py_, delta_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))
     return M
 
-def M_EQuad_41(L):
+def M_EQuad_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm;
     M[py_, y_] = -M[px_, x_]
 
-def M_HMono_41(L):
+def M_HMono_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[px_, x_] = \
         -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
@@ -171,14 +183,14 @@ def M_HMono_41(L):
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_HDipole_41(L):
+def M_HDipole_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[py_, delta_] = \
         -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
         *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))
     return M
 
-def M_HQuad_41(L):
+def M_HQuad_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     M[px_, x_] = \
         -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
@@ -186,7 +198,7 @@ def M_HQuad_41(L):
     M[py_, y_] = -M[px_, x_]
     return M
 
-def M_AccGap_41(L):
+def M_AccGap_41(L, m, Z, V0, T, S, phi, Rm):
     M = numpy.identity(ps_dim)
     return M
 
@@ -202,6 +214,10 @@ M_cav_41 = {
     'AccGap'  : M_AccGap_41
     }
 
+def get_cav_M(cav_hom, L, m, Z, phi, Rm):
+    M = M_cav_41(L, m, Z, V0, T, S, phi, Rm)
+    M[4, 5]= -2*math.pi/(lamda*1e3*beta**3*gamma*ionEs*L)
+    M[5, 4]= -Z*V0_1*(T_1*math.sin(phi+k*L)+math.cos(phi+k*L))
 
 
 # ------------------------------------------------------------------------------
@@ -384,13 +400,28 @@ def rd_cav_tlm(file_name):
 
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
+# HWR cavity.
 f_QWR = 80.5e6
 Rm    = 17.0
 beta  =  0.041
+
 # HWR cavity.
-f_HWR = 322e6
-Rm    = 17.0
-#beta  =  0.085
+#f_HWR = 322e6
+#Rm    = 20.0
+#beta  =  0.29
+
+gamma = 1.0/math.sqrt(1-beta**2)
+
+cav41 = cavity.param['EFocus1']['em_center']
+#cavity.param['EFocus1'][T]         = 0.0
+#cavity.param['EFocus1'][Tp]        = 0.0
+#cavity.param['EFocus1'][S]         = 0.0
+#cavity.param['EFocus1'][Sp]        = 0.0
+#cavity.param['EFocus1'][E0]        = 0.0
+
+print cav41.param['EFocus1']
+
+exit(0)
 
 if False:
     print
