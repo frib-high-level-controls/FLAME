@@ -65,3 +65,21 @@ add_executable(test_parse
 target_link_libraries(test_parse
   uscsi_core
 )
+
+if(UNIX)
+
+  add_test(recurse1
+    /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/recurse-test.sh
+      ./test_parse
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/tracy_1.lat
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/tracy_1_out.lat
+  )
+
+  add_test(recurse2
+    /bin/sh ${CMAKE_CURRENT_SOURCE_DIR}/recurse-test.sh
+      ./test_parse
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/tracy_2.lat
+      ${CMAKE_CURRENT_SOURCE_DIR}/data/tracy_2_out.lat
+  )
+
+endif()

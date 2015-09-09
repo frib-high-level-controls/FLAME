@@ -16,9 +16,24 @@ Config::getAny(const std::string& name) const
 }
 
 void
-Config::setAny(const std::string& name, value_t& val)
+Config::setAny(const std::string& name, const value_t& val)
 {
     values[name] = val;
+}
+
+void
+Config::swapAny(const std::string& name, value_t& val)
+{
+    {
+        values_t::iterator it = values.find(name);
+        if(it!=values.end()) {
+            it->second.swap(val);
+            return;
+        }
+    }
+    std::pair<values_t::iterator, bool> ret = values.insert(std::make_pair(name,value_t()));
+    assert(ret.second);
+    ret.first->second.swap(val);
 }
 
 namespace {
@@ -151,9 +166,10 @@ struct GLPSParser::Pvt {
     Config* fill_context(parse_context& ctxt)
     {
         std::auto_ptr<Config> ret(new Config);
+        ret->reserve(ctxt.vars.size()+2);
 
         // copy ctxt.vars to top level Config
-        for(parse_context::vars_t::const_iterator it=ctxt.vars.begin(), end=ctxt.vars.end();
+        for(parse_context::vars_t::iterator it=ctxt.vars.begin(), end=ctxt.vars.end();
             it!=end; ++it)
         {
             assign_expr_to_Config(*ret, it->name, it->expr);
@@ -193,15 +209,17 @@ struct GLPSParser::Pvt {
         }
 
         Config::vector_t elements;
-        elements.reserve(ctxt.line.size());
+        elements.resize(line->names.size());
 
         // copy in elements
+        size_t i = 0;
         for(strlist_t::list_t::const_iterator it=line->names.begin(), end=line->names.end();
             it!=end; ++it)
         {
-            elements.push_back(Config());
-            Config& next = elements.back();
-            parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
+            Config& next = elements[i++];
+            const parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
+
+            next.reserve(elem.props.size()+2);
 
             // push elements properties
             for(kvlist_t::map_t::const_iterator itx=elem.props.begin(), endx=elem.props.end();
@@ -211,12 +229,13 @@ struct GLPSParser::Pvt {
             }
 
             // special properties
+            assert(!elem.etype.empty() && !elem.label.empty());
             next.set<std::string>("type", elem.etype);
             next.set<std::string>("name", elem.label);
         }
 
-        ret->set<std::string>("name", line->label);
-        ret->set<Config::vector_t>("elements", elements);
+        ret->swap<std::string>("name", line->label);
+        ret->swap<Config::vector_t>("elements", elements);
 
         return ret.release();
     }
@@ -360,6 +379,8 @@ void GLPSPrint(std::ostream& strm, const Config& conf)
         try {
             const std::string& name=it->get<std::string>("name");
             const std::string& type=it->get<std::string>("type");
+            if(name.empty() || type.empty())
+                throw std::runtime_error("Element missing 'name' and/or 'type'");
             line.push_back(name);
             // only show element definition once
             if(eshown.find(name)!=eshown.end())
@@ -382,7 +403,7 @@ void GLPSPrint(std::ostream& strm, const Config& conf)
             boost::apply_visitor(glps_show_props(strm, itx->first), itx->second);
         }
 
-        strm<<"\n";
+        strm<<";\n";
     }
 
     std::string lname(conf.get<std::string>("name", "default"));

@@ -19,6 +19,7 @@ extern "C" {
 parse_element::parse_element(std::string L, std::string E, kvlist_t::map_t &M)
     :label(L), etype(E)
 {
+    assert(!label.empty() && !etype.empty());
     props.swap(M);
 }
 
@@ -421,8 +422,12 @@ void glps_add_element(parse_context *ctxt, string_t *label, string_t *etype, kvl
     try{
         if(!P)
             props.reset(new kvlist_t);
-        if(ctxt->element_idx.find(label->str)!=ctxt->element_idx.end()) {
+        if(label->str.empty() || etype->str.empty()) {
+            glps_error(ctxt->scanner, ctxt, "Element with null label or type");
+
+        } else if(ctxt->element_idx.find(label->str)!=ctxt->element_idx.end()) {
             glps_error(ctxt->scanner, ctxt, "Name '%s' already used", label->str.c_str());
+
         } else {
             ctxt->elements.push_back(parse_element(label->str, etype->str, props->map));
             ctxt->element_idx[label->str] = ctxt->elements.size()-1;
