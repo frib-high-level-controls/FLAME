@@ -18,23 +18,16 @@ import os.path
 
 # Constants:
 ps_dim = 6
-x_ = 0; px_ = 1; y_ = 2; py_ = 3; ct_ = 4; delta_ = 5
+x_ = 0; px_ = 1; y_ = 2; py_ = 3; ct_ = 4; delta_ = 5; orbit_ = 6
+
 
 # scipy.constants.c    = 3.141592653589793
 # scipy.constants.mu_0 = 1.256637061435917e-06
 AU = 931.49432 # MeV/u
 
-
-class cavity:
-    param = {
-        'EFocus1' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
-        'EFocus2' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
-        'EDipole' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
-        'EQuad'   : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
-        'HMono'   : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
-        'HDipole' : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0'),
-        'HQuad'   : ('em_center', 'T', 'Tp', 'S', 'Sp', 'E0')
-        }
+cav_homs = (
+    'EFocus1', 'EDipole', 'HDipole', 'HMono', 'HQuad', 'EQuad', 'EFocus2'
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -147,63 +140,56 @@ def get_cav_41(cav_hom, f, beta):
 # Cavity transverse thin lens model.
 # ------------------------------------------------------------------------------
 
-def M_drift(L, m, Z, V0, T, S, phi, Rm):
+def M_EFocus1_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
-    M[x_, px_] = L
-    M[y_, py_] = L
-    return M
-
-def M_EFocus1_41(L, m, Z, V0, T, S, phi, Rm):
-    M = numpy.identity(ps_dim)
-    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm
+    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/aper
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_EFocus2_41(L, m, Z, V0, T, S, phi, Rm):
+def M_EFocus2_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
-    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm
+    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/aper
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_EDipole_41(L, m, Z, V0, T, S, phi, Rm):
+def M_EDipole_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
-    M[py_, delta_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))
+    M[py_, orbit_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))
     return M
 
-def M_EQuad_41(L, m, Z, V0, T, S, phi, Rm):
+def M_EQuad_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
-    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/Rm;
+    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/aper;
     M[py_, y_] = -M[px_, x_]
 
-def M_HMono_41(L, m, Z, V0, T, S, phi, Rm):
+def M_HMono_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
     M[px_, x_] = \
         -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
-        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/Rm
+        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/aper
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_HDipole_41(L, m, Z, V0, T, S, phi, Rm):
+def M_HDipole_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
-    M[py_, delta_] = \
+    M[py_, orbit_] = \
         -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
         *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))
     return M
 
-def M_HQuad_41(L, m, Z, V0, T, S, phi, Rm):
+def M_HQuad_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
     M[px_, x_] = \
         -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
-        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/Rm
+        *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/aper
     M[py_, y_] = -M[px_, x_]
     return M
 
-def M_AccGap_41(L, m, Z, V0, T, S, phi, Rm):
+def M_AccGap_41(L, m, Z, V0, T, S, phi, aper):
     M = numpy.identity(ps_dim)
     return M
 
 M_cav_41 = {
-    'drift'   : M_drift,
     'EFocus1' : M_EFocus1_41,
     'EFocus2' : M_EFocus2_41,
     'EDipole' : M_EDipole_41,
@@ -214,10 +200,11 @@ M_cav_41 = {
     'AccGap'  : M_AccGap_41
     }
 
-def get_cav_M(cav_hom, L, m, Z, phi, Rm):
-    M = M_cav_41(L, m, Z, V0, T, S, phi, Rm)
-    M[4, 5]= -2*math.pi/(lamda*1e3*beta**3*gamma*ionEs*L)
-    M[5, 4]= -Z*V0_1*(T_1*math.sin(phi+k*L)+math.cos(phi+k*L))
+def get_cav_M_hom(cav_hom, L, m, Z, phi, aper):
+    M = M_cav_41(L, m, Z, V0, T, S, phi, aper)
+    arg = 2.0*math.pi/(beta*lambda_)
+    M[ct_, delta_]= -2*math.pi/(lamda*beta**3*gamma*ionEs*L)
+    M[delta_, ct_]= -Z*V0_1*(T_1*math.sin(phi+arg*L)+math.cos(phi+arg*L))
 
 
 # ------------------------------------------------------------------------------
@@ -306,7 +293,7 @@ def prt_transit_times(file_name, n, f, beta_min, beta_max):
         beta = beta_min + k*dbeta
         [T, Tp, S, Sp, EML, em_center] = \
             get_transit_time_factors(z, EM, beta, lambda_)
-        [T_pol, S_pol] = get_cav(cav_hom, f, beta)
+        [T_pol, S_pol] = get_cav_41(cav_hom, f, beta)
         outf.write('%8.5f %8.5f %8.5f %8.5f %8.5f\n' % \
                        (beta, T, T_pol, S, S_pol))
     outf.close()
@@ -329,7 +316,7 @@ def prt_cav_tlm_41(home_dir, beta):
     f_QWR = 80.5e6
     outf = open('tlm_cav_41.dat', 'w')
     s = -0.120
-    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'start', 0.0, 0.0))
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'marker', 0.0, 0.0))
     # 1st gap.
     s = prt_cav_tlm(home_dir+'CaviMlp_EFocus2_41.txt', outf, s, f_QWR, beta, -1)
     s = prt_cav_tlm(home_dir+'CaviMlp_EDipole_41.txt', outf, s, f_QWR, beta, -1)
@@ -349,7 +336,7 @@ def prt_cav_tlm_41(home_dir, beta):
     L = 0.120 - s
     outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
     s += L
-    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'end', 0.0, 0.0))
+    outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'marker', 0.0, 0.0))
     outf.close()
 
 
@@ -363,22 +350,51 @@ def prt_get_cav(file_name, f, beta):
 
 def rd_tst_data(file_name):
     inf = open(file_name, 'r')
+    print \
+        '         k              EM Center             T                   S' \
+        '                  T\'                 S\'                 EML'
+    # Skip first line.
+    line = inf.readline()
     line = inf.readline().strip('\r\n')
     while line:
-        arg = float(re.split(r'[=(]', line)[1])
-        line = inf.readline().strip('\r\n')
-        tokens = re.split(r'[=,]', line)
-        [EM_center, T, S, EML, cav_hom] = \
-            [float(tokens[1]), float(tokens[3]), float(tokens[5]),
-             float(tokens[7]), tokens[8]]
-        line = inf.readline().strip('\r\n')
-        tokens = re.split(r'[=,]', line)
-        [Tp, Sp] = [float(tokens[1]), float(tokens[3])]
+        tokens = re.split(r'\s*', line)
+        [arg, EM_center, T, S, Tp, Sp, EML, cav_hom] = \
+            [float(tokens[0]), float(tokens[1]), float(tokens[2]),
+             float(tokens[3]), float(tokens[4]), float(tokens[5]),
+             float(tokens[6]), tokens[7]]
         print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
             (arg, EM_center, T, S, 1e-3*Tp, 1e-3*Sp, EML, cav_hom)
-        # Skip blank line.
-        line = inf.readline()
         line = inf.readline().strip('\r\n')
+
+
+def get_cav_param(home_dir, cav_hom, beta):
+    file_name = home_dir+'CaviMlp_'
+    [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
+    cav.hom[cav_hom].param['em_center'] = em_center
+    cav.hom[cav_hom].param['T']         = T
+    cav.hom[cav_hom].param['Tp']        = S
+    cav.hom[cav_hom].param['S']         = Tp
+    cav.hom[cav_hom].param['Sp']        = Sp
+    cav.hom[cav_hom].param['E0']        = EML
+    print cav.hom[cav_hom].param
+    print cav.hom['EDipole'].param
+    return cav
+
+def get_cav1():
+    pass
+
+
+def M_drift(L, m, Z, V0, T, S, phi, aper):
+    M = numpy.identity(ps_dim)
+    M[x_, px_] = L
+    M[y_, py_] = L
+    return M
+
+
+def get_cav_M(L, m, Z, phi, aper):
+    M = numpy.identity(ps_dim)
+    M = numpy.dot(M, M1)
+    return M
 
 
 def rd_cav_tlm(file_name):
@@ -401,42 +417,35 @@ def rd_cav_tlm(file_name):
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
 
 # HWR cavity.
-f_QWR = 80.5e6
-Rm    = 17.0
-beta  =  0.041
+f_QWR    = 80.5e6
+# Cavity aperture.
+aper_QWR = 17e-3
+beta     =  0.041
 
 # HWR cavity.
-#f_HWR = 322e6
-#Rm    = 20.0
-#beta  =  0.29
+#f_HWR    = 322e6
+#aper_HWR = 20e-3
+#beta     =  0.29
 
 gamma = 1.0/math.sqrt(1-beta**2)
 
-cav41 = cavity.param['EFocus1']['em_center']
-#cavity.param['EFocus1'][T]         = 0.0
-#cavity.param['EFocus1'][Tp]        = 0.0
-#cavity.param['EFocus1'][S]         = 0.0
-#cavity.param['EFocus1'][Sp]        = 0.0
-#cavity.param['EFocus1'][E0]        = 0.0
 
-print cav41.param['EFocus1']
+#cav41 = cavity()
+#for cav_hom in cav41.hom:
+#    print cav_hom
+#get_cav_param(home_dir, 'EFocus1', beta)
+#exit(0)
 
-exit(0)
+#rd_cav_tlm(home_dir+'thinlenlon_41.txt')
 
 if False:
+    # Transit times from polynomial interpolation.
     print
-    get_cav_41('EFocus1', f_QWR, beta)
-    get_cav_41('EDipole', f_QWR, beta)
-    get_cav_41('HDipole', f_QWR, beta)
-    get_cav_41('HMono',   f_QWR, beta)
-    get_cav_41('HQuad',   f_QWR, beta)
-    get_cav_41('EQuad',   f_QWR, beta)
-    get_cav_41('EFocus2', f_QWR, beta)
+    for cav_hom in cav_homs:
+        get_cav_41(cav_hom, f_QWR, beta)
 
 if False:
-    rd_cav_tlm(home_dir+'thinlenlon_41.txt')
-
-if False:
+    # Cross check.
     print
     rd_tst_data(home_dir+'cross_check_41.dat')
 
@@ -445,21 +454,13 @@ if False:
     print '\nbeta = %18.15f' % (beta)
 
     print
-    prt_get_cav(home_dir+'CaviMlp_EFocus1_41.txt', f_QWR, beta)
-    prt_get_cav(home_dir+'CaviMlp_EDipole_41.txt', f_QWR, beta)
-    prt_get_cav(home_dir+'CaviMlp_HDipole_41.txt', f_QWR, beta)
-    prt_get_cav(home_dir+'CaviMlp_HMono_41.txt',   f_QWR, beta)
-    prt_get_cav(home_dir+'CaviMlp_HQuad_41.txt',   f_QWR, beta)
-    prt_get_cav(home_dir+'CaviMlp_EQuad_41.txt',   f_QWR, beta)
-    prt_get_cav(home_dir+'CaviMlp_EFocus2_41.txt', f_QWR, beta)
+    for cav_hom in cav_homs:
+        print home_dir+'CaviMlp_'+cav_hom+'_41.txt'
+        prt_get_cav(home_dir+'CaviMlp_'+cav_hom+'_41.txt', f_QWR, beta)
 
 prt_cav_tlm_41(home_dir, beta)
 
-if False:
-    prt_transit_times(home_dir+'CaviMlp_EFocus1_41.txt', 25, f_QWR, 0.025, 0.08)
-    prt_transit_times(home_dir+'CaviMlp_EDipole_41.txt', 25, f_QWR, 0.025, 0.08)
-    prt_transit_times(home_dir+'CaviMlp_HDipole_41.txt', 25, f_QWR, 0.025, 0.08)
-    prt_transit_times(home_dir+'CaviMlp_HMono_41.txt',   25, f_QWR, 0.025, 0.08)
-    prt_transit_times(home_dir+'CaviMlp_HQuad_41.txt',   25, f_QWR, 0.025, 0.08)
-    prt_transit_times(home_dir+'CaviMlp_EQuad_41.txt',   25, f_QWR, 0.025, 0.08)
-    prt_transit_times(home_dir+'CaviMlp_EFocus2_41.txt', 25, f_QWR, 0.025, 0.08)
+if True:
+    for cav_hom in cav_homs:
+        prt_transit_times(home_dir+'CaviMlp_'+cav_hom+'_41.txt',
+                          25, f_QWR, 0.025, 0.08)
