@@ -131,7 +131,7 @@ struct store_ctxt_var : public boost::static_visitor<void>
     }
 };
 
-void assign_expr_to_Config(Config& conf, const std::string& name, expr_t& expr)
+void assign_expr_to_Config(Config& conf, const std::string& name, const expr_t& expr)
 {
     switch(expr.etype)
     {
@@ -139,10 +139,10 @@ void assign_expr_to_Config(Config& conf, const std::string& name, expr_t& expr)
         conf.set<double>(name, boost::get<double>(expr.value));
         break;
     case glps_expr_string:
-        conf.swap<std::string>(name, boost::get<std::string>(expr.value));
+        conf.set<std::string>(name, boost::get<std::string>(expr.value));
         break;
     case glps_expr_vector:
-        conf.swap<std::vector<double> >(name, boost::get<std::vector<double> >(expr.value));
+        conf.set<std::vector<double> >(name, boost::get<std::vector<double> >(expr.value));
         break;
     default:
         throw std::logic_error("Context contained unresolved/illegal variable");
@@ -217,22 +217,21 @@ struct GLPSParser::Pvt {
             it!=end; ++it)
         {
             Config& next = elements[i++];
-            parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
+            const parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
 
             next.reserve(elem.props.size()+2);
 
             // push elements properties
-            for(kvlist_t::map_t::iterator itx=elem.props.begin(), endx=elem.props.end();
+            for(kvlist_t::map_t::const_iterator itx=elem.props.begin(), endx=elem.props.end();
                 itx!=endx; ++itx)
             {
                 assign_expr_to_Config(next, itx->first, itx->second);
             }
 
             // special properties
-            next.swap<std::string>("type", elem.etype);
-            next.swap<std::string>("name", elem.label);
-
-            elem.props.clear();
+            assert(!elem.etype.empty() && !elem.label.empty());
+            next.set<std::string>("type", elem.etype);
+            next.set<std::string>("name", elem.label);
         }
 
         ret->swap<std::string>("name", line->label);
@@ -380,6 +379,8 @@ void GLPSPrint(std::ostream& strm, const Config& conf)
         try {
             const std::string& name=it->get<std::string>("name");
             const std::string& type=it->get<std::string>("type");
+            if(name.empty() || type.empty())
+                throw std::runtime_error("Element missing 'name' and/or 'type'");
             line.push_back(name);
             // only show element definition once
             if(eshown.find(name)!=eshown.end())
@@ -402,7 +403,7 @@ void GLPSPrint(std::ostream& strm, const Config& conf)
             boost::apply_visitor(glps_show_props(strm, itx->first), itx->second);
         }
 
-        strm<<"\n";
+        strm<<";\n";
     }
 
     std::string lname(conf.get<std::string>("name", "default"));

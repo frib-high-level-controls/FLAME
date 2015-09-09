@@ -30,9 +30,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::cout<<"Generic AST:\n";
-    std::cout << *conf;
-    std::cout<<"GLPS:\n";
+    std::cerr<<"Generic AST:\n";
+    std::cerr << *conf;
+    std::cerr<<"GLPS:\n";
     GLPSPrint(std::cout, *conf);
 
     fprintf(stderr, "Done\n");
