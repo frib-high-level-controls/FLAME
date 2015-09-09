@@ -87,9 +87,9 @@ if(Python_FOUND)
   endif()
 endif()
 
-add_subdirectory(src)
-
 enable_testing()
+
+add_subdirectory(src)
 
 if(USE_PYTHON AND NUMPY_INCLUDE_DIRS AND Boost_PYTHON_LIBRARY)
   message(STATUS "Building python support")
