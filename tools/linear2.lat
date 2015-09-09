@@ -1,0 +1,17 @@
+sim_type = "TransferMatrix";
+
+S: source, initial = [
+  1,0,0,0,0,0,
+  0,1,0,0,0,0,
+  0,0,1,0,0,0,
+  0,0,0,1,0,0,
+  0,0,0,0,1,0,
+  0,0,0,0,0,1,
+];
+
+L = 1.0;
+D1: drift, length=L;
+D2: drift, length=L*2;
+
+test: LINE = (S, 3*D1, D2);
+USE: test;

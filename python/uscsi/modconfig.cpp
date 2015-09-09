@@ -8,6 +8,7 @@
 #include <boost/python/extract.hpp>
 #include <boost/python/dict.hpp>
 #include <boost/python/list.hpp>
+#include <boost/python/str.hpp>
 #include <boost/python/return_value_policy.hpp>
 #include <boost/python/manage_new_object.hpp>
 
@@ -44,7 +45,7 @@ bool XnS(Config& C, const std::string& n, bp::object& O)
 
 template<typename T>
 static inline
-bool XnL(std::list<boost::any>& L, bp::object& O)
+bool XnL(Config::vector_t& L, bp::object& O)
 {
     bp::extract<T> E(O);
     if(E.check()) {
@@ -54,6 +55,15 @@ bool XnL(std::list<boost::any>& L, bp::object& O)
     return false;
 }
 
+/** Translate python dict to Config
+ *
+ *  {}      -> Config
+ *  float   -> double
+ *  str     -> string
+ *  [{}]    -> vector<Config>
+ *  ndarray -> vector<double>
+ *  TODO: [0.0]   -> vector<double>
+ */
 static
 void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
 {
@@ -88,50 +98,33 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
             name = X();
         }
 
-        if(XnS<int>(ret, name, value))
-            continue;
-        else if(XnS<double>(ret, name, value))
+        if(XnS<double>(ret, name, value))
             continue;
         else if(XnS<std::string>(ret, name, value))
             continue;
         else if(PyArray_Check(value.ptr()))
         {
-            if(PyArray_NDIM(value.ptr())!=2)
-                throw std::runtime_error("ndarray ndim!=2");
             bp::object arr(bp::handle<>(PyArray_ContiguousFromAny(value.ptr(), NPY_DOUBLE, 0, 2)));
             double *buf = (double*)PyArray_DATA(arr.ptr());
             std::vector<double> temp(PyArray_SIZE(arr.ptr()));
             std::copy(buf, buf+temp.size(), temp.begin());
 
-            ret.setAny(name, temp);
+            ret.set<std::vector<double> >(name, temp);
             continue;
         }
 
         {
-            bp::extract<bp::dict> E(value);
-            if(E.check()) {
-                Config recurse;
-                Dict2Config(recurse, E(), depth+1);
-                ret.setAny(name, recurse);
-                continue;
-            }
-        }
-        {
             bp::extract<bp::list> E(value);
             if(E.check()) {
-                std::list<boost::any> output;
+                Config::vector_t output;
+                ssize_t L = bp::len(value);
+                output.reserve(L>=0 ? L : -L);
 
-                for(size_t i=0, len = bp::len(value); i<len; i++)
+                for(size_t i=0, len = L; i<len; i++)
                 {
                     bp::object ent(value[i]);
 
-                    if(XnL<int>(output, ent))
-                        continue;
-                    else if(XnL<double>(output, ent))
-                        continue;
-                    else if(XnL<std::string>(output, ent))
-                        continue;
-                    else {
+                    {
                         bp::extract<bp::dict> X(ent);
                         if(X.check()) {
                             Config recurse;
@@ -142,7 +135,7 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
                         }
                     }
                 }
-                ret.setAny(name, output);
+                ret.set<Config::vector_t>(name, output);
                 continue;
             }
         }
@@ -158,12 +151,94 @@ Config* dict2conf(const bp::dict& O)
     return conf.release();
 }
 
+static
+bp::dict conf2dict(const Config *conf);
+
+namespace {
+struct confval : public boost::static_visitor<bp::object>
+{
+    bp::object operator()(double v) const
+    {
+        return bp::object(bp::handle<>(PyFloat_FromDouble(v)));
+    }
+
+    bp::object operator()(const std::string& v) const
+    {
+        return bp::str(v.c_str());
+    }
+
+    bp::object operator()(const std::vector<double>& v) const
+    {
+        npy_intp dims[]  = {(npy_intp)v.size()};
+        PyArrayObject *obj;
+        obj = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+        bp::object ret(bp::handle<>((PyObject*)obj)); // throws if obj==NULL
+        std::copy(v.begin(), v.end(), (double*)PyArray_DATA(obj));
+        return ret;
+    }
+
+    bp::object operator()(const Config::vector_t& v) const
+    {
+        bp::list L;
+        for(size_t i=0, N=v.size(); i<N; i++)
+        {
+            L.append(conf2dict(&v[i]));
+        }
+        return L;
+    }
+};
+}
+
+static
+bp::dict conf2dict(const Config *conf)
+{
+    bp::dict ret;
+
+    for(Config::const_iterator it=conf->begin(), end=conf->end();
+        it!=end; ++it)
+    {
+        bp::str key(it->first.c_str());
+        ret[key] = boost::apply_visitor(confval(), it->second);
+    }
+
+    return ret;
+}
+
+namespace {
+struct PyGLPSParser : public boost::noncopyable
+{
+    GLPSParser parser;
+
+    Config* parse(const bp::str& s)
+    {
+        bp::extract<const char *> X(s);
+        if(!X.check())
+            throw std::invalid_argument("string required");
+        return parser.parse(X());
+    }
+};
+}
+
+bp::str PyGLPSPrint(const Config* c)
+{
+    std::ostringstream strm;
+    GLPSPrint(strm, *c);
+
+    return bp::str(strm.str().c_str());
+}
+
 void registerModConfig(void)
 {
     using namespace boost::python;
 
     def("dictshow", showConfig);
     def("dict2conf", dict2conf, return_value_policy<bp::manage_new_object>());
+    def("conf2dict", conf2dict);
+    def("GLPSPrinter",  &PyGLPSPrint);
 
     class_<Config, boost::noncopyable>("Config", no_init);
+
+    class_<PyGLPSParser, boost::noncopyable>("GLPSParser")
+            .def("parse", &PyGLPSParser::parse, return_value_policy<bp::manage_new_object>())
+            ;
 }

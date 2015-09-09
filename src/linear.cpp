@@ -10,7 +10,7 @@ MatrixState::MatrixState(const Config& c)
     ,state(boost::numeric::ublas::identity_matrix<double>(6))
 {
     try{
-        const std::vector<double>& I = c.get<const std::vector<double>&>("initial");
+        const std::vector<double>& I = c.get<std::vector<double> >("initial");
         if(I.size()<state.data().size())
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.data().begin());
@@ -43,7 +43,7 @@ VectorState::VectorState(const Config& c)
     ,state(6, 0.0)
 {
     try{
-        const std::vector<double>& I = c.get<const std::vector<double>&>("initial");
+        const std::vector<double>& I = c.get<std::vector<double> >("initial");
         if(I.size()<state.size())
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.begin());
@@ -73,6 +73,34 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
 namespace {
 
 template<typename State>
+struct LinearSource : LinearElementBase<State>
+{
+    typedef LinearElementBase<State> base_t;
+    LinearSource(const Config& c)
+        :base_t(c)
+        ,ivect(c.get<std::vector<double> >("initial",
+                                           std::vector<double>()))
+    {}
+
+    virtual void advance(StateBase& s) const
+    {
+        State& ST = static_cast<State&>(s);
+        if(ivect.size()==0)
+            return; // use defaults
+        // Replace state with our initial values
+        if(ST.state.data().size()!=ivect.size())
+            throw std::invalid_argument("Initial state size incorrect");
+        std::copy(ivect.begin(), ivect.end(), ST.state.data().begin());
+    }
+
+    std::vector<double> ivect;
+
+    virtual ~LinearSource() {}
+
+    virtual const char* type_name() const {return "source";}
+};
+
+template<typename State>
 struct LinearDrift : LinearElementBase<State>
 {
     typedef LinearElementBase<State> base_t;
@@ -95,7 +123,7 @@ struct LinearThinDipole : LinearElementBase<State>
     {
         double angle = c.get<double>("angle"), // in rad.
                P = c.get<double>("radius", 1.0),
-               off = c.get<bool>("vertical", false) ? State::L_Y : State::L_X ,
+               off = c.get<double>("vertical", 0.0)!=0.0 ? State::L_Y : State::L_X ,
                cos = ::cos(angle),
                sin = ::sin(angle);
 
@@ -171,6 +199,9 @@ void registerLinear()
 {
     Machine::registerState<VectorState>("Vector");
     Machine::registerState<MatrixState>("TransferMatrix");
+
+    Machine::registerElement<LinearSource<VectorState> >("Vector", "source");
+    Machine::registerElement<LinearSource<MatrixState> >("TransferMatrix", "source");
 
     Machine::registerElement<LinearDrift<VectorState> >("Vector", "drift");
     Machine::registerElement<LinearDrift<MatrixState> >("TransferMatrix", "drift");

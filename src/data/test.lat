@@ -1,0 +1,12 @@
+hello = 42 ; # hello
+world = "test" ;
+# I hope this works
+test = [ 1.0, -2.22222, 3.0e-14];
+
+a0: foo, a=4, b=test;
+a1: foo, a=hello+2, b="baz";
+
+X1: LINE = (a0, a1);
+
+USE: X1;
+END;

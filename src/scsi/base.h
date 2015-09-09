@@ -13,56 +13,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/call_traits.hpp>
 
+#include "config.h"
 #include "util.h"
-
-/** @brief A wrapper around map<string,any> to hold configuration information
- */
-struct Config
-{
-    bool has(const std::string& s) const;
-
-    boost::any getAny(const std::string& s) const;
-    boost::any getAny(const std::string& s, const boost::any& def) const;
-    //! Set value with implicit cast to @class boost::any
-    void setAny(const std::string& s, const boost::any& val);
-
-    /** @brief Fetch value assocated with name and cast to type T
-     * @throws key_error if name is not valid
-     * @throws boost::bad_any_cast if the value associated with name can't be cast to type T
-     */
-    template<typename T>
-    T get(const std::string& name) const
-    {
-        return boost::any_cast<T>(getAny(name));
-    }
-    /** @brief @see get()
-     * @returns the value assocated with name, or the provided default value
-     */
-    template<typename T>
-    T get(const std::string& s, typename boost::call_traits<T>::param_type def) const
-    {
-        try{
-            return boost::any_cast<T>(getAny(s));
-        }catch(boost::bad_any_cast&){
-        }catch(key_error&){
-        }
-        return def;
-    }
-    //! Set value with explicit type
-    template<typename T>
-    void set(const std::string& s, typename boost::call_traits<T>::param_type V)
-    {
-        setAny(s, V);
-    }
-
-    typedef std::map<std::string, boost::any> map_t;
-private:
-    map_t p_props;
-
-    friend std::ostream& operator<<(std::ostream&, const Config& c);
-};
-
-std::ostream& operator<<(std::ostream&, const Config& c);
 
 /** @brief The abstract base class for all simulation state objects.
  *
@@ -160,12 +112,16 @@ struct Machine : public boost::noncopyable
 
     inline const std::string& simtype() const {return p_simtype;}
 
+    inline std::ostream* trace() const {return p_trace;}
+    void set_trace(std::ostream* v) {p_trace=v;}
+
     typedef std::vector<ElementVoid*> p_elements_t;
     typedef std::map<std::string, ElementVoid*> p_lookup_t;
 private:
     p_elements_t p_elements;
     p_lookup_t p_lookup;
     std::string p_simtype;
+    std::ostream* p_trace;
 
     typedef StateBase* (*state_builder_t)(const Config& c);
     typedef ElementVoid* (*element_builder_t)(const Config& c);
