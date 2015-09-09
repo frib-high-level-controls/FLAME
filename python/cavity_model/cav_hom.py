@@ -257,8 +257,9 @@ def get_EM_center(z, EM):
     return eml, em_center
 
 
-def get_transit_time_factors(z, EM, beta, lambda_):
-    # Compute transit time factors: [T, T', S, S'].
+def get_cav_prms(z, EM, beta, lambda_):
+    # Compute: e-m center, transit time factors [T, T', S, S'], and integrated
+    # field.
     [EML, em_center] = get_EM_center(z, numpy.absolute(EM))
     z -= em_center
     coef = 2.0*math.pi/(beta*lambda_)
@@ -270,20 +271,20 @@ def get_transit_time_factors(z, EM, beta, lambda_):
          *(z[1:]-z[:-1])).sum()/EML
     Sp = ((z[1:]+z[:-1])/2.0*(EM[1:]+EM[:-1])/2.0
           *numpy.cos(coef*(z[1:]+z[:-1])/2.0)*(z[1:]-z[:-1])).sum()/EML
-    return T, Tp, S, Sp, EML, em_center
+    return em_center, T, Tp, S, Sp, EML
 
 
-def get_cav(file_name, f, beta):
+def get_cav_param(file_name, f, beta):
     # Compute: e-m center, transit time factors [T, T', S, S'], and integrated
     # field.
     [z, EM] = rd_hom(file_name)
     lambda_ = scipy.constants.c/f
-    [T, Tp, S, Sp, EML, em_center] = \
-        get_transit_time_factors(z, EM, beta, lambda_)
+    [em_center, T, Tp, S, Sp, EML] = \
+        get_cav_prms(z, EM, beta, lambda_)
     return [em_center, T, Tp, S, Sp, EML]
 
 
-def prt_transit_times(file_name, n, f, beta_min, beta_max):
+def prt_interpol_prms(file_name, n, f, beta_min, beta_max):
     dbeta = (beta_max-beta_min)/(n-1)
     cav_hom = file_name.split('_')[1]
     outf = open(cav_hom+'.dat', 'w')
@@ -291,8 +292,8 @@ def prt_transit_times(file_name, n, f, beta_min, beta_max):
     lambda_ = scipy.constants.c/f
     for k in range(n):
         beta = beta_min + k*dbeta
-        [T, Tp, S, Sp, EML, em_center] = \
-            get_transit_time_factors(z, EM, beta, lambda_)
+        [em_center, T, Tp, S, Sp, EML] = \
+            get_cav_prms(z, EM, beta, lambda_)
         [T_pol, S_pol] = get_cav_41(cav_hom, f, beta)
         outf.write('%8.5f %8.5f %8.5f %8.5f %8.5f\n' % \
                        (beta, T, T_pol, S, S_pol))
@@ -301,7 +302,7 @@ def prt_transit_times(file_name, n, f, beta_min, beta_max):
 
 def prt_cav_tlm(file_name, outf, s, f, beta, sgn):
     cav_hom = file_name.split('_')[1]
-    [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
+    [em_center, T, Tp, S, Sp, EML] = get_cav_param(file_name, f_QWR, beta)
     em_center = sgn*em_center
     L = math.fabs(s-em_center)
     outf.write('%18.15f %-8s %18.15f %18.15f\n' % (s, 'drift', L, 0.0))
@@ -343,7 +344,7 @@ def prt_cav_tlm_41(home_dir, beta):
 def prt_get_cav(file_name, f, beta):
     cav_hom = file_name.split('_')[1]
     arg = 2.0*math.pi/(beta*lambda_)
-    [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
+    [em_center, T, Tp, S, Sp, EML] = get_cav_param(file_name, f_QWR, beta)
     print '%18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %18.15f %s' % \
         (1e-3*arg, 1e3*em_center, T, S, Tp, Sp, 1e-6*EML, cav_hom)
 
@@ -367,21 +368,18 @@ def rd_tst_data(file_name):
         line = inf.readline().strip('\r\n')
 
 
-def get_cav_param(home_dir, cav_hom, beta):
-    file_name = home_dir+'CaviMlp_'
-    [em_center, T, Tp, S, Sp, EML] = get_cav(file_name, f_QWR, beta)
-    cav.hom[cav_hom].param['em_center'] = em_center
-    cav.hom[cav_hom].param['T']         = T
-    cav.hom[cav_hom].param['Tp']        = S
-    cav.hom[cav_hom].param['S']         = Tp
-    cav.hom[cav_hom].param['Sp']        = Sp
-    cav.hom[cav_hom].param['E0']        = EML
-    print cav.hom[cav_hom].param
-    print cav.hom['EDipole'].param
-    return cav
+def get_cav_hom(file_name, cav_hom, f_QWR, beta, cav):
+    [em_center, T, Tp, S, Sp, EML] = get_cav_param(file_name, f_QWR, beta)
+    cav[cav_hom] = {'em_center' : em_center, 'T' : T, 'S' : S, 'Tp' : Tp,
+                    'Sp' : Sp, 'E0' : EML}
 
-def get_cav1():
-    pass
+
+def get_cav(home_dir, f_QWR, beta):
+    cav = {}
+    for cav_hom in cav_homs:
+        file_name = home_dir+'CaviMlp_'+cav_hom+'_41.txt'
+        get_cav_hom(file_name, cav_hom, f_QWR, beta, cav)
+    return cav
 
 
 def M_drift(L, m, Z, V0, T, S, phi, aper):
@@ -430,13 +428,14 @@ beta     =  0.041
 gamma = 1.0/math.sqrt(1-beta**2)
 
 
-#cav41 = cavity()
-#for cav_hom in cav41.hom:
-#    print cav_hom
-#get_cav_param(home_dir, 'EFocus1', beta)
-#exit(0)
+cav41 = get_cav(home_dir, f_QWR, beta)
+print cav41
 
-#rd_cav_tlm(home_dir+'thinlenlon_41.txt')
+if False:
+    prt_cav_tlm_41(home_dir, beta)
+
+if False:
+    rd_cav_tlm(home_dir+'thinlenlon_41.txt')
 
 if False:
     # Transit times from polynomial interpolation.
@@ -458,9 +457,7 @@ if False:
         print home_dir+'CaviMlp_'+cav_hom+'_41.txt'
         prt_get_cav(home_dir+'CaviMlp_'+cav_hom+'_41.txt', f_QWR, beta)
 
-prt_cav_tlm_41(home_dir, beta)
-
 if True:
     for cav_hom in cav_homs:
-        prt_transit_times(home_dir+'CaviMlp_'+cav_hom+'_41.txt',
+        prt_interpol_prms(home_dir+'CaviMlp_'+cav_hom+'_41.txt',
                           25, f_QWR, 0.025, 0.08)
