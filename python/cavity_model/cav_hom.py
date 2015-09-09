@@ -429,7 +429,6 @@ gamma = 1.0/math.sqrt(1-beta**2)
 
 
 cav41 = get_cav(home_dir, f_QWR, beta)
-print cav41
 
 if False:
     prt_cav_tlm_41(home_dir, beta)
