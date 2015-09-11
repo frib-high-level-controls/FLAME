@@ -17,13 +17,16 @@ import os.path
 
 
 # Constants:
-ps_dim = 6
+ss_dim = 6+1
 x_ = 0; px_ = 1; y_ = 2; py_ = 3; ct_ = 4; delta_ = 5; orbit_ = 6
 
 
-# scipy.constants.c    = 3.141592653589793
+# scipy.constants.pi   = 3.141592653589793
+# scipy.constants.c    = 2.99792458e8
 # scipy.constants.mu_0 = 1.256637061435917e-06
-AU = 931.49432 # MeV/u
+
+AU  = 931.49432        # MeV/u
+qom = 33.0/(238.0*AU)  # Charge over mass ratio for U-238.
 
 cav_homs = (
     'EFocus1', 'EDipole', 'HDipole', 'HMono', 'HQuad', 'EQuad', 'EFocus2'
@@ -140,53 +143,54 @@ def get_cav_41(cav_hom, f, beta):
 # Cavity transverse thin lens model.
 # ------------------------------------------------------------------------------
 
-def M_EFocus1_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
-    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/aper
+def M_EFocus1_41(L, qom, V0, T, S, phi, beta, gamma, aper):
+    M = numpy.identity(ss_dim)
+    M[px_, x_] = qom*V0/(beta**2*gamma)*(T*math.cos(phi)-S*math.sin(phi))/aper
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_EFocus2_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
-    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/aper
+def M_EFocus2_41(L, qom, V0, T, S, phi, beta, gamma, aper):
+    M = numpy.identity(ss_dim)
+    M[px_, x_] = qom*V0/(beta**2*gamma)*(T*math.cos(phi)-S*math.sin(phi))/aper
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_EDipole_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
-    M[py_, orbit_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))
+def M_EDipole_41(L, qom, V0, T, S, phi, beta, gamma):
+    M = numpy.identity(ss_dim)
+    M[py_, orbit_] = qom*V0/(beta**2*gamma)*(T*math.cos(phi)-S*math.sin(phi))
     return M
 
-def M_EQuad_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
-    M[px_, x_] = Z*V0/(beta**2*gamma*m)*(T*math.cos(phi)-S*math.sin(phi))/aper;
+def M_EQuad_41(L, qom, V0, T, S, phi, beta, gamma, aper):
+    M = numpy.identity(ss_dim)
+    M[px_, x_] = qom*V0/(beta**2*gamma)*(T*math.cos(phi)-S*math.sin(phi))/aper;
     M[py_, y_] = -M[px_, x_]
+    return M
 
-def M_HMono_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
+def M_HMono_41(L, qom, V0, T, S, phi, beta, gamma, aper):
+    M = numpy.identity(ss_dim)
     M[px_, x_] = \
-        -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
+        -scipy.constants.mu_0*scipy.constants.c*qom*V0/(beta*gamma) \
         *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/aper
     M[py_, y_] = M[px_, x_]
     return M
 
-def M_HDipole_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
+def M_HDipole_41(L, qom, V0, T, S, phi, beta, gamma):
+    M = numpy.identity(ss_dim)
     M[py_, orbit_] = \
-        -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
+        -scipy.constants.mu_0*scipy.constants.c*qom*V0/(beta*gamma) \
         *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))
     return M
 
-def M_HQuad_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
+def M_HQuad_41(L, qom, V0, T, S, phi, beta, gamma, aper):
+    M = numpy.identity(ss_dim)
     M[px_, x_] = \
-        -scipy.constants.mu_0*scipy.constants.c*Z*V0/(beta*gamma*m) \
+        -scipy.constants.mu_0*scipy.constants.c*qom*V0/(beta*gamma) \
         *(T*math.cos(phi+math.pi/2.0)-S*math.sin(phi+math.pi/2.0))/aper
     M[py_, y_] = -M[px_, x_]
     return M
 
-def M_AccGap_41(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
+def M_AccGap_41(L, qom, V0, T, S, phi, beta, gamma, aper):
+    M = numpy.identity(ss_dim)
     return M
 
 M_cav_41 = {
@@ -200,11 +204,17 @@ M_cav_41 = {
     'AccGap'  : M_AccGap_41
     }
 
-def get_cav_M_hom(cav_hom, L, m, Z, phi, aper):
-    M = M_cav_41(L, m, Z, V0, T, S, phi, aper)
+def get_cav_hom_M(cav_hom, f, beta, gamma, L, qom, V0, T, S, phi, aper):
+    lambda_ = scipy.constants.c/f
+    if cav_hom not in ['EDipole', 'HDipole']:
+        M = M_cav_41[cav_hom](L, qom, V0, T, S, phi, beta, gamma, aper)
+    else:
+        M = M_cav_41[cav_hom](L, qom, V0, T, S, phi, beta, gamma)
     arg = 2.0*math.pi/(beta*lambda_)
-    M[ct_, delta_]= -2*math.pi/(lamda*beta**3*gamma*ionEs*L)
-    M[delta_, ct_]= -Z*V0_1*(T_1*math.sin(phi+arg*L)+math.cos(phi+arg*L))
+    # ionEs?
+#    M[ct_, delta_]= -2*math.pi/(lambda_*beta**3*gamma*ionEs*L)
+#    M[delta_, ct_]= -qom*V0_1*(T_1*math.sin(phi+arg*L)+math.cos(phi+arg*L))
+    return M
 
 
 # ------------------------------------------------------------------------------
@@ -382,20 +392,23 @@ def get_cav(home_dir, f_QWR, beta):
     return cav
 
 
-def M_drift(L, m, Z, V0, T, S, phi, aper):
-    M = numpy.identity(ps_dim)
+def M_drift(L):
+    M = numpy.identity(ss_dim)
     M[x_, px_] = L
     M[y_, py_] = L
     return M
 
 
-def get_cav_M(L, m, Z, phi, aper):
-    M = numpy.identity(ps_dim)
-    M = numpy.dot(M, M1)
-    return M
+def prt_mat(n, A):
+    for i in range(n):
+        for j in range(n):
+            # Use comma to not print a newline.
+            print ('%13.5e' % (A[i, j])),
+        print
 
 
-def rd_cav_tlm(file_name):
+def rd_cav_tlm(file_name, f, beta, phi, aper, cav):
+    M = numpy.identity(ss_dim)
     inf = open(file_name, 'r')
     line = inf.readline().strip('\r\n')
     # Loop until blank line.
@@ -405,11 +418,28 @@ def rd_cav_tlm(file_name):
             pass
         else:
             tokens = re.split(r'\s*', line)
-            [s, type, L, aper, ELM] = \
+            [s, elem_type, L, aper, ELM] = \
                 [1e-3*float(tokens[0]), tokens[1], 1e-3*float(tokens[3]),
                  float(tokens[4]), float(tokens[5])]
-            print '%18.15f %8s %18.15f %18.15f %5.3f' % (s, type, L, ELM, aper)
+            print '%18.15f %8s %18.15f %18.15f %5.3f' % \
+                (s, elem_type, L, ELM, aper)
+            if elem_type == 'AccGap':
+                Mk = numpy.identity(ss_dim)
+            elif elem_type == 'drift':
+                Mk = M_drift(L)
+            else:
+                Mk = get_cav_hom_M(elem_type, f, beta, gamma, L, qom,
+                                   cav[elem_type]['E0'], cav[elem_type]['T'],
+                                   cav[elem_type]['S'], phi, aper)
+            if False:
+                print
+                prt_mat(ss_dim, Mk)
+            M = numpy.dot(Mk, M)
+#            M = numpy.dot(M, Mk)
+            numpy.set_printoptions(precision=3)
         line = inf.readline().strip('\r\n')
+    print
+    prt_mat(ss_dim, M)
 
 
 home_dir = '/home/bengtsson/FRIB/Cavity Model/Multipole41/'
@@ -427,14 +457,20 @@ beta     =  0.041
 
 gamma = 1.0/math.sqrt(1-beta**2)
 
-
 cav41 = get_cav(home_dir, f_QWR, beta)
+
+E_kin   =  0.9149311118819696  # [MeV/u]
+phi_QWR = -0.4781250075202763  # [rad]
+
+E_mass  = AU
+
+E_tot   = E_kin + E_mass;
+gamma   = E_tot/E_mass;
+
+rd_cav_tlm(home_dir+'thinlenlon_41.txt', f_QWR, beta, phi_QWR, aper_QWR, cav41)
 
 if False:
     prt_cav_tlm_41(home_dir, beta)
-
-if False:
-    rd_cav_tlm(home_dir+'thinlenlon_41.txt')
 
 if False:
     # Transit times from polynomial interpolation.
@@ -456,7 +492,7 @@ if False:
         print home_dir+'CaviMlp_'+cav_hom+'_41.txt'
         prt_get_cav(home_dir+'CaviMlp_'+cav_hom+'_41.txt', f_QWR, beta)
 
-if True:
+if False:
     for cav_hom in cav_homs:
         prt_interpol_prms(home_dir+'CaviMlp_'+cav_hom+'_41.txt',
                           25, f_QWR, 0.025, 0.08)
