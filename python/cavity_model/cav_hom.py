@@ -25,9 +25,6 @@ x_ = 0; px_ = 1; y_ = 2; py_ = 3; ct_ = 4; delta_ = 5; orbit_ = 6
 # scipy.constants.c    = 2.99792458e8
 # scipy.constants.mu_0 = 1.256637061435917e-06
 
-AU  = 931.49432        # MeV/u
-qom = 33.0/(238.0*AU)  # Charge over mass ratio for U-238.
-
 cav_homs = (
     'EFocus1', 'EDipole', 'HDipole', 'HMono', 'HQuad', 'EQuad', 'EFocus2'
     )
@@ -191,6 +188,7 @@ def M_HQuad_41(L, qom, V0, T, S, phi, beta, gamma, aper):
 
 def M_AccGap_41(L, qom, V0, T, S, phi, beta, gamma, aper):
     M = numpy.identity(ss_dim)
+    # Scaling of the transverse momenta by: beta_0*gamma_0/(beta_1*gamma_1).
     return M
 
 M_cav_41 = {
@@ -459,13 +457,26 @@ gamma = 1.0/math.sqrt(1-beta**2)
 
 cav41 = get_cav(home_dir, f_QWR, beta)
 
-E_kin   =  0.9149311118819696  # [MeV/u]
+AU  = 931.49432        # MeV/u
+# ionZ = 33.0/238.0
+qom = 33.0/(238.0*AU)  # Charge over mass ratio for U-238.
+
 phi_QWR = -0.4781250075202763  # [rad]
 
+E_kin   = 0.9149311118819696  # [MeV/u]
 E_mass  = AU
-
 E_tot   = E_kin + E_mass;
-gamma   = E_tot/E_mass;
+
+gamma = numpy.array([E_tot/E_mass, 0.0, 0.0]);
+for k in range(len(gamma)):
+    beta[k] = math.sqrt(1.0-1.0/gamma[k]**2)
+
+ionW_f = ionW0 + ionZ*V0*(T*math.cos(phi+k*Ecen)-S*math.sin(phi+k*Ecen))
+ionFy_f = \
+    phi + k*Ecen + k_f*(dis-Ecen) \
+    + ionZ*V0*k*(Tp*Math.sin(phi+k*Ecen)+Sp*Math.cos(phi+k*Ecen)) \
+    /(2.0*(ionW0-FRIBPara.ionEs))
+
 
 rd_cav_tlm(home_dir+'thinlenlon_41.txt', f_QWR, beta, phi_QWR, aper_QWR, cav41)
 
