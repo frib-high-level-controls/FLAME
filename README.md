@@ -6,8 +6,9 @@ Also python and numpy headers.
 The nosetests test runner is used for 'make test' if present.
 
 ```sh
-apt-get install libboost-dev libboost-system-dev libboost-python-dev \
- python-dev cmake python-nose python-numpy build-essential git
+apt-get install libboost-dev libboost-system-dev \
+libboost-python-dev python-dev python-nose python-numpy \
+cmake build-essential bison flex git
 ```
 
 Supports python 2.6, 2.7, and 3.4
