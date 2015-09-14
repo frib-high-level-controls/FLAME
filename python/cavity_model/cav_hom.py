@@ -461,6 +461,8 @@ AU  = 931.49432        # MeV/u
 # ionZ = 33.0/238.0
 qom = 33.0/(238.0*AU)  # Charge over mass ratio for U-238.
 
+print 'ionLambda = %12.5e' % (scipy.constants.c/f_QWR)
+
 phi_QWR = -0.4781250075202763  # [rad]
 
 E_kin   = 0.9149311118819696  # [MeV/u]
@@ -468,14 +470,15 @@ E_mass  = AU
 E_tot   = E_kin + E_mass;
 
 gamma = numpy.array([E_tot/E_mass, 0.0, 0.0]);
-for k in range(len(gamma)):
-    beta[k] = math.sqrt(1.0-1.0/gamma[k]**2)
 
-ionW_f = ionW0 + ionZ*V0*(T*math.cos(phi+k*Ecen)-S*math.sin(phi+k*Ecen))
-ionFy_f = \
-    phi + k*Ecen + k_f*(dis-Ecen) \
-    + ionZ*V0*k*(Tp*Math.sin(phi+k*Ecen)+Sp*Math.cos(phi+k*Ecen)) \
-    /(2.0*(ionW0-FRIBPara.ionEs))
+#for k in range(len(gamma)):
+#    beta[k] = math.sqrt(1.0-1.0/gamma[k]**2)
+
+#ionW_f = ionW0 + ionZ*V0*(T*math.cos(phi+k*Ecen)-S*math.sin(phi+k*Ecen))
+#ionFy_f = \
+#    phi + k*Ecen + k_f*(dis-Ecen) \
+#    + ionZ*V0*k*(Tp*math.sin(phi+k*Ecen)+Sp*math.cos(phi+k*Ecen)) \
+#    /(2.0*(ionW0-FRIBPara.ionEs))
 
 
 rd_cav_tlm(home_dir+'thinlenlon_41.txt', f_QWR, beta, phi_QWR, aper_QWR, cav41)
