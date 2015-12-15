@@ -36,7 +36,12 @@ class testBasic(unittest.TestCase):
     state = S.state
     del S
     gc.collect()
-    self.assertNotEqual(R(), None)
+    self.assertIsNot(R(), None)
+
+    del state
+
+    gc.collect()
+    self.assertIs(R(), None)
 
   def test_err(self):
     "Try to propagate the something which is not a State"
