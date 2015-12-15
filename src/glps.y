@@ -8,7 +8,7 @@
 static inline
 void yyerror (yacc_arg arg, const char* msg)
 {
-    glps_error(arg.scanner, arg.ctxt, msg);
+    glps_error(arg.scanner, arg.ctxt, "%s", msg);
 }
 %}
 
