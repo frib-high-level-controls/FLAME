@@ -21,9 +21,9 @@ void MomentElementBase::advance(StateBase& s) const
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
-    state_t::value_t temp;
+    state_t::value_t temp(state_t::maxsize,state_t::maxsize); //TODO: attach to some obj to avoid realloc?
     noalias(temp) = prod(transfer, ST.state);
-    ST.state = prod(temp, trans(transfer));
+    noalias(ST.state) = prod(temp, trans(transfer));
 }
 
 namespace {
