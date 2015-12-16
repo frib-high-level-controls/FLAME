@@ -6,32 +6,7 @@ from numpy import asarray
 from numpy.testing import assert_array_almost_equal as assert_array_equal
 from numpy.testing import assert_equal
 
-from .._internal import dictshow, conf2dict, dict2conf, GLPSParser
-
-class testGood(unittest.TestCase):
-    data = [
-      ({}, ""),
-      ({'a':1}, "a = 1\n"),
-      ({'a':asarray([[1,2],[3,4]])}, "a = [1, 2, 3, 4]\n"),
-    ]
-
-    def test_good(self):
-        for I, E in self.data:
-            try:
-                A = dictshow(dict2conf(I))
-                self.assertEqual(A, E)
-            except:
-                print('Error on', I, E)
-                raise
-
-    def test_fail(self):
-        # argument not a {}
-        self.assertRaises(Exception, dict2conf, None)
-        self.assertRaises(Exception, dict2conf, set())
-
-        # unknown type
-        self.assertRaises(KeyError, dict2conf, {'a':None})
-        self.assertRaises(KeyError, dict2conf, {'a':set()})
+from .._internal import dictshow, GLPSParser
 
 class testParse(unittest.TestCase):
     maxDiff = 1000
@@ -94,7 +69,7 @@ x1: drift, L=4;
 foo: LINE = (x1, x1);
 """)
         
-        self.assertEqual(conf2dict(C), {
+        self.assertEqual(C, {
             'hello':"test\x1f",
             'name':'foo',
             'elements':[
@@ -112,7 +87,7 @@ x1: drift, L=4;
 foo: LINE = (x1, x1);
 """)
 
-        self.assertEqual(conf2dict(C), {
+        self.assertEqual(C, {
             'hello':42.0,
             'name':'foo',
             'elements':[
@@ -131,7 +106,7 @@ x2: quad, L=1;
 foo: LINE = (2*x1, x2);
 """)
 
-        self.assertEqual(conf2dict(C), {
+        self.assertEqual(C, {
             'hello':42.0,
             'name':'foo',
             'elements':[
@@ -152,7 +127,6 @@ x2: quad, L=1;
 foo: LINE = (S, 2*x1, x2);
 """)
 
-        C = conf2dict(C)
         E = {
             'hello':42.0,
             'name':'foo',
@@ -180,7 +154,7 @@ x1: drift, L=4;
 foo: LINE = (0*x1, (3-1)*x1);
 """)
 
-        self.assertEqual(conf2dict(C), {
+        self.assertEqual(C, {
             'hello':42.0,
             'name':'foo',
             'elements':[
@@ -196,7 +170,6 @@ hello = [1,2, 3, 4];
 x1: drift, L=4, extra = [1, 3, 5];
 foo: LINE = (x1, x1);
 """)
-        C = conf2dict(C)
 
         assert_array_equal(C['hello'], asarray([1,2,3,4]))
         assert_array_equal(C['elements'][0]['extra'], asarray([1,3,5]))

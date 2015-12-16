@@ -37,6 +37,7 @@ int registerModState(PyObject *mod);
 template<typename T = PyObject>
 struct PyRef {
     T* _ptr;
+    PyRef() :_ptr(NULL) {}
     PyRef(T* p) : _ptr(p) {
         if(!p)
             throw std::bad_alloc(); // TODO: probably already a python exception
@@ -47,6 +48,16 @@ struct PyRef {
         assert(ret);
         _ptr = NULL;
         return ret;
+    }
+    void clear() {
+        Py_CLEAR(_ptr);
+        _ptr = NULL;
+    }
+    void reset(T* p) {
+        if(!p)
+            throw std::bad_alloc(); // TODO: probably already a python exception
+        Py_CLEAR(_ptr);
+        _ptr = p;
     }
     PyObject* releasePy() {
         return (PyObject*)release();

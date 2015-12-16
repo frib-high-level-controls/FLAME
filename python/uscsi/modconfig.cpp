@@ -20,127 +20,90 @@
 
 #include "pyscsi.h"
 
-namespace bp = boost::python;
-
 static
-std::string
-showConfig(const Config* c)
+PyObject* showConfig(PyObject *, PyObject *args)
 {
-    std::ostringstream strm;
-    strm << *c;
-    return strm.str();
-}
-
-template<typename T>
-static inline
-bool XnS(Config& C, const std::string& n, bp::object& O)
-{
-    bp::extract<T> E(O);
-    if(E.check()) {
-        C.set<T>(n, E());
-        return true;
-    }
-    return false;
-}
-
-template<typename T>
-static inline
-bool XnL(Config::vector_t& L, bp::object& O)
-{
-    bp::extract<T> E(O);
-    if(E.check()) {
-        L.push_back(E());
-        return true;
-    }
-    return false;
+    try {
+        PyObject *dict;
+        if(!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict))
+            return NULL;
+        std::auto_ptr<Config> c(dict2conf(dict));
+        std::ostringstream strm;
+        strm << *c;
+        return PyString_FromString(strm.str().c_str());
+    }CATCH()
 }
 
 /** Translate python dict to Config
  *
  *  {}      -> Config
- *  float   -> double
- *  str     -> string
- *  [{}]    -> vector<Config>
- *  ndarray -> vector<double>
- *  TODO: [0.0]   -> vector<double>
+ *    float   -> double
+ *    str     -> string
+ *    [{}]    -> vector<Config>  (recurse)
+ *    ndarray -> vector<double>
+ *    TODO: [0.0]   -> vector<double>
  */
 static
-void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
+void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
 {
     if(depth>3)
         throw std::runtime_error("too deep for Dict2Config");
 
-    bp::object it;
-#if PY_MAJOR_VERSION >= 3
-    {
-        // it seems that in python 3 land it is necessary to create an
-        // intermediate "set-like" object to iterate a dict as tuples...
-        bp::object temp(O.items());
-        it = bp::object(bp::handle<>(PyObject_GetIter(temp.ptr())));
-    }
-#else
-    it = bp::object(O.iteritems());
-#endif
-    PyObject *item;
-    while( !!(item=PyIter_Next(it.ptr())) )
-    {
-        std::string name;
-        bp::object value;
-        {
-            bp::object K(bp::handle<>(bp::borrowed(PyTuple_GetItem(item, 0))));
-            value = bp::object(bp::handle<>(bp::borrowed(PyTuple_GetItem(item, 1))));
+    PyObject *key, *value;
+    Py_ssize_t pos = 0;
 
-            Py_DECREF(item);
-            bp::extract<std::string> X(K);
-            if(!X.check())
-                throw std::runtime_error("keys must be strings");
+    while(PyDict_Next(dict, &pos, &key, &value)) {
 
-            name = X();
-        }
+        const char *kname = PyString_AsString(key);
+        if(!kname)
+            throw std::invalid_argument("dict() keys must be string");
 
-        if(XnS<double>(ret, name, value))
-            continue;
-        else if(XnS<std::string>(ret, name, value))
-            continue;
-        else if(PyArray_Check(value.ptr()))
-        {
-            bp::object arr(bp::handle<>(PyArray_ContiguousFromAny(value.ptr(), NPY_DOUBLE, 0, 2)));
-            double *buf = (double*)PyArray_DATA(arr.ptr());
-            std::vector<double> temp(PyArray_SIZE(arr.ptr()));
+        PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(value);
+        if(valuetype==&PyFloat_Type) { // scalar double
+            double val = PyFloat_AsDouble(value);
+            ret.set<double>(kname, val);
+
+        } else if(valuetype==&PyInt_Type) { // scalar integer (treated as double)
+            long val = PyInt_AsLong(value);
+            ret.set<double>(kname, val);
+
+        } else if(PyString_Check(value)) { // string
+            const char *val = PyString_AsString(value);
+            ret.set<std::string>(kname, val);
+
+        } else if(PyArray_Check(value)) { // array (ndarray)
+            PyRef<> arr(PyArray_ContiguousFromAny(value, NPY_DOUBLE, 0, 2));
+            double *buf = (double*)PyArray_DATA(arr.py());
+            std::vector<double> temp(PyArray_SIZE(arr.py()));
             std::copy(buf, buf+temp.size(), temp.begin());
 
-            ret.set<std::vector<double> >(name, temp);
-            continue;
-        }
+            ret.set<std::vector<double> >(kname, temp);
 
-        {
-            bp::extract<bp::list> E(value);
-            if(E.check()) {
-                Config::vector_t output;
-                ssize_t L = bp::len(value);
-                output.reserve(L>=0 ? L : -L);
+        } else if(PySequence_Check(value)) { // list of dict
+            Py_ssize_t N = PySequence_Size(value);
 
-                for(size_t i=0, len = L; i<len; i++)
-                {
-                    bp::object ent(value[i]);
+            Config::vector_t output;
 
-                    {
-                        bp::extract<bp::dict> X(ent);
-                        if(X.check()) {
-                            Config recurse;
-                            Dict2Config(recurse, X(), depth+1);
-                            output.push_back(recurse);
-                        } else {
-                            throw std::invalid_argument("list entry");
-                        }
-                    }
-                }
-                ret.set<Config::vector_t>(name, output);
-                continue;
+            for(Py_ssize_t i=0; i<N; i++) {
+                PyObject *elem = PySequence_GetItem(value, i);
+                assert(elem);
+
+                if(!PyDict_Check(elem))
+                    throw std::invalid_argument("lists must contain only dict()s");
+
+                output.push_back(Config());
+
+                Dict2Config(output.back(), elem, depth+1);
+
             }
-        }
 
-        throw key_error(name);
+            ret.set<Config::vector_t>(kname, output);
+
+        } else {
+            std::ostringstream msg;
+            msg<<"Must be a dict, not "<<valuetype->tp_name;
+            throw std::invalid_argument(msg.str());
+        }
     }
 }
 
@@ -148,82 +111,86 @@ Config* dict2conf(PyObject *dict)
 {
     if(!PyDict_Check(dict))
         throw std::invalid_argument("Not a dict");
-    bp::dict O(bp::borrowed<>(dict));
     std::auto_ptr<Config> conf(new Config);
-    Dict2Config(*conf, O);
+    Dict2Config(*conf, dict);
     return conf.release();
 }
 
 static
-bp::dict conf2dict(const Config *conf);
+PyObject* conf2dict(const Config *conf);
 
 namespace {
-struct confval : public boost::static_visitor<bp::object>
+struct confval : public boost::static_visitor<PyObject*>
 {
-    bp::object operator()(double v) const
+    PyObject* operator()(double v) const
     {
-        return bp::object(bp::handle<>(PyFloat_FromDouble(v)));
+        return PyFloat_FromDouble(v);
     }
 
-    bp::object operator()(const std::string& v) const
+    PyObject* operator()(const std::string& v) const
     {
-        return bp::str(v.c_str());
+        return PyString_FromString(v.c_str());
     }
 
-    bp::object operator()(const std::vector<double>& v) const
+    PyObject* operator()(const std::vector<double>& v) const
     {
         npy_intp dims[]  = {(npy_intp)v.size()};
-        PyArrayObject *obj;
-        obj = (PyArrayObject *)PyArray_SimpleNew(1, dims, NPY_DOUBLE);
-        bp::object ret(bp::handle<>((PyObject*)obj)); // throws if obj==NULL
-        std::copy(v.begin(), v.end(), (double*)PyArray_DATA(obj));
-        return ret;
+        PyRef<> obj(PyArray_SimpleNew(1, dims, NPY_DOUBLE));
+        std::copy(v.begin(), v.end(), (double*)PyArray_DATA(obj.py()));
+        return obj.release();
     }
 
-    bp::object operator()(const Config::vector_t& v) const
+    PyObject* operator()(const Config::vector_t& v) const
     {
-        bp::list L;
+        PyRef<> L(PyList_New(v.size()));
+
         for(size_t i=0, N=v.size(); i<N; i++)
         {
-            L.append(conf2dict(&v[i]));
+            PyList_SetItem(L.py(), i, conf2dict(&v[i]));
         }
-        return L;
+        return L.release();
     }
 };
 }
 
 static
-bp::dict conf2dict(const Config *conf)
+PyObject* conf2dict(const Config *conf)
 {
-    bp::dict ret;
+    PyRef<> ret(PyDict_New());
 
     for(Config::const_iterator it=conf->begin(), end=conf->end();
         it!=end; ++it)
     {
-        bp::str key(it->first.c_str());
-        ret[key] = boost::apply_visitor(confval(), it->second);
+        if(PyDict_SetItemString(ret.py(), it->first.c_str(),
+                                boost::apply_visitor(confval(), it->second)
+                                ))
+            throw std::runtime_error("Failed to insert into dictionary from conf2dict");
     }
 
-    return ret;
+    return ret.release();
 }
+
+namespace bp = boost::python;
 
 namespace {
 struct PyGLPSParser : public boost::noncopyable
 {
     GLPSParser parser;
 
-    Config* parse(const bp::str& s)
+    PyObject* parse(const bp::str& s)
     {
         bp::extract<const char *> X(s);
         if(!X.check())
             throw std::invalid_argument("string required");
-        return parser.parse(X());
+        std::auto_ptr<Config> conf(parser.parse(X()));
+        return conf2dict(conf.get());
     }
 };
 }
 
-bp::str PyGLPSPrint(const Config* c)
+bp::str PyGLPSPrint(bp::dict d)
 {
+    std::auto_ptr<Config> c(dict2conf(d.ptr()));
     std::ostringstream strm;
     GLPSPrint(strm, *c);
 
@@ -235,13 +202,9 @@ void registerModConfig(void)
     using namespace boost::python;
 
     def("dictshow", showConfig);
-    def("dict2conf", dict2conf, return_value_policy<bp::manage_new_object>());
-    def("conf2dict", conf2dict);
     def("GLPSPrinter",  &PyGLPSPrint);
 
-    class_<Config, boost::noncopyable>("Config", no_init);
-
     class_<PyGLPSParser, boost::noncopyable>("GLPSParser")
-            .def("parse", &PyGLPSParser::parse, return_value_policy<bp::manage_new_object>())
+            .def("parse", &PyGLPSParser::parse)
             ;
 }
