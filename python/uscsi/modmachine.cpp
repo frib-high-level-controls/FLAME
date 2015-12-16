@@ -99,9 +99,9 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
 static PyMethodDef PyMachine_methods[] = {
     {"__str__", (PyCFunction)&PyMachine_str, METH_NOARGS,
      "Render as string"},
-    {"allocState", (PyCFunction)&PyMachine_allocState, METH_KEYWORDS,
+    {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
      "Allocate a new State based on this Machine's configuration"},
-    {"propagate", (PyCFunction)&PyMachine_propagate, METH_KEYWORDS,
+    {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
      "Propagate the provided State through the simulation"},
     {NULL, NULL, 0, NULL}
 };

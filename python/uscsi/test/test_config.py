@@ -19,7 +19,7 @@ class testParse(unittest.TestCase):
     def test_fail(self):
         P = GLPSParser()
         self.assertRaisesRegexp(RuntimeError, ".*invalid charactor.*",
-                                P.parse, "\xff\xfe")
+                                P.parse, b"\xff\xfe")
 
         self.assertRaisesRegexp(RuntimeError, "No beamlines defined by this file",
                                 P.parse, "")

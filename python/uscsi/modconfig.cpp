@@ -31,8 +31,13 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
     Py_ssize_t pos = 0;
 
     while(PyDict_Next(dict, &pos, &key, &value)) {
-
+#if PY_MAJOR_VERSION >= 3
+        PyRef<> ascii(PyUnicode_AsASCIIString(key));
+        const char *kname = PyBytes_AsString(ascii.py());
+#else
         const char *kname = PyString_AsString(key);
+#endif
+
         if(!kname)
             throw std::invalid_argument("dict() keys must be string");
 
@@ -46,7 +51,13 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
             ret.set<double>(kname, val);
 
         } else if(PyString_Check(value)) { // string
-            const char *val = PyString_AsString(value);
+#if PY_MAJOR_VERSION >= 3
+            PyRef<> kascii(PyUnicode_AsASCIIString(value));
+            const char *val = PyBytes_AsString(kascii.py());
+#else
+            const char *val = PyString_AsString(key);
+#endif
+
             ret.set<std::string>(kname, val);
 
         } else if(PyArray_Check(value)) { // array (ndarray)
@@ -168,13 +179,15 @@ PyObject* PyGLPSPrint(PyObject *, PyObject *args)
 PyObject* PyGLPSParse(PyObject *, PyObject *args)
 {
     try{
-        const char *s;
-        if(!PyArg_ParseTuple(args, "s", &s))
+        Py_buffer buf;
+        if(!PyArg_ParseTuple(args, "s*", &buf))
             return NULL;
+        if(buf.shape || buf.strides || buf.suboffsets)
+            throw std::invalid_argument("Only simple buffers are supported");
 
         GLPSParser parser;
-        std::auto_ptr<Config> conf(parser.parse(s));
-
+        std::auto_ptr<Config> conf(parser.parse((char*)buf.buf, buf.len));
         return conf2dict(conf.get());
+
     }CATCH()
 }

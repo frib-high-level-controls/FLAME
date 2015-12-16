@@ -23,8 +23,10 @@ int registerModState(PyObject *mod);
 #define CATCH() CATCH2(std::exception, RuntimeError)
 
 #if PY_MAJOR_VERSION >= 3
+#define PyInt_Type PyLong_Type
 #define PyInt_FromLong PyLong_FromLong
 #define PyInt_AsLong PyLong_AsLong
+#define PyString_Check PyUnicode_Check
 #define PyString_FromString PyUnicode_FromString
 #define MODINIT_RET(VAL) return (VAL)
 
