@@ -263,6 +263,15 @@ GLPSParser::parse(FILE *fp)
 }
 
 Config*
+GLPSParser::parse(const char* s, size_t len)
+{
+    parse_context ctxt;
+    priv->fill_vars(ctxt);
+    ctxt.parse(s, len);
+    return priv->fill_context(ctxt);
+}
+
+Config*
 GLPSParser::parse(const std::string& s)
 {
     parse_context ctxt;

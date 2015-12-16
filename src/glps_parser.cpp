@@ -523,11 +523,28 @@ YY_BUFFER_STATE setup_string(yyscan_t scanner, void* pvt)
     const std::string *str = (const std::string*)pvt;
     return glps__scan_bytes(str->c_str(), str->size(), scanner);
 }
+
+struct bytebuf {
+    const char *bytes;
+    size_t len;
+};
+
+YY_BUFFER_STATE setup_bytes(yyscan_t scanner, void* pvt)
+{
+    bytebuf *buf = (bytebuf*)pvt;
+    return glps__scan_bytes(buf->bytes, buf->len, scanner);
+}
 }
 
 void parse_context::parse(FILE *fp)
 {
     parse_common(&setup_file, this, (void*)fp);
+}
+
+void parse_context::parse(const char* s, size_t len)
+{
+    bytebuf buf = {s, len};
+    parse_common(&setup_bytes, this, (void*)&buf);
 }
 
 void parse_context::parse(const std::string& s)

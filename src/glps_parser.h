@@ -173,6 +173,7 @@ struct parse_context {
     ~parse_context();
 
     void parse(FILE *fp);
+    void parse(const char* s, size_t len);
     void parse(const std::string& s);
 
     void *scanner;
