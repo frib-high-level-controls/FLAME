@@ -12,9 +12,17 @@ addons:
     - cmake
     - bison
     - flex
+language: python
+python:
+  - "2.7"
+  - "3.4"
+env:
+  - PROF=deb7
+  - PROF=deb8
 install:
+ - pip install -r requirements-${PROF}.txt
  - mkdir build
- - (cd build && cmake -DPYTHON_EXECUTABLE=`which python2.7` ..)
+ - (cd build && cmake -DPYTHON_EXECUTABLE=`which python` -DNEED_PYTHON=ON ..)
  - make -C build -j2 VERBOSE=1
 script: make -C build -j2 VERBOSE=1 test
 after_failure: sed -e 1,/nosetest/d build/Testing/Temporary/LastTest.log
