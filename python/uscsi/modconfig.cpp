@@ -55,7 +55,7 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
             PyRef<> kascii(PyUnicode_AsASCIIString(value));
             const char *val = PyBytes_AsString(kascii.py());
 #else
-            const char *val = PyString_AsString(key);
+            const char *val = PyString_AsString(value);
 #endif
 
             ret.set<std::string>(kname, val);

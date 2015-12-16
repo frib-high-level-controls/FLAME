@@ -1,5 +1,6 @@
 
 #include <list>
+#include <sstream>
 
 #include "scsi/base.h"
 #include "scsi/util.h"
@@ -29,8 +30,11 @@ Machine::Machine(const Config& c)
     std::string type(c.get<std::string>("sim_type"));
 
     p_state_infos_t::iterator it = p_state_infos.find(type);
-    if(it==p_state_infos.end())
-        throw key_error(type);
+    if(it==p_state_infos.end()) {
+        std::ostringstream msg;
+        msg<<"Unsupport sim_type '"<<type<<"'";
+        throw key_error(msg.str());
+    }
 
     p_info = it->second;
 
