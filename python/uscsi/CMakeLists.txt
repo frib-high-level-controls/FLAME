@@ -25,6 +25,7 @@ set(PY_SRC
   __init__.py
   test/__init__.py
   test/test_linear.py
+  test/test_moment.py
   test/test_config.py
 )
 
