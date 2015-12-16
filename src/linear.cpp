@@ -15,7 +15,9 @@ MatrixState::MatrixState(const Config& c)
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.data().begin());
     }catch(key_error&){
+        // default to identity
     }catch(boost::bad_any_cast&){
+        throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
 }
 

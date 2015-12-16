@@ -76,4 +76,5 @@ void registerMoment()
     Machine::registerState<MatrixState>("MomentMatrix");
 
     Machine::registerElement<GenericMomentElement >("MomentMatrix", "generic");
+    Machine::registerElement<MomentSource >("MomentMatrix", "source");
 }
