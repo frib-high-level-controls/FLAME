@@ -35,16 +35,10 @@ class testBasic(unittest.TestCase):
     S = self.M.allocState({})
     state = S.state
 
-    print "A",repr(state),gc.is_tracked(state),gc.get_referents(state), gc.get_referrers(state)
-    print "B",repr(S),gc.is_tracked(S),gc.get_referents(S), gc.get_referrers(S)
+    R = weakref.ref(S)
 
-    def gone(X):
-        print 'dead',X
-    R = weakref.ref(S, gone)
-    #stateR = weakref.ref(state, gone)
     del S
     gc.collect()
-    print "A",gc.get_referents(state), gc.get_referrers(state)
 
     # S should be kept alive by reference from state
     self.assertIsNot(R(), None)
@@ -53,7 +47,6 @@ class testBasic(unittest.TestCase):
 
     gc.collect()
     S = R()
-    print "B",gc.get_referents(S), gc.get_referrers(S)
     self.assertIs(R(), None)
 
   def test_err(self):
