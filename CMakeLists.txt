@@ -12,7 +12,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 if(CMAKE_COMPILER_IS_GNUCC)
   # Turn on extra GCC warnings
-  add_definitions(-Wall -Wextra -Wno-unused-parameter)
+  add_definitions(-Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers)
   if(USE_WERROR)
     add_definitions(-Werror)
   endif()

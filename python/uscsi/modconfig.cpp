@@ -144,8 +144,11 @@ void Dict2Config(Config& ret, const bp::dict& O, unsigned depth=0)
     }
 }
 
-Config* dict2conf(const bp::dict& O)
+Config* dict2conf(PyObject *dict)
 {
+    if(!PyDict_Check(dict))
+        throw std::invalid_argument("Not a dict");
+    bp::dict O(bp::borrowed<>(dict));
     std::auto_ptr<Config> conf(new Config);
     Dict2Config(*conf, O);
     return conf.release();

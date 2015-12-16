@@ -1,34 +1,131 @@
 
 #include <string>
-#include <map>
 
-#include <boost/python/object.hpp>
-#include <boost/python/class.hpp>
-#include <boost/python/errors.hpp>
+#include "scsi/base.h"
+#include "pyscsi.h"
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
 
-#include "scsi/base.h"
-#include "pyscsi.h"
+#define TRY PyState *state = (PyState*)raw; try
 
-namespace bp = boost::python;
+namespace {
 
-static PyObject *statetype;
+struct PyState {
+    PyObject_HEAD
+    PyObject *dict, *weak; //  __dict__ and __weakref__
+    PyObject *attrs; // lookup name to attribute index (for StateBase)
+    StateBase *state;
+};
 
-struct PyState : public boost::noncopyable
+static
+int PyState_traverse(PyObject *raw, visitproc visit, void *arg)
 {
-    std::auto_ptr<StateBase> state;
-    typedef std::map<std::string, bp::object> attrs_t;
-    attrs_t attrs;
+    PyState *state = (PyState*)raw;
+    Py_VISIT(state->attrs);
+    Py_VISIT(state->dict);
+    return 0;
+}
 
-    PyState() {}
-    ~PyState() {}
+static
+int PyState_clear(PyObject *raw)
+{
+    PyState *state = (PyState*)raw;
+    Py_CLEAR(state->dict);
+    Py_CLEAR(state->attrs);
+    return 0;
+}
 
-    void attach(StateBase* b, PyObject *pyobj)
-    {
-        attrs_t newattrs;
+static
+void PyState_free(PyObject *raw)
+{
+    TRY {
+        std::auto_ptr<StateBase> S(state->state);
+        state->state = NULL;
+
+        if(state->weak)
+            PyObject_ClearWeakRefs(raw);
+
+        PyState_clear(raw);
+
+        Py_TYPE(raw)->tp_free(raw);
+    } CATCH2V(std::exception, RuntimeError)
+}
+
+static
+PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
+{
+    TRY {
+        PyObject *val = PyDict_GetItem(state->attrs, attr);
+        int i = PyInt_AsLong(val);
+
+        StateBase::ArrayInfo info;
+
+        if(!state->state->getArray(i, info))
+            return PyErr_Format(PyExc_AttributeError, "invalid attribute name");
+
+        npy_intp dims[5];
+        memcpy(dims, info.dim, sizeof(dims));
+
+        PyRef<> obj(PyArray_SimpleNewFromData(info.ndim, dims, NPY_DOUBLE, info.ptr));
+
+        Py_INCREF(state);
+        PyArray_BASE(obj.py()) = (PyObject*)state;
+
+        return obj.releasePy();
+    } CATCH()
+}
+
+static
+int PyState_setattro(PyObject *, PyObject *, PyObject *)
+{
+    PyErr_SetString(PyExc_NotImplementedError, "Can't set attributes");
+    return -1;
+}
+
+static
+PyObject* PyState_str(PyObject *raw)
+{
+    TRY {
+        std::ostringstream strm;
+        state->state->show(strm);
+        return PyString_FromString(strm.str().c_str());
+    } CATCH()
+}
+
+static PyMethodDef PyState_methods[] = {
+    {"__str__", (PyCFunction)&PyState_str, METH_NOARGS,
+     "Render as string"},
+    {NULL, NULL, 0, NULL}
+};
+
+static PyTypeObject PyStateType = {
+#if PY_MAJOR_VERSION >= 3
+    PyVarObject_HEAD_INIT(NULL, 0)
+#else
+    PyObject_HEAD_INIT(NULL)
+    0,
+#endif
+    "uscsi._internal.State",
+    sizeof(PyState),
+};
+
+} // namespace
+
+PyObject* wrapstate(StateBase* b)
+{
+    try {
+
+        PyRef<PyState> state((PyState*)PyStateType.tp_alloc(&PyStateType, 0));
+
+        state->state = b;
+        state->attrs = state->weak = state->dict = 0;
+
+        state->attrs = PyDict_New();
+        if(!state->attrs)
+            return NULL;
+
         for(unsigned i=0; true; i++)
         {
             StateBase::ArrayInfo info;
@@ -36,105 +133,50 @@ struct PyState : public boost::noncopyable
             if(!b->getArray(i, info))
                 break;
 
-            npy_intp dims[5];
-            memcpy(dims, info.dim, sizeof(dims));
+            PyRef<> name(PyInt_FromLong(i));
+            if(PyDict_SetItemString(state->attrs, info.name.c_str(), name.py()))
+                throw std::runtime_error("Failed to insert into Dict");
 
-            PyObject *obj = PyArray_New(&PyArray_Type, info.ndim, dims, NPY_DOUBLE,
-                                        NULL, info.ptr, sizeof(*info.ptr), NPY_CARRAY, pyobj);
-            if(!obj)
-                throw std::runtime_error("Failed to wrap array");
-            Py_INCREF(pyobj);
-
-            newattrs[info.name] = bp::object(bp::handle<>(obj));
         }
 
-        attrs.swap(newattrs);
-        state.reset(b);
-    }
-
-    std::string tostring() const
-    {
-        std::ostringstream strm;
-        state->show(strm);
-        return strm.str();
-    }
-
-    static PyObject* getattro(PyObject *obj, PyObject *name)
-    {
-        char *sname;
-#if PY_MAJOR_VERSION >= 3
-        bp::object data(bp::handle<>(PyUnicode_AsASCIIString(name)));
-        if(!data.ptr())
-            return NULL;
-        sname = const_cast<char*>(PyBytes_AsString(data.ptr()));
-#else
-        sname = PyString_AsString(name);
-#endif
-        PyObject *ret = getattr(obj, sname);
-        return ret;
-    }
-
-    static PyObject* getattr(PyObject *obj, char *name)
-    {
-        PyState *self=bp::extract<PyState*>(obj);
-        attrs_t::const_iterator it = self->attrs.find(name);
-        if(it!=self->attrs.end())
-        {
-            PyObject *ret = it->second.ptr();
-            Py_INCREF(ret);
-            return ret;
-        }
-        return PyErr_Format(PyExc_AttributeError, "Unknown attribute %s", name);
-    }
-};
-
-PyObject* wrapstate(StateBase* b)
-{
-    if(b->pyptr) {
-        Py_INCREF(b->pyptr);
-    } else {
-        static char fmt[1];
-        b->pyptr = PyObject_CallFunction(statetype, fmt);
-        if(!b->pyptr)
-            return NULL;
-        bp::pytype_check((PyTypeObject*)statetype, (PyObject*)b->pyptr);
-        PyState *state = bp::extract<PyState*>((PyObject*)b->pyptr);
-        try{
-            state->attach(b, (PyObject*)b->pyptr);
-        }catch(...){
-            Py_DECREF(b->pyptr);
-            b->pyptr = NULL;
-            throw;
-        }
-    }
-    return (PyObject*)b->pyptr;
-    Py_RETURN_NONE;
+        return state.releasePy();
+    } CATCH()
 }
 
-StateBase* unwrapstate(PyObject* py)
+
+StateBase* unwrapstate(PyObject* raw)
 {
-    bp::pytype_check((PyTypeObject*)statetype, py);
-    PyState *self=bp::extract<PyState*>(py);
-    return self->state.get();
+    if(!PyObject_TypeCheck(raw, &PyStateType))
+        throw std::invalid_argument("Argument is not a State");
+    PyState *state = (PyState*)raw;
+    return state->state;
 }
 
-void registerModState(void)
+int registerModState(PyObject *mod)
 {
-    using namespace boost::python;
+    import_array1(-1);
 
-    object so = class_<PyState, boost::noncopyable>("State")
-            .def("__str__", &PyState::tostring)
-            //.def_readwrite("next_elem", &StateBase::next_elem)
-            ;
+    PyStateType.tp_dealloc = &PyState_free;
 
-    statetype = so.ptr();
-    Py_INCREF(statetype);
+    PyStateType.tp_weaklistoffset = offsetof(PyState, weak);
+    PyStateType.tp_traverse = &PyState_traverse;
+    PyStateType.tp_clear = &PyState_clear;
 
-    PyTypeObject *ptype = (PyTypeObject*)statetype;
+    PyStateType.tp_dictoffset = offsetof(PyState, dict);
+    PyStateType.tp_getattro = &PyState_getattro;
+    PyStateType.tp_setattro = &PyState_setattro;
 
-    // class_ has ready'd this type
-    assert((ptype->tp_flags&Py_TPFLAGS_READY)==Py_TPFLAGS_READY);
+    PyStateType.tp_flags = Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE|Py_TPFLAGS_HAVE_GC;
+    PyStateType.tp_methods = PyState_methods;
 
-    ptype->tp_getattr = PyState::getattr;
-    ptype->tp_getattro = PyState::getattro;
+    if(PyType_Ready(&PyStateType))
+        return -1;
+
+    Py_INCREF(&PyStateType);
+    if(PyModule_AddObject(mod, "State", (PyObject*)&PyStateType)) {
+        Py_DECREF(&PyStateType);
+        return -1;
+    }
+
+    return 0;
 }

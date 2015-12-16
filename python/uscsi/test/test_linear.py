@@ -31,21 +31,34 @@ class testBasic(unittest.TestCase):
     "See that State attributes have appropriate lifetime"
 
     import weakref, gc
+
     S = self.M.allocState({})
-    R = weakref.ref(S)
     state = S.state
+
+    print "A",repr(state),gc.is_tracked(state),gc.get_referents(state), gc.get_referrers(state)
+    print "B",repr(S),gc.is_tracked(S),gc.get_referents(S), gc.get_referrers(S)
+
+    def gone(X):
+        print 'dead',X
+    R = weakref.ref(S, gone)
+    #stateR = weakref.ref(state, gone)
     del S
     gc.collect()
+    print "A",gc.get_referents(state), gc.get_referrers(state)
+
+    # S should be kept alive by reference from state
     self.assertIsNot(R(), None)
 
     del state
 
     gc.collect()
+    S = R()
+    print "B",gc.get_referents(S), gc.get_referrers(S)
     self.assertIs(R(), None)
 
   def test_err(self):
     "Try to propagate the something which is not a State"
-    self.assertRaises(TypeError, self.M.propagate, None)
+    self.assertRaises(ValueError, self.M.propagate, None)
 
 class TestMatrix(unittest.TestCase):
   def setUp(self):

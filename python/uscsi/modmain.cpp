@@ -3,6 +3,7 @@
 #include <sstream>
 
 //#include <boost/python.hpp>
+#include <boost/python/scope.hpp>
 #include <boost/python/module.hpp>
 #include <boost/python/exception_translator.hpp>
 
@@ -29,6 +30,7 @@ void translate_any(const boost::bad_any_cast& e)
 BOOST_PYTHON_MODULE(_internal)
 {
     using namespace boost::python;
+    scope mod;
 
     if (_import_array() < 0)
         throw std::runtime_error("Failed to import numpy");
@@ -38,8 +40,10 @@ BOOST_PYTHON_MODULE(_internal)
 
     // add python stuff to this module
     registerModConfig();
-    registerModMachine();
-    registerModState();
+    if(registerModMachine(mod.ptr()))
+        throw std::runtime_error("Failed to initialize Machine");
+    if(registerModState(mod.ptr()))
+        throw std::runtime_error("Failed to initialize State");
 
     // add States and Elements
     registerLinear();
