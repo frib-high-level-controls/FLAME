@@ -2,9 +2,6 @@
 #define PYSCSI_H
 
 #include <Python.h>
-#include <numpy/ndarrayobject.h>
-
-#include <boost/python/dict.hpp>
 
 struct Config;
 struct StateBase;
@@ -14,7 +11,9 @@ Config* dict2conf(PyObject *dict);
 PyObject* wrapstate(StateBase*); // takes ownership of argument from caller
 StateBase* unwrapstate(PyObject*); // ownership of returned pointer remains with argument
 
-void registerModConfig(void);
+PyObject* PyGLPSPrint(PyObject *, PyObject *args);
+PyObject* PyGLPSParse(PyObject *, PyObject *args);
+
 int registerModMachine(PyObject *mod);
 int registerModState(PyObject *mod);
 

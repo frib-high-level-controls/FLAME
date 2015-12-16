@@ -2,50 +2,64 @@
 #include <list>
 #include <sstream>
 
-//#include <boost/python.hpp>
-#include <boost/python/scope.hpp>
-#include <boost/python/module.hpp>
-#include <boost/python/exception_translator.hpp>
+#include "scsi/base.h"
+#include "pyscsi.h"
 
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
 
-#include "scsi/base.h"
-#include "pyscsi.h"
-
-namespace bp = boost::python;
-
+namespace {
 static
-void translate_key(const key_error& e)
-{
-    PyErr_SetString(PyExc_KeyError, e.what());
+PyMethodDef modmethods[] = {
+    {"_GLPSParse", (PyCFunction)&PyGLPSParse, METH_VARARGS,
+     "Parse a GLPS lattice file to AST form"},
+    {"GLPSPrinter", (PyCFunction)&PyGLPSPrint, METH_VARARGS,
+     "Print a GLPS AST to string"},
+    {NULL, NULL, 0, NULL}
+};
+
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef module = {
+   PyModuleDef_HEAD_INIT,
+   "uscsi._internal",
+   NULL,
+   -1,
+   modmethods
+};
+#endif
 }
 
-static
-void translate_any(const boost::bad_any_cast& e)
+PyMODINIT_FUNC
+#if PY_MAJOR_VERSION >= 3
+PyInit__internal(void)
+#else
+init_internal(void)
+#endif
 {
-    PyErr_SetString(PyExc_ValueError, e.what());
-}
+    try {
+        if (_import_array() < 0)
+            throw std::runtime_error("Failed to import numpy");
 
-BOOST_PYTHON_MODULE(_internal)
-{
-    using namespace boost::python;
-    scope mod;
+#if PY_MAJOR_VERSION >= 3
+        PyRef<> mod(PyModule_Create(&module));
+#else
+        PyRef<> mod(Py_InitModule("uscsi._internal", modmethods));
+#endif
 
-    if (_import_array() < 0)
-        throw std::runtime_error("Failed to import numpy");
+        if(registerModMachine(mod.py()))
+            throw std::runtime_error("Failed to initialize Machine");
+        if(registerModState(mod.py()))
+            throw std::runtime_error("Failed to initialize State");
 
-    register_exception_translator<key_error>(translate_key);
-    register_exception_translator<boost::bad_any_cast>(translate_any);
+        // add States and Elements
+        registerLinear();
+        registerMoment();
 
-    // add python stuff to this module
-    registerModConfig();
-    if(registerModMachine(mod.ptr()))
-        throw std::runtime_error("Failed to initialize Machine");
-    if(registerModState(mod.ptr()))
-        throw std::runtime_error("Failed to initialize State");
-
-    // add States and Elements
-    registerLinear();
-    registerMoment();
+#if PY_MAJOR_VERSION >= 3
+        return mod.release();
+    }CATCH()
+#else
+        mod.release();
+    }CATCH2V(std::exception, RuntimeError)
+#endif
 }

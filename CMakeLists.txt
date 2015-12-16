@@ -4,6 +4,7 @@ project("uscsi" C CXX)
 
 option(USE_WERROR "Treat warnings as errors")
 option(USE_PYTHON "Build python support" ON)
+option(NEED_PYTHON "Require python support" OFF)
 
 message(STATUS "Option PYTHON ${USE_PYTHON}")
 
@@ -61,17 +62,6 @@ if(Python_FOUND)
   )
   message(STATUS "Numpy headers ${NUMPY_INCLUDE_DIRS}")
 
-  # find appropriate boost_python library
-  find_library(Boost_PYTHON_LIBRARY
-    NAMES
-      "boost_python-mt-py${Python_VERSION_MAJOR}${Python_VERSION_MINOR}"
-      "boost_python-py${Python_VERSION_MAJOR}${Python_VERSION_MINOR}"
-    PATHS ${Boost_LIBRARY_DIRS}
-    NO_DEFAULT_PATH
-  )
-
-  message(STATUS "Boost python ${Boost_PYTHON_LIBRARY}")
-
   # see if nosetests test runner is available
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -m nose.core -V
@@ -80,7 +70,11 @@ if(Python_FOUND)
     RESULT_VARIABLE _HAVE_NOSE
   )
   if(_HAVE_NOSE)
-    message(STATUS "Can't find nosetests, not running tests")
+    if(NEED_PYTHON)
+      message(SEND_ERROR "Unable to build Python support")
+    else()
+      message(STATUS "Can't find nosetests, not running tests")
+    endif()
     set(HAVE_NOSE NO)
   else()
     set(HAVE_NOSE YES)
@@ -91,9 +85,11 @@ enable_testing()
 
 add_subdirectory(src)
 
-if(USE_PYTHON AND NUMPY_INCLUDE_DIRS AND Boost_PYTHON_LIBRARY)
+if(USE_PYTHON AND NUMPY_INCLUDE_DIRS)
   message(STATUS "Building python support")
   add_subdirectory(python/uscsi)
+elseif(NEED_PYTHON)
+  message(SEND_ERROR "Unable to build Python support")
 else()
   message(STATUS "Omitting python support")
 endif()

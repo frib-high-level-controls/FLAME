@@ -14,7 +14,6 @@ add_library(_internal SHARED
 
 target_link_libraries(_internal
   uscsi_core
-  ${Boost_PYTHON_LIBRARY}
 )
 
 set_target_properties(_internal

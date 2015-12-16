@@ -2,37 +2,15 @@
 #include <list>
 #include <sstream>
 
-//#include <boost/python.hpp>
-#include <boost/python/def.hpp>
-#include <boost/python/class.hpp>
-#include <boost/python/extract.hpp>
-#include <boost/python/dict.hpp>
-#include <boost/python/list.hpp>
-#include <boost/python/str.hpp>
-#include <boost/python/return_value_policy.hpp>
-#include <boost/python/manage_new_object.hpp>
+#include "scsi/base.h"
+
+#include "pyscsi.h"
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
 
-#include "scsi/base.h"
-
-#include "pyscsi.h"
-
-static
-PyObject* showConfig(PyObject *, PyObject *args)
-{
-    try {
-        PyObject *dict;
-        if(!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict))
-            return NULL;
-        std::auto_ptr<Config> c(dict2conf(dict));
-        std::ostringstream strm;
-        strm << *c;
-        return PyString_FromString(strm.str().c_str());
-    }CATCH()
-}
+namespace {
 
 /** Translate python dict to Config
  *
@@ -107,15 +85,6 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
     }
 }
 
-Config* dict2conf(PyObject *dict)
-{
-    if(!PyDict_Check(dict))
-        throw std::invalid_argument("Not a dict");
-    std::auto_ptr<Config> conf(new Config);
-    Dict2Config(*conf, dict);
-    return conf.release();
-}
-
 static
 PyObject* conf2dict(const Config *conf);
 
@@ -170,41 +139,42 @@ PyObject* conf2dict(const Config *conf)
     return ret.release();
 }
 
-namespace bp = boost::python;
+} // namespace
 
-namespace {
-struct PyGLPSParser : public boost::noncopyable
+Config* dict2conf(PyObject *dict)
 {
-    GLPSParser parser;
+    if(!PyDict_Check(dict))
+        throw std::invalid_argument("Not a dict");
+    std::auto_ptr<Config> conf(new Config);
+    Dict2Config(*conf, dict);
+    return conf.release();
+}
 
-    PyObject* parse(const bp::str& s)
-    {
-        bp::extract<const char *> X(s);
-        if(!X.check())
-            throw std::invalid_argument("string required");
-        std::auto_ptr<Config> conf(parser.parse(X()));
+PyObject* PyGLPSPrint(PyObject *, PyObject *args)
+{
+    try {
+        PyObject *dict;
+        if(!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict))
+            return NULL;
+
+        Config conf;
+        Dict2Config(conf, dict);
+        std::ostringstream strm;
+        GLPSPrint(strm, conf);
+        return PyString_FromString(strm.str().c_str());
+    }CATCH()
+}
+
+PyObject* PyGLPSParse(PyObject *, PyObject *args)
+{
+    try{
+        const char *s;
+        if(!PyArg_ParseTuple(args, "s", &s))
+            return NULL;
+
+        GLPSParser parser;
+        std::auto_ptr<Config> conf(parser.parse(s));
+
         return conf2dict(conf.get());
-    }
-};
-}
-
-bp::str PyGLPSPrint(bp::dict d)
-{
-    std::auto_ptr<Config> c(dict2conf(d.ptr()));
-    std::ostringstream strm;
-    GLPSPrint(strm, *c);
-
-    return bp::str(strm.str().c_str());
-}
-
-void registerModConfig(void)
-{
-    using namespace boost::python;
-
-    def("dictshow", showConfig);
-    def("GLPSPrinter",  &PyGLPSPrint);
-
-    class_<PyGLPSParser, boost::noncopyable>("GLPSParser")
-            .def("parse", &PyGLPSParser::parse)
-            ;
+    }CATCH()
 }

@@ -6,7 +6,12 @@ from numpy import asarray
 from numpy.testing import assert_array_almost_equal as assert_array_equal
 from numpy.testing import assert_equal
 
-from .._internal import dictshow, GLPSParser
+from .._internal import (GLPSPrinter as dictshow, _GLPSParse)
+
+class GLPSParser(object):
+    def parse(self, s):
+        return _GLPSParse(s)
+
 
 class testParse(unittest.TestCase):
     maxDiff = 1000

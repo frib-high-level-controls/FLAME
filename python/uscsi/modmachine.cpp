@@ -4,6 +4,10 @@
 #include "scsi/base.h"
 #include "pyscsi.h"
 
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
+#include <numpy/ndarrayobject.h>
+
 #define TRY PyMachine *machine = (PyMachine*)raw; try
 
 namespace {
@@ -126,8 +130,6 @@ static const char pymdoc[] =
 
 int registerModMachine(PyObject *mod)
 {
-    import_array1(-1);
-
     PyMachineType.tp_doc = pymdoc;
 
     PyMachineType.tp_new = &PyType_GenericNew;

@@ -1,5 +1,6 @@
 
 #include <string>
+#include <sstream>
 
 #include "scsi/base.h"
 #include "pyscsi.h"
@@ -154,8 +155,6 @@ StateBase* unwrapstate(PyObject* raw)
 
 int registerModState(PyObject *mod)
 {
-    import_array1(-1);
-
     PyStateType.tp_dealloc = &PyState_free;
 
     PyStateType.tp_weaklistoffset = offsetof(PyState, weak);
