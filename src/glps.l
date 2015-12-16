@@ -66,7 +66,10 @@
 <quote>[^"\n\r]* { yymore(); }
 
 . {
-   glps_error(yyscanner, yyextra, "invalid charactor '%c' (%d)", yytext[0], yytext[0]);
+   if(yytext[0]&0x80)
+       glps_error(yyscanner, yyextra, "invalid charactor '<unprintable>' (%d)", yytext[0]);
+   else
+       glps_error(yyscanner, yyextra, "invalid charactor '%c' (%d)", yytext[0], yytext[0]);
    yyterminate();
 }
 
