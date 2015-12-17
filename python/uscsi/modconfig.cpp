@@ -176,17 +176,20 @@ PyObject* PyGLPSPrint(PyObject *, PyObject *args)
     }CATCH()
 }
 
+#ifndef PY_SSIZE_T_CLEAN
+#error the following assumes ssize_t is used
+#endif
+
 PyObject* PyGLPSParse(PyObject *, PyObject *args)
 {
     try{
-        Py_buffer buf;
-        if(!PyArg_ParseTuple(args, "s*", &buf))
+        const char *buf;
+        Py_ssize_t blen;
+        if(!PyArg_ParseTuple(args, "s#", &buf, &blen))
             return NULL;
-        if(buf.shape || buf.strides || buf.suboffsets)
-            throw std::invalid_argument("Only simple buffers are supported");
 
         GLPSParser parser;
-        std::auto_ptr<Config> conf(parser.parse((char*)buf.buf, buf.len));
+        std::auto_ptr<Config> conf(parser.parse(buf, blen));
         return conf2dict(conf.get());
 
     }CATCH()

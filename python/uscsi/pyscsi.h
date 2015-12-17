@@ -1,6 +1,6 @@
 #ifndef PYSCSI_H
 #define PYSCSI_H
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 struct Config;
