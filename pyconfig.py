@@ -28,7 +28,6 @@ try:
 except ImportError:
     pass
 
-incdirs = [get_python_inc()]+get_numpy_include_dirs()
 libdirs = [get_config_var('LIBDIR')]
 
 print('set(Python_DEFINITIONS, "%s")'%get_config_var('BASECFLAGS'), file=out)

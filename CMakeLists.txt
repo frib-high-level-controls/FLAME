@@ -85,7 +85,7 @@ enable_testing()
 
 add_subdirectory(src)
 
-if(USE_PYTHON AND NUMPY_INCLUDE_DIRS)
+if(USE_PYTHON AND Python_NUMPY_FOUND)
   message(STATUS "Building python support")
   add_subdirectory(python/uscsi)
 elseif(NEED_PYTHON)
