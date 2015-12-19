@@ -2,6 +2,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${HDF5_CXX_INCLUDE_DIR}
 )
 
 add_custom_command(
@@ -50,9 +51,12 @@ add_library(uscsi_core SHARED
   glps_ops.cpp
   glps.par.c glps.par.h
   glps.tab.c glps.tab.h
+
+  h5loader.cpp scsi/h5loader.h
 )
 target_link_libraries(uscsi_core
   ${Boost_LIBRARIES}
+  ${HDF5_LIBRARIES}
 )
 
 add_executable(test_lex
@@ -82,6 +86,13 @@ add_executable(test_config
 
 add_test(config test_config)
 target_link_libraries(test_config
+  uscsi_core
+)
+
+add_executable(h5_loader
+  h5loadertest.cpp
+)
+target_link_libraries(h5_loader
   uscsi_core
 )
 

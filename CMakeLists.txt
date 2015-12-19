@@ -22,6 +22,10 @@ message(STATUS "Build type ${CMAKE_BUILD_TYPE}")
 
 find_package(Boost 1.42.0 REQUIRED COMPONENTS system thread)
 
+# respects -DHDF5_USE_STATIC_LIBRARIES=YES
+# and environment variable HDF5_ROOT
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+
 find_program(LEX_EXECUTABLE flex
   DOC "Location of lexer genereator"
 )
