@@ -68,7 +68,7 @@ PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
     TRY {
         PyObject *d;
         const char *pnames[] = {"config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "|O", (char**)pnames, &d))
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|", (char**)pnames, &d))
             return NULL;
 
         std::auto_ptr<Config> C(dict2conf(d));
