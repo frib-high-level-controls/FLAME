@@ -78,6 +78,8 @@ if(Python_FOUND)
   endif()
 endif()
 
+find_package(Doxygen)
+
 enable_testing()
 
 add_subdirectory(src)
@@ -92,3 +94,19 @@ else()
 endif()
 
 add_subdirectory(tools)
+
+if(DOXYGEN_FOUND)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documentation)
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/documentation/Doxyfile.in
+    ${CMAKE_CURRENT_BINARY_DIR}/documentation/Doxyfile
+    @ONLY
+  )
+  add_custom_target(doc
+    COMMAND ${DOXYGEN_EXECUTABLE} Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documentation
+  )
+  message(STATUS "Will generate documentation")
+else()
+  message(STATUS "Skipping documentation generation (missing doxygen)")
+endif()

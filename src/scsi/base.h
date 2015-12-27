@@ -23,14 +23,14 @@
 
 /** @brief The abstract base class for all simulation state objects.
  *
- * Represents the state of some bunch of particles moving through a @class Machine
+ * Represents the state of some bunch of particles moving through a Machine
  */
 struct StateBase : public boost::noncopyable
 {
     virtual ~StateBase();
 
-    //! Index of @class ElementBase in @class Machine which will follow this one.
-    //! May be altered by ElementBase::advance()
+    //! Index of ElementVoid in Machine to follow this the current one.
+    //! May be altered within ElementVoid::advance() to achieve branching or looping.
     size_t next_elem;
     double IonZ, IonEs, IonEk, IonW;
 
@@ -47,7 +47,7 @@ struct StateBase : public boost::noncopyable
     /** @brief Introspect named parameter of the derived class
      * @param idx The index of the parameter
      * @param Info mailbox to be filled with information about this paramter
-     * @return true if the parameter and Info was filled in, otherwise false
+     * @return true if 'idx' is valid and Info was filled in, otherwise false
      *
      * To introspect call this with index increasing from zero until false is returned.
      *
@@ -55,6 +55,7 @@ struct StateBase : public boost::noncopyable
      */
     virtual bool getArray(unsigned idx, ArrayInfo& Info) {return false;}
 
+    //! @private
     //! Mailbox to hold the python interpreter object wrapping us.
     void *pyptr;
 protected:
@@ -83,8 +84,8 @@ struct ElementVoid : public boost::noncopyable
 
     inline const Config& conf() const {return p_conf;}
 
-    const std::string name; //!< Name of this element (unique in its @class Machine)
-    const size_t index; //!< Index of this element (unique in its @class Machine)
+    const std::string name; //!< Name of this element (unique in its Machine)
+    const size_t index; //!< Index of this element (unique in its Machine)
 
     virtual void show(std::ostream&) const;
 
