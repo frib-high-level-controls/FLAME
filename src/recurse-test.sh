@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e -x
+set -e
 # Check that the output of test_parse matches expectations
 # Also that that the output of test_parse can be re-parsed
 # and give the same output.
@@ -13,11 +13,11 @@ shift
 
 ibase="$(basename "$input")"
 
-trap 'rm -f "$ibase".out1 "$ibase".out2' INT TERM QUIT EXIT
+trap 'rm -f "$ibase".out1 "$ibase".out2 "$ibase".err1 "$ibase".err2' INT TERM QUIT EXIT
 
-"$prog" "$input" > "$ibase".out1
+"$prog" "$input" > "$ibase".out1 2> "$ibase".err1
 
-"$prog" "$ibase".out1 > "$ibase".out2
+"$prog" "$ibase".out1 > "$ibase".out2 2> "$ibase".err2
 
 ret=0
 
@@ -33,6 +33,13 @@ echo "Difference pass 1 -> pass 2"
 if ! diff -u "$ibase".out1 "$ibase".out2
 then
   ret=1
+fi
+
+if [ $ret -ne 0 ]; then
+  echo "============ Pass 1 stderr ============"
+  tail -n100 "$ibase".err1
+  echo "============ Pass 2 stderr ============"
+  tail -n100 "$ibase".err2
 fi
 
 exit $ret
