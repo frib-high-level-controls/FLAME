@@ -50,6 +50,9 @@ add_library(uscsi_core SHARED
   glps_ops.cpp
   glps.par.c glps.par.h
   glps.tab.c glps.tab.h
+}
+target_link_libraries(uscsi_core
+  ${Boost_LIBRARIES}
 )
 
 add_executable(test_lex

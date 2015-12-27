@@ -2,8 +2,16 @@
 #include <list>
 #include <sstream>
 
+#include <boost/thread/mutex.hpp>
+
 #include "scsi/base.h"
 #include "scsi/util.h"
+
+namespace {
+// This mutex guards the global Machine::p_state_infos
+typedef boost::mutex info_mutex_t;
+info_mutex_t info_mutex;
+}
 
 StateBase::~StateBase() {}
 
@@ -28,6 +36,8 @@ Machine::Machine(const Config& c)
     ,p_info()
 {
     std::string type(c.get<std::string>("sim_type"));
+
+    info_mutex_t::scoped_lock G(info_mutex);
 
     p_state_infos_t::iterator it = p_state_infos.find(type);
     if(it==p_state_infos.end()) {
@@ -63,6 +73,8 @@ Machine::Machine(const Config& c)
 
         result.push_back(E);
     }
+
+    G.unlock();
 
     for(p_elements_t::iterator it=p_elements.begin(), end=p_elements.end(); it!=end; ++it)
     {
@@ -105,6 +117,7 @@ Machine::p_state_infos_t Machine::p_state_infos;
 
 void Machine::p_registerState(const char *name, state_builder_t b)
 {
+    info_mutex_t::scoped_lock G(info_mutex);
     if(p_state_infos.find(name)!=p_state_infos.end())
         throw key_error(name);
     state_info I;
@@ -115,6 +128,7 @@ void Machine::p_registerState(const char *name, state_builder_t b)
 
 void Machine::p_registerElement(const std::string& sname, const char *ename, element_builder_t b)
 {
+    info_mutex_t::scoped_lock G(info_mutex);
     p_state_infos_t::iterator it = p_state_infos.find(sname);
     if(it==p_state_infos.end())
         throw key_error(sname);

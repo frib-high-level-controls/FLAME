@@ -19,11 +19,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
   endif()
 endif()
 
-find_package(Boost 1.42.0 COMPONENTS system)
-
-if(NOT Boost_FOUND)
-  message(SEND_ERROR "Boost is required")
-endif()
+find_package(Boost 1.42.0 REQUIRED COMPONENTS system thread)
 
 find_program(LEX_EXECUTABLE flex
   DOC "Location of lexer genereator"
