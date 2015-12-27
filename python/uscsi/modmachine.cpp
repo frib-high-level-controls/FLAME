@@ -34,7 +34,8 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
         machine->machine = new Machine(*C);
 
         return 0;
-    } CATCH3(std::invalid_argument, ValueError, -1)
+    } CATCH3(key_error, KeyError, -1)
+      CATCH3(std::invalid_argument, ValueError, -1)
       CATCH3(std::exception, RuntimeError, -1)
 }
 
