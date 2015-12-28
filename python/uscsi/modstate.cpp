@@ -96,8 +96,6 @@ PyObject* PyState_str(PyObject *raw)
 }
 
 static PyMethodDef PyState_methods[] = {
-    {"__str__", (PyCFunction)&PyState_str, METH_NOARGS,
-     "Render as string"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -155,6 +153,7 @@ StateBase* unwrapstate(PyObject* raw)
 
 int registerModState(PyObject *mod)
 {
+    PyStateType.tp_str = &PyState_str;
     PyStateType.tp_dealloc = &PyState_free;
 
     PyStateType.tp_weaklistoffset = offsetof(PyState, weak);

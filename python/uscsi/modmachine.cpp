@@ -53,7 +53,7 @@ void PyMachine_free(PyObject *raw)
 }
 
 static
-PyObject *PyMachine_str(PyObject *raw, PyObject *args)
+PyObject *PyMachine_str(PyObject *raw)
 {
     TRY {
         std::ostringstream strm;
@@ -97,8 +97,6 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
 }
 
 static PyMethodDef PyMachine_methods[] = {
-    {"__str__", (PyCFunction)&PyMachine_str, METH_NOARGS,
-     "Render as string"},
     {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
      "Allocate a new State based on this Machine's configuration"},
     {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
@@ -131,6 +129,7 @@ static const char pymdoc[] =
 int registerModMachine(PyObject *mod)
 {
     PyMachineType.tp_doc = pymdoc;
+    PyMachineType.tp_str = &PyMachine_str;
 
     PyMachineType.tp_new = &PyType_GenericNew;
     PyMachineType.tp_init = &PyMachine_init;

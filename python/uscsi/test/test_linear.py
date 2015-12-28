@@ -15,6 +15,13 @@ class testBasic(unittest.TestCase):
       ],
     })
 
+  def test_print(self):
+    self.assertEqual(str(self.M), """sim_type: Vector
+#Elements: 1
+Element 0: elem0 (drift)
+Transfer: [6,6]((1,0,0,0,0,0),(0,1,0,0,0,0),(0,0,1,0,0,0),(0,0,0,1,0,0),(0,0,0,0,1,1),(0,0,0,0,0,1))
+""")
+
   def test_drift(self):
     "Propogate a state vector through a drift section"
 
