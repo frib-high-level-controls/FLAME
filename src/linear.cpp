@@ -2,6 +2,7 @@
 #include <algorithm>
 
 #include "scsi/linear.h"
+#include "scsi/moment.h"
 #include "scsi/state/vector.h"
 #include "scsi/state/matrix.h"
 
@@ -74,11 +75,12 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
 
 namespace {
 
-template<typename State>
-struct LinearSource : LinearElementBase<State>
+template<typename Base>
+struct ElementSource : public Base
 {
-    typedef LinearElementBase<State> base_t;
-    LinearSource(const Config& c)
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementSource(const Config& c)
         :base_t(c)
         ,ivect(c.get<std::vector<double> >("initial",
                                            std::vector<double>()))
@@ -86,7 +88,7 @@ struct LinearSource : LinearElementBase<State>
 
     virtual void advance(StateBase& s) const
     {
-        State& ST = static_cast<State&>(s);
+        state_t& ST = static_cast<state_t&>(s);
         if(ivect.size()==0)
             return; // use defaults
         // Replace state with our initial values
@@ -97,37 +99,40 @@ struct LinearSource : LinearElementBase<State>
 
     std::vector<double> ivect;
 
-    virtual ~LinearSource() {}
+    virtual ~ElementSource() {}
 
     virtual const char* type_name() const {return "source";}
 };
 
-template<typename State>
-struct LinearDrift : LinearElementBase<State>
+template<typename Base>
+struct ElementDrift : public Base
 {
-    typedef LinearElementBase<State> base_t;
-    LinearDrift(const Config& c)
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementDrift(const Config& c)
         :base_t(c)
     {
-        this->transfer(State::L_X, State::P_X) = c.get<double>("length");
-        this->transfer(State::L_Y, State::P_Y) = c.get<double>("length");
-        this->transfer(State::L_Z, State::L_Z) = c.get<double>("length");
+        double len = c.get<double>("length");
+        this->transfer(state_t::L_X, state_t::P_X) = len;
+        this->transfer(state_t::L_Y, state_t::P_Y) = len;
+        this->transfer(state_t::L_Z, state_t::L_Z) = len;
     }
-    virtual ~LinearDrift() {}
+    virtual ~ElementDrift() {}
 
     virtual const char* type_name() const {return "drift";}
 };
 
-template<typename State>
-struct LinearThinDipole : LinearElementBase<State>
+template<typename Base>
+struct ElementThinDipole : public Base
 {
-    typedef LinearElementBase<State> base_t;
-    LinearThinDipole(const Config& c)
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementThinDipole(const Config& c)
         :base_t(c)
     {
         double angle = c.get<double>("angle"), // in rad.
                P = c.get<double>("radius", 1.0),
-               off = c.get<double>("vertical", 0.0)!=0.0 ? State::L_Y : State::L_X ,
+               off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::L_Y : state_t::L_X ,
                cos = ::cos(angle),
                sin = ::sin(angle);
 
@@ -135,16 +140,17 @@ struct LinearThinDipole : LinearElementBase<State>
         this->transfer(off,off+1) = P*sin;
         this->transfer(off+1,off) = -sin/P;
     }
-    virtual ~LinearThinDipole() {}
+    virtual ~ElementThinDipole() {}
 
     virtual const char* type_name() const {return "dipole";}
 };
 
-template<typename State>
-struct LinearThinQuad : LinearElementBase<State>
+template<typename Base>
+struct ElementThinQuad : public Base
 {
-    typedef LinearElementBase<State> base_t;
-    LinearThinQuad(const Config& c)
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementThinQuad(const Config& c)
         :base_t(c)
     {
         double L  = c.get<double>("length"),
@@ -160,12 +166,12 @@ struct LinearThinQuad : LinearElementBase<State>
 
         if(K<0.0) {
             // defocus in X, focus in Y
-            Fdir = State::L_Y;
-            Ddir = State::L_X;
+            Fdir = state_t::L_Y;
+            Ddir = state_t::L_X;
         } else {
             // focus in X, defocus in Y
-            Fdir = State::L_X;
-            Ddir = State::L_Y;
+            Fdir = state_t::L_X;
+            Ddir = state_t::L_Y;
         }
 
         this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
@@ -176,15 +182,16 @@ struct LinearThinQuad : LinearElementBase<State>
         this->transfer(Ddir,Ddir+1) = sinh/sK;
         this->transfer(Ddir+1,Ddir) = sK*sinh;
     }
-    virtual ~LinearThinQuad() {}
+    virtual ~ElementThinQuad() {}
 
     virtual const char* type_name() const {return "quad";}
 };
-template<typename State>
-struct LinearGeneric : LinearElementBase<State>
+template<typename Base>
+struct ElementGeneric : public Base
 {
-    typedef LinearElementBase<State> base_t;
-    LinearGeneric(const Config& c)
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementGeneric(const Config& c)
         :base_t(c)
     {
         std::vector<double> I = c.get<std::vector<double> >("transfer");
@@ -192,7 +199,7 @@ struct LinearGeneric : LinearElementBase<State>
             throw std::invalid_argument("Initial transfer size too big");
         std::copy(I.begin(), I.end(), this->transfer.data().begin());
     }
-    virtual ~LinearGeneric() {}
+    virtual ~ElementGeneric() {}
 
     virtual const char* type_name() const {return "generic";}
 };
@@ -203,19 +210,25 @@ void registerLinear()
 {
     Machine::registerState<VectorState>("Vector");
     Machine::registerState<MatrixState>("TransferMatrix");
+    Machine::registerState<MatrixState>("MomentMatrix");
 
-    Machine::registerElement<LinearSource<VectorState> >("Vector", "source");
-    Machine::registerElement<LinearSource<MatrixState> >("TransferMatrix", "source");
+    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector", "source");
+    Machine::registerElement<ElementSource<LinearElementBase<MatrixState> > >("TransferMatrix", "source");
+    Machine::registerElement<ElementSource<MomentElementBase> >("MomentMatrix", "source");
 
-    Machine::registerElement<LinearDrift<VectorState> >("Vector", "drift");
-    Machine::registerElement<LinearDrift<MatrixState> >("TransferMatrix", "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector", "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
+    Machine::registerElement<ElementDrift<MomentElementBase> >("MomentMatrix", "drift");
 
-    Machine::registerElement<LinearThinDipole<VectorState> >("Vector", "dipole");
-    Machine::registerElement<LinearThinDipole<MatrixState> >("TransferMatrix", "dipole");
+    Machine::registerElement<ElementThinDipole<LinearElementBase<VectorState> > >("Vector", "dipole");
+    Machine::registerElement<ElementThinDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "dipole");
+    Machine::registerElement<ElementThinDipole<MomentElementBase> >("MomentMatrix", "dipole");
 
-    Machine::registerElement<LinearThinQuad<VectorState> >("Vector", "quad");
-    Machine::registerElement<LinearThinQuad<MatrixState> >("TransferMatrix", "quad");
+    Machine::registerElement<ElementThinQuad<LinearElementBase<VectorState> > >("Vector", "quad");
+    Machine::registerElement<ElementThinQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
+    Machine::registerElement<ElementThinQuad<MomentElementBase> >("MomentMatrix", "quad");
 
-    Machine::registerElement<LinearGeneric<VectorState> >("Vector", "generic");
-    Machine::registerElement<LinearGeneric<MatrixState> >("TransferMatrix", "generic");
+    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector", "generic");
+    Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
+    Machine::registerElement<ElementGeneric<MomentElementBase> >("MomentMatrix", "generic");
 }
