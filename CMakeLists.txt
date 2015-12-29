@@ -18,6 +18,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
     add_definitions(-Werror)
   endif()
 endif()
+message(STATUS "Build type ${CMAKE_BUILD_TYPE}")
 
 find_package(Boost 1.42.0 REQUIRED COMPONENTS system thread)
 
