@@ -17,7 +17,7 @@ PyObject* PyGLPSParse(PyObject *, PyObject *args);
 int registerModMachine(PyObject *mod);
 int registerModState(PyObject *mod);
 
-#define CATCH2V(CXX, PYEXC) catch(CXX& e) { std::cerr<<"Exception during "<<__PRETTY_FUNCTION__<<" :"<<e.what()<<"\n"; return; }
+#define CATCH2V(CXX, PYEXC) catch(CXX& e) { PyErr_SetString(PyExc_##PYEXC, e.what()); return; }
 #define CATCH3(CXX, PYEXC, RET) catch(CXX& e) { PyErr_SetString(PyExc_##PYEXC, e.what()); return RET; }
 #define CATCH2(CXX, PYEXC) CATCH3(CXX, PYEXC, NULL)
 #define CATCH() CATCH2(std::exception, RuntimeError)

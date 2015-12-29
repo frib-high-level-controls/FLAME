@@ -41,14 +41,18 @@ init_internal(void)
             throw std::runtime_error("Failed to import numpy");
 
 #if PY_MAJOR_VERSION >= 3
-        PyRef<> mod(PyModule_Create(&module));
+        // w/ py3 we own the module object and return NULL on import failure
+        PyRef<> modref(PyModule_Create(&module));
+        PyObject *mod = modref.py();
 #else
-        PyRef<> mod(Py_InitModule("uscsi._internal", modmethods));
+        // w/ py2 we get a borrowed ref. and indicate import
+        // failure by returning w/ a python exception set
+        PyObject *mod = Py_InitModule("uscsi._internal", modmethods);
 #endif
 
-        if(registerModMachine(mod.py()))
+        if(registerModMachine(mod))
             throw std::runtime_error("Failed to initialize Machine");
-        if(registerModState(mod.py()))
+        if(registerModState(mod))
             throw std::runtime_error("Failed to initialize State");
 
         // add States and Elements
@@ -56,10 +60,10 @@ init_internal(void)
         registerMoment();
 
 #if PY_MAJOR_VERSION >= 3
-        return mod.release();
+        modref.release();
+        return mod;
     }CATCH()
 #else
-        mod.release();
     }CATCH2V(std::exception, RuntimeError)
 #endif
 }
