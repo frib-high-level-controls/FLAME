@@ -19,7 +19,7 @@ class testBasic(unittest.TestCase):
     self.assertEqual(str(self.M), """sim_type: Vector
 #Elements: 1
 Element 0: elem0 (drift)
-Transfer: [6,6]((1,0,0,0,0,0),(0,1,0,0,0,0),(0,0,1,0,0,0),(0,0,0,1,0,0),(0,0,0,0,1,1),(0,0,0,0,0,1))
+Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0,1,0),(0,0,0,0,0,1))
 """)
 
   def test_drift(self):
@@ -32,7 +32,7 @@ Transfer: [6,6]((1,0,0,0,0,0),(0,1,0,0,0,0),(0,0,1,0,0,0),(0,0,0,1,0,0),(0,0,0,0
 
     self.M.propagate(S)
 
-    assert_aequal(S.state, [0, 0, 0, 0, 1.001, 1e-3])
+    assert_aequal(S.state, [0, 0, 0, 0, 1.000, 1e-3])
 
   def test_gc(self):
     "See that State attributes have appropriate lifetime"
@@ -89,11 +89,11 @@ class TestMatrix(unittest.TestCase):
     self.M.propagate(S)
 
     assert_aequal(S.state, [
-      [1, 0, 0, 0, 0, 0],
+      [1, 2, 0, 0, 0, 0],
       [0, 1, 0, 0, 0, 0],
-      [0, 0, 1, 0, 0, 0],
+      [0, 0, 1, 2, 0, 0],
       [0, 0, 0, 1, 0, 0],
-      [0, 0, 0, 0, 1, 2],
+      [0, 0, 0, 0, 1, 0],
       [0, 0, 0, 0, 0, 1],
     ])
 

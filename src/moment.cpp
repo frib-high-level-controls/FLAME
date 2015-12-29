@@ -55,6 +55,59 @@ struct MomentSource : MomentElementBase
     virtual const char* type_name() const {return "source";}
 };
 
+struct MomentDipole : MomentElementBase
+{
+    MomentDipole(const Config& c)
+        :MomentElementBase(c)
+    {
+        double L  = c.get<double>("length"),
+               K  = c.get<double>("strength", 1.0),
+               aK = fabs(K),
+               sK = sqrt(aK),
+               sKL=sK*L,
+               cos = ::cos(sKL),
+               sin = ::sin(sKL),
+               cosh = ::cosh(sKL),
+               sinh = ::sinh(sKL);
+        unsigned Fdir, Ddir;
+
+        if(K<0.0) {
+            // defocus in X, focus in Y
+            Fdir = state_t::L_Y;
+            Ddir = state_t::L_X;
+        } else {
+            // focus in X, defocus in Y
+            Fdir = state_t::L_X;
+            Ddir = state_t::L_Y;
+        }
+
+        this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
+        this->transfer(Fdir,Fdir+1) = sin/sK;
+        this->transfer(Fdir+1,Fdir) = sK*sin;
+
+        this->transfer(Ddir,Ddir) = this->transfer(Ddir+1,Ddir+1) = cosh;
+        this->transfer(Ddir,Ddir+1) = sinh/sK;
+        this->transfer(Ddir+1,Ddir) = sK*sinh;
+    }
+    virtual ~MomentDipole() {}
+
+    virtual const char* type_name() const {return "drift";}
+};
+
+struct MomentDrift : MomentElementBase
+{
+    MomentDrift(const Config& c)
+        :MomentElementBase(c)
+    {
+        this->transfer(state_t::L_X, state_t::P_X) = c.get<double>("length");
+        this->transfer(state_t::L_Y, state_t::P_Y) = c.get<double>("length");
+        this->transfer(state_t::L_Z, state_t::L_Z) = c.get<double>("length");
+    }
+    virtual ~MomentDrift() {}
+
+    virtual const char* type_name() const {return "drift";}
+};
+
 struct GenericMomentElement : MomentElementBase
 {
     GenericMomentElement(const Config& c)
@@ -75,6 +128,8 @@ void registerMoment()
 {
     Machine::registerState<MatrixState>("MomentMatrix");
 
-    Machine::registerElement<GenericMomentElement >("MomentMatrix", "generic");
-    Machine::registerElement<MomentSource >("MomentMatrix", "source");
+    Machine::registerElement<GenericMomentElement>("MomentMatrix", "generic");
+    Machine::registerElement<MomentSource>("MomentMatrix", "source");
+    Machine::registerElement<MomentDrift>("MomentMatrix", "drift");
+    Machine::registerElement<MomentDipole>("MomentMatrix", "dipole");
 }

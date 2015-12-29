@@ -109,7 +109,9 @@ struct LinearDrift : LinearElementBase<State>
     LinearDrift(const Config& c)
         :base_t(c)
     {
-        this->transfer(State::L_Z, State::P_Z) = c.get<double>("length");
+        this->transfer(State::L_X, State::P_X) = c.get<double>("length");
+        this->transfer(State::L_Y, State::P_Y) = c.get<double>("length");
+        this->transfer(State::L_Z, State::L_Z) = c.get<double>("length");
     }
     virtual ~LinearDrift() {}
 
