@@ -130,15 +130,27 @@ struct ElementThinDipole : public Base
     ElementThinDipole(const Config& c)
         :base_t(c)
     {
-        double angle = c.get<double>("angle"), // in rad.
-               P = c.get<double>("radius", 1.0),
+        double phi = c.get<double>("angle"), // in rad.
+               rho = c.get<double>("radius", 1.0),
+               L   = rho*phi,
                off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::L_Y : state_t::L_X ,
-               cos = ::cos(angle),
-               sin = ::sin(angle);
+               cos = ::cos(phi),
+               sin = ::sin(phi);
 
-        this->transfer(off,off) = this->transfer(off+1,off+1) = cos;
-        this->transfer(off,off+1) = P*sin;
-        this->transfer(off+1,off) = -sin/P;
+        // Off is 0 or 2.
+        if (off == 0) {
+            this->transfer(state_t::L_X, state_t::L_X) = cos;
+            this->transfer(state_t::L_X, state_t::P_X) = rho*sin;
+            this->transfer(state_t::P_X, state_t::L_X) = -sin/rho;
+            this->transfer(state_t::P_X, state_t::P_X) = cos;
+            this->transfer(state_t::L_Y, state_t::P_Y) = L;
+        } else {
+            this->transfer(state_t::L_Y, state_t::L_Y) = cos;
+            this->transfer(state_t::L_Y, state_t::P_Y) = rho*sin;
+            this->transfer(state_t::P_Y, state_t::L_Y) = -sin/rho;
+            this->transfer(state_t::P_Y, state_t::P_Y) = cos;
+            this->transfer(state_t::L_X, state_t::P_X) = L;
+        }
     }
     virtual ~ElementThinDipole() {}
 
