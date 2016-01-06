@@ -14,7 +14,7 @@ struct VectorState : public StateBase
 {
     enum {maxsize=6};
     enum param_t {
-        L_X, P_X, L_Y, P_Y, L_Z, P_Z
+        PS_X, PS_PX, PS_Y, PS_PY, PS_S, PS_PS
     };
 
     VectorState(const Config& c);

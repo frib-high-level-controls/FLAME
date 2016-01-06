@@ -9,35 +9,57 @@ from .. import Machine
 
 class testBasic(unittest.TestCase):
   def setUp(self):
+    # Called before each test.
+
+#    T = self.expect = numpy.asfarray([
+#      [1, 0, 0, 0, 0, 0],
+#      [0, 1, 0, 0, 0, 0],
+#      [0, 0, 1, 0, 0, 0],
+#      [0, 0, 0, 1, 0, 0],
+#      [0, 0, 0, 0, 1, 0],
+#      [0, 0, 0, 0, 0, 1]
+#    ])
+
+#    self.M = Machine({
+#      'sim_type':'MomentMatrix',
+#      'elements':[
+#        {'name':'elem0', 'type':'source', 'initial':T},
+#        {'name':'elem2', 'type':'dipole', 'length':1.234},
+#        {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
+#      ]
+#    })
+    return
+
+  def test_generic(self):
+    "Propagate a state matrix through a generic section"
+
     T = self.expect = numpy.asfarray([
       [1, 0, 0, 0, 0, 0],
       [0, 1, 0, 0, 0, 0],
       [0, 0, 1, 0, 0, 0],
       [0, 0, 0, 1, 0, 0],
       [0, 0, 0, 0, 1, 0],
-      [0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 1]
     ])
-    self.M = Machine({
-      'sim_type':'MomentMatrix',
-      'elements':[
-        #        {'name':'elem0', 'type':'source', 'initial':T},
-        #        {'name':'elem2', 'type':'dipole', 'length':1.234},
-        #        {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
-      ]
-    })
-#    print self.M
-
-  def test_generic(self):
-    "Propagate a state matrix through a generic section"
 
     self.M = Machine({
       'sim_type':'MomentMatrix',
       'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
         {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)}
       ]
     })
 
     S = self.M.allocState({})
+
+#    S.state[:] = [
+#      [1, 0, 0, 0, 0, 0],
+#      [0, 1, 0, 0, 0, 0],
+#      [0, 0, 1, 0, 0, 0],
+#      [0, 0, 0, 1, 0, 0],
+#      [0, 0, 0, 0, 1, 0],
+#      [0, 0, 0, 0, 0, 1]
+#    ]
 
     self.M.propagate(S)
 
@@ -51,25 +73,26 @@ class testBasic(unittest.TestCase):
     ])
 
   def test_drift(self):
-    "Propagate a state vector through a drift section"
+    "Propagate a state vector through a drift"
 
-    self.M = Machine({
-      'sim_type':'MomentMatrix',
-      'elements':[
-        {'name':'elem1', 'type':'drift', 'length':1.234},
-      ]
-    })
-
-    S = self.M.allocState({})
-
-    S.state[:] = [
+    T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
       [0,   0.2, 0,   0,   0,   0  ],
       [0,   0,   0.3, 0,   0,   0  ],
       [0,   0,   0,   0.4, 0,   0  ],
       [0,   0,   0,   0,   0.5, 0  ],
       [0,   0,   0,   0,   0,   0.6]
-    ]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'drift', 'length':1.234},
+      ]
+    })
+
+    S = self.M.allocState({})
 
     self.M.propagate(S)
 
@@ -82,28 +105,29 @@ class testBasic(unittest.TestCase):
       [0,         0,      0,         0,      0,        0.6]
     ])
 
-  def test_dipole(self):
-    "Propagate a state vector through a dipole section"
+  def test_hdipole(self):
+    "Propagate a state vector through a horizontal dipole"
 
-    # Vertical is 0 or 1.
-    self.M = Machine({
-      'sim_type':'MomentMatrix',
-      'elements':[
-        {'name':'elem1', 'type':'dipole', 'vertical':0, 'radius':1.0,
-         'angle':25.0*numpy.pi/180.0},
-      ]
-    })
-
-    S = self.M.allocState({})
-
-    S.state[:] = [
+    T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
       [0,   0.2, 0,   0,   0,   0  ],
       [0,   0,   0.3, 0,   0,   0  ],
       [0,   0,   0,   0.4, 0,   0  ],
       [0,   0,   0,   0,   0.5, 0  ],
       [0,   0,   0,   0,   0,   0.6]
-    ]
+    ])
+
+    # Vertical is 0 or 1.
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'dipole', 'vertical':0, 'radius':1.0,
+         'angle':25.0*numpy.pi/180.0},
+      ]
+    })
+
+    S = self.M.allocState({})
 
     self.M.propagate(S)
 
@@ -115,3 +139,103 @@ class testBasic(unittest.TestCase):
       [0,          0,          0,          0,          0.5,        0  ],
       [0,          0,          0,          0,          0,          0.6]
     ], decimal=6)
+
+  def test_vdipole(self):
+    "Propagate a state vector through a vertical dipole"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    # Vertical is 0 or 1.
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'dipole', 'vertical':1, 'radius':1.0,
+         'angle':25.0*numpy.pi/180.0},
+      ]
+      })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [
+      [0.13807718, 0.08726646, 0,          0,          0,   0  ],
+      [0.08726646, 0.2,        0,          0,          0,   0  ],
+      [0,          0,          0.31786062, 0.03830222, 0,   0  ],
+      [0,          0,          0.03830222, 0.38213938, 0,   0  ],
+      [0,          0,          0,          0,          0.5, 0  ],
+      [0,          0,          0,          0,          0,   0.6]
+    ], decimal=6)
+
+  def test_dquad(self):
+    "Propagate a state vector through a defocusing quadrupole"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'quad', 'length':1.0, 'strength':-1.1},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+    assert_aequal(S.state, [
+      [ 0.54171388, 0.59291953, 0,          0,          0,          0        ],
+      [ 0.59291953, 0.68588526, 0,          0,          0,          0        ],
+      [ 0,          0,          0.34781599, 0.30082651, 0,          0        ],
+      [ 0,          0,          0.30082651, 0.34740241, 0,          0        ],
+      [ 0,          0,          0,          0,          0.5,        0        ],
+      [ 0,          0,          0,          0,          0,          0.6      ]
+    ], decimal=6)
+
+    def test_fquad(self):
+      "Propagate a state vector through a focusing quadrupole"
+
+      T = self.expect = numpy.asfarray([
+        [0.1, 0,   0,   0,   0,   0  ],
+        [0,   0.2, 0,   0,   0,   0  ],
+        [0,   0,   0.3, 0,   0,   0  ],
+        [0,   0,   0,   0.4, 0,   0  ],
+        [0,   0,   0,   0,   0.5, 0  ],
+        [0,   0,   0,   0,   0,   0.6]
+      ])
+
+      self.M = Machine({
+        'sim_type':'MomentMatrix',
+        'elements':[
+          {'name':'elem0', 'type':'source', 'initial':T},
+          {'name':'elem1', 'type':'quad', 'length':1.0, 'strength':1.1},
+        ]
+      })
+
+      S = self.M.allocState({})
+
+      self.M.propagate(S)
+
+      assert_aequal(S.state, [
+        [0.1614777,  0.12774825,  0,          0,          0,   0  ],
+        [0.12774825, 0.13237453,  0,          0,          0,   0  ],
+        [0,          0,           1.34016493, 1.39622985, 0,   0  ],
+        [0,          0,           1.39622985, 1.54418143, 0,   0  ],
+        [0,          0,           0,          0,          0.5, 0  ],
+        [0,          0,           0,          0,          0,   0.6]
+      ], decimal=6)

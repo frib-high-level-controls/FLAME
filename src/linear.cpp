@@ -113,9 +113,9 @@ struct ElementDrift : public Base
         :base_t(c)
     {
         double len = c.get<double>("length");
-        this->transfer(state_t::L_X, state_t::P_X) = len;
-        this->transfer(state_t::L_Y, state_t::P_Y) = len;
-        this->transfer(state_t::L_Z, state_t::L_Z) = len;
+        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
+        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
     }
     virtual ~ElementDrift() {}
 
@@ -123,67 +123,67 @@ struct ElementDrift : public Base
 };
 
 template<typename Base>
-struct ElementThinDipole : public Base
+struct ElementDipole : public Base
 {
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
-    ElementThinDipole(const Config& c)
+    ElementDipole(const Config& c)
         :base_t(c)
     {
         double phi = c.get<double>("angle"), // in rad.
                rho = c.get<double>("radius", 1.0),
                L   = rho*phi,
-               off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::L_Y : state_t::L_X ,
+               off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::PS_Y : state_t::PS_X ,
                cos = ::cos(phi),
                sin = ::sin(phi);
 
         // Off is 0 or 2.
         if (off == 0) {
-            this->transfer(state_t::L_X, state_t::L_X) = cos;
-            this->transfer(state_t::L_X, state_t::P_X) = rho*sin;
-            this->transfer(state_t::P_X, state_t::L_X) = -sin/rho;
-            this->transfer(state_t::P_X, state_t::P_X) = cos;
-            this->transfer(state_t::L_Y, state_t::P_Y) = L;
+            this->transfer(state_t::PS_X, state_t::PS_X)   = cos;
+            this->transfer(state_t::PS_X, state_t::PS_PX)  = rho*sin;
+            this->transfer(state_t::PS_PX, state_t::PS_X)  = -sin/rho;
+            this->transfer(state_t::PS_PX, state_t::PS_PX) = cos;
+            this->transfer(state_t::PS_Y, state_t::PS_PY)  = L;
         } else {
-            this->transfer(state_t::L_Y, state_t::L_Y) = cos;
-            this->transfer(state_t::L_Y, state_t::P_Y) = rho*sin;
-            this->transfer(state_t::P_Y, state_t::L_Y) = -sin/rho;
-            this->transfer(state_t::P_Y, state_t::P_Y) = cos;
-            this->transfer(state_t::L_X, state_t::P_X) = L;
+            this->transfer(state_t::PS_Y, state_t::PS_Y)   = cos;
+            this->transfer(state_t::PS_Y, state_t::PS_PY)  = rho*sin;
+            this->transfer(state_t::PS_PY, state_t::PS_Y)  = -sin/rho;
+            this->transfer(state_t::PS_PY, state_t::PS_PY) = cos;
+            this->transfer(state_t::PS_X, state_t::PS_PX)  = L;
         }
     }
-    virtual ~ElementThinDipole() {}
+    virtual ~ElementDipole() {}
 
     virtual const char* type_name() const {return "dipole";}
 };
 
 template<typename Base>
-struct ElementThinQuad : public Base
+struct ElementQuad : public Base
 {
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
-    ElementThinQuad(const Config& c)
+    ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L  = c.get<double>("length"),
-               K  = c.get<double>("strength", 1.0),
-               aK = fabs(K),
-               sK = sqrt(aK),
-               sKL=sK*L,
-               cos = ::cos(sKL),
-               sin = ::sin(sKL),
+        double L    = c.get<double>("length"),
+               K    = c.get<double>("strength", 1.0),
+               aK   = fabs(K),
+               sK   = sqrt(aK),
+               sKL  = sK*L,
+               cos  = ::cos(sKL),
+               sin  = ::sin(sKL),
                cosh = ::cosh(sKL),
                sinh = ::sinh(sKL);
         unsigned Fdir, Ddir;
 
         if(K<0.0) {
             // defocus in X, focus in Y
-            Fdir = state_t::L_Y;
-            Ddir = state_t::L_X;
+            Fdir = state_t::PS_Y;
+            Ddir = state_t::PS_X;
         } else {
             // focus in X, defocus in Y
-            Fdir = state_t::L_X;
-            Ddir = state_t::L_Y;
+            Fdir = state_t::PS_X;
+            Ddir = state_t::PS_Y;
         }
 
         this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
@@ -194,7 +194,7 @@ struct ElementThinQuad : public Base
         this->transfer(Ddir,Ddir+1) = sinh/sK;
         this->transfer(Ddir+1,Ddir) = sK*sinh;
     }
-    virtual ~ElementThinQuad() {}
+    virtual ~ElementQuad() {}
 
     virtual const char* type_name() const {return "quad";}
 };
@@ -232,13 +232,13 @@ void registerLinear()
     Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
     Machine::registerElement<ElementDrift<MomentElementBase> >("MomentMatrix", "drift");
 
-    Machine::registerElement<ElementThinDipole<LinearElementBase<VectorState> > >("Vector", "dipole");
-    Machine::registerElement<ElementThinDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "dipole");
-    Machine::registerElement<ElementThinDipole<MomentElementBase> >("MomentMatrix", "dipole");
+    Machine::registerElement<ElementDipole<LinearElementBase<VectorState> > >("Vector", "dipole");
+    Machine::registerElement<ElementDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "dipole");
+    Machine::registerElement<ElementDipole<MomentElementBase> >("MomentMatrix", "dipole");
 
-    Machine::registerElement<ElementThinQuad<LinearElementBase<VectorState> > >("Vector", "quad");
-    Machine::registerElement<ElementThinQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
-    Machine::registerElement<ElementThinQuad<MomentElementBase> >("MomentMatrix", "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector", "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
+    Machine::registerElement<ElementQuad<MomentElementBase> >("MomentMatrix", "quad");
 
     Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector", "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
