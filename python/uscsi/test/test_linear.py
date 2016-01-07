@@ -119,3 +119,41 @@ class testGeneric(unittest.TestCase):
         M.propagate(S)
 
         assert_aequal(S.state, T)
+
+class TestSource(unittest.TestCase):
+    def test_matrix(self):
+        T = numpy.asfarray([1, 0, 1, 0, 1, 0])
+        M = Machine({
+          'sim_type':'Vector',
+          'elements':[
+            {'name':'elem0', 'type':'source', 'initial':T},
+          ],
+        })
+
+        S = M.allocState({})
+
+        M.propagate(S)
+
+        assert_aequal(S.state, T)
+
+    def test_matrix(self):
+        T = numpy.asfarray([
+          [1, 0, 1, 0, 1, 0],
+          [0, 1, 0, 1, 0, 1],
+          [1, 0, 1, 0, 1, 0],
+          [0, 1, 0, 1, 0, 1],
+          [1, 0, 1, 0, 1, 0],
+          [0, 1, 0, 1, 0, 1],
+        ])
+        M = Machine({
+          'sim_type':'TransferMatrix',
+          'elements':[
+            {'name':'elem0', 'type':'source', 'initial':T},
+          ],
+        })
+
+        S = M.allocState({})
+
+        M.propagate(S)
+
+        assert_aequal(S.state, T)

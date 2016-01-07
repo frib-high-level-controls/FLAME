@@ -81,23 +81,24 @@ struct ElementSource : public Base
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementSource(const Config& c)
-        :base_t(c)
-        ,ivect(c.get<std::vector<double> >("initial",
-                                           std::vector<double>()))
+        :base_t(c), istate(c)
     {}
 
     virtual void advance(StateBase& s) const
     {
         state_t& ST = static_cast<state_t&>(s);
-        if(ivect.size()==0)
-            return; // use defaults
         // Replace state with our initial values
-        if(ST.state.data().size()!=ivect.size())
-            throw std::invalid_argument("Initial state size incorrect");
-        std::copy(ivect.begin(), ivect.end(), ST.state.data().begin());
+        ST.state = this->istate.state;
     }
 
-    std::vector<double> ivect;
+    virtual void show(std::ostream& strm) const
+    {
+        ElementVoid::show(strm);
+        strm<<"Initial: "<<istate.state<<"\n";
+    }
+
+    state_t istate;
+    // note that 'transfer' is not used by this element type
 
     virtual ~ElementSource() {}
 
