@@ -1,11 +1,25 @@
 
+import sys
 import unittest
+import math
 import numpy
 from numpy import testing as NT
 #from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 from numpy.testing import assert_array_almost_equal as assert_aequal
 
 from .. import Machine
+
+def print_state(S):
+  n = 6
+  for i in range(n):
+    sys.stdout.write('[')
+    for j in range(n):
+      sys.stdout.write('%9.6f' % (S.state[i, j]))
+      if j != n-1: sys.stdout.write(', ')
+    if i != n-1:
+      sys.stdout.write('],\n')
+    else:
+      sys.stdout.write(']\n')
 
 class testBasic(unittest.TestCase):
   def setUp(self):
@@ -98,15 +112,15 @@ class testBasic(unittest.TestCase):
     self.M.propagate(S)
 
     assert_aequal(S.state, [
-      [0.4045512, 0.2468, 0,         0,      0,        0  ],
-      [0.2468,    0.2,    0,         0,      0,        0  ],
-      [0,         0,      0.9091024, 0.4936, 0,        0  ],
-      [0,         0,      0.4936,    0.4,    0,        0  ],
-      [0,         0,      0,         0,      0.761378, 0  ],
-      [0,         0,      0,         0,      0,        0.6]
+      [ 0.404551,  0.246800,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.246800,  0.200000,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.909102,  0.493600,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.493600,  0.400000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.761378,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ])
 
-  def test_sbend(self):
+  def test_sbend1(self):
     "Propagate a state vector through a focusing sector bend"
 
     T = self.expect = numpy.asfarray([
@@ -122,7 +136,8 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'sbend', 'L':2.0, 'phi':25.0*numpy.pi/180.0, 'K':1.0},
+        {'name':'elem1', 'type':'sbend', 'L':2.0, 'phi':math.radians(25.0),
+         'K':1.0},
       ]
     })
 
@@ -131,15 +146,82 @@ class testBasic(unittest.TestCase):
     self.M.propagate(S)
 
     assert_aequal(S.state, [
-      [ 0.17180565, -0.03791219, 0,          0,          0, 0  ],
-      [-0.03791219,  0.12477665, 0,          0,          0, 0  ],
-      [ 0,           0,          9.50788149, 9.55147102, 0, 0  ],
-      [ 0,           0,          9.55147102, 9.60788149, 0, 0  ],
-      [ 0,           0,          0,          0,          2, 0  ],
-      [ 0,           0,          0,          0,          0, 0.6]
+      [ 0.171806, -0.037912,  0.000000,  0.000000,  0.000000,  0.000000],
+      [-0.037912,  0.124777,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  9.507881,  9.551471,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  9.551471,  9.607881,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+   ], decimal=6)
+
+  def test_sbend2(self):
+    "Propagate a state vector through a defocusing sector bend"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'sbend', 'L':2.0, 'phi':math.radians(25.0),
+         'K':-1.0},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [
+      [ 3.789181,  3.748527,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 3.748527,  3.713589,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.382682, -0.037840,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, -0.037840,  0.317318,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
 
   def test_quad1(self):
+    "Propagate a state vector through a focusing quadrupole"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'quad', 'L':2.0, 'K':1.1},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [
+      [ 0.161135, -0.037295,  0.000000,  0.000000,  0.000000,  0.000000],
+      [-0.037295,  0.132752,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, 10.981961, 11.546105,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, 11.546105, 12.150157,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    ], decimal=6)
+
+  def test_quad2(self):
     "Propagate a state vector through a defocusing quadrupole"
 
     T = self.expect = numpy.asfarray([
@@ -155,51 +237,19 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'quad', 'length':1.0, 'strength':-1.1},
+        {'name':'elem1', 'type':'quad', 'L':2.0, 'K':-1.1},
       ]
     })
 
     S = self.M.allocState({})
 
     self.M.propagate(S)
+
     assert_aequal(S.state, [
-      [ 0.54171388, 0.59291953, 0,          0,          0,          0        ],
-      [ 0.59291953, 0.68588526, 0,          0,          0,          0        ],
-      [ 0,          0,          0.34781599, 0.30082651, 0,          0        ],
-      [ 0,          0,          0.30082651, 0.34740241, 0,          0        ],
-      [ 0,          0,          0,          0,          0.5,        0        ],
-      [ 0,          0,          0,          0,          0,          0.6      ]
+      [ 4.636175,  4.903140,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 4.903140,  5.189793,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.347549, -0.029007,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, -0.029007,  0.347696,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
-
-    def test_quad2(self):
-      "Propagate a state vector through a focusing quadrupole"
-
-      T = self.expect = numpy.asfarray([
-        [0.1, 0,   0,   0,   0,   0  ],
-        [0,   0.2, 0,   0,   0,   0  ],
-        [0,   0,   0.3, 0,   0,   0  ],
-        [0,   0,   0,   0.4, 0,   0  ],
-        [0,   0,   0,   0,   0.5, 0  ],
-        [0,   0,   0,   0,   0,   0.6]
-      ])
-
-      self.M = Machine({
-        'sim_type':'MomentMatrix',
-        'elements':[
-          {'name':'elem0', 'type':'source', 'initial':T},
-          {'name':'elem1', 'type':'quad', 'length':1.0, 'strength':1.1},
-        ]
-      })
-
-      S = self.M.allocState({})
-
-      self.M.propagate(S)
-
-      assert_aequal(S.state, [
-        [0.1614777,  0.12774825,  0,          0,          0,   0  ],
-        [0.12774825, 0.13237453,  0,          0,          0,   0  ],
-        [0,          0,           1.34016493, 1.39622985, 0,   0  ],
-        [0,          0,           1.39622985, 1.54418143, 0,   0  ],
-        [0,          0,           0,          0,          0.5, 0  ],
-        [0,          0,           0,          0,          0,   0.6]
-      ], decimal=6)

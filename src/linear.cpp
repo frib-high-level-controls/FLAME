@@ -199,8 +199,8 @@ struct ElementQuad : public Base
     ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L    = c.get<double>("length"),
-               K    = c.get<double>("strength", 1.0),
+        double L    = c.get<double>("L"),
+               K    = c.get<double>("K", 0e0),
                aK   = fabs(K),
                sK   = sqrt(aK),
                sKL  = sK*L,
@@ -208,25 +208,27 @@ struct ElementQuad : public Base
                sin  = ::sin(sKL),
                cosh = ::cosh(sKL),
                sinh = ::sinh(sKL);
-        unsigned Fdir, Ddir;
+        unsigned Find, Dind;
 
-        if(K < 0.0) {
+        if(K < 0e0) {
             // defocus in X, focus in Y
-            Fdir = state_t::PS_Y;
-            Ddir = state_t::PS_X;
+            Find = state_t::PS_Y;
+            Dind = state_t::PS_X;
         } else {
             // focus in X, defocus in Y
-            Fdir = state_t::PS_X;
-            Ddir = state_t::PS_Y;
+            Find = state_t::PS_X;
+            Dind = state_t::PS_Y;
         }
 
-        this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
-        this->transfer(Fdir,Fdir+1) = sin/sK;
-        this->transfer(Fdir+1,Fdir) = sK*sin;
+        this->transfer(Find,Find)   = this->transfer(Find+1,Find+1) = cos;
+        this->transfer(Find,Find+1) = sin/sK;
+        this->transfer(Find+1,Find) = -sK*sin;
 
-        this->transfer(Ddir,Ddir) = this->transfer(Ddir+1,Ddir+1) = cosh;
-        this->transfer(Ddir,Ddir+1) = sinh/sK;
-        this->transfer(Ddir+1,Ddir) = sK*sinh;
+        this->transfer(Dind,Dind)   = this->transfer(Dind+1,Dind+1) = cosh;
+        this->transfer(Dind,Dind+1) = sinh/sK;
+        this->transfer(Dind+1,Dind) = sK*sinh;
+
+        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
     }
     virtual ~ElementQuad() {}
 
@@ -258,23 +260,23 @@ void registerLinear()
     Machine::registerState<MatrixState>("TransferMatrix");
     Machine::registerState<MatrixState>("MomentMatrix");
 
-    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector", "source");
+    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector",         "source");
     Machine::registerElement<ElementSource<LinearElementBase<MatrixState> > >("TransferMatrix", "source");
-    Machine::registerElement<ElementSource<MomentElementBase> >("MomentMatrix", "source");
+    Machine::registerElement<ElementSource<MomentElementBase>               >("MomentMatrix",   "source");
 
-    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector", "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector",         "drift");
     Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
-    Machine::registerElement<ElementDrift<MomentElementBase> >("MomentMatrix", "drift");
+    Machine::registerElement<ElementDrift<MomentElementBase>               >("MomentMatrix",   "drift");
 
-    Machine::registerElement<ElementSBend<LinearElementBase<VectorState> > >("Vector", "sbend");
+    Machine::registerElement<ElementSBend<LinearElementBase<VectorState> > >("Vector",         "sbend");
     Machine::registerElement<ElementSBend<LinearElementBase<MatrixState> > >("TransferMatrix", "sbend");
-    Machine::registerElement<ElementSBend<MomentElementBase> >("MomentMatrix", "sbend");
+    Machine::registerElement<ElementSBend<MomentElementBase>               >("MomentMatrix",   "sbend");
 
-    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector", "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector",         "quad");
     Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
-    Machine::registerElement<ElementQuad<MomentElementBase> >("MomentMatrix", "quad");
+    Machine::registerElement<ElementQuad<MomentElementBase>               >("MomentMatrix",   "quad");
 
-    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector", "generic");
+    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector",         "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
-    Machine::registerElement<ElementGeneric<MomentElementBase> >("MomentMatrix", "generic");
+    Machine::registerElement<ElementGeneric<MomentElementBase>               >("MomentMatrix",   "generic");
 }
