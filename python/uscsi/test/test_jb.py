@@ -1,106 +1,255 @@
 
+import sys
 import unittest
+import math
 import numpy
 from numpy import testing as NT
-from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
+#from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
+from numpy.testing import assert_array_almost_equal as assert_aequal
 
 from .. import Machine
 
+def print_state(S):
+  n = 6
+  for i in range(n):
+    sys.stdout.write('[')
+    for j in range(n):
+      sys.stdout.write('%9.6f' % (S.state[i, j]))
+      if j != n-1: sys.stdout.write(', ')
+    if i != n-1:
+      sys.stdout.write('],\n')
+    else:
+      sys.stdout.write(']\n')
+
 class testBasic(unittest.TestCase):
   def setUp(self):
+    # Called before each test.
+
+    # T = self.expect = numpy.asfarray([
+    #   [1, 0, 0, 0, 0, 0],
+    #   [0, 1, 0, 0, 0, 0],
+    #   [0, 0, 1, 0, 0, 0],
+    #   [0, 0, 0, 1, 0, 0],
+    #   [0, 0, 0, 0, 1, 0],
+    #   [0, 0, 0, 0, 0, 1]
+    # ])
+
+   # self.M = Machine({
+   #   'sim_type':'MomentMatrix',
+   #   'elements':[
+   #     {'name':'elem0', 'type':'source', 'initial':T},
+   #     {'name':'elem2', 'type':'dipole', 'length':1.234},
+   #     {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
+   #   ]
+   # })
+
+   return
+
+  def test_generic(self):
+    "Propagate a state matrix through a generic section"
+
     T = self.expect = numpy.asfarray([
       [1, 0, 0, 0, 0, 0],
       [0, 1, 0, 0, 0, 0],
       [0, 0, 1, 0, 0, 0],
       [0, 0, 0, 1, 0, 0],
       [0, 0, 0, 0, 1, 0],
-      [0, 0, 0, 0, 0, 1],
+      [0, 0, 0, 0, 0, 1]
     ])
+
     self.M = Machine({
       'sim_type':'MomentMatrix',
       'elements':[
-#        {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'drift', 'length':1.234},
-#        {'name':'elem2', 'type':'dipole', 'length':1.234},
-#        {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
-      ],
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)}
+      ]
     })
-#    print self.M
-
-  def test_generic(self):
-    "Propagate a state matrix through a generic section"
-
-#    print "test_generic ->"
 
     S = self.M.allocState({})
+
+#    S.state[:] = [
+#      [1, 0, 0, 0, 0, 0],
+#      [0, 1, 0, 0, 0, 0],
+#      [0, 0, 1, 0, 0, 0],
+#      [0, 0, 0, 1, 0, 0],
+#      [0, 0, 0, 0, 1, 0],
+#      [0, 0, 0, 0, 0, 1]
+#    ]
 
     self.M.propagate(S)
 
     assert_aequal(S.state, [
-      [2.522756, 1.234, 0,        0,     0,        0],
-      [1.234,    1,     0,        0,     0,        0],
-      [0,        0,     2.522756, 1.234, 0,        0],
-      [0,        0,     1.234,    1,     0,        0],
-      [0,        0,     0,        0,     1.522756, 0],
-      [0,        0,     0,        0,     0,        1]
+      [1, 0, 0, 0, 0, 0],
+      [0, 1, 0, 0, 0, 0],
+      [0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0],
+      [0, 0, 0, 0, 1, 0],
+      [0, 0, 0, 0, 0, 1]
     ])
-
-#    print "-> test_generic"
 
   def test_drift(self):
-    "Propagate a state vector through a drift section"
+    "Propagate a state vector through a drift"
 
-#    print "test_drift ->:"
-    S = self.M.allocState({})
-
-    S.state[:] = [
+    T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
       [0,   0.2, 0,   0,   0,   0  ],
       [0,   0,   0.3, 0,   0,   0  ],
       [0,   0,   0,   0.4, 0,   0  ],
       [0,   0,   0,   0,   0.5, 0  ],
       [0,   0,   0,   0,   0,   0.6]
-    ]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'drift', 'length':1.234},
+      ]
+    })
+
+    S = self.M.allocState({})
 
     self.M.propagate(S)
 
     assert_aequal(S.state, [
-      [0.4045512, 0.2468, 0,         0,      0,        0  ],
-      [0.2468,    0.2,    0,         0,      0,        0  ],
-      [0,         0,      0.9091024, 0.4936, 0,        0  ],
-      [0,         0,      0.4936,    0.4,    0,        0  ],
-      [0,         0,      0,         0,      0.761378, 0  ],
-      [0,         0,      0,         0,      0,        0.6]
+      [ 0.404551,  0.246800,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.246800,  0.200000,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.909102,  0.493600,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.493600,  0.400000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.761378,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ])
 
-#    print "-> test_drift"
+  def test_sbend1(self):
+    "Propagate a state vector through a focusing sector bend"
 
-  def test_dipole(self):
-    "Propagate a state vector through a dipole section"
-
-#    print "test_dipole ->:"
-    S = self.M.allocState({})
-
-    S.state[:] = [
+    T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
       [0,   0.2, 0,   0,   0,   0  ],
       [0,   0,   0.3, 0,   0,   0  ],
       [0,   0,   0,   0.4, 0,   0  ],
       [0,   0,   0,   0,   0.5, 0  ],
       [0,   0,   0,   0,   0,   0.6]
-    ]
+    ])
 
-#    print S.state
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'sbend', 'L':2.0, 'phi':math.radians(25.0),
+         'K':1.0},
+      ]
+    })
+
+    S = self.M.allocState({})
+
     self.M.propagate(S)
-#    print S.state
 
-#    assert_aequal(S.state, [
-#      [0.4045512, 0.2468, 0,         0,      0,        0  ],
-#      [0.2468,    0.2,    0,         0,      0,        0  ],
-#      [0,         0,      0.9091024, 0.4936, 0,        0  ],
-#      [0,         0,      0.4936,    0.4,    0,        0  ],
-#      [0,         0,      0,         0,      0.761378, 0  ],
-#      [0,         0,      0,         0,      0,        0.6]
-#    ])
+    assert_aequal(S.state, [
+      [ 0.171806, -0.037912,  0.000000,  0.000000,  0.000000,  0.000000],
+      [-0.037912,  0.124777,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  9.507881,  9.551471,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  9.551471,  9.607881,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+   ], decimal=6)
 
-#    print "-> test_dipole"
+  def test_sbend2(self):
+    "Propagate a state vector through a defocusing sector bend"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'sbend', 'L':2.0, 'phi':math.radians(25.0),
+         'K':-1.0},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [
+      [ 3.789181,  3.748527,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 3.748527,  3.713589,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.382682, -0.037840,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, -0.037840,  0.317318,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    ], decimal=6)
+
+  def test_quad1(self):
+    "Propagate a state vector through a focusing quadrupole"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'quad', 'L':2.0, 'K':1.1},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [
+      [ 0.161135, -0.037295,  0.000000,  0.000000,  0.000000,  0.000000],
+      [-0.037295,  0.132752,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, 10.981961, 11.546105,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, 11.546105, 12.150157,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    ], decimal=6)
+
+  def test_quad2(self):
+    "Propagate a state vector through a defocusing quadrupole"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'quad', 'L':2.0, 'K':-1.1},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [
+      [ 4.636175,  4.903140,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 4.903140,  5.189793,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.347549, -0.029007,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, -0.029007,  0.347696,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    ], decimal=6)

@@ -114,9 +114,9 @@ struct ElementDrift : public Base
         :base_t(c)
     {
         double len = c.get<double>("length");
-        this->transfer(state_t::L_X, state_t::P_X) = len;
-        this->transfer(state_t::L_Y, state_t::P_Y) = len;
-        this->transfer(state_t::L_Z, state_t::L_Z) = len;
+        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
+        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
     }
     virtual ~ElementDrift() {}
 
@@ -124,66 +124,114 @@ struct ElementDrift : public Base
 };
 
 template<typename Base>
-struct ElementThinDipole : public Base
+struct ElementSBend : public Base
 {
+    // Sector Bend.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
-    ElementThinDipole(const Config& c)
+    ElementSBend(const Config& c)
         :base_t(c)
     {
-        double angle = c.get<double>("angle"), // in rad.
-               P = c.get<double>("radius", 1.0),
-               off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::L_Y : state_t::L_X ,
-               cos = ::cos(angle),
-               sin = ::sin(angle);
+        double L      = c.get<double>("L", 0e0),
+               phi    = c.get<double>("phi", 0e0), // [rad].
+               K      = c.get<double>("K", 0e0),   // [1/m^2].
+               rho    = L/phi,
+               Kx     = K + 1e0/sqr(rho),
+               Ky     = -K,
+               sqrtK,
+               psi,
+               cs,
+               sn;
 
-        this->transfer(off,off) = this->transfer(off+1,off+1) = cos;
-        this->transfer(off,off+1) = P*sin;
-        this->transfer(off+1,off) = -sin/P;
+        // Horizontal plane.
+        if (Kx > 0e0) {
+            sqrtK = sqrt(Kx);
+            psi = sqrtK*L;
+            cs = ::cos(fabs(psi));
+            sn = ::sin(fabs(psi));
+            this->transfer(state_t::PS_X,  state_t::PS_X)  = cs;
+            this->transfer(state_t::PS_X,  state_t::PS_PX) = sn/sqrtK;
+            this->transfer(state_t::PS_PX, state_t::PS_X)  = -sqrtK*sn;
+            this->transfer(state_t::PS_PX, state_t::PS_PX) = cs;
+        } else {
+            sqrtK = sqrt(-Kx);
+            psi = sqrtK*L;
+            cs = ::cosh(fabs(psi));
+            sn = ::sinh(fabs(psi));
+            this->transfer(state_t::PS_X,  state_t::PS_X)  = cs;
+            this->transfer(state_t::PS_X,  state_t::PS_PX) = sn/sqrtK;
+            this->transfer(state_t::PS_PX, state_t::PS_X)  = sqrtK*sn;
+            this->transfer(state_t::PS_PX, state_t::PS_PX) = cs;
+        }
+
+        // Vertical plane.
+        if (Ky > 0e0) {
+            sqrtK = sqrt(Ky);
+            psi = sqrtK*L;
+            cs = ::cos(fabs(psi));
+            sn = ::sin(fabs(psi));
+            this->transfer(state_t::PS_Y,  state_t::PS_Y)  = cs;
+            this->transfer(state_t::PS_Y,  state_t::PS_PY) = sn/sqrtK;
+            this->transfer(state_t::PS_PY, state_t::PS_Y)  = -sqrtK*sn;
+            this->transfer(state_t::PS_PY, state_t::PS_PY) = cs;
+        } else {
+            sqrtK = sqrt(-Ky);
+            psi = sqrtK*L;
+            cs = ::cosh(fabs(psi));
+            sn = ::sinh(fabs(psi));
+            this->transfer(state_t::PS_Y,  state_t::PS_Y)  = cs;
+            this->transfer(state_t::PS_Y,  state_t::PS_PY) = sn/sqrtK;
+            this->transfer(state_t::PS_PY, state_t::PS_Y)  = sqrtK*sn;
+            this->transfer(state_t::PS_PY, state_t::PS_PY) = cs;
+        }
+        // Longitudinal plane.
+        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
     }
-    virtual ~ElementThinDipole() {}
+    virtual ~ElementSBend() {}
 
-    virtual const char* type_name() const {return "dipole";}
+    virtual const char* type_name() const {return "sbend";}
 };
 
 template<typename Base>
-struct ElementThinQuad : public Base
+struct ElementQuad : public Base
 {
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
-    ElementThinQuad(const Config& c)
+    ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L  = c.get<double>("length"),
-               K  = c.get<double>("strength", 1.0),
-               aK = fabs(K),
-               sK = sqrt(aK),
-               sKL=sK*L,
-               cos = ::cos(sKL),
-               sin = ::sin(sKL),
+        double L    = c.get<double>("L"),
+               K    = c.get<double>("K", 0e0),
+               aK   = fabs(K),
+               sK   = sqrt(aK),
+               sKL  = sK*L,
+               cos  = ::cos(sKL),
+               sin  = ::sin(sKL),
                cosh = ::cosh(sKL),
                sinh = ::sinh(sKL);
-        unsigned Fdir, Ddir;
+        unsigned Find, Dind;
 
-        if(K<0.0) {
+        if(K < 0e0) {
             // defocus in X, focus in Y
-            Fdir = state_t::L_Y;
-            Ddir = state_t::L_X;
+            Find = state_t::PS_Y;
+            Dind = state_t::PS_X;
         } else {
             // focus in X, defocus in Y
-            Fdir = state_t::L_X;
-            Ddir = state_t::L_Y;
+            Find = state_t::PS_X;
+            Dind = state_t::PS_Y;
         }
 
-        this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
-        this->transfer(Fdir,Fdir+1) = sin/sK;
-        this->transfer(Fdir+1,Fdir) = sK*sin;
+        this->transfer(Find,Find)   = this->transfer(Find+1,Find+1) = cos;
+        this->transfer(Find,Find+1) = sin/sK;
+        this->transfer(Find+1,Find) = -sK*sin;
 
-        this->transfer(Ddir,Ddir) = this->transfer(Ddir+1,Ddir+1) = cosh;
-        this->transfer(Ddir,Ddir+1) = sinh/sK;
-        this->transfer(Ddir+1,Ddir) = sK*sinh;
+        this->transfer(Dind,Dind)   = this->transfer(Dind+1,Dind+1) = cosh;
+        this->transfer(Dind,Dind+1) = sinh/sK;
+        this->transfer(Dind+1,Dind) = sK*sinh;
+
+        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
     }
-    virtual ~ElementThinQuad() {}
+    virtual ~ElementQuad() {}
 
     virtual const char* type_name() const {return "quad";}
 };
@@ -213,23 +261,23 @@ void registerLinear()
     Machine::registerState<MatrixState>("TransferMatrix");
     Machine::registerState<MatrixState>("MomentMatrix");
 
-    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector", "source");
+    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector",         "source");
     Machine::registerElement<ElementSource<LinearElementBase<MatrixState> > >("TransferMatrix", "source");
-    Machine::registerElement<ElementSource<MomentElementBase> >("MomentMatrix", "source");
+    Machine::registerElement<ElementSource<MomentElementBase>               >("MomentMatrix",   "source");
 
-    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector", "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector",         "drift");
     Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
-    Machine::registerElement<ElementDrift<MomentElementBase> >("MomentMatrix", "drift");
+    Machine::registerElement<ElementDrift<MomentElementBase>               >("MomentMatrix",   "drift");
 
-    Machine::registerElement<ElementThinDipole<LinearElementBase<VectorState> > >("Vector", "dipole");
-    Machine::registerElement<ElementThinDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "dipole");
-    Machine::registerElement<ElementThinDipole<MomentElementBase> >("MomentMatrix", "dipole");
+    Machine::registerElement<ElementSBend<LinearElementBase<VectorState> > >("Vector",         "sbend");
+    Machine::registerElement<ElementSBend<LinearElementBase<MatrixState> > >("TransferMatrix", "sbend");
+    Machine::registerElement<ElementSBend<MomentElementBase>               >("MomentMatrix",   "sbend");
 
-    Machine::registerElement<ElementThinQuad<LinearElementBase<VectorState> > >("Vector", "quad");
-    Machine::registerElement<ElementThinQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
-    Machine::registerElement<ElementThinQuad<MomentElementBase> >("MomentMatrix", "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector",         "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
+    Machine::registerElement<ElementQuad<MomentElementBase>               >("MomentMatrix",   "quad");
 
-    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector", "generic");
+    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector",         "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
-    Machine::registerElement<ElementGeneric<MomentElementBase> >("MomentMatrix", "generic");
+    Machine::registerElement<ElementGeneric<MomentElementBase>               >("MomentMatrix",   "generic");
 }
