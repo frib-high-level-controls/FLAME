@@ -14,6 +14,11 @@
  *
  * x' = M * x
  */
+
+// Macros:
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
 template<typename State>
 struct LinearElementBase : public ElementVoid
 {

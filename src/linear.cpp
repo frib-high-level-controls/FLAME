@@ -123,38 +123,72 @@ struct ElementDrift : public Base
 };
 
 template<typename Base>
-struct ElementDipole : public Base
+struct ElementSBend : public Base
 {
+    // Sector Bend.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
-    ElementDipole(const Config& c)
+    ElementSBend(const Config& c)
         :base_t(c)
     {
-        double phi = c.get<double>("angle"), // in rad.
-               rho = c.get<double>("radius", 1.0),
-               L   = rho*phi,
-               off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::PS_Y : state_t::PS_X ,
-               cos = ::cos(phi),
-               sin = ::sin(phi);
+        double L      = c.get<double>("L", 0e0),
+               phi    = c.get<double>("phi", 0e0), // [rad].
+               K      = c.get<double>("K", 0e0),   // [1/m^2].
+               rho    = L/phi,
+               Kx     = K + 1e0/sqr(rho),
+               Ky     = -K,
+               sqrtK,
+               psi,
+               cs,
+               sn;
 
-        // Off is 0 or 2.
-        if (off == 0) {
-            this->transfer(state_t::PS_X, state_t::PS_X)   = cos;
-            this->transfer(state_t::PS_X, state_t::PS_PX)  = rho*sin;
-            this->transfer(state_t::PS_PX, state_t::PS_X)  = -sin/rho;
-            this->transfer(state_t::PS_PX, state_t::PS_PX) = cos;
-            this->transfer(state_t::PS_Y, state_t::PS_PY)  = L;
+        // Horizontal plane.
+        if (Kx > 0e0) {
+            sqrtK = sqrt(Kx);
+            psi = sqrtK*L;
+            cs = ::cos(fabs(psi));
+            sn = ::sin(fabs(psi));
+            this->transfer(state_t::PS_X,  state_t::PS_X)  = cs;
+            this->transfer(state_t::PS_X,  state_t::PS_PX) = sn/sqrtK;
+            this->transfer(state_t::PS_PX, state_t::PS_X)  = -sqrtK*sn;
+            this->transfer(state_t::PS_PX, state_t::PS_PX) = cs;
         } else {
-            this->transfer(state_t::PS_Y, state_t::PS_Y)   = cos;
-            this->transfer(state_t::PS_Y, state_t::PS_PY)  = rho*sin;
-            this->transfer(state_t::PS_PY, state_t::PS_Y)  = -sin/rho;
-            this->transfer(state_t::PS_PY, state_t::PS_PY) = cos;
-            this->transfer(state_t::PS_X, state_t::PS_PX)  = L;
+            sqrtK = sqrt(-Kx);
+            psi = sqrtK*L;
+            cs = ::cosh(fabs(psi));
+            sn = ::sinh(fabs(psi));
+            this->transfer(state_t::PS_X,  state_t::PS_X)  = cs;
+            this->transfer(state_t::PS_X,  state_t::PS_PX) = sn/sqrtK;
+            this->transfer(state_t::PS_PX, state_t::PS_X)  = sqrtK*sn;
+            this->transfer(state_t::PS_PX, state_t::PS_PX) = cs;
         }
-    }
-    virtual ~ElementDipole() {}
 
-    virtual const char* type_name() const {return "dipole";}
+        // Vertical plane.
+        if (Ky > 0e0) {
+            sqrtK = sqrt(Ky);
+            psi = sqrtK*L;
+            cs = ::cos(fabs(psi));
+            sn = ::sin(fabs(psi));
+            this->transfer(state_t::PS_Y,  state_t::PS_Y)  = cs;
+            this->transfer(state_t::PS_Y,  state_t::PS_PY) = sn/sqrtK;
+            this->transfer(state_t::PS_PY, state_t::PS_Y)  = -sqrtK*sn;
+            this->transfer(state_t::PS_PY, state_t::PS_PY) = cs;
+        } else {
+            sqrtK = sqrt(-Ky);
+            psi = sqrtK*L;
+            cs = ::cosh(fabs(psi));
+            sn = ::sinh(fabs(psi));
+            this->transfer(state_t::PS_Y,  state_t::PS_Y)  = cs;
+            this->transfer(state_t::PS_Y,  state_t::PS_PY) = sn/sqrtK;
+            this->transfer(state_t::PS_PY, state_t::PS_Y)  = sqrtK*sn;
+            this->transfer(state_t::PS_PY, state_t::PS_PY) = cs;
+        }
+        // Longitudinal plane.
+        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
+    }
+    virtual ~ElementSBend() {}
+
+    virtual const char* type_name() const {return "sbend";}
 };
 
 template<typename Base>
@@ -176,7 +210,7 @@ struct ElementQuad : public Base
                sinh = ::sinh(sKL);
         unsigned Fdir, Ddir;
 
-        if(K<0.0) {
+        if(K < 0.0) {
             // defocus in X, focus in Y
             Fdir = state_t::PS_Y;
             Ddir = state_t::PS_X;
@@ -232,9 +266,9 @@ void registerLinear()
     Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
     Machine::registerElement<ElementDrift<MomentElementBase> >("MomentMatrix", "drift");
 
-    Machine::registerElement<ElementDipole<LinearElementBase<VectorState> > >("Vector", "dipole");
-    Machine::registerElement<ElementDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "dipole");
-    Machine::registerElement<ElementDipole<MomentElementBase> >("MomentMatrix", "dipole");
+    Machine::registerElement<ElementSBend<LinearElementBase<VectorState> > >("Vector", "sbend");
+    Machine::registerElement<ElementSBend<LinearElementBase<MatrixState> > >("TransferMatrix", "sbend");
+    Machine::registerElement<ElementSBend<MomentElementBase> >("MomentMatrix", "sbend");
 
     Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector", "quad");
     Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
