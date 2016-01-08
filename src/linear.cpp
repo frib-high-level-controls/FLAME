@@ -76,6 +76,12 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
 namespace {
 
 template<typename Base>
+void get(typename Base::value_t &M)
+{
+    M(0, 0) = 1e0;
+}
+
+template<typename Base>
 struct ElementSource : public Base
 {
     typedef Base base_t;
@@ -112,7 +118,7 @@ struct ElementDrift : public Base
     ElementDrift(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("length");
+        double len = c.get<double>("L");
         this->transfer(state_t::PS_X, state_t::PS_PX) = len;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
         this->transfer(state_t::PS_S, state_t::PS_S)  = len;
@@ -220,15 +226,26 @@ struct ElementQuad : public Base
             Dind = state_t::PS_Y;
         }
 
-        this->transfer(Find,Find)   = this->transfer(Find+1,Find+1) = cos;
-        this->transfer(Find,Find+1) = sin/sK;
-        this->transfer(Find+1,Find) = -sK*sin;
+        this->transfer(Find, Find) = this->transfer(Find+1, Find+1) = cos;
+        if (sK != 0e0)
+            this->transfer(Find, Find+1) = sin/sK;
+        else
+            this->transfer(Find, Find+1) = L;
+        if (sK != 0e0)
+            this->transfer(Find+1, Find) = -sK*sin;
+        else
+            this->transfer(Find+1, Find) = 0e0;
+        this->transfer(Dind, Dind) = this->transfer(Dind+1, Dind+1) = cosh;
+        if (sK != 0e0)
+            this->transfer(Dind, Dind+1) = sinh/sK;
+        else
+            this->transfer(Dind, Dind+1) = L;
+        if (sK != 0e0)
+            this->transfer(Dind+1, Dind) = sK*sinh;
+        else
+            this->transfer(Dind+1, Dind) = 0e0;
 
-        this->transfer(Dind,Dind)   = this->transfer(Dind+1,Dind+1) = cosh;
-        this->transfer(Dind,Dind+1) = sinh/sK;
-        this->transfer(Dind+1,Dind) = sK*sinh;
-
-        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
+        this->transfer(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementQuad() {}
 

@@ -9,6 +9,11 @@ from numpy.testing import assert_array_almost_equal as assert_aequal
 
 from .. import Machine
 
+from .._internal import (GLPSPrinter as dictshow, _GLPSParse)
+
+import os
+datadir = os.path.dirname(__file__)
+
 def print_state(S):
   n = 6
   for i in range(n):
@@ -20,6 +25,10 @@ def print_state(S):
       sys.stdout.write('],\n')
     else:
       sys.stdout.write(']\n')
+
+class GLPSParser(object):
+    def parse(self, s):
+        return _GLPSParse(s)
 
 class testBasic(unittest.TestCase):
   def setUp(self):
@@ -38,7 +47,7 @@ class testBasic(unittest.TestCase):
    #   'sim_type':'MomentMatrix',
    #   'elements':[
    #     {'name':'elem0', 'type':'source', 'initial':T},
-   #     {'name':'elem2', 'type':'dipole', 'length':1.234},
+   #     {'name':'elem2', 'type':'dipole', 'L':1.234},
    #     {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
    #   ]
    # })
@@ -103,7 +112,7 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'drift', 'length':1.234},
+        {'name':'elem1', 'type':'drift', 'L':1.234},
       ]
     })
 
@@ -251,5 +260,27 @@ class testBasic(unittest.TestCase):
       [ 0.000000,  0.000000,  0.347549, -0.029007,  0.000000,  0.000000],
       [ 0.000000,  0.000000, -0.029007,  0.347696,  0.000000,  0.000000],
       [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    ], decimal=6)
+
+  def test_lat(self):
+    # Propagate a state vector through a lattice defined by a lattice file.
+    P = GLPSParser()
+
+    inf = open(os.path.join(datadir, 'moment_jb.lat'), 'r')
+    C = P.parse(inf.read())
+
+    self.M = Machine(C)
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+#    print_state(S)
+    assert_aequal(S.state, [
+      [ 5.367983,  0.300692,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.300692,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  9.390504,  2.603222,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  2.603222,  0.734440,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  0.000000,  0.000000, 13.430708,  0.000000],
       [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
