@@ -70,7 +70,7 @@ class testParse(unittest.TestCase):
 
         C = P.parse("""
 hello = "test\x1f";
-x1: drift, L=4;
+x1: drift, L=4; # comments are ignored
 foo: LINE = (x1, x1);
 """)
         
