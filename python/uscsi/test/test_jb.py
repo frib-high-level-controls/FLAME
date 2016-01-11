@@ -213,7 +213,7 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'quad', 'L':2.0, 'K':1.1},
+        {'name':'elem1', 'type':'quadrupole', 'L':2.0, 'K':1.1},
       ]
     })
 
@@ -246,7 +246,7 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'quad', 'L':2.0, 'K':-1.1},
+        {'name':'elem1', 'type':'quadrupole', 'L':2.0, 'K':-1.1},
       ]
     })
 
@@ -263,6 +263,39 @@ class testBasic(unittest.TestCase):
       [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
 
+  def test_solenoid(self):
+    "Propagate a state vector through a defocusing quadrupole"
+
+    T = self.expect = numpy.asfarray([
+      [0.1, 0,   0,   0,   0,   0  ],
+      [0,   0.2, 0,   0,   0,   0  ],
+      [0,   0,   0.3, 0,   0,   0  ],
+      [0,   0,   0,   0.4, 0,   0  ],
+      [0,   0,   0,   0,   0.5, 0  ],
+      [0,   0,   0,   0,   0,   0.6]
+    ])
+
+    self.M = Machine({
+      'sim_type':'MomentMatrix',
+      'elements':[
+        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem1', 'type':'solenoid', 'L':1.123, 'K':0.0},
+      ]
+    })
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    # assert_aequal(S.state, [
+    #   [ 4.636175,  4.903140,  0.000000,  0.000000,  0.000000,  0.000000],
+    #   [ 4.903140,  5.189793,  0.000000,  0.000000,  0.000000,  0.000000],
+    #   [ 0.000000,  0.000000,  0.347549, -0.029007,  0.000000,  0.000000],
+    #   [ 0.000000,  0.000000, -0.029007,  0.347696,  0.000000,  0.000000],
+    #   [ 0.000000,  0.000000,  0.000000,  0.000000,  2.000000,  0.000000],
+    #   [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    # ], decimal=6)
+
   def test_lat(self):
     # Propagate a state vector through a lattice defined by a lattice file.
     P = GLPSParser()
@@ -271,6 +304,7 @@ class testBasic(unittest.TestCase):
     C = P.parse(inf.read())
 
     self.M = Machine(C)
+#    print self.M
 
     S = self.M.allocState({})
 
@@ -284,3 +318,26 @@ class testBasic(unittest.TestCase):
       [ 0.000000,  0.000000,  0.000000,  0.000000, 13.430708,  0.000000],
       [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
+
+  def test_LS1(self):
+    # Propagate a state vector through a lattice defined by a lattice file.
+    P = GLPSParser()
+
+    inf = open(os.path.join(datadir, 'LS1.lat'), 'r')
+    C = P.parse(inf.read())
+
+    self.M = Machine(C)
+#    print self.M
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+    # print_state(S)
+    # assert_aequal(S.state, [
+    #   [ 5.367983,  0.300692,  0.000000,  0.000000,  0.000000,  0.000000],
+    #   [ 0.300692,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],
+    #   [ 0.000000,  0.000000,  9.390504,  2.603222,  0.000000,  0.000000],
+    #   [ 0.000000,  0.000000,  2.603222,  0.734440,  0.000000,  0.000000],
+    #   [ 0.000000,  0.000000,  0.000000,  0.000000, 13.430708,  0.000000],
+    #   [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+    # ], decimal=6)

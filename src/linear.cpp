@@ -76,9 +76,47 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
 namespace {
 
 template<typename Base>
-void get(typename Base::value_t &M)
+void Get2by2Matrix(const double L, const double K, const unsigned ind, typename Base::value_t &M)
 {
-    M(0, 0) = 1e0;
+    // Transport matrix for one plane for a Quadrupole.
+    double sqrtK,
+           psi,
+           cs,
+           sn;
+
+    if (K > 0e0) {
+        // Focusing.
+        sqrtK = sqrt(K);
+        psi = sqrtK*L;
+        cs = ::cos(psi);
+        sn = ::sin(psi);
+
+        M(ind, ind) = M(ind+1, ind+1) = cs;
+        if (sqrtK != 0e0)
+            M(ind, ind+1) = sn/sqrtK;
+        else
+            M(ind, ind+1) = L;
+        if (sqrtK != 0e0)
+            M(ind+1, ind) = -sqrtK*sn;
+        else
+            M(ind+1, ind) = 0e0;
+    } else {
+        // Defocusing.
+        sqrtK = sqrt(-K);
+        psi = sqrtK*L;
+        cs = ::cosh(psi);
+        sn = ::sinh(psi);
+
+        M(ind, ind) = M(ind+1, ind+1) = cs;
+        if (sqrtK != 0e0)
+            M(ind, ind+1) = sn/sqrtK;
+        else
+            M(ind, ind+1) = L;
+        if (sqrtK != 0e0)
+            M(ind+1, ind) = sqrtK*sn;
+        else
+            M(ind+1, ind) = 0e0;
+    }
 }
 
 template<typename Base>
@@ -111,8 +149,25 @@ struct ElementSource : public Base
 };
 
 template<typename Base>
+struct ElementMark : public Base
+{
+    // Transport (identity) matrix for a Marker.
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementMark(const Config& c)
+        :base_t(c)
+    {
+        // Identity matrix.
+    }
+    virtual ~ElementMark() {}
+
+    virtual const char* type_name() const {return "marker";}
+};
+
+template<typename Base>
 struct ElementDrift : public Base
 {
+    // Transport matrix for a Drift.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementDrift(const Config& c)
@@ -131,64 +186,23 @@ struct ElementDrift : public Base
 template<typename Base>
 struct ElementSBend : public Base
 {
-    // Sector Bend.
+    // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L      = c.get<double>("L", 0e0),
+        double L      = c.get<double>("L",   0e0),
                phi    = c.get<double>("phi", 0e0), // [rad].
-               K      = c.get<double>("K", 0e0),   // [1/m^2].
+               K      = c.get<double>("K",   0e0),   // [1/m^2].
                rho    = L/phi,
                Kx     = K + 1e0/sqr(rho),
-               Ky     = -K,
-               sqrtK,
-               psi,
-               cs,
-               sn;
+               Ky     = -K;
 
         // Horizontal plane.
-        if (Kx > 0e0) {
-            sqrtK = sqrt(Kx);
-            psi = sqrtK*L;
-            cs = ::cos(fabs(psi));
-            sn = ::sin(fabs(psi));
-            this->transfer(state_t::PS_X,  state_t::PS_X)  = cs;
-            this->transfer(state_t::PS_X,  state_t::PS_PX) = sn/sqrtK;
-            this->transfer(state_t::PS_PX, state_t::PS_X)  = -sqrtK*sn;
-            this->transfer(state_t::PS_PX, state_t::PS_PX) = cs;
-        } else {
-            sqrtK = sqrt(-Kx);
-            psi = sqrtK*L;
-            cs = ::cosh(fabs(psi));
-            sn = ::sinh(fabs(psi));
-            this->transfer(state_t::PS_X,  state_t::PS_X)  = cs;
-            this->transfer(state_t::PS_X,  state_t::PS_PX) = sn/sqrtK;
-            this->transfer(state_t::PS_PX, state_t::PS_X)  = sqrtK*sn;
-            this->transfer(state_t::PS_PX, state_t::PS_PX) = cs;
-        }
-
+        Get2by2Matrix<Base>(L, Kx, (unsigned)state_t::PS_X, this->transfer);
         // Vertical plane.
-        if (Ky > 0e0) {
-            sqrtK = sqrt(Ky);
-            psi = sqrtK*L;
-            cs = ::cos(fabs(psi));
-            sn = ::sin(fabs(psi));
-            this->transfer(state_t::PS_Y,  state_t::PS_Y)  = cs;
-            this->transfer(state_t::PS_Y,  state_t::PS_PY) = sn/sqrtK;
-            this->transfer(state_t::PS_PY, state_t::PS_Y)  = -sqrtK*sn;
-            this->transfer(state_t::PS_PY, state_t::PS_PY) = cs;
-        } else {
-            sqrtK = sqrt(-Ky);
-            psi = sqrtK*L;
-            cs = ::cosh(fabs(psi));
-            sn = ::sinh(fabs(psi));
-            this->transfer(state_t::PS_Y,  state_t::PS_Y)  = cs;
-            this->transfer(state_t::PS_Y,  state_t::PS_PY) = sn/sqrtK;
-            this->transfer(state_t::PS_PY, state_t::PS_Y)  = sqrtK*sn;
-            this->transfer(state_t::PS_PY, state_t::PS_PY) = cs;
-        }
+        Get2by2Matrix<Base>(L, Ky, (unsigned)state_t::PS_Y, this->transfer);
         // Longitudinal plane.
         this->transfer(state_t::PS_S,  state_t::PS_S) = L;
     }
@@ -200,57 +214,103 @@ struct ElementSBend : public Base
 template<typename Base>
 struct ElementQuad : public Base
 {
+    // Transport matrix for a Quadrupole (Cartesian coordinates).
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementQuad(const Config& c)
         :base_t(c)
     {
         double L    = c.get<double>("L"),
-               K    = c.get<double>("K", 0e0),
-               aK   = fabs(K),
-               sK   = sqrt(aK),
-               sKL  = sK*L,
-               cos  = ::cos(sKL),
-               sin  = ::sin(sKL),
-               cosh = ::cosh(sKL),
-               sinh = ::sinh(sKL);
-        unsigned Find, Dind;
+               K    = c.get<double>("K", 0e0);
 
-        if(K < 0e0) {
-            // defocus in X, focus in Y
-            Find = state_t::PS_Y;
-            Dind = state_t::PS_X;
-        } else {
-            // focus in X, defocus in Y
-            Find = state_t::PS_X;
-            Dind = state_t::PS_Y;
-        }
-
-        this->transfer(Find, Find) = this->transfer(Find+1, Find+1) = cos;
-        if (sK != 0e0)
-            this->transfer(Find, Find+1) = sin/sK;
-        else
-            this->transfer(Find, Find+1) = L;
-        if (sK != 0e0)
-            this->transfer(Find+1, Find) = -sK*sin;
-        else
-            this->transfer(Find+1, Find) = 0e0;
-        this->transfer(Dind, Dind) = this->transfer(Dind+1, Dind+1) = cosh;
-        if (sK != 0e0)
-            this->transfer(Dind, Dind+1) = sinh/sK;
-        else
-            this->transfer(Dind, Dind+1) = L;
-        if (sK != 0e0)
-            this->transfer(Dind+1, Dind) = sK*sinh;
-        else
-            this->transfer(Dind+1, Dind) = 0e0;
-
+        // Horizontal plane.
+        Get2by2Matrix<Base>(L,  K, (unsigned)state_t::PS_X, this->transfer);
+        // Vertical plane.
+        Get2by2Matrix<Base>(L, -K, (unsigned)state_t::PS_Y, this->transfer);
+        // Longitudinal plane.
         this->transfer(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementQuad() {}
 
-    virtual const char* type_name() const {return "quad";}
+    virtual const char* type_name() const {return "quadupole";}
 };
+
+template<typename Base>
+struct ElementSolenoid : public Base
+{
+    // Transport (identity) matrix for a Solenoid; K = B0/(B*rho).
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementSolenoid(const Config& c)
+        :base_t(c)
+    {
+        double L = c.get<double>("L"),
+               K = c.get<double>("K", 0e0),
+               C = ::cos(K*L),
+               S = ::sin(K*L);
+
+        this->transfer(state_t::PS_X, state_t::PS_X)
+                = this->transfer(state_t::PS_PX, state_t::PS_PX)
+                = this->transfer(state_t::PS_Y, state_t::PS_Y)
+                = this->transfer(state_t::PS_PY, state_t::PS_PY)
+                = sqr(C);
+
+        if (K != 0e0)
+            this->transfer(state_t::PS_X, state_t::PS_PX) = S*C/K;
+        else
+            this->transfer(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer(state_t::PS_X, state_t::PS_Y) = S*C;
+        if (K != 0e0)
+            this->transfer(state_t::PS_X, state_t::PS_PY) = sqr(S)/K;
+        else
+            this->transfer(state_t::PS_X, state_t::PS_PY) = 0e0;
+
+        this->transfer(state_t::PS_PX, state_t::PS_X) = -K*S*C;
+        this->transfer(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
+        this->transfer(state_t::PS_PX, state_t::PS_PY) = S*C;
+
+        this->transfer(state_t::PS_Y, state_t::PS_X) = -S*C;
+        if (K != 0e0)
+            this->transfer(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
+        else
+            this->transfer(state_t::PS_Y, state_t::PS_PX) = 0e0;
+        if (K != 0e0)
+            this->transfer(state_t::PS_Y, state_t::PS_PY) = S*C/K;
+        else
+            this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+
+        this->transfer(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
+        this->transfer(state_t::PS_PY, state_t::PS_PX) = -S*C;
+        this->transfer(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
+
+        // Longitudinal plane.
+        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+    }
+    virtual ~ElementSolenoid() {}
+
+    virtual const char* type_name() const {return "solenoid";}
+};
+
+template<typename Base>
+struct ElementRFCav : public Base
+{
+    // Transport matrix for an RF Cavity.
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementRFCav(const Config& c)
+        :base_t(c)
+    {
+        double len = c.get<double>("L");
+
+//        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
+//        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
+//        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
+    }
+    virtual ~ElementRFCav() {}
+
+    virtual const char* type_name() const {return "rfcavity";}
+};
+
 template<typename Base>
 struct ElementGeneric : public Base
 {
@@ -281,6 +341,10 @@ void registerLinear()
     Machine::registerElement<ElementSource<LinearElementBase<MatrixState> > >("TransferMatrix", "source");
     Machine::registerElement<ElementSource<MomentElementBase>               >("MomentMatrix",   "source");
 
+    Machine::registerElement<ElementMark<LinearElementBase<VectorState> > >("Vector",         "marker");
+    Machine::registerElement<ElementMark<LinearElementBase<MatrixState> > >("TransferMatrix", "marker");
+    Machine::registerElement<ElementMark<MomentElementBase>               >("MomentMatrix",   "marker");
+
     Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector",         "drift");
     Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
     Machine::registerElement<ElementDrift<MomentElementBase>               >("MomentMatrix",   "drift");
@@ -289,9 +353,17 @@ void registerLinear()
     Machine::registerElement<ElementSBend<LinearElementBase<MatrixState> > >("TransferMatrix", "sbend");
     Machine::registerElement<ElementSBend<MomentElementBase>               >("MomentMatrix",   "sbend");
 
-    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector",         "quad");
-    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
-    Machine::registerElement<ElementQuad<MomentElementBase>               >("MomentMatrix",   "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector",         "quadrupole");
+    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quadrupole");
+    Machine::registerElement<ElementQuad<MomentElementBase>               >("MomentMatrix",   "quadrupole");
+
+    Machine::registerElement<ElementSolenoid<LinearElementBase<VectorState> > >("Vector",         "solenoid");
+    Machine::registerElement<ElementSolenoid<LinearElementBase<MatrixState> > >("TransferMatrix", "solenoid");
+    Machine::registerElement<ElementSolenoid<MomentElementBase>               >("MomentMatrix",   "solenoid");
+
+    Machine::registerElement<ElementRFCav<LinearElementBase<VectorState> > >("Vector",         "rfcavity");
+    Machine::registerElement<ElementRFCav<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
+    Machine::registerElement<ElementRFCav<MomentElementBase>               >("MomentMatrix",   "rfcavity");
 
     Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector",         "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
