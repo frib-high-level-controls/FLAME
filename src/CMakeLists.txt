@@ -69,6 +69,15 @@ target_link_libraries(test_parse
   uscsi_core
 )
 
+add_executable(test_config
+  test_config.cpp
+)
+
+add_test(config test_config)
+target_link_libraries(test_config
+  uscsi_core
+)
+
 if(UNIX)
 
   add_test(recurse1

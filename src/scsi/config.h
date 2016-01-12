@@ -73,11 +73,15 @@ public:
     typedef std::map<std::string, value_t> values_t;
 private:
     typedef boost::shared_ptr<values_t> values_pointer;
-    values_pointer values;
+    typedef std::vector<values_pointer> values_scope_t;
+    values_scope_t value_scopes;
+    // value_scopes always has at least one element
 
     void _cow();
+    explicit Config(values_scope_t& V) { value_scopes.swap(V); }
 public:
     Config();
+    explicit Config(const values_t& V);
     Config(const Config&);
     Config& operator=(const Config&);
 
@@ -121,7 +125,7 @@ public:
              typename boost::call_traits<typename detail::is_config_value<T>::type>::param_type val)
     {
         _cow();
-        (*values)[name] = val;
+        (*value_scopes.back())[name] = val;
     }
 
     template<typename T>
@@ -134,11 +138,10 @@ public:
         //val.swap(boost::get<T>(temp)); // TODO: detect insert, make this a real swap
     }
 
-    template<typename T>
     void swap(Config& c)
     {
-        // now _cow() here since values isn't modified
-        values.swap(c.values);
+        // now _cow() here since no value_t are modified
+        value_scopes.swap(c.value_scopes);
     }
 
     void show(std::ostream&, unsigned indent=0) const;
@@ -146,10 +149,16 @@ public:
     typedef values_t::iterator iterator;
     typedef values_t::const_iterator const_iterator;
 
-    inline const_iterator begin() const { return values->begin(); }
-    inline const_iterator end() const { return values->end(); }
+    // Only iterates inner most scope
+    inline const_iterator begin() const { return value_scopes.back()->begin(); }
+    inline const_iterator end() const { return value_scopes.back()->end(); }
 
     inline void reserve(size_t) {}
+
+    size_t depth() const;
+    void push_scope();
+    void pop_scope();
+    Config new_scope() const;
 };
 
 IS_CONFIG_VALUE(std::vector<Config>);
