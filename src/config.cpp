@@ -7,31 +7,57 @@
 
 #include "glps_parser.h"
 
+Config::Config()
+    :values(new values_t)
+{}
+
+Config::Config(const Config& O)
+    :values(O.values)
+{}
+
+Config&
+Config::operator=(const Config& O)
+{
+    values = O.values;
+    return *this;
+}
+
+//! Ensure we have a unique reference to our values std::map by making a copy if necessary
+void Config::_cow()
+{
+    if(!values.unique()) {
+        Config::values_pointer U(new values_t(*values)); // copy
+        U.swap(values);
+    }
+}
+
 const Config::value_t&
 Config::getAny(const std::string& name) const
 {
-    values_t::const_iterator it=values.find(name);
-    if(it==values.end()) throw key_error(name);
+    values_t::const_iterator it=values->find(name);
+    if(it==values->end()) throw key_error(name);
     return it->second;
 }
 
 void
 Config::setAny(const std::string& name, const value_t& val)
 {
-    values[name] = val;
+    _cow();
+    (*values)[name] = val;
 }
 
 void
 Config::swapAny(const std::string& name, value_t& val)
 {
+    _cow();
     {
-        values_t::iterator it = values.find(name);
-        if(it!=values.end()) {
+        values_t::iterator it = values->find(name);
+        if(it!=values->end()) {
             it->second.swap(val);
             return;
         }
     }
-    std::pair<values_t::iterator, bool> ret = values.insert(std::make_pair(name,value_t()));
+    std::pair<values_t::iterator, bool> ret = values->insert(std::make_pair(name,value_t()));
     assert(ret.second);
     ret.first->second.swap(val);
 }
@@ -100,7 +126,7 @@ struct show_value : public boost::static_visitor<void>
 void
 Config::show(std::ostream& strm, unsigned indent) const
 {
-    for(Config::values_t::const_iterator it=values.begin(), end=values.end();
+    for(Config::values_t::const_iterator it=values->begin(), end=values->end();
         it!=end; ++it)
     {
         boost::apply_visitor(show_value(strm, it->first, indent), it->second);

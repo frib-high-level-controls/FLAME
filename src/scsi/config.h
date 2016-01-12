@@ -16,6 +16,7 @@ extern "C" {
 #include <memory>
 #include <stdexcept>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 #include <boost/call_traits.hpp>
 #include <boost/static_assert.hpp>
@@ -71,8 +72,15 @@ public:
 
     typedef std::map<std::string, value_t> values_t;
 private:
-    values_t values;
+    typedef boost::shared_ptr<values_t> values_pointer;
+    values_pointer values;
+
+    void _cow();
 public:
+    Config();
+    Config(const Config&);
+    Config& operator=(const Config&);
+
     /** lookup untyped.
      * @throws key_error if name doesn't refer to an existing parameter
      */
@@ -112,7 +120,8 @@ public:
     void set(const std::string& name,
              typename boost::call_traits<typename detail::is_config_value<T>::type>::param_type val)
     {
-        values[name] = val;
+        _cow();
+        (*values)[name] = val;
     }
 
     template<typename T>
@@ -128,6 +137,7 @@ public:
     template<typename T>
     void swap(Config& c)
     {
+        // now _cow() here since values isn't modified
         values.swap(c.values);
     }
 
@@ -136,8 +146,8 @@ public:
     typedef values_t::iterator iterator;
     typedef values_t::const_iterator const_iterator;
 
-    inline const_iterator begin() const { return values.begin(); }
-    inline const_iterator end() const { return values.end(); }
+    inline const_iterator begin() const { return values->begin(); }
+    inline const_iterator end() const { return values->end(); }
 
     inline void reserve(size_t) {}
 };
