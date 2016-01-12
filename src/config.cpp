@@ -291,7 +291,7 @@ struct GLPSParser::Pvt {
         for(strlist_t::list_t::const_iterator it=line->names.begin(), end=line->names.end();
             it!=end; ++it)
         {
-            Config& next = elements[i++];
+            Config next(ret->new_scope()); // inheirt global scope
             const parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
 
             next.reserve(elem.props.size()+2);
@@ -307,6 +307,7 @@ struct GLPSParser::Pvt {
             assert(!elem.etype.empty() && !elem.label.empty());
             next.set<std::string>("type", elem.etype);
             next.set<std::string>("name", elem.label);
+            elements[i++].swap(next);
         }
 
         ret->swap<std::string>("name", line->label);

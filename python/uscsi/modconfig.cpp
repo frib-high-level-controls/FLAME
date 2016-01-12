@@ -72,6 +72,7 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
             Py_ssize_t N = PySequence_Size(value);
 
             Config::vector_t output;
+            output.reserve(N);
 
             for(Py_ssize_t i=0; i<N; i++) {
                 PyObject *elem = PySequence_GetItem(value, i);
@@ -80,10 +81,9 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
                 if(!PyDict_Check(elem))
                     throw std::invalid_argument("lists must contain only dict()s");
 
-                output.push_back(Config());
+                output.push_back(ret.new_scope());
 
-                Dict2Config(output.back(), elem, depth+1);
-
+                Dict2Config(output.back(), elem, depth+1); // inheirt parent scope
             }
 
             ret.set<Config::vector_t>(kname, output);
