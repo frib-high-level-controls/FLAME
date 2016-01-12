@@ -120,7 +120,7 @@ void Machine::p_registerState(const char *name, state_builder_t b)
     info_mutex_t::scoped_lock G(info_mutex);
     if(p_state_infos.find(name)!=p_state_infos.end()) {
         std::ostringstream strm;
-        strm<<"attempt to register already registered sim-type=\""<<name<<"\"";
+        strm<<"attempt to register already registered sim_type=\""<<name<<"\"";
         throw std::logic_error(strm.str());
     }
     state_info I;
@@ -135,14 +135,14 @@ void Machine::p_registerElement(const std::string& sname, const char *ename, ele
     p_state_infos_t::iterator it = p_state_infos.find(sname);
     if(it==p_state_infos.end()) {
         std::ostringstream strm;
-        strm<<"can't add element \""<<ename<<"\" for unknown sim-type=\""<<sname<<"\"";
+        strm<<"can't add element \""<<ename<<"\" for unknown sim_type=\""<<sname<<"\"";
         throw std::logic_error(strm.str());
     }
     state_info& I = it->second;
     if(I.elements.find(ename)!=I.elements.end()) {
         std::ostringstream strm;
         strm<<"element type \""<<ename<<"\" has already been registered for "
-              "sim-type=\""<<sname<<"\"";
+              "sim_type=\""<<sname<<"\"";
         throw std::logic_error(strm.str());
     }
     I.elements[ename] = b;
