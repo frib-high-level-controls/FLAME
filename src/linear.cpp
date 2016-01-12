@@ -292,23 +292,40 @@ struct ElementSolenoid : public Base
 };
 
 template<typename Base>
-struct ElementRFCav : public Base
+struct ElementRFCavity : public Base
 {
     // Transport matrix for an RF Cavity.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
-    ElementRFCav(const Config& c)
+    ElementRFCavity(const Config& c)
         :base_t(c)
     {
         double len = c.get<double>("L");
 
-//        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
-//        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
+        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
 //        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
     }
-    virtual ~ElementRFCav() {}
+    virtual ~ElementRFCavity() {}
 
     virtual const char* type_name() const {return "rfcavity";}
+};
+
+template<typename Base>
+struct ElementEDipole : public Base
+{
+    // Transport matrix for an Electric Dipole.
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementEDipole(const Config& c)
+        :base_t(c)
+    {
+        double len = c.get<double>("L");
+
+    }
+    virtual ~ElementEDipole() {}
+
+    virtual const char* type_name() const {return "edipole";}
 };
 
 template<typename Base>
@@ -361,9 +378,13 @@ void registerLinear()
     Machine::registerElement<ElementSolenoid<LinearElementBase<MatrixState> > >("TransferMatrix", "solenoid");
     Machine::registerElement<ElementSolenoid<MomentElementBase>               >("MomentMatrix",   "solenoid");
 
-    Machine::registerElement<ElementRFCav<LinearElementBase<VectorState> > >("Vector",         "rfcavity");
-    Machine::registerElement<ElementRFCav<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
-    Machine::registerElement<ElementRFCav<MomentElementBase>               >("MomentMatrix",   "rfcavity");
+    Machine::registerElement<ElementRFCavity<LinearElementBase<VectorState> > >("Vector",         "rfcavity");
+    Machine::registerElement<ElementRFCavity<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
+    Machine::registerElement<ElementRFCavity<MomentElementBase>               >("MomentMatrix",   "rfcavity");
+
+    Machine::registerElement<ElementEDipole<LinearElementBase<VectorState> > >("Vector",         "edipole");
+    Machine::registerElement<ElementEDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "edipole");
+    Machine::registerElement<ElementEDipole<MomentElementBase>               >("MomentMatrix",   "edipole");
 
     Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector",         "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");

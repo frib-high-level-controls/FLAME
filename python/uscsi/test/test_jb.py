@@ -97,7 +97,7 @@ class testBasic(unittest.TestCase):
     ])
 
   def test_drift(self):
-    "Propagate a state vector through a drift"
+    "Propagate a state matrix through a drift"
 
     T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
@@ -130,7 +130,7 @@ class testBasic(unittest.TestCase):
     ])
 
   def test_sbend1(self):
-    "Propagate a state vector through a focusing sector bend"
+    "Propagate a state matrix through a focusing sector bend"
 
     T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
@@ -164,7 +164,7 @@ class testBasic(unittest.TestCase):
    ], decimal=6)
 
   def test_sbend2(self):
-    "Propagate a state vector through a defocusing sector bend"
+    "Propagate a state matrix through a defocusing sector bend"
 
     T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
@@ -198,7 +198,7 @@ class testBasic(unittest.TestCase):
     ], decimal=6)
 
   def test_quad1(self):
-    "Propagate a state vector through a focusing quadrupole"
+    "Propagate a state matrix through a focusing quadrupole"
 
     T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
@@ -231,7 +231,7 @@ class testBasic(unittest.TestCase):
     ], decimal=6)
 
   def test_quad2(self):
-    "Propagate a state vector through a defocusing quadrupole"
+    "Propagate a state matrix through a defocusing quadrupole"
 
     T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
@@ -264,7 +264,7 @@ class testBasic(unittest.TestCase):
     ], decimal=6)
 
   def test_solenoid(self):
-    "Propagate a state vector through a defocusing quadrupole"
+    "Propagate a state matrix through a defocusing quadrupole"
 
     T = self.expect = numpy.asfarray([
       [0.1, 0,   0,   0,   0,   0  ],
@@ -297,7 +297,7 @@ class testBasic(unittest.TestCase):
     # ], decimal=6)
 
   def test_lat(self):
-    # Propagate a state vector through a lattice defined by a lattice file.
+    # Propagate a state matrix through a lattice defined by a lattice file.
     P = GLPSParser()
 
     inf = open(os.path.join(datadir, 'moment_jb.lat'), 'r')
@@ -320,10 +320,23 @@ class testBasic(unittest.TestCase):
     ], decimal=6)
 
   def test_LS1(self):
-    # Propagate a state vector through a lattice defined by a lattice file.
+    # Propagate a state matrix through a lattice defined by a lattice file.
+
+    # Global parameters:
+
+#    AU        = 931.49432                 # MeV/u.
+#    qom_U_238 = 33.0/(238.0*AU)           # Charge over mass ratio for U-238.
+
+#    E_mass = AU                           # Ion type.
+#    E_kin  = 0.9149311118819696           # Kinetic energy [MeV/u].
+#    E_tot  = sqrt(sqr(E_kin)+sqr(E_Mass)) # Total energy [MeV/u].
+#    E_tot  = E_kin + E_Mass
+
+#    gamma = numpy.array([E_tot/E_mass, 0.0, 0.0]);
+
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'LS1.lat'), 'r')
+    inf = open(os.path.join(datadir, 'latticeout_IMP_withPV.lat'), 'r')
     C = P.parse(inf.read())
 
     self.M = Machine(C)
