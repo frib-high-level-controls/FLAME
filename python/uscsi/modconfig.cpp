@@ -66,7 +66,7 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
             std::vector<double> temp(PyArray_SIZE(arr.py()));
             std::copy(buf, buf+temp.size(), temp.begin());
 
-            ret.set<std::vector<double> >(kname, temp);
+            ret.swap<std::vector<double> >(kname, temp);
 
         } else if(PySequence_Check(value)) { // list of dict
             Py_ssize_t N = PySequence_Size(value);
