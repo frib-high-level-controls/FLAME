@@ -98,27 +98,6 @@ class TestMatrix(unittest.TestCase):
     ])
 
 class TestGlobal(unittest.TestCase):
-    def test_dict(self):
-        "Test global scope when converting dict to Config"
-        M = Machine({
-          'sim_type':'Vector',
-          'length':1.0,  # define once
-          'elements':[
-            {'name':'elem0', 'type':'drift'}, # use
-            {'name':'elem1', 'type':'drift'}, # three
-            {'name':'elem2', 'type':'drift'}, # times
-          ],
-        })
-
-        S = M.allocState({})
-
-        S.state[:] = [0, 0, 1, 1e-3, 0, 0]
-        assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
-
-        M.propagate(S)
-
-        assert_aequal(S.state, [0, 0, 1.003, 1e-3, 0, 0])
-
     def test_parse(self):
         "Test global scope when parsing"
         M = Machine(b"""

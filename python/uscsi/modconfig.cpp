@@ -81,7 +81,8 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
                 if(!PyDict_Check(elem))
                     throw std::invalid_argument("lists must contain only dict()s");
 
-                output.push_back(ret.new_scope());
+                //output.push_back(ret.new_scope()); // TODO: can't use scoping here since iteration order of PyDict_Next() is not stable
+                output.push_back(Config());
 
                 Dict2Config(output.back(), elem, depth+1); // inheirt parent scope
             }
