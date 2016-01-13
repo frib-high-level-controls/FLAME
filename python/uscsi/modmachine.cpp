@@ -23,14 +23,28 @@ static
 int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *conf;
+        PyObject *conf = NULL;
         const char *pnames[] = {"config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "|O!", (char**)pnames, &PyDict_Type, &conf))
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|", (char**)pnames, &conf))
             return -1;
 
         assert(!machine->weak);
 
-        std::auto_ptr<Config> C(dict2conf(conf));
+        Py_buffer buf;
+        std::auto_ptr<Config> C;
+
+        if(PyDict_Check(conf)) {
+            C.reset(dict2conf(conf));
+
+        } else if(!PyObject_GetBuffer(conf, &buf, PyBUF_SIMPLE)) {
+            GLPSParser parser;
+            C.reset(parser.parse((const char*)buf.buf, buf.len));
+
+            PyBuffer_Release(&buf);
+        } else {
+            throw std::invalid_argument("'config' must be dict or byte buffer");
+        }
+
         machine->machine = new Machine(*C);
 
         return 0;
