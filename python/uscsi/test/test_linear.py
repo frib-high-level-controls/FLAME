@@ -102,7 +102,7 @@ class TestGlobal(unittest.TestCase):
         "Test global scope when parsing"
         M = Machine(b"""
 sim_type = "Vector";
-length = 2.0;
+L = 2.0;
 elem0: drift;
 elem1: drift;
 elem2: drift;
