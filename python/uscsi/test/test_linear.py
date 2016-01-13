@@ -121,7 +121,7 @@ class TestGlobal(unittest.TestCase):
 
     def test_parse(self):
         "Test global scope when parsing"
-        M = Machine("""
+        M = Machine(b"""
 sim_type = "Vector";
 length = 2.0;
 elem0: drift;
