@@ -97,6 +97,48 @@ class TestMatrix(unittest.TestCase):
       [0, 0, 0, 0, 0, 1],
     ])
 
+class TestGlobal(unittest.TestCase):
+    def test_dict(self):
+        "Test global scope when converting dict to Config"
+        M = Machine({
+          'sim_type':'Vector',
+          'length':1.0,  # define once
+          'elements':[
+            {'name':'elem0', 'type':'drift'}, # use
+            {'name':'elem1', 'type':'drift'}, # three
+            {'name':'elem2', 'type':'drift'}, # times
+          ],
+        })
+
+        S = M.allocState({})
+
+        S.state[:] = [0, 0, 1, 1e-3, 0, 0]
+        assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
+
+        M.propagate(S)
+
+        assert_aequal(S.state, [0, 0, 1.003, 1e-3, 0, 0])
+
+    def test_parse(self):
+        "Test global scope when parsing"
+        M = Machine("""
+sim_type = "Vector";
+length = 2.0;
+elem0: drift;
+elem1: drift;
+elem2: drift;
+foo: LINE = (elem0, elem1, elem2);
+""")
+
+        S = M.allocState({})
+
+        S.state[:] = [0, 0, 1, 1e-3, 0, 0]
+        assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
+
+        M.propagate(S)
+
+        assert_aequal(S.state, [0, 0, 1.006, 1e-3, 0, 0])
+
 class testGeneric(unittest.TestCase):
     def test_generic(self):
         T = numpy.asfarray([
