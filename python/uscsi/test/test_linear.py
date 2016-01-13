@@ -11,7 +11,7 @@ class testBasic(unittest.TestCase):
     self.M = Machine({
       'sim_type':'Vector',
       'elements':[
-        {'name':'elem0', 'type':'drift', 'length':1.0},
+        {'name':'elem0', 'type':'drift', 'L':1.0},
       ],
     })
 
@@ -65,8 +65,8 @@ class TestMatrix(unittest.TestCase):
     self.M = Machine({
       'sim_type':'TransferMatrix',
       'elements':[
-        {'name':'elem0', 'type':'drift', 'length':1.0},
-        {'name':'elem1', 'type':'drift', 'length':1.0},
+        {'name':'elem0', 'type':'drift', 'L':1.0},
+        {'name':'elem1', 'type':'drift', 'L':1.0},
       ],
     })
 
