@@ -1,0 +1,26 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+# Define beam envelope parameters.
+S: source, initial = [
+  0.1, 0,   0,   0,   0,   0,
+  0,   0.2, 0,   0,   0,   0,
+  0,   0,   0.3, 0,   0,   0,
+  0,   0,   0,   0.4, 0,   0,
+  0,   0,   0,   0,   0.5, 0,
+  0,   0,   0,   0,   0,   0.6
+];
+
+# Define pi.
+pi = 4.0*atan(1.0);
+degree = pi/180.0;
+
+d1: drift, L = 1.234;
+b1: sbend, L = 2.0, phi = 25.0*degree, K = -0.1;
+q1: quad,  L = 2.1, K = 0.1;
+
+cav: rfcav;
+
+cell: LINE = (S, d1, b1, q1, cav);
+USE: cell;
