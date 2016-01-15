@@ -300,8 +300,8 @@ class testBasic(unittest.TestCase):
     # Propagate a state matrix through a lattice defined by a lattice file.
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'moment_jb.lat'), 'r')
-    self.M = Machine(inf.read())
+    with open(os.path.join(datadir, 'moment_jb.lat'), 'rb') as inf:
+      self.M = Machine(inf.read())
 #    print self.M
 
     S = self.M.allocState({})
@@ -334,8 +334,8 @@ class testBasic(unittest.TestCase):
 
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'latticeout_IMP_withPV.lat'), 'r')
-    self.M = Machine(inf.read())
+    with open(os.path.join(datadir, 'latticeout_IMP_withPV.lat'), 'rb') as inf:
+      self.M = Machine(inf.read())
 #    print self.M
 
     S = self.M.allocState({})
