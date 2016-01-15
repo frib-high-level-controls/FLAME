@@ -1,0 +1,816 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+D1: drift, L = 0.072000, Aper = 0.020000;
+D2: drift, L = 0.135064, Aper = 0.020000;
+C1: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 0.640000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D3: drift, L = 0.064263, Aper = 0.020000;
+M1: marker, L = 0.000000, Attr2 = -23.000000;
+D4: drift, L = 0.055880, Aper = 0.020000;
+D5: drift, L = 0.076123, Aper = 0.020000;
+S1: solenoid, L = 0.100000, K = 5.340000, Aper = 0.020000;
+M2: marker, L = 0.000000, Attr2 = -21.000000;
+S2: solenoid, L = 0.100000, K = 5.340000, Aper = 0.020000;
+D6: drift, L = 0.076123, Aper = 0.020000;
+D7: drift, L = 0.067270, Aper = 0.020000;
+C2: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 0.700000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D8: drift, L = 0.539646, Aper = 0.017000;
+C3: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 0.760000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D9: drift, L = 0.064263, Aper = 0.020000;
+M3: marker, L = 0.000000, Attr2 = -23.000000;
+D10: drift, L = 0.055880, Aper = 0.020000;
+D11: drift, L = 0.076123, Aper = 0.020000;
+S3: solenoid, L = 0.100000, K = 5.900000, Aper = 0.020000;
+M4: marker, L = 0.000000, Attr2 = -21.000000;
+S4: solenoid, L = 0.100000, K = 5.900000, Aper = 0.020000;
+D12: drift, L = 0.076123, Aper = 0.020000;
+D13: drift, L = 0.067270, Aper = 0.020000;
+C4: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 0.820000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D14: drift, L = 0.135064, Aper = 0.020000;
+D15: drift, L = 0.072000, Aper = 0.020000;
+D16: drift, L = 0.116000, Aper = 0.020000;
+M5: marker, L = 0.000000, Attr2 = -23.000000;
+D17: drift, L = 0.074000, Aper = 0.020000;
+D18: drift, L = 0.091000, Aper = 0.020000;
+D19: drift, L = 0.000000, Aper = 0.020000;
+D20: drift, L = 0.099000, Aper = 0.020000;
+D21: drift, L = 0.072000, Aper = 0.020000;
+D22: drift, L = 0.135064, Aper = 0.020000;
+C5: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 0.880000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D23: drift, L = 0.064263, Aper = 0.020000;
+M6: marker, L = 0.000000, Attr2 = -23.000000;
+D24: drift, L = 0.055880, Aper = 0.020000;
+D25: drift, L = 0.076123, Aper = 0.020000;
+S5: solenoid, L = 0.100000, K = 6.500000, Aper = 0.020000;
+M7: marker, L = 0.000000, Attr2 = -21.000000;
+S6: solenoid, L = 0.100000, K = 6.500000, Aper = 0.020000;
+D26: drift, L = 0.076123, Aper = 0.020000;
+D27: drift, L = 0.067270, Aper = 0.020000;
+C6: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 0.940000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D28: drift, L = 0.539646, Aper = 0.017000;
+C7: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D29: drift, L = 0.064263, Aper = 0.020000;
+M8: marker, L = 0.000000, Attr2 = -23.000000;
+D30: drift, L = 0.055880, Aper = 0.020000;
+D31: drift, L = 0.076123, Aper = 0.020000;
+S7: solenoid, L = 0.100000, K = 6.900000, Aper = 0.020000;
+M9: marker, L = 0.000000, Attr2 = -21.000000;
+S8: solenoid, L = 0.100000, K = 6.900000, Aper = 0.020000;
+D32: drift, L = 0.076123, Aper = 0.020000;
+D33: drift, L = 0.067270, Aper = 0.020000;
+C8: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D34: drift, L = 0.135064, Aper = 0.020000;
+D35: drift, L = 0.072000, Aper = 0.020000;
+D36: drift, L = 0.116000, Aper = 0.020000;
+M10: marker, L = 0.000000, Attr2 = -23.000000;
+D37: drift, L = 0.074000, Aper = 0.020000;
+D38: drift, L = 0.000000, Aper = 0.020000;
+D39: drift, L = 0.091000, Aper = 0.020000;
+D40: drift, L = 0.000000, Aper = 0.020000;
+D41: drift, L = 0.099000, Aper = 0.020000;
+D42: drift, L = 0.072000, Aper = 0.020000;
+D43: drift, L = 0.135064, Aper = 0.020000;
+C9: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D44: drift, L = 0.064263, Aper = 0.020000;
+M11: marker, L = 0.000000, Attr2 = -23.000000;
+D45: drift, L = 0.055880, Aper = 0.020000;
+D46: drift, L = 0.076123, Aper = 0.020000;
+S9: solenoid, L = 0.100000, K = 7.200000, Aper = 0.020000;
+M12: marker, L = 0.000000, Attr2 = -21.000000;
+S10: solenoid, L = 0.100000, K = 7.200000, Aper = 0.020000;
+D47: drift, L = 0.076123, Aper = 0.020000;
+D48: drift, L = 0.067270, Aper = 0.020000;
+C10: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D49: drift, L = 0.539646, Aper = 0.017000;
+C11: rfcavity, L = 0.240000, phase = -35.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D50: drift, L = 0.064263, Aper = 0.020000;
+M13: marker, L = 0.000000, Attr2 = -23.000000;
+D51: drift, L = 0.055880, Aper = 0.020000;
+D52: drift, L = 0.076123, Aper = 0.020000;
+S11: solenoid, L = 0.100000, K = 7.700000, Aper = 0.020000;
+M14: marker, L = 0.000000, Attr2 = -21.000000;
+S12: solenoid, L = 0.100000, K = 7.700000, Aper = 0.020000;
+D53: drift, L = 0.076123, Aper = 0.020000;
+D54: drift, L = 0.067270, Aper = 0.020000;
+C12: rfcavity, L = 0.240000, phase = -45.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D55: drift, L = 0.135064, Aper = 0.020000;
+D56: drift, L = 0.072000, Aper = 0.020000;
+D57: drift, L = 0.116000, Aper = 0.020000;
+M15: marker, L = 0.000000, Attr2 = -23.000000;
+D58: drift, L = 0.074000, Aper = 0.020000;
+D59: drift, L = 0.091000, Aper = 0.020000;
+D60: drift, L = 0.000000, Aper = 0.020000;
+D61: drift, L = 0.099000, Aper = 0.020000;
+D62: drift, L = 0.072000, Aper = 0.020000;
+D63: drift, L = 0.175312, Aper = 0.020000;
+C13: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D64: drift, L = 0.095595, Aper = 0.020000;
+M16: marker, L = 0.000000, Attr2 = -23.000000;
+D65: drift, L = 0.055880, Aper = 0.020000;
+D66: drift, L = 0.076136, Aper = 0.020000;
+S13: solenoid, L = 0.250000, K = 5.000000, Aper = 0.020000;
+M17: marker, L = 0.000000, Attr2 = -21.000000;
+S14: solenoid, L = 0.250000, K = 5.000000, Aper = 0.020000;
+D67: drift, L = 0.076136, Aper = 0.020000;
+D68: drift, L = 0.098602, Aper = 0.020000;
+C14: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D69: drift, L = 0.097688, Aper = 0.020000;
+C15: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D70: drift, L = 0.097688, Aper = 0.020000;
+C16: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D71: drift, L = 0.095595, Aper = 0.020000;
+M18: marker, L = 0.000000, Attr2 = -23.000000;
+D72: drift, L = 0.055880, Aper = 0.020000;
+D73: drift, L = 0.076136, Aper = 0.020000;
+S15: solenoid, L = 0.250000, K = 5.200000, Aper = 0.020000;
+M19: marker, L = 0.000000, Attr2 = -21.000000;
+S16: solenoid, L = 0.250000, K = 5.200000, Aper = 0.020000;
+D74: drift, L = 0.076136, Aper = 0.020000;
+D75: drift, L = 0.098602, Aper = 0.020000;
+C17: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D76: drift, L = 0.097688, Aper = 0.020000;
+C18: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D77: drift, L = 0.097688, Aper = 0.020000;
+C19: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D78: drift, L = 0.095595, Aper = 0.020000;
+M20: marker, L = 0.000000, Attr2 = -23.000000;
+D79: drift, L = 0.055880, Aper = 0.020000;
+D80: drift, L = 0.076136, Aper = 0.020000;
+S17: solenoid, L = 0.250000, K = 5.100000, Aper = 0.020000;
+M21: marker, L = 0.000000, Attr2 = -21.000000;
+S18: solenoid, L = 0.250000, K = 5.100000, Aper = 0.020000;
+D81: drift, L = 0.076136, Aper = 0.020000;
+D82: drift, L = 0.098602, Aper = 0.020000;
+C20: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D83: drift, L = 0.175312, Aper = 0.020000;
+D84: drift, L = 0.072000, Aper = 0.020000;
+D85: drift, L = 0.116000, Aper = 0.020000;
+M22: marker, L = 0.000000, Attr2 = -23.000000;
+D86: drift, L = 0.074000, Aper = 0.020000;
+D87: drift, L = 0.091000, Aper = 0.020000;
+D88: drift, L = 0.000000, Aper = 0.020000;
+D89: drift, L = 0.099000, Aper = 0.020000;
+D90: drift, L = 0.072000, Aper = 0.020000;
+D91: drift, L = 0.175312, Aper = 0.020000;
+C21: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D92: drift, L = 0.095595, Aper = 0.020000;
+M23: marker, L = 0.000000, Attr2 = -23.000000;
+D93: drift, L = 0.055880, Aper = 0.020000;
+D94: drift, L = 0.076136, Aper = 0.020000;
+S19: solenoid, L = 0.250000, K = 5.000000, Aper = 0.020000;
+M24: marker, L = 0.000000, Attr2 = -21.000000;
+S20: solenoid, L = 0.250000, K = 5.000000, Aper = 0.020000;
+D95: drift, L = 0.076136, Aper = 0.020000;
+D96: drift, L = 0.098602, Aper = 0.020000;
+C22: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D97: drift, L = 0.097688, Aper = 0.020000;
+C23: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D98: drift, L = 0.097688, Aper = 0.020000;
+C24: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D99: drift, L = 0.095595, Aper = 0.020000;
+M25: marker, L = 0.000000, Attr2 = -23.000000;
+D100: drift, L = 0.055880, Aper = 0.020000;
+D101: drift, L = 0.076136, Aper = 0.020000;
+S21: solenoid, L = 0.250000, K = 4.900000, Aper = 0.020000;
+M26: marker, L = 0.000000, Attr2 = -21.000000;
+S22: solenoid, L = 0.250000, K = 4.900000, Aper = 0.020000;
+D102: drift, L = 0.076136, Aper = 0.020000;
+D103: drift, L = 0.098602, Aper = 0.020000;
+C25: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D104: drift, L = 0.097688, Aper = 0.020000;
+C26: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D105: drift, L = 0.097688, Aper = 0.020000;
+C27: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D106: drift, L = 0.095595, Aper = 0.020000;
+M27: marker, L = 0.000000, Attr2 = -23.000000;
+D107: drift, L = 0.055880, Aper = 0.020000;
+D108: drift, L = 0.076136, Aper = 0.020000;
+S23: solenoid, L = 0.250000, K = 5.510000, Aper = 0.020000;
+M28: marker, L = 0.000000, Attr2 = -21.000000;
+S24: solenoid, L = 0.250000, K = 5.510000, Aper = 0.020000;
+D109: drift, L = 0.076136, Aper = 0.020000;
+D110: drift, L = 0.098602, Aper = 0.020000;
+C28: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D111: drift, L = 0.175312, Aper = 0.020000;
+D112: drift, L = 0.072000, Aper = 0.020000;
+D113: drift, L = 0.116000, Aper = 0.020000;
+M29: marker, L = 0.000000, Attr2 = -23.000000;
+D114: drift, L = 0.074000, Aper = 0.020000;
+D115: drift, L = 0.091000, Aper = 0.020000;
+D116: drift, L = 0.000000, Aper = 0.020000;
+D117: drift, L = 0.099000, Aper = 0.020000;
+D118: drift, L = 0.072000, Aper = 0.020000;
+D119: drift, L = 0.175312, Aper = 0.020000;
+C29: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D120: drift, L = 0.095595, Aper = 0.020000;
+M30: marker, L = 0.000000, Attr2 = -23.000000;
+D121: drift, L = 0.055880, Aper = 0.020000;
+D122: drift, L = 0.076136, Aper = 0.020000;
+S25: solenoid, L = 0.250000, K = 5.560000, Aper = 0.020000;
+M31: marker, L = 0.000000, Attr2 = -21.000000;
+S26: solenoid, L = 0.250000, K = 5.560000, Aper = 0.020000;
+D123: drift, L = 0.076136, Aper = 0.020000;
+D124: drift, L = 0.098602, Aper = 0.020000;
+C30: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D125: drift, L = 0.097688, Aper = 0.020000;
+C31: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D126: drift, L = 0.097688, Aper = 0.020000;
+C32: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D127: drift, L = 0.095595, Aper = 0.020000;
+M32: marker, L = 0.000000, Attr2 = -23.000000;
+D128: drift, L = 0.055880, Aper = 0.020000;
+D129: drift, L = 0.076136, Aper = 0.020000;
+S27: solenoid, L = 0.250000, K = 5.300000, Aper = 0.020000;
+M33: marker, L = 0.000000, Attr2 = -21.000000;
+S28: solenoid, L = 0.250000, K = 5.300000, Aper = 0.020000;
+D130: drift, L = 0.076136, Aper = 0.020000;
+D131: drift, L = 0.098602, Aper = 0.020000;
+C33: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D132: drift, L = 0.097688, Aper = 0.020000;
+C34: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D133: drift, L = 0.097688, Aper = 0.020000;
+C35: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D134: drift, L = 0.095595, Aper = 0.020000;
+M34: marker, L = 0.000000, Attr2 = -23.000000;
+D135: drift, L = 0.055880, Aper = 0.020000;
+D136: drift, L = 0.076136, Aper = 0.020000;
+S29: solenoid, L = 0.250000, K = 6.120000, Aper = 0.020000;
+M35: marker, L = 0.000000, Attr2 = -21.000000;
+S30: solenoid, L = 0.250000, K = 6.120000, Aper = 0.020000;
+D137: drift, L = 0.076136, Aper = 0.020000;
+D138: drift, L = 0.098602, Aper = 0.020000;
+C36: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D139: drift, L = 0.175312, Aper = 0.020000;
+D140: drift, L = 0.072000, Aper = 0.020000;
+D141: drift, L = 0.116000, Aper = 0.020000;
+M36: marker, L = 0.000000, Attr2 = -23.000000;
+D142: drift, L = 0.074000, Aper = 0.020000;
+D143: drift, L = 0.091000, Aper = 0.020000;
+D144: drift, L = 0.000000, Aper = 0.020000;
+D145: drift, L = 0.099000, Aper = 0.020000;
+D146: drift, L = 0.072000, Aper = 0.020000;
+D147: drift, L = 0.175312, Aper = 0.020000;
+C37: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D148: drift, L = 0.095595, Aper = 0.020000;
+M37: marker, L = 0.000000, Attr2 = -23.000000;
+D149: drift, L = 0.055880, Aper = 0.020000;
+D150: drift, L = 0.076136, Aper = 0.020000;
+S31: solenoid, L = 0.250000, K = 6.150000, Aper = 0.020000;
+M38: marker, L = 0.000000, Attr2 = -21.000000;
+S32: solenoid, L = 0.250000, K = 6.150000, Aper = 0.020000;
+D151: drift, L = 0.076136, Aper = 0.020000;
+D152: drift, L = 0.098602, Aper = 0.020000;
+C38: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D153: drift, L = 0.097688, Aper = 0.020000;
+C39: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D154: drift, L = 0.097688, Aper = 0.020000;
+C40: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D155: drift, L = 0.095595, Aper = 0.020000;
+M39: marker, L = 0.000000, Attr2 = -23.000000;
+D156: drift, L = 0.055880, Aper = 0.020000;
+D157: drift, L = 0.076136, Aper = 0.020000;
+S33: solenoid, L = 0.250000, K = 5.700000, Aper = 0.020000;
+M40: marker, L = 0.000000, Attr2 = -21.000000;
+S34: solenoid, L = 0.250000, K = 5.700000, Aper = 0.020000;
+D158: drift, L = 0.076136, Aper = 0.020000;
+D159: drift, L = 0.098602, Aper = 0.020000;
+C41: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D160: drift, L = 0.097688, Aper = 0.020000;
+C42: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D161: drift, L = 0.097688, Aper = 0.020000;
+C43: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D162: drift, L = 0.095595, Aper = 0.020000;
+M41: marker, L = 0.000000, Attr2 = -23.000000;
+D163: drift, L = 0.055880, Aper = 0.020000;
+D164: drift, L = 0.076136, Aper = 0.020000;
+S35: solenoid, L = 0.250000, K = 6.730000, Aper = 0.020000;
+M42: marker, L = 0.000000, Attr2 = -21.000000;
+S36: solenoid, L = 0.250000, K = 6.730000, Aper = 0.020000;
+D165: drift, L = 0.076136, Aper = 0.020000;
+D166: drift, L = 0.098602, Aper = 0.020000;
+C44: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D167: drift, L = 0.175312, Aper = 0.020000;
+D168: drift, L = 0.072000, Aper = 0.020000;
+D169: drift, L = 0.116000, Aper = 0.020000;
+M43: marker, L = 0.000000, Attr2 = -23.000000;
+D170: drift, L = 0.074000, Aper = 0.020000;
+D171: drift, L = 0.000000, Aper = 0.020000;
+D172: drift, L = 0.091000, Aper = 0.020000;
+D173: drift, L = 0.000000, Aper = 0.020000;
+D174: drift, L = 0.099000, Aper = 0.020000;
+D175: drift, L = 0.072000, Aper = 0.020000;
+D176: drift, L = 0.175312, Aper = 0.020000;
+C45: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D177: drift, L = 0.095595, Aper = 0.020000;
+M44: marker, L = 0.000000, Attr2 = -23.000000;
+D178: drift, L = 0.055880, Aper = 0.020000;
+D179: drift, L = 0.076136, Aper = 0.020000;
+S37: solenoid, L = 0.250000, K = 6.750000, Aper = 0.020000;
+M45: marker, L = 0.000000, Attr2 = -21.000000;
+S38: solenoid, L = 0.250000, K = 6.750000, Aper = 0.020000;
+D180: drift, L = 0.076136, Aper = 0.020000;
+D181: drift, L = 0.098602, Aper = 0.020000;
+C46: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D182: drift, L = 0.097688, Aper = 0.020000;
+C47: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D183: drift, L = 0.097688, Aper = 0.020000;
+C48: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D184: drift, L = 0.095595, Aper = 0.020000;
+M46: marker, L = 0.000000, Attr2 = -23.000000;
+D185: drift, L = 0.055880, Aper = 0.020000;
+D186: drift, L = 0.076136, Aper = 0.020000;
+S39: solenoid, L = 0.250000, K = 6.100000, Aper = 0.020000;
+M47: marker, L = 0.000000, Attr2 = -21.000000;
+S40: solenoid, L = 0.250000, K = 6.100000, Aper = 0.020000;
+D187: drift, L = 0.076136, Aper = 0.020000;
+D188: drift, L = 0.098602, Aper = 0.020000;
+C49: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D189: drift, L = 0.097688, Aper = 0.020000;
+C50: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D190: drift, L = 0.097688, Aper = 0.020000;
+C51: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D191: drift, L = 0.095595, Aper = 0.020000;
+M48: marker, L = 0.000000, Attr2 = -23.000000;
+D192: drift, L = 0.055880, Aper = 0.020000;
+D193: drift, L = 0.076136, Aper = 0.020000;
+S41: solenoid, L = 0.250000, K = 7.330000, Aper = 0.020000;
+M49: marker, L = 0.000000, Attr2 = -21.000000;
+S42: solenoid, L = 0.250000, K = 7.330000, Aper = 0.020000;
+D194: drift, L = 0.076136, Aper = 0.020000;
+D195: drift, L = 0.098602, Aper = 0.020000;
+C52: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D196: drift, L = 0.175312, Aper = 0.020000;
+D197: drift, L = 0.072000, Aper = 0.020000;
+D198: drift, L = 0.116000, Aper = 0.020000;
+M50: marker, L = 0.000000, Attr2 = -23.000000;
+D199: drift, L = 0.074000, Aper = 0.020000;
+D200: drift, L = 0.000000, Aper = 0.020000;
+D201: drift, L = 0.091000, Aper = 0.020000;
+D202: drift, L = 0.000000, Aper = 0.020000;
+D203: drift, L = 0.099000, Aper = 0.020000;
+D204: drift, L = 0.072000, Aper = 0.020000;
+D205: drift, L = 0.175312, Aper = 0.020000;
+C53: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D206: drift, L = 0.095595, Aper = 0.020000;
+M51: marker, L = 0.000000, Attr2 = -23.000000;
+D207: drift, L = 0.055880, Aper = 0.020000;
+D208: drift, L = 0.076136, Aper = 0.020000;
+S43: solenoid, L = 0.250000, K = 7.340000, Aper = 0.020000;
+M52: marker, L = 0.000000, Attr2 = -21.000000;
+S44: solenoid, L = 0.250000, K = 7.340000, Aper = 0.020000;
+D209: drift, L = 0.076136, Aper = 0.020000;
+D210: drift, L = 0.098602, Aper = 0.020000;
+C54: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D211: drift, L = 0.097688, Aper = 0.020000;
+C55: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D212: drift, L = 0.097688, Aper = 0.020000;
+C56: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D213: drift, L = 0.095595, Aper = 0.020000;
+M53: marker, L = 0.000000, Attr2 = -23.000000;
+D214: drift, L = 0.055880, Aper = 0.020000;
+D215: drift, L = 0.076136, Aper = 0.020000;
+S45: solenoid, L = 0.250000, K = 6.500000, Aper = 0.020000;
+M54: marker, L = 0.000000, Attr2 = -21.000000;
+S46: solenoid, L = 0.250000, K = 6.500000, Aper = 0.020000;
+D216: drift, L = 0.076136, Aper = 0.020000;
+D217: drift, L = 0.098602, Aper = 0.020000;
+C57: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D218: drift, L = 0.097688, Aper = 0.020000;
+C58: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D219: drift, L = 0.097688, Aper = 0.020000;
+C59: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D220: drift, L = 0.095595, Aper = 0.020000;
+M55: marker, L = 0.000000, Attr2 = -23.000000;
+D221: drift, L = 0.055880, Aper = 0.020000;
+D222: drift, L = 0.076136, Aper = 0.020000;
+S47: solenoid, L = 0.250000, K = 7.500000, Aper = 0.020000;
+M56: marker, L = 0.000000, Attr2 = -21.000000;
+S48: solenoid, L = 0.250000, K = 7.500000, Aper = 0.020000;
+D223: drift, L = 0.076136, Aper = 0.020000;
+D224: drift, L = 0.098602, Aper = 0.020000;
+C60: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D225: drift, L = 0.175312, Aper = 0.020000;
+D226: drift, L = 0.072000, Aper = 0.020000;
+D227: drift, L = 0.116000, Aper = 0.020000;
+M57: marker, L = 0.000000, Attr2 = -23.000000;
+D228: drift, L = 0.074000, Aper = 0.020000;
+D229: drift, L = 0.000000, Aper = 0.020000;
+D230: drift, L = 0.091000, Aper = 0.020000;
+D231: drift, L = 0.000000, Aper = 0.020000;
+D232: drift, L = 0.099000, Aper = 0.020000;
+D233: drift, L = 0.072000, Aper = 0.020000;
+D234: drift, L = 0.175312, Aper = 0.020000;
+C61: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D235: drift, L = 0.095595, Aper = 0.020000;
+M58: marker, L = 0.000000, Attr2 = -23.000000;
+D236: drift, L = 0.055880, Aper = 0.020000;
+D237: drift, L = 0.076136, Aper = 0.020000;
+S49: solenoid, L = 0.250000, K = 7.500000, Aper = 0.020000;
+M59: marker, L = 0.000000, Attr2 = -21.000000;
+S50: solenoid, L = 0.250000, K = 7.500000, Aper = 0.020000;
+D238: drift, L = 0.076136, Aper = 0.020000;
+D239: drift, L = 0.098602, Aper = 0.020000;
+C62: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D240: drift, L = 0.097688, Aper = 0.020000;
+C63: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D241: drift, L = 0.097688, Aper = 0.020000;
+C64: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D242: drift, L = 0.095595, Aper = 0.020000;
+M60: marker, L = 0.000000, Attr2 = -23.000000;
+D243: drift, L = 0.055880, Aper = 0.020000;
+D244: drift, L = 0.076136, Aper = 0.020000;
+S51: solenoid, L = 0.250000, K = 6.800000, Aper = 0.020000;
+M61: marker, L = 0.000000, Attr2 = -21.000000;
+S52: solenoid, L = 0.250000, K = 6.800000, Aper = 0.020000;
+D245: drift, L = 0.076136, Aper = 0.020000;
+D246: drift, L = 0.098602, Aper = 0.020000;
+C65: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D247: drift, L = 0.097688, Aper = 0.020000;
+C66: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D248: drift, L = 0.097688, Aper = 0.020000;
+C67: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D249: drift, L = 0.095595, Aper = 0.020000;
+M62: marker, L = 0.000000, Attr2 = -23.000000;
+D250: drift, L = 0.055880, Aper = 0.020000;
+D251: drift, L = 0.076136, Aper = 0.020000;
+S53: solenoid, L = 0.250000, K = 7.250000, Aper = 0.020000;
+M63: marker, L = 0.000000, Attr2 = -21.000000;
+S54: solenoid, L = 0.250000, K = 7.250000, Aper = 0.020000;
+D252: drift, L = 0.076136, Aper = 0.020000;
+D253: drift, L = 0.098602, Aper = 0.020000;
+C68: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D254: drift, L = 0.175312, Aper = 0.020000;
+D255: drift, L = 0.072000, Aper = 0.020000;
+D256: drift, L = 0.116000, Aper = 0.020000;
+M64: marker, L = 0.000000, Attr2 = -23.000000;
+D257: drift, L = 0.074000, Aper = 0.020000;
+D258: drift, L = 0.000000, Aper = 0.020000;
+D259: drift, L = 0.091000, Aper = 0.020000;
+D260: drift, L = 0.000000, Aper = 0.020000;
+D261: drift, L = 0.099000, Aper = 0.020000;
+D262: drift, L = 0.072000, Aper = 0.020000;
+D263: drift, L = 0.175312, Aper = 0.020000;
+C69: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D264: drift, L = 0.095595, Aper = 0.020000;
+M65: marker, L = 0.000000, Attr2 = -23.000000;
+D265: drift, L = 0.055880, Aper = 0.020000;
+D266: drift, L = 0.076136, Aper = 0.020000;
+S55: solenoid, L = 0.250000, K = 7.650000, Aper = 0.020000;
+M66: marker, L = 0.000000, Attr2 = -21.000000;
+S56: solenoid, L = 0.250000, K = 7.650000, Aper = 0.020000;
+D267: drift, L = 0.076136, Aper = 0.020000;
+D268: drift, L = 0.098602, Aper = 0.020000;
+C70: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D269: drift, L = 0.097688, Aper = 0.020000;
+C71: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D270: drift, L = 0.097688, Aper = 0.020000;
+C72: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D271: drift, L = 0.095595, Aper = 0.020000;
+M67: marker, L = 0.000000, Attr2 = -23.000000;
+D272: drift, L = 0.055880, Aper = 0.020000;
+D273: drift, L = 0.076136, Aper = 0.020000;
+S57: solenoid, L = 0.250000, K = 7.000000, Aper = 0.020000;
+M68: marker, L = 0.000000, Attr2 = -21.000000;
+S58: solenoid, L = 0.250000, K = 7.000000, Aper = 0.020000;
+D274: drift, L = 0.076136, Aper = 0.020000;
+D275: drift, L = 0.098602, Aper = 0.020000;
+C73: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D276: drift, L = 0.097688, Aper = 0.020000;
+C74: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D277: drift, L = 0.097688, Aper = 0.020000;
+C75: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D278: drift, L = 0.095595, Aper = 0.020000;
+M69: marker, L = 0.000000, Attr2 = -23.000000;
+D279: drift, L = 0.055880, Aper = 0.020000;
+D280: drift, L = 0.076136, Aper = 0.020000;
+S59: solenoid, L = 0.250000, K = 7.800000, Aper = 0.020000;
+M70: marker, L = 0.000000, Attr2 = -21.000000;
+S60: solenoid, L = 0.250000, K = 7.800000, Aper = 0.020000;
+D281: drift, L = 0.076136, Aper = 0.020000;
+D282: drift, L = 0.098602, Aper = 0.020000;
+C76: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D283: drift, L = 0.175312, Aper = 0.020000;
+D284: drift, L = 0.072000, Aper = 0.020000;
+D285: drift, L = 0.116000, Aper = 0.020000;
+M71: marker, L = 0.000000, Attr2 = -23.000000;
+D286: drift, L = 0.074000, Aper = 0.020000;
+D287: drift, L = 0.000000, Aper = 0.020000;
+D288: drift, L = 0.091000, Aper = 0.020000;
+D289: drift, L = 0.000000, Aper = 0.020000;
+D290: drift, L = 0.099000, Aper = 0.020000;
+D291: drift, L = 0.072000, Aper = 0.020000;
+D292: drift, L = 0.175312, Aper = 0.020000;
+C77: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D293: drift, L = 0.095595, Aper = 0.020000;
+M72: marker, L = 0.000000, Attr2 = -23.000000;
+D294: drift, L = 0.055880, Aper = 0.020000;
+D295: drift, L = 0.076136, Aper = 0.020000;
+S61: solenoid, L = 0.250000, K = 7.850000, Aper = 0.020000;
+M73: marker, L = 0.000000, Attr2 = -21.000000;
+S62: solenoid, L = 0.250000, K = 7.850000, Aper = 0.020000;
+D296: drift, L = 0.076136, Aper = 0.020000;
+D297: drift, L = 0.098602, Aper = 0.020000;
+C78: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D298: drift, L = 0.097688, Aper = 0.020000;
+C79: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D299: drift, L = 0.097688, Aper = 0.020000;
+C80: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D300: drift, L = 0.095595, Aper = 0.020000;
+M74: marker, L = 0.000000, Attr2 = -23.000000;
+D301: drift, L = 0.055880, Aper = 0.020000;
+D302: drift, L = 0.076136, Aper = 0.020000;
+S63: solenoid, L = 0.250000, K = 7.050000, Aper = 0.020000;
+M75: marker, L = 0.000000, Attr2 = -21.000000;
+S64: solenoid, L = 0.250000, K = 7.050000, Aper = 0.020000;
+D303: drift, L = 0.076136, Aper = 0.020000;
+D304: drift, L = 0.098602, Aper = 0.020000;
+C81: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D305: drift, L = 0.097688, Aper = 0.020000;
+C82: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D306: drift, L = 0.097688, Aper = 0.020000;
+C83: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D307: drift, L = 0.095595, Aper = 0.020000;
+M76: marker, L = 0.000000, Attr2 = -23.000000;
+D308: drift, L = 0.055880, Aper = 0.020000;
+D309: drift, L = 0.076136, Aper = 0.020000;
+S65: solenoid, L = 0.250000, K = 8.000000, Aper = 0.020000;
+M77: marker, L = 0.000000, Attr2 = -21.000000;
+S66: solenoid, L = 0.250000, K = 8.000000, Aper = 0.020000;
+D310: drift, L = 0.076136, Aper = 0.020000;
+D311: drift, L = 0.098602, Aper = 0.020000;
+C84: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D312: drift, L = 0.175312, Aper = 0.020000;
+D313: drift, L = 0.072000, Aper = 0.020000;
+D314: drift, L = 0.116000, Aper = 0.020000;
+M78: marker, L = 0.000000, Attr2 = -23.000000;
+D315: drift, L = 0.074000, Aper = 0.020000;
+D316: drift, L = 0.000000, Aper = 0.020000;
+D317: drift, L = 0.091000, Aper = 0.020000;
+D318: drift, L = 0.000000, Aper = 0.020000;
+D319: drift, L = 0.099000, Aper = 0.020000;
+D320: drift, L = 0.072000, Aper = 0.020000;
+D321: drift, L = 0.175312, Aper = 0.020000;
+C85: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D322: drift, L = 0.095595, Aper = 0.020000;
+M79: marker, L = 0.000000, Attr2 = -23.000000;
+D323: drift, L = 0.055880, Aper = 0.020000;
+D324: drift, L = 0.076136, Aper = 0.020000;
+S67: solenoid, L = 0.250000, K = 7.750000, Aper = 0.020000;
+M80: marker, L = 0.000000, Attr2 = -21.000000;
+S68: solenoid, L = 0.250000, K = 7.750000, Aper = 0.020000;
+D325: drift, L = 0.076136, Aper = 0.020000;
+D326: drift, L = 0.098602, Aper = 0.020000;
+C86: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D327: drift, L = 0.097688, Aper = 0.020000;
+C87: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D328: drift, L = 0.097688, Aper = 0.020000;
+C88: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D329: drift, L = 0.095595, Aper = 0.020000;
+M81: marker, L = 0.000000, Attr2 = -23.000000;
+D330: drift, L = 0.055880, Aper = 0.020000;
+D331: drift, L = 0.076136, Aper = 0.020000;
+S69: solenoid, L = 0.250000, K = 7.000000, Aper = 0.020000;
+M82: marker, L = 0.000000, Attr2 = -21.000000;
+S70: solenoid, L = 0.250000, K = 7.000000, Aper = 0.020000;
+D332: drift, L = 0.076136, Aper = 0.020000;
+D333: drift, L = 0.098602, Aper = 0.020000;
+C89: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D334: drift, L = 0.097688, Aper = 0.020000;
+C90: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D335: drift, L = 0.097688, Aper = 0.020000;
+C91: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D336: drift, L = 0.095595, Aper = 0.020000;
+M83: marker, L = 0.000000, Attr2 = -23.000000;
+D337: drift, L = 0.055880, Aper = 0.020000;
+D338: drift, L = 0.076136, Aper = 0.020000;
+S71: solenoid, L = 0.250000, K = 7.900000, Aper = 0.020000;
+M84: marker, L = 0.000000, Attr2 = -21.000000;
+S72: solenoid, L = 0.250000, K = 7.900000, Aper = 0.020000;
+D339: drift, L = 0.076136, Aper = 0.020000;
+D340: drift, L = 0.098602, Aper = 0.020000;
+C92: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D341: drift, L = 0.175312, Aper = 0.020000;
+D342: drift, L = 0.072000, Aper = 0.020000;
+D343: drift, L = 0.116000, Aper = 0.020000;
+M85: marker, L = 0.000000, Attr2 = -23.000000;
+D344: drift, L = 0.074000, Aper = 0.020000;
+D345: drift, L = 0.000000, Aper = 0.020000;
+D346: drift, L = 0.091000, Aper = 0.020000;
+D347: drift, L = 0.000000, Aper = 0.020000;
+D348: drift, L = 0.099000, Aper = 0.020000;
+D349: drift, L = 0.072000, Aper = 0.020000;
+D350: drift, L = 0.175312, Aper = 0.020000;
+C93: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D351: drift, L = 0.095595, Aper = 0.020000;
+M86: marker, L = 0.000000, Attr2 = -23.000000;
+D352: drift, L = 0.055880, Aper = 0.020000;
+D353: drift, L = 0.076136, Aper = 0.020000;
+S73: solenoid, L = 0.250000, K = 8.000000, Aper = 0.020000;
+M87: marker, L = 0.000000, Attr2 = -21.000000;
+S74: solenoid, L = 0.250000, K = 8.000000, Aper = 0.020000;
+D354: drift, L = 0.076136, Aper = 0.020000;
+D355: drift, L = 0.098602, Aper = 0.020000;
+C94: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D356: drift, L = 0.097688, Aper = 0.020000;
+C95: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D357: drift, L = 0.097688, Aper = 0.020000;
+C96: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D358: drift, L = 0.095595, Aper = 0.020000;
+M88: marker, L = 0.000000, Attr2 = -23.000000;
+D359: drift, L = 0.055880, Aper = 0.020000;
+D360: drift, L = 0.076136, Aper = 0.020000;
+S75: solenoid, L = 0.250000, K = 6.800000, Aper = 0.020000;
+M89: marker, L = 0.000000, Attr2 = -21.000000;
+S76: solenoid, L = 0.250000, K = 6.800000, Aper = 0.020000;
+D361: drift, L = 0.076136, Aper = 0.020000;
+D362: drift, L = 0.098602, Aper = 0.020000;
+C97: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D363: drift, L = 0.097688, Aper = 0.020000;
+C98: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D364: drift, L = 0.097688, Aper = 0.020000;
+C99: rfcavity, L = 0.300000, phase = -21.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D365: drift, L = 0.095595, Aper = 0.020000;
+M90: marker, L = 0.000000, Attr2 = -23.000000;
+D366: drift, L = 0.055880, Aper = 0.020000;
+D367: drift, L = 0.076136, Aper = 0.020000;
+S77: solenoid, L = 0.250000, K = 8.200000, Aper = 0.020000;
+M91: marker, L = 0.000000, Attr2 = -21.000000;
+S78: solenoid, L = 0.250000, K = 8.200000, Aper = 0.020000;
+D368: drift, L = 0.076136, Aper = 0.020000;
+D369: drift, L = 0.098602, Aper = 0.020000;
+C100: rfcavity, L = 0.300000, phase = -40.000000, E_fac_ad = 1.000000,
+    Aper = 0.017000, Attr2 = 80.500000;
+D370: drift, L = 0.175312, Aper = 0.020000;
+D371: drift, L = 0.072000, Aper = 0.020000;
+D372: drift, L = 0.116000, Aper = 0.020000;
+
+cell: LINE = (
+  D1, D2, C1, D3, M1, D4, D5, S1, M2, S2, 
+  D6, D7, C2, D8, C3, D9, M3, D10, D11, S3, 
+  M4, S4, D12, D13, C4, D14, D15, D16, M5, D17, 
+  D18, D19, D20, D21, D22, C5, D23, M6, D24, D25, 
+  S5, M7, S6, D26, D27, C6, D28, C7, D29, M8, 
+  D30, D31, S7, M9, S8, D32, D33, C8, D34, D35, 
+  D36, M10, D37, D38, D39, D40, D41, D42, D43, C9, 
+  D44, M11, D45, D46, S9, M12, S10, D47, D48, C10, 
+  D49, C11, D50, M13, D51, D52, S11, M14, S12, D53, 
+  D54, C12, D55, D56, D57, M15, D58, D59, D60, D61, 
+  D62, D63, C13, D64, M16, D65, D66, S13, M17, S14, 
+  D67, D68, C14, D69, C15, D70, C16, D71, M18, D72, 
+  D73, S15, M19, S16, D74, D75, C17, D76, C18, D77, 
+  C19, D78, M20, D79, D80, S17, M21, S18, D81, D82, 
+  C20, D83, D84, D85, M22, D86, D87, D88, D89, D90, 
+  D91, C21, D92, M23, D93, D94, S19, M24, S20, D95, 
+  D96, C22, D97, C23, D98, C24, D99, M25, D100, D101, 
+  S21, M26, S22, D102, D103, C25, D104, C26, D105, C27, 
+  D106, M27, D107, D108, S23, M28, S24, D109, D110, C28, 
+  D111, D112, D113, M29, D114, D115, D116, D117, D118, D119, 
+  C29, D120, M30, D121, D122, S25, M31, S26, D123, D124, 
+  C30, D125, C31, D126, C32, D127, M32, D128, D129, S27, 
+  M33, S28, D130, D131, C33, D132, C34, D133, C35, D134, 
+  M34, D135, D136, S29, M35, S30, D137, D138, C36, D139, 
+  D140, D141, M36, D142, D143, D144, D145, D146, D147, C37, 
+  D148, M37, D149, D150, S31, M38, S32, D151, D152, C38, 
+  D153, C39, D154, C40, D155, M39, D156, D157, S33, M40, 
+  S34, D158, D159, C41, D160, C42, D161, C43, D162, M41, 
+  D163, D164, S35, M42, S36, D165, D166, C44, D167, D168, 
+  D169, M43, D170, D171, D172, D173, D174, D175, D176, C45, 
+  D177, M44, D178, D179, S37, M45, S38, D180, D181, C46, 
+  D182, C47, D183, C48, D184, M46, D185, D186, S39, M47, 
+  S40, D187, D188, C49, D189, C50, D190, C51, D191, M48, 
+  D192, D193, S41, M49, S42, D194, D195, C52, D196, D197, 
+  D198, M50, D199, D200, D201, D202, D203, D204, D205, C53, 
+  D206, M51, D207, D208, S43, M52, S44, D209, D210, C54, 
+  D211, C55, D212, C56, D213, M53, D214, D215, S45, M54, 
+  S46, D216, D217, C57, D218, C58, D219, C59, D220, M55, 
+  D221, D222, S47, M56, S48, D223, D224, C60, D225, D226, 
+  D227, M57, D228, D229, D230, D231, D232, D233, D234, C61, 
+  D235, M58, D236, D237, S49, M59, S50, D238, D239, C62, 
+  D240, C63, D241, C64, D242, M60, D243, D244, S51, M61, 
+  S52, D245, D246, C65, D247, C66, D248, C67, D249, M62, 
+  D250, D251, S53, M63, S54, D252, D253, C68, D254, D255, 
+  D256, M64, D257, D258, D259, D260, D261, D262, D263, C69, 
+  D264, M65, D265, D266, S55, M66, S56, D267, D268, C70, 
+  D269, C71, D270, C72, D271, M67, D272, D273, S57, M68, 
+  S58, D274, D275, C73, D276, C74, D277, C75, D278, M69, 
+  D279, D280, S59, M70, S60, D281, D282, C76, D283, D284, 
+  D285, M71, D286, D287, D288, D289, D290, D291, D292, C77, 
+  D293, M72, D294, D295, S61, M73, S62, D296, D297, C78, 
+  D298, C79, D299, C80, D300, M74, D301, D302, S63, M75, 
+  S64, D303, D304, C81, D305, C82, D306, C83, D307, M76, 
+  D308, D309, S65, M77, S66, D310, D311, C84, D312, D313, 
+  D314, M78, D315, D316, D317, D318, D319, D320, D321, C85, 
+  D322, M79, D323, D324, S67, M80, S68, D325, D326, C86, 
+  D327, C87, D328, C88, D329, M81, D330, D331, S69, M82, 
+  S70, D332, D333, C89, D334, C90, D335, C91, D336, M83, 
+  D337, D338, S71, M84, S72, D339, D340, C92, D341, D342, 
+  D343, M85, D344, D345, D346, D347, D348, D349, D350, C93, 
+  D351, M86, D352, D353, S73, M87, S74, D354, D355, C94, 
+  D356, C95, D357, C96, D358, M88, D359, D360, S75, M89, 
+  S76, D361, D362, C97, D363, C98, D364, C99, D365, M90, 
+  D366, D367, S77, M91, S78, D368, D369, C100, D370, D371, 
+  D372
+);
+
+
+USE: cell;

@@ -301,9 +301,7 @@ class testBasic(unittest.TestCase):
     P = GLPSParser()
 
     inf = open(os.path.join(datadir, 'moment_jb.lat'), 'r')
-    C = P.parse(inf.read())
-
-    self.M = Machine(C)
+    self.M = Machine(inf.read())
 #    print self.M
 
     S = self.M.allocState({})
@@ -337,15 +335,13 @@ class testBasic(unittest.TestCase):
     P = GLPSParser()
 
     inf = open(os.path.join(datadir, 'latticeout_IMP_withPV.lat'), 'r')
-    C = P.parse(inf.read())
-
-    self.M = Machine(C)
+    self.M = Machine(inf.read())
 #    print self.M
 
     S = self.M.allocState({})
 
     self.M.propagate(S)
-    # print_state(S)
+#    print_state(S)
     # assert_aequal(S.state, [
     #   [ 5.367983,  0.300692,  0.000000,  0.000000,  0.000000,  0.000000],
     #   [ 0.300692,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],

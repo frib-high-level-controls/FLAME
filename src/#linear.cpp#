@@ -1,0 +1,277 @@
+
+#include <algorithm>
+
+#include "scsi/linear.h"
+#include "scsi/moment.h"
+#include "scsi/state/vector.h"
+#include "scsi/state/matrix.h"
+
+MatrixState::MatrixState(const Config& c)
+    :StateBase(c)
+    ,state(boost::numeric::ublas::identity_matrix<double>(6))
+{
+    try{
+        const std::vector<double>& I = c.get<std::vector<double> >("initial");
+        if(I.size()<state.data().size())
+            throw std::invalid_argument("Initial state size too big");
+        std::copy(I.begin(), I.end(), state.data().begin());
+    }catch(key_error&){
+        // default to identity
+    }catch(boost::bad_any_cast&){
+        throw std::invalid_argument("'initial' has wrong type (must be vector)");
+    }
+}
+
+MatrixState::~MatrixState() {}
+
+void MatrixState::show(std::ostream& strm) const
+{
+    strm<<"State: "<<state<<"\n";
+}
+
+bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
+    if(idx==0) {
+        Info.name = "state";
+        Info.ptr = &state(0,0);
+        Info.ndim = 2;
+        Info.dim[0] = state.size1();
+        Info.dim[1] = state.size2();
+        return true;
+    }
+    return false;
+}
+
+VectorState::VectorState(const Config& c)
+    :StateBase(c)
+    ,state(6, 0.0)
+{
+    try{
+        const std::vector<double>& I = c.get<std::vector<double> >("initial");
+        if(I.size()<state.size())
+            throw std::invalid_argument("Initial state size too big");
+        std::copy(I.begin(), I.end(), state.begin());
+    }catch(key_error&){
+    }catch(boost::bad_any_cast&){
+    }
+}
+
+VectorState::~VectorState() {}
+
+void VectorState::show(std::ostream& strm) const
+{
+    strm<<"State: "<<state<<"\n";
+}
+
+bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
+    if(idx==0) {
+        Info.name = "state";
+        Info.ptr = &state(0);
+        Info.ndim = 1;
+        Info.dim[0] = state.size();
+        return true;
+    }
+    return false;
+}
+
+namespace {
+
+template<typename Base>
+struct ElementSource : public Base
+{
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementSource(const Config& c)
+        :base_t(c)
+        ,ivect(c.get<std::vector<double> >("initial",
+                                           std::vector<double>()))
+    {}
+
+    virtual void advance(StateBase& s) const
+    {
+        state_t& ST = static_cast<state_t&>(s);
+        if(ivect.size()==0)
+            return; // use defaults
+        // Replace state with our initial values
+        if(ST.state.data().size()!=ivect.size())
+            throw std::invalid_argument("Initial state size incorrect");
+        std::copy(ivect.begin(), ivect.end(), ST.state.data().begin());
+    }
+
+    std::vector<double> ivect;
+
+    virtual ~ElementSource() {}
+
+    virtual const char* type_name() const {return "source";}
+};
+
+template<typename Base>
+struct ElementDrift : public Base
+{
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementDrift(const Config& c)
+        :base_t(c)
+    {
+        double len = c.get<double>("length");
+        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
+        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
+    }
+    virtual ~ElementDrift() {}
+
+    virtual const char* type_name() const {return "drift";}
+};
+
+template<typename Base>
+struct ElementDipole : public Base
+{
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementDipole(const Config& c)
+        :base_t(c)
+    {
+        double phi = c.get<double>("angle"), // in rad.
+               rho = c.get<double>("radius", 1.0),
+               L   = rho*phi,
+               off = c.get<double>("vertical", 0.0)!=0.0 ? state_t::PS_Y : state_t::PS_X ,
+               cos = ::cos(phi),
+               sin = ::sin(phi);
+
+        // Off is 0 or 2.
+        if (off == 0) {
+            this->transfer(state_t::PS_X, state_t::PS_X)   = cos;
+            this->transfer(state_t::PS_X, state_t::PS_PX)  = rho*sin;
+            this->transfer(state_t::PS_PX, state_t::PS_X)  = -sin/rho;
+            this->transfer(state_t::PS_PX, state_t::PS_PX) = cos;
+            this->transfer(state_t::PS_Y, state_t::PS_PY)  = L;
+        } else {
+            this->transfer(state_t::PS_Y, state_t::PS_Y)   = cos;
+            this->transfer(state_t::PS_Y, state_t::PS_PY)  = rho*sin;
+            this->transfer(state_t::PS_PY, state_t::PS_Y)  = -sin/rho;
+            this->transfer(state_t::PS_PY, state_t::PS_PY) = cos;
+            this->transfer(state_t::PS_X, state_t::PS_PX)  = L;
+        }
+    }
+    virtual ~ElementDipole() {}
+
+    virtual const char* type_name() const {return "dipole";}
+};
+
+template<typename Base>
+struct ElementSBend : public Base
+{
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementSBend(const Config& c)
+        :base_t(c)
+  {
+    double L    = c.get<double>("L", 0e0),
+      phi  = c.get<double>("phi", 0e0), // [rad].
+      Ky    = c.get<double>("K", 0e0),    // [1/m^2].
+      Kx   = Ky + 1e0/sqr(rho),
+      rho  = L/phi,
+      psi  = sqrt(K)*L,
+      cos  = ::cos(psi),
+      sin  = ::sin(psi);
+    cosh = ::cosh(psi),
+      sinh = ::sinh(psi);
+
+    if (Ky > 0e0) {
+      this->transfer(state_t::PS_X, state_t::PS_X)   = cos;
+      this->transfer(state_t::PS_X, state_t::PS_PX)  = rho*sin;
+      this->transfer(state_t::PS_PX, state_t::PS_X)  = -sin/rho;
+      this->transfer(state_t::PS_PX, state_t::PS_PX) = cos;
+      this->transfer(state_t::PS_Y, state_t::PS_PY)  = L;
+    }
+    virtual ~ElementSBend() {}
+
+    virtual const char* type_name() const {return "sbend";}
+};
+
+template<typename Base>
+struct ElementQuad : public Base
+{
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementQuad(const Config& c)
+        :base_t(c)
+    {
+        double L    = c.get<double>("length"),
+               K    = c.get<double>("strength", 1.0),
+               aK   = fabs(K),
+               sK   = sqrt(aK),
+               sKL  = sK*L,
+               cos  = ::cos(sKL),
+               sin  = ::sin(sKL),
+               cosh = ::cosh(sKL),
+               sinh = ::sinh(sKL);
+        unsigned Fdir, Ddir;
+
+        if(K<0.0) {
+            // defocus in X, focus in Y
+            Fdir = state_t::PS_Y;
+            Ddir = state_t::PS_X;
+        } else {
+            // focus in X, defocus in Y
+            Fdir = state_t::PS_X;
+            Ddir = state_t::PS_Y;
+        }
+
+        this->transfer(Fdir,Fdir) = this->transfer(Fdir+1,Fdir+1) = cos;
+        this->transfer(Fdir,Fdir+1) = sin/sK;
+        this->transfer(Fdir+1,Fdir) = sK*sin;
+
+        this->transfer(Ddir,Ddir) = this->transfer(Ddir+1,Ddir+1) = cosh;
+        this->transfer(Ddir,Ddir+1) = sinh/sK;
+        this->transfer(Ddir+1,Ddir) = sK*sinh;
+    }
+    virtual ~ElementQuad() {}
+
+    virtual const char* type_name() const {return "quad";}
+};
+template<typename Base>
+struct ElementGeneric : public Base
+{
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementGeneric(const Config& c)
+        :base_t(c)
+    {
+        std::vector<double> I = c.get<std::vector<double> >("transfer");
+        if(I.size()<this->transfer.data().size())
+            throw std::invalid_argument("Initial transfer size too big");
+        std::copy(I.begin(), I.end(), this->transfer.data().begin());
+    }
+    virtual ~ElementGeneric() {}
+
+    virtual const char* type_name() const {return "generic";}
+};
+
+} // namespace
+
+void registerLinear()
+{
+    Machine::registerState<VectorState>("Vector");
+    Machine::registerState<MatrixState>("TransferMatrix");
+    Machine::registerState<MatrixState>("MomentMatrix");
+
+    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector", "source");
+    Machine::registerElement<ElementSource<LinearElementBase<MatrixState> > >("TransferMatrix", "source");
+    Machine::registerElement<ElementSource<MomentElementBase> >("MomentMatrix", "source");
+
+    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector", "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
+    Machine::registerElement<ElementDrift<MomentElementBase> >("MomentMatrix", "drift");
+
+    Machine::registerElement<ElementDipole<LinearElementBase<VectorState> > >("Vector", "dipole");
+    Machine::registerElement<ElementDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "dipole");
+    Machine::registerElement<ElementDipole<MomentElementBase> >("MomentMatrix", "dipole");
+
+    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector", "quad");
+    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quad");
+    Machine::registerElement<ElementQuad<MomentElementBase> >("MomentMatrix", "quad");
+
+    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector", "generic");
+    Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
+    Machine::registerElement<ElementGeneric<MomentElementBase> >("MomentMatrix", "generic");
+}

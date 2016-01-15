@@ -193,12 +193,12 @@ struct ElementSBend : public Base
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L      = c.get<double>("L",   0e0),
-               phi    = c.get<double>("phi", 0e0), // [rad].
-               K      = c.get<double>("K",   0e0),   // [1/m^2].
-               rho    = L/phi,
-               Kx     = K + 1e0/sqr(rho),
-               Ky     = -K;
+        double L   = c.get<double>("L",   0e0),
+               phi = c.get<double>("phi", 0e0), // [rad].
+               rho = L/phi,
+               K   = c.get<double>("K",   0e0), // [1/m^2].
+               Kx  = K + 1e0/sqr(rho),
+               Ky  = -K;
 
         // Horizontal plane.
         Get2by2Matrix<Base>(L, Kx, (unsigned)state_t::PS_X, this->transfer);
