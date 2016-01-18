@@ -114,6 +114,27 @@ Machine::allocState(Config& c) const
     return (*p_info.builder)(c);
 }
 
+void Machine::reconfigure(size_t idx, const Config& c)
+{
+    if(idx>=p_elements.size())
+        throw std::invalid_argument("element index out of range");
+
+    const std::string& etype(c.get<std::string>("type"));
+
+    state_info::elements_t::iterator eit = p_info.elements.find(etype);
+    if(eit==p_info.elements.end())
+        throw key_error(etype);
+
+    element_builder_t builder = eit->second;
+
+    std::auto_ptr<ElementVoid> E((*builder)(c));
+
+    *const_cast<size_t*>(&E->index) = idx; // ugly
+
+    delete p_elements[idx];
+    p_elements[idx] = E.release();
+}
+
 Machine::p_state_infos_t Machine::p_state_infos;
 
 void Machine::p_registerState(const char *name, state_builder_t b)

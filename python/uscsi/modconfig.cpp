@@ -10,8 +10,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
 
-namespace {
-
 /** Translate python dict to Config
  *
  *  {}      -> Config
@@ -21,8 +19,7 @@ namespace {
  *    ndarray -> vector<double>
  *    TODO: [0.0]   -> vector<double>
  */
-static
-void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
+void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
 {
     if(depth>3)
         throw std::runtime_error("too deep for Dict2Config");
@@ -96,6 +93,8 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0)
         }
     }
 }
+
+namespace {
 
 static
 PyObject* conf2dict(const Config *conf);
