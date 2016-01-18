@@ -78,11 +78,18 @@ private:
     // value_scopes always has at least one element
 
     void _cow();
+    //! Construct from several std::map (several scopes)
+    //! Argument is consumed via. swap()
+    //! Used by new_scope()
     explicit Config(values_scope_t& V) { value_scopes.swap(V); }
 public:
+    //! New empty config
     Config();
+    //! Build config from a single std::map (single scope)
     explicit Config(const values_t& V);
+    //! Copy ctor
     Config(const Config&);
+    //! Assignment
     Config& operator=(const Config&);
 
     /** lookup untyped.

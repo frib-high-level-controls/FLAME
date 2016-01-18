@@ -94,9 +94,10 @@ struct Machine : public boost::noncopyable
     /** @brief Pass the given bunch State through this Machine.
      *
      * @param S The initial state, will be updated with the final state
-     * @param start The index of the first Element to the state will pass through
+     * @param start The index of the first Element the state will pass through
      * @param max The maximum number of elements through which the state will be passed
-     * @throws std::exception sub-classes for various errors.  If an exception is through then the state of S is undefined.
+     * @throws std::exception sub-classes for various errors.
+     *         If an exception is thrown then the state of S is undefined.
      */
     void propagate(StateBase* S,
                    size_t start=0,

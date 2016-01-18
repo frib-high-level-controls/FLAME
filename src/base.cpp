@@ -57,9 +57,9 @@ Machine::Machine(const Config& c)
     size_t idx=0;
     for(elements_t::iterator it=Es.begin(), end=Es.end(); it!=end; ++it)
     {
-        Config EC = boost::any_cast<Config>(*it);
+        const Config& EC = *it;
 
-        std::string etype(EC.get<std::string>("type"));
+        const std::string& etype(EC.get<std::string>("type"));
 
         state_info::elements_t::iterator eit = p_info.elements.find(etype);
         if(eit==p_info.elements.end())
