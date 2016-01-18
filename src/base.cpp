@@ -67,7 +67,21 @@ Machine::Machine(const Config& c)
 
         element_builder_t builder = eit->second;
 
-        ElementVoid *E = (*builder)(EC);
+        ElementVoid *E;
+        try{
+            E = (*builder)(EC);
+        }catch(key_error& e){
+            std::ostringstream strm;
+            strm<<"Error while initializing element "<<idx<<" '"<<EC.get<std::string>("name", "<invalid>")
+               <<"' : missing required parameter '"<<e.what()<<"'";
+            throw key_error(strm.str());
+
+        }catch(std::exception& e){
+            std::ostringstream strm;
+            strm<<"Error while constructing element "<<idx<<" '"<<EC.get<std::string>("name", "<invalid>")
+               <<"' : "<<e.what();
+            throw std::runtime_error(strm.str());
+        }
 
         *const_cast<size_t*>(&E->index) = idx++; // ugly
 
