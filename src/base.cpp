@@ -97,7 +97,8 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
 {
     const size_t nelem = p_elements.size();
 
-    for(size_t i=start; S->next_elem<nelem && i<max; i++)
+    S->next_elem = start;
+    for(size_t i=0; S->next_elem<nelem && i<max; i++)
     {
         ElementVoid* E = p_elements[S->next_elem];
         S->next_elem++;
