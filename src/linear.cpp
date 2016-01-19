@@ -251,7 +251,7 @@ struct ElementSolenoid : public Base
     {
         double L = c.get<double>("L"),
                B = c.get<double>("B"),
-               K = B/Brho,
+               K = B/c.get<double>("Brho"),
                C = ::cos(K*L),
                S = ::sin(K*L);
 
