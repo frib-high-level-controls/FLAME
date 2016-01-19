@@ -19,6 +19,7 @@ StateBase::StateBase(const Config& c)
     :next_elem(0)
     ,E(c.get<double>("E", 0))
     ,qop(c.get<double>("qop", 0))
+    ,Brho(c.get<double>("Brho", 0))
     ,pyptr(0)
 {}
 

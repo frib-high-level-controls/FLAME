@@ -133,6 +133,9 @@ struct ElementSource : public Base
         state_t& ST = static_cast<state_t&>(s);
         // Replace state with our initial values
         ST.state = this->istate.state;
+        ST.E = this->istate.E;
+        ST.qop = this->istate.qop;
+        ST.Brho = this->istate.Brho;
     }
 
     virtual void show(std::ostream& strm) const
@@ -246,10 +249,11 @@ struct ElementSolenoid : public Base
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L"),
-               K   = c.get<double>("K", 0e0),
-               C   = ::cos(K*L),
-               S   = ::sin(K*L);
+        double L = c.get<double>("L"),
+               B = c.get<double>("B"),
+               K = B/Brho,
+               C = ::cos(K*L),
+               S = ::sin(K*L);
 
         this->transfer(state_t::PS_X, state_t::PS_X)
                 = this->transfer(state_t::PS_PX, state_t::PS_PX)

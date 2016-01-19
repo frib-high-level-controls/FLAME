@@ -3,8 +3,9 @@
 sim_type = "MomentMatrix";
 
 # Global parameters.
-E   = 1.111e6; # Total energy [eV].
-qop = 0.123;   # Charge over mass ratio.
+E    = 1.111e6; # Total energy [eV].
+qop  = 0.123;   # Charge over mass ratio.
+Brho = 1/qop;   # Magnetic rigidity.
 
 # Define beam envelope parameters.
 S: source, initial = [

@@ -43,7 +43,15 @@ void prt_lat(Machine &sim)
 
 void initialize_long(Machine &sim)
 {
-//    typedef ElementRFCavity<MomentElementBase> rfcav_t;
+
+    Config D;
+    std::auto_ptr<StateBase> state(sim.allocState(D));
+    // Propagate through first element.
+    sim.propagate(state.get(), 0, 1);
+
+    std::cout << *state << std::endl;
+    std::cout << "E = " << state->E << ", qop = " << state->qop << ", Brho = " << state->Brho
+              << std::endl;
 
     for(Machine::p_elements_t::iterator it = sim.p_elements.begin(),
         end = sim.p_elements.end(); it != end; ++it)
@@ -60,13 +68,11 @@ void initialize_long(Machine &sim)
         } else if (t_name == "sbend") {
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
+            std::cout << "solenoid: L = " << conf.get<double>("L"),
+            std::cout << ", B = " << conf.get<double>("B") << std::endl;
         } else if (t_name == "rfcavity") {
             std::cout << "cavity: L =" << conf.get<double>("L")
                       << ", phi = " << conf.get<double>("phi") << std::endl;
-
-//            rfcav_t* rfcav_ptr = dynamic_cast<rfcav_t*>(elem);
-//            assert(rfcav_ptr != NULL); // Check if cavity.
-//            rfcav_ptr-> = phi;
         }
     }
 }
