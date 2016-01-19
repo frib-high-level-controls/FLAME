@@ -317,6 +317,24 @@ class testBasic(unittest.TestCase):
       [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
 
+  def test_parse(self):
+    "Test global scope when parsing"
+    # Propagate a state matrix through a lattice defined by a lattice file.
+    P = GLPSParser()
+
+    inf = open(os.path.join(datadir, 'moment_jb_2.lat'), 'r')
+    self.M = Machine(inf.read())
+    print self.M
+
+    S = self.M.allocState({})
+    print S
+
+ #    assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
+
+    self.M.propagate(S)
+
+#    assert_aequal(S.state, [0, 0, 1.006, 1e-3, 0, 0])
+
   def test_LS1(self):
     # Propagate a state matrix through a lattice defined by a lattice file.
 

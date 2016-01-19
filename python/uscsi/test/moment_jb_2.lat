@@ -1,0 +1,31 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+# Global parameters.
+E   = 1.111e6; # Total energy [eV].
+qop = 0.123;   # Charge over mass ratio.
+
+# Define beam envelope parameters.
+S: source, initial = [
+  0.1, 0,   0,   0,   0,   0,
+  0,   0.2, 0,   0,   0,   0,
+  0,   0,   0.3, 0,   0,   0,
+  0,   0,   0,   0.4, 0,   0,
+  0,   0,   0,   0,   0.5, 0,
+  0,   0,   0,   0,   0,   0.6
+];
+
+d1: drift, L = 0.072000, aper = 0.020000;
+d2: drift, L = 0.135064, aper = 0.020000;
+cav1_d1127: rfcavity, L = 0.240000, f = 80.500000e6, phi = -35.000000,
+            scl_fac = 0.640000, aper = 0.017000;
+d3: drift, L = 0.064263, aper = 0.020000;
+bpm_d1129: marker;
+d4: drift, L = 0.055880, aper = 0.020000;
+d5: drift, L = 0.076123, aper = 0.020000;
+sol1_d1131: solenoid, L = 0.100000, B = 5.340000, aper = 0.020000;
+
+cell: LINE = (S, d1, d2, cav1_d1127, d3, bpm_d1129, d4, d5, sol1_d1131);
+
+USE: cell;

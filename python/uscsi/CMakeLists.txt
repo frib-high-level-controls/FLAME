@@ -29,6 +29,7 @@ set(PY_SRC
   test/test_config.py
   test/test_jb.py
   test/moment_jb.lat
+  test/moment_jb_2.lat
 )
 
 # Copy .py files to the binary dir in order to run unit-tests

@@ -15,7 +15,12 @@ info_mutex_t info_mutex;
 
 StateBase::~StateBase() {}
 
-StateBase::StateBase(const Config&) :next_elem(0), pyptr(0) {}
+StateBase::StateBase(const Config& c)
+    :next_elem(0)
+    ,E(c.get<double>("E", 0))
+    ,qop(c.get<double>("qop", 0))
+    ,pyptr(0)
+{}
 
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))

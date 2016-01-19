@@ -174,10 +174,11 @@ struct ElementDrift : public Base
     ElementDrift(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("L");
-        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
-        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
+        double L = c.get<double>("L");
+
+        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementDrift() {}
 
@@ -245,10 +246,10 @@ struct ElementSolenoid : public Base
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L"),
-               K = c.get<double>("K", 0e0),
-               C = ::cos(K*L),
-               S = ::sin(K*L);
+        double L   = c.get<double>("L"),
+               K   = c.get<double>("K", 0e0),
+               C   = ::cos(K*L),
+               S   = ::sin(K*L);
 
         this->transfer(state_t::PS_X, state_t::PS_X)
                 = this->transfer(state_t::PS_PX, state_t::PS_PX)
@@ -301,11 +302,12 @@ struct ElementRFCavity : public Base
     ElementRFCavity(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("L");
+        double L = c.get<double>("L"),
+        phi      = c.get<double>("phi");
 
-        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
+        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementRFCavity() {}
 
@@ -321,7 +323,7 @@ struct ElementEDipole : public Base
     ElementEDipole(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("L");
+        double L = c.get<double>("L");
 
     }
     virtual ~ElementEDipole() {}

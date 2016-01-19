@@ -27,6 +27,7 @@ struct StateBase : public boost::noncopyable
     //! Index of @class ElementBase in @class Machine which will follow this one.
     //! May be altered by ElementBase::advance()
     size_t next_elem;
+    double E, qop; // Energy and charge of momentum.
 
     virtual void show(std::ostream&) const {}
 
@@ -86,6 +87,12 @@ private:
     const Config p_conf;
 };
 
+//std::ostream& operator<<(std::ostream& strm, const ElementVoid& s)
+//{
+//    s.show(strm);
+//    return strm;
+//}
+
 struct Machine : public boost::noncopyable
 {
     Machine(const Config& c);
@@ -118,10 +125,10 @@ struct Machine : public boost::noncopyable
     typedef std::vector<ElementVoid*> p_elements_t;
     typedef std::map<std::string, ElementVoid*> p_lookup_t;
 private:
-    p_elements_t p_elements;
-    p_lookup_t p_lookup;
-    std::string p_simtype;
-    std::ostream* p_trace;
+//    p_elements_t p_elements;
+//    p_lookup_t p_lookup;
+//    std::string p_simtype;
+//    std::ostream* p_trace;
 
     typedef StateBase* (*state_builder_t)(const Config& c);
     typedef ElementVoid* (*element_builder_t)(const Config& c);
@@ -143,7 +150,7 @@ private:
         elements_t elements;
     };
 
-    state_info p_info;
+//    state_info p_info;
 
     typedef std::map<std::string, state_info> p_state_infos_t;
     static p_state_infos_t p_state_infos;
@@ -153,6 +160,11 @@ private:
     static void p_registerElement(const std::string& sname, const char *ename, element_builder_t b);
 
 public:
+    p_elements_t p_elements;
+    p_lookup_t p_lookup;
+    std::string p_simtype;
+    std::ostream* p_trace;
+    state_info p_info;
 
     template<typename State>
     static void registerState(const char *name)
