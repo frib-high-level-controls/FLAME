@@ -30,6 +30,7 @@ set(PY_SRC
   test/test_jb.py
   test/moment_jb.lat
   test/moment_jb_2.lat
+  test/latticeout_IMP_withPV.lat
 )
 
 # Copy .py files to the binary dir in order to run unit-tests

@@ -101,9 +101,10 @@ struct Machine : public boost::noncopyable
     /** @brief Pass the given bunch State through this Machine.
      *
      * @param S The initial state, will be updated with the final state
-     * @param start The index of the first Element to the state will pass through
+     * @param start The index of the first Element the state will pass through
      * @param max The maximum number of elements through which the state will be passed
-     * @throws std::exception sub-classes for various errors.  If an exception is through then the state of S is undefined.
+     * @throws std::exception sub-classes for various errors.
+     *         If an exception is thrown then the state of S is undefined.
      */
     void propagate(StateBase* S,
                    size_t start=0,
@@ -117,6 +118,8 @@ struct Machine : public boost::noncopyable
      */
     StateBase* allocState(Config& c) const;
 
+    void reconfigure(size_t idx, const Config& c);
+
     inline const std::string& simtype() const {return p_simtype;}
 
     inline std::ostream* trace() const {return p_trace;}
@@ -124,6 +127,20 @@ struct Machine : public boost::noncopyable
 
     typedef std::vector<ElementVoid*> p_elements_t;
     typedef std::map<std::string, ElementVoid*> p_lookup_t;
+
+    inline size_t size() const { return p_elements.size(); }
+
+    typedef p_elements_t::iterator iterator;
+    typedef p_elements_t::const_iterator const_iterator;
+
+    iterator begin() { return p_elements.begin(); }
+    const_iterator begin() const { return p_elements.begin(); }
+
+    iterator end() { return p_elements.end(); }
+    const_iterator end() const { return p_elements.end(); }
+
+    inline ElementVoid* operator[](size_t i) { return p_elements[i]; }
+    inline const ElementVoid* operator[](size_t i) const { return p_elements[i]; }
 private:
 //    p_elements_t p_elements;
 //    p_lookup_t p_lookup;
@@ -141,6 +158,8 @@ private:
     struct element_builder_impl {
         static ElementVoid* build(const Config& c)
         { return new Element(c); }
+        static ElementVoid* rebuild(Element *o, const Config& c)
+        { delete o; return new Element(c); }
     };
 
     struct state_info {

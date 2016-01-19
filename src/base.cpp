@@ -62,9 +62,9 @@ Machine::Machine(const Config& c)
     size_t idx=0;
     for(elements_t::iterator it=Es.begin(), end=Es.end(); it!=end; ++it)
     {
-        Config EC = boost::any_cast<Config>(*it);
+        const Config& EC = *it;
 
-        std::string etype(EC.get<std::string>("type"));
+        const std::string& etype(EC.get<std::string>("type"));
 
         state_info::elements_t::iterator eit = p_info.elements.find(etype);
         if(eit==p_info.elements.end())
@@ -72,7 +72,21 @@ Machine::Machine(const Config& c)
 
         element_builder_t builder = eit->second;
 
-        ElementVoid *E = (*builder)(EC);
+        ElementVoid *E;
+        try{
+            E = (*builder)(EC);
+        }catch(key_error& e){
+            std::ostringstream strm;
+            strm<<"Error while initializing element "<<idx<<" '"<<EC.get<std::string>("name", "<invalid>")
+               <<"' : missing required parameter '"<<e.what()<<"'";
+            throw key_error(strm.str());
+
+        }catch(std::exception& e){
+            std::ostringstream strm;
+            strm<<"Error while constructing element "<<idx<<" '"<<EC.get<std::string>("name", "<invalid>")
+               <<"' : "<<e.what();
+            throw std::runtime_error(strm.str());
+        }
 
         *const_cast<size_t*>(&E->index) = idx++; // ugly
 
@@ -102,7 +116,8 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
 {
     const size_t nelem = p_elements.size();
 
-    for(size_t i=start; S->next_elem<nelem && i<max; i++)
+    S->next_elem = start;
+    for(size_t i=0; S->next_elem<nelem && i<max; i++)
     {
         ElementVoid* E = p_elements[S->next_elem];
         S->next_elem++;
@@ -116,6 +131,27 @@ StateBase*
 Machine::allocState(Config& c) const
 {
     return (*p_info.builder)(c);
+}
+
+void Machine::reconfigure(size_t idx, const Config& c)
+{
+    if(idx>=p_elements.size())
+        throw std::invalid_argument("element index out of range");
+
+    const std::string& etype(c.get<std::string>("type"));
+
+    state_info::elements_t::iterator eit = p_info.elements.find(etype);
+    if(eit==p_info.elements.end())
+        throw key_error(etype);
+
+    element_builder_t builder = eit->second;
+
+    std::auto_ptr<ElementVoid> E((*builder)(c));
+
+    *const_cast<size_t*>(&E->index) = idx; // ugly
+
+    delete p_elements[idx];
+    p_elements[idx] = E.release();
 }
 
 Machine::p_state_infos_t Machine::p_state_infos;

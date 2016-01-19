@@ -300,8 +300,8 @@ class testBasic(unittest.TestCase):
     # Propagate a state matrix through a lattice defined by a lattice file.
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'moment_jb.lat'), 'r')
-    self.M = Machine(inf.read())
+    with open(os.path.join(datadir, 'moment_jb.lat'), 'rb') as inf:
+      self.M = Machine(inf.read())
 #    print self.M
 
     S = self.M.allocState({})
@@ -309,10 +309,10 @@ class testBasic(unittest.TestCase):
     self.M.propagate(S)
 #    print_state(S)
     assert_aequal(S.state, [
-      [ 5.367983,  0.300692,  0.000000,  0.000000,  0.000000,  0.000000],
-      [ 0.300692,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],
-      [ 0.000000,  0.000000,  9.390504,  2.603222,  0.000000,  0.000000],
-      [ 0.000000,  0.000000,  2.603222,  0.734440,  0.000000,  0.000000],
+      [ 5.989936,  0.321261,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.321261,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],
+      [ 0.000000,  0.000000, 15.331388,  3.337662,  0.000000,  0.000000],
+      [ 0.000000,  0.000000,  3.337662,  0.734440,  0.000000,  0.000000],
       [ 0.000000,  0.000000,  0.000000,  0.000000, 13.430708,  0.000000],
       [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
     ], decimal=6)
@@ -352,8 +352,8 @@ class testBasic(unittest.TestCase):
 
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'latticeout_IMP_withPV.lat'), 'r')
-    self.M = Machine(inf.read())
+    with open(os.path.join(datadir, 'latticeout_IMP_withPV.lat'), 'rb') as inf:
+      self.M = Machine(inf.read())
 #    print self.M
 
     S = self.M.allocState({})

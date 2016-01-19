@@ -111,11 +111,39 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
     CATCH()
 }
 
+static
+PyObject *PyMachine_reconfigure(PyObject *raw, PyObject *args, PyObject *kws)
+{
+    TRY{
+        unsigned long idx;
+        PyObject *conf;
+        const char *pnames[] = {"index", "config", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "kO!|", (char**)pnames, &idx, &PyDict_Type, &conf))
+            return NULL;
+
+        if(idx>=machine->machine->size())
+            return PyErr_Format(PyExc_ValueError, "invalid element index %lu", idx);
+
+        // TODO: only allow existing elements to be changed.
+        //       allow unassign
+        Config newconf((*machine->machine)[idx]->conf());
+
+        Dict2Config(newconf, conf, 3); // set depth=3 to prevent recursion
+
+        machine->machine->reconfigure(idx, newconf);
+
+        Py_RETURN_NONE;
+    } CATCH2(std::invalid_argument, ValueError)
+    CATCH()
+}
+
 static PyMethodDef PyMachine_methods[] = {
     {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
      "Allocate a new State based on this Machine's configuration"},
     {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
      "Propagate the provided State through the simulation"},
+    {"reconfigure", (PyCFunction)&PyMachine_reconfigure, METH_VARARGS|METH_KEYWORDS,
+     "Change the configuration of an element."},
     {NULL, NULL, 0, NULL}
 };
 

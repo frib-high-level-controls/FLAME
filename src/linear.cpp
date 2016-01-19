@@ -234,7 +234,7 @@ struct ElementQuad : public Base
     }
     virtual ~ElementQuad() {}
 
-    virtual const char* type_name() const {return "quadupole";}
+    virtual const char* type_name() const {return "quadrupole";}
 };
 
 template<typename Base>

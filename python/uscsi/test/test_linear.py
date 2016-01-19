@@ -27,12 +27,33 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
 
     S = self.M.allocState({})
 
-    S.state[:] = [0, 0, 0, 0, 1, 1e-3]
-    assert_aequal(S.state, [0, 0, 0, 0, 1.000, 1e-3])
+    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
 
     self.M.propagate(S)
 
-    assert_aequal(S.state, [0, 0, 0, 0, 1.000, 1e-3])
+    assert_aequal(S.state, [1.001, 1e-3, 0, 0, 0, 0])
+
+  def test_reconfig(self):
+    "Change the length after construction"
+
+    S = self.M.allocState({})
+
+    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [1.001, 1e-3, 0, 0, 0, 0])
+
+    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
+
+    self.M.reconfigure(0, {"L": 2.0})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [1.002, 1e-3, 0, 0, 0, 0])
 
   def test_gc(self):
     "See that State attributes have appropriate lifetime"
