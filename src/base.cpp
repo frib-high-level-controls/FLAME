@@ -17,8 +17,9 @@ StateBase::~StateBase() {}
 
 StateBase::StateBase(const Config& c)
     :next_elem(0)
-    ,E(c.get<double>("E", 0))
-    ,qop(c.get<double>("qop", 0))
+    ,ionEs(c.get<double>("ionEs", 0))
+    ,ionEk(c.get<double>("ionEk", 0))
+    ,ionW(c.get<double>("ionW", 0))
     ,Brho(c.get<double>("Brho", 0))
     ,pyptr(0)
 {}

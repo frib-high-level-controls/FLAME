@@ -1,11 +1,26 @@
 # Beam envelope simulation.
 
-sim_type = "MomentMatrix";
+sim_type = "TransferMatrix";
+#sim_type = "MomentMatrix";
 
 # Global parameters.
-E    = 1.111e6; # Total energy [eV].
-qop  = 0.123;   # Charge over mass ratio.
-Brho = 1/qop;   # Magnetic rigidity.
+
+# ionZ   = 33/238.0; # U_238.
+# ionChargeStates = {33.0/238.0, 34.0/238.0};
+# chargeAmount    = {10111.0, 10531.0};
+
+u = 931.49432e6; # Atomic mass unit.
+
+ionEs = u;             # 
+ionEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
+ionW  = ionEs + ionEk; # Total energy [eV/u].
+
+Brho = 1e0;
+
+# Define Initial Conditions.
+
+# Define phase-space coordinates.
+#S: source, initial = [0.1, 0.2, 0.3, 0.4, -0.1, -0.2];
 
 # Define beam envelope parameters.
 S: source, initial = [

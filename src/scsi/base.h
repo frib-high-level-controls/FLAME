@@ -27,7 +27,7 @@ struct StateBase : public boost::noncopyable
     //! Index of @class ElementBase in @class Machine which will follow this one.
     //! May be altered by ElementBase::advance()
     size_t next_elem;
-    double E, qop, Brho; // Energy, charge over momentum, and magnetic rigidity.
+    double ionEs, ionEk, ionW, Brho; // Energy, charge over momentum, and magnetic rigidity.
 
     virtual void show(std::ostream&) const {}
 

@@ -133,8 +133,9 @@ struct ElementSource : public Base
         state_t& ST = static_cast<state_t&>(s);
         // Replace state with our initial values
         ST.state = this->istate.state;
-        ST.E = this->istate.E;
-        ST.qop = this->istate.qop;
+        ST.ionEs = this->istate.ionEs;
+        ST.ionEk = this->istate.ionEk;
+        ST.ionW = this->istate.ionW;
         ST.Brho = this->istate.Brho;
     }
 
