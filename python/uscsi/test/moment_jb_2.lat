@@ -34,8 +34,8 @@ S: source, initial = [
 
 d1: drift, L = 0.072000, aper = 0.020000;
 d2: drift, L = 0.135064, aper = 0.020000;
-cav1_d1127: rfcavity, L = 0.240000, f = 80.500000e6, phi = -35.000000,
-            scl_fac = 0.640000, aper = 0.017000;
+cav1_d1127: rfcavity, ctype = "0.041QWR", L = 0.240000, f = 80.500000e6,
+  phi = -35.000000, scl_fac = 0.640000, aper = 0.017000;
 d3: drift, L = 0.064263, aper = 0.020000;
 bpm_d1129: marker;
 d4: drift, L = 0.055880, aper = 0.020000;

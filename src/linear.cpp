@@ -1,4 +1,5 @@
 
+#include <string>
 #include <algorithm>
 
 #include "scsi/linear.h"
@@ -307,8 +308,9 @@ struct ElementRFCavity : public Base
     ElementRFCavity(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L"),
-        phi      = c.get<double>("phi");
+        std::string cav_type = c.get<std::string>("ctype");
+        double L             = c.get<double>("L"),
+        phi                  = c.get<double>("phi");
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
