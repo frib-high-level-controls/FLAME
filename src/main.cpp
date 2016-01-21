@@ -57,12 +57,12 @@ void TableType::zero(const int k)
 
 void TableType::show(std::ostream& strm, const int k) const
 {
-    strm << std::fixed << std::setprecision(5)
-         << std::setw(10) << this->s[k]
-         << std::setw(10) << this->Ek[k]*1e-6
-         << std::setw(12) << this->Fy_abs[k]
-         << std::setw(10) << this->Beta[k]
-         << std::setw(10) << this->Gamma[k];
+    strm << std::scientific << std::setprecision(10)
+         << std::setw(18) << this->s[k]
+         << std::setw(18) << this->Ek[k]*1e-6
+         << std::setw(18) << this->Fy_abs[k]
+         << std::setw(18) << this->Beta[k]
+         << std::setw(18) << this->Gamma[k];
 }
 
 
@@ -287,7 +287,7 @@ void init_long(Machine &sim, const CavDataType CavData[])
             E_fac_ad = conf.get<double>("scl_fac");
 
             caviFy = calFindPhaseTable_simplify(
-                        cavi, state->ionEk, ionFys, tab.Fy_abs[n-1], multip);
+                        cavi, ionW-ionEs, ionFys, tab.Fy_abs[n-1], multip);
 
             ionFy_i = multip*tab.Fy_abs[n-1] + caviFy;
             // Calculate influence of the cavity of reference particle kinetic energy, absolute phase,
