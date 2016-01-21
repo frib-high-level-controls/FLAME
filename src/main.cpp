@@ -17,54 +17,54 @@
 extern int glps_debug;
 
 
-const int MaxTab = 2000;
+const int MaxTab = 2000; // Max number of entries.
 
 class TableType {
-    // Table for longitudinal initialization for reference particle.
+// Table for longitudinal initialization for reference particle.
 public:
-    double s[MaxTab],           // Longitudinal position [m].
-           Ek[MaxTab],          // Kinetic energy [MeV/u].
-           Fy_abs[MaxTab],      // Synchrotron phase [rad].
-           Beta[MaxTab],        // Relativistic factor beta.
-           Gamma[MaxTab],       // Relativistic factor gamma.
-           caviFy[MaxTab],      // Cavity phase [rad].
-           DrivenPhase[MaxTab]; // Cavity driven phase [rad].
+    int    n;              // Length of table.
+    double s[MaxTab],      // Longitudinal position [m].
+           Ek[MaxTab],     // Kinetic energy [eV/u].
+           Fy_abs[MaxTab], // Synchrotron phase [rad].
+           Beta[MaxTab],   // Relativistic factor beta.
+           Gamma[MaxTab];  // Relativistic factor gamma.
 
     void zero(const int);
     void show(std::ostream& strm, const int) const;
 };
 
 
-const int MaxCavData = 500;
+const int MaxCavData = 1000; // Max number of data points.
 
 class CavDataType {
-// Cavity on-axis longitudinal electric field [] vs. s [m].
+// Cavity on-axis longitudinal electric field vs. s.
 public:
-    int    n;
-    double ElongvsS[MaxCavData][2];
+    int    n;                 // Lenght of data.
+    double s[MaxCavData],     // s coordinate [m]
+           Elong[MaxCavData]; // Longitudinal Electric field [V/m].
 
     void RdData(const std::string);
+    void show(std::ostream& strm, const int) const;
 };
 
 
 void TableType::zero(const int k)
 {
     this->s[k] = 0e0; this->Fy_abs[k] = 0e0; this->Ek[k] = 0e0; this->Beta[k] = 0e0;
-    this->Gamma[k] = 0e0; this->DrivenPhase[k] = 0e0;
+    this->Gamma[k] = 0e0;
 }
 
 
 void TableType::show(std::ostream& strm, const int k) const
 {
-    strm << std::scientific << std::setprecision(5)
-         << "Table row: "
-         << std::setw(13) << this->s[k]
-         << std::setw(13) << this->Fy_abs[k]
-         << std::setw(13) << this->Ek[k]
-         << std::setw(13) << this->Beta[k]
-         << std::setw(13) << this->Gamma[k]
-         << std::setw(13) << this->DrivenPhase[k];
+    strm << std::fixed << std::setprecision(5)
+         << std::setw(10) << this->s[k]
+         << std::setw(10) << this->Ek[k]*1e-6
+         << std::setw(12) << this->Fy_abs[k]
+         << std::setw(10) << this->Beta[k]
+         << std::setw(10) << this->Gamma[k];
 }
+
 
 void CavDataType::RdData(const std::string FileName)
 {
@@ -80,20 +80,31 @@ void CavDataType::RdData(const std::string FileName)
     this->n = 0;
     while (getline(inf, line)) {
         this->n++;
+        if (n > MaxCavData) {
+            std::cout << "*** RdData: max data exceeded";
+            exit(1);
+        }
         sscanf(line.c_str(), "%lf %lf",
-               &this->ElongvsS[this->n-1][0], &this->ElongvsS[this->n-1][1]);
+               &this->s[this->n-1], &this->Elong[this->n-1]);
         // Convert from [mm] to [m].
-        this->ElongvsS[this->n-1][0] *= 1e-3;
+        this->s[this->n-1] *= 1e-3;
     }
     inf.close();
 
     if (false) {
         std::cout << std::endl;
-        for (k = 0; k < this->n; k++)
-            std::cout << std::scientific << std::setprecision(5)
-                      << std::setw(13) << this->ElongvsS[k][0]
-                      << std::setw(13) << this->ElongvsS[k][1] << std::endl;
+        for (k = 0; k < this->n; k++) {
+            this->show(std::cout, k);
+            std::cout << std::endl;
+        }
     }
+}
+
+
+void CavDataType::show(std::ostream& strm, const int k) const
+{
+    strm << std::scientific << std::setprecision(5)
+         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k];
 }
 
 
@@ -161,47 +172,43 @@ double calFindPhaseTable_simplify(const int cavi, const double ionEk, const doub
     return ionFys - Fy_c - Fy_abs*multip;
 }
 
-
-void calGapTrace(const double axisData[], const double ionW0,
-                 const double ionFy0, double &ionK, const double ionZ,
-                 const double ionEs, const double ionLamda, const double E_fac_ad)
+void calGapTrace(const CavDataType &CavData, const double ionW0, const double ionFy0,
+                 const double ionK0, const double ionZ, const double ionEs, const double ionLamda,
+                 const double E_fac_ad, double &ionW, double &ionFy)
 {
-    // axisData position: mm ; longitudinal electric field: V/m.
-    int    axisStep, ii;
-    double ionFy = ionFy0,
-           ionW  = ionW0,
-           dis,
-           dz;
+    // axisData position [m], longitudinal electric field [V/m].
+    int    n     = CavData.n,
+           k;
 
-//    dis = axisData.get(axisData.size()-1)[0] - axisData.get(0)[0];
-//    dz = dis/(axisData.size()-1); //mm
+    double dis   = CavData.s[n-1] - CavData.s[0],
+           dz    = dis/(n-1),
+           ionK, ionFylast, iongamma, ionBeta;
 
-//    axisStep = axisData.size();
-    for (ii = 0; ii < axisStep-1; ii++) {
-        double ionFylast = ionFy;
+    ionFy = ionFy0;
+    ionK  = ionK0;
+    for (k = 0; k < n-1; k++) {
+        ionFylast = ionFy;
         ionFy += ionK*dz;
-//        ionW += ionZ*E_fac_ad*(axisData.get(ii)[1]+axisData.get(ii+1)[1])/2/1e6
-//                *Math.cos((ionFylast+ionFy)/2)*dz/1000; //MeV
-        double iongamma = ionW/ionEs;
-        double ionBeta = sqrt(1e0-1e0/sqr(iongamma));
-        if ((ionW-ionEs)<0)
-        {
+        ionW  += ionZ*E_fac_ad*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
+                 *cos((ionFylast+ionFy)/2e0)*dz; // MeV
+        iongamma = ionW/ionEs;
+        ionBeta = sqrt(1e0-1e0/sqr(iongamma));
+        if ((ionW-ionEs) < 0e0) {
             ionW = ionEs;
-            ionBeta = 0;
+            ionBeta = 0e0;
         }
-        ionK = 2*M_PI/(ionBeta*ionLamda*1e3); // rad/mm
+        ionK = 2e0*M_PI/(ionBeta*ionLamda);
     }
-
-//    double[] output = {ionW, ionFy};
-//    return output;
 }
 
 
-void init_long(Machine &sim)
+void init_long(Machine &sim, const CavDataType CavData[])
 {
+    // Longitudinal initialization for reference particle.
+    std::string    CavType;
     int       n, cavi;
     double    iongamma, ionBeta, SampleLamda, SampleionK, ionFy_i;
-    double    multip, caviionK, ionFys, E_fac_ad;
+    double    multip, caviionK, ionFys, E_fac_ad, fRF, caviFy, ionW, ionZ, ionEs, ionFy_o;
     TableType tab;
 
     const double c0         = 2.99792458e8,   // Speed of light [m/s].
@@ -209,29 +216,29 @@ void init_long(Machine &sim)
                  mu0        = 4e0*M_PI*1e-7,  // Vacuum permeability.
                  SampleFref = 80.5e6;         // Long. sampling frequency [Hz]; must be set to RF freq.
 
-    // Turn trac on/off.
-    if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
-
     Config D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
     // Propagate through first element.
     sim.propagate(state.get(), 0, 1);
 
-    n = 0;
-    iongamma    = state->ionW/state->ionEs;
+    ionW  = state->ionW;
+    ionEs = state->ionEs;
+
+    iongamma    = ionW/ionEs;
     ionBeta     = sqrt(1e0-1e0/sqr(iongamma));
-    SampleLamda = c0/SampleFref/1e6;
+    SampleLamda = c0/SampleFref;
     SampleionK  = 2e0*M_PI/(ionBeta*SampleLamda); // [m^-1].
 
     std::cout << *state << std::endl;
     std::cout << std::scientific << std::setprecision(5)
-              << "ionEs = " << state->ionEs  << ", ionEk = " << state->ionEk
-              << ", ionW = " << state->ionW << std::endl << std::endl;
+              << "ionEs = " << ionEs  << ", ionEk = " << state->ionEk
+              << ", ionW = " << ionW << std::endl << std::endl;
 
-    tab.zero(n);
-    tab.Ek[n]     = state->ionEk;
-    tab.Beta[n]   = ionBeta;
-    tab.Gamma[n]  = iongamma;
+    n               = 1;
+    tab.zero(n-1);
+    tab.Ek[n-1]     = state->ionEk;
+    tab.Beta[n-1]   = ionBeta;
+    tab.Gamma[n-1]  = iongamma;
 
     for(Machine::p_elements_t::iterator it = sim.p_elements.begin(),
         end = sim.p_elements.end(); it != end; ++it)
@@ -245,65 +252,61 @@ void init_long(Machine &sim)
         if (t_name == "marker") {
         } else if (t_name == "drift") {
             n++;
-            tab.s[n]      = tab.s[n-1] + conf.get<double>("L");
-            tab.Fy_abs[n] = tab.Fy_abs[n-1] + SampleionK*conf.get<double>("L");
-            tab.Ek[n]     = tab.Ek[n-1];
-            tab.Beta[n]   = tab.Beta[n-1];
-            tab.Gamma[n]  = tab.Gamma[n-1];
+            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+            tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
+            tab.Ek[n-1]     = tab.Ek[n-2];
+            tab.Beta[n-1]   = tab.Beta[n-2];
+            tab.Gamma[n-1]  = tab.Gamma[n-2];
         } else if (t_name == "sbend") {
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
             n++;
-            tab.s[n]      = tab.s[n-1] + conf.get<double>("L");
-            tab.Fy_abs[n] = tab.Fy_abs[n-1] + SampleionK*conf.get<double>("L");
-            tab.Ek[n]     = tab.Ek[n-1];
-            tab.Beta[n]   = tab.Beta[n-1];
-            tab.Gamma[n]  = tab.Gamma[n-1];
+            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+            tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
+            tab.Ek[n-1]     = tab.Ek[n-2];
+            tab.Beta[n-1]   = tab.Beta[n-2];
+            tab.Gamma[n-1]  = tab.Gamma[n-2];
         } else if (t_name == "rfcavity") {
             n++;
-            if (conf.get<std::string>("ctype") == "0.041QWR") {
-                std::cout << "type: " << conf.get<std::string>("ctype") << std::endl;
+            CavType = conf.get<std::string>("cavtype");
+            if (CavType == "0.041QWR") {
                 cavi = 1;
-            } else if (conf.get<std::string>("ctype") == "0.085QWR") {
+            } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
                 cavi = 2;
             } else {
-                std::cout << "*** init_long: undef. cavity type" << std::endl;
+                std::cout << "*** init_long: undef. cavity type: " << CavType << std::endl;
                 exit(1);
             }
-            multip   = conf.get<double>("f")/SampleFref;
-            caviionK = 2e0*M_PI/(ionBeta*c0/conf.get<double>("f"));
+            std::cout << "cavi = " << cavi << std:: endl;
+            fRF      = conf.get<double>("f");
+            multip   = fRF/SampleFref;
+            caviionK = 2e0*M_PI/(ionBeta*c0/fRF);
              // Synchrotron phase.
-            ionFys   = conf.get<double>("f")*M_PI/180e0;
+            ionFys   = conf.get<double>("phi")*M_PI/180e0;
             // Electric field scale factor.
             E_fac_ad = conf.get<double>("scl_fac");
 
-            tab.DrivenPhase[n] = calFindPhaseTable_simplify(
+            caviFy = calFindPhaseTable_simplify(
                         cavi, state->ionEk, ionFys, tab.Fy_abs[n-1], multip);
 
-            ionFy_i = multip*tab.Fy_abs[n-1] + tab.caviFy[n-1];
-//            // Calculate influence of the cavity of reference particle kinetic energy, absolute phase, beta and gamma
-//            // The data is then recorded for later TLM tracking use
-//            double[] output = calGapTrace(axisData, ionW, ionFy_i, caviionK, fribPara.ionZ, FRIBPara.ionEs,
-//                                        caviLamda, E_fac_ad);
-//            // calGapTrace(axisData_41_ad,FRIBPara.Wion,FRIBPara.Fy,FRIBPara.ionK,FRIBPara.Zion,FRIBPara.Esion,FRIBPara.QWR1.lamda);
-//            ionW = output[0];
-//            double ionFy_o = output[1];
-//            ionEk = ionW-FRIBPara.ionEs;
-//            entry = new double[]{tlmnode.position+tlmnode.length,ionEk};
-//            tab.Ek.add(entry);
-//            iongamma = ionW/FRIBPara.ionEs;
-//            ionBeta = Math.sqrt(1-1/(iongamma*iongamma));
-//            SampleionK = 2*Math.PI/(ionBeta*SampleLamda*1e3); // rad/mm
-//            Fy_abs = Fy_abs+(ionFy_o-ionFy_i)/multip;
-//            entry = new double[]{tlmnode.position+tlmnode.length,Fy_abs};
-//            tab.Fy_abs.add(entry);
-//            entry = new double[]{tlmnode.position+tlmnode.length,ionBeta};
-//            tab.Beta.add(entry);
-//            entry = new double[]{tlmnode.position+tlmnode.length,iongamma};
-//            tab.Gamma.add(entry);
+            ionFy_i = multip*tab.Fy_abs[n-1] + caviFy;
+            // Calculate influence of the cavity of reference particle kinetic energy, absolute phase,
+            // beta and gamma
+            // The data is then recorded for later TLM tracking use
+            ionZ = conf.get<double>("ionZ");
+            calGapTrace(CavData[cavi-1], ionW, ionFy_i, caviionK, ionZ, ionEs, c0/fRF, E_fac_ad,
+                        ionW, ionFy_o);
+            tab.s[n-1] = tab.s[n-2] + conf.get<double>("L");
+            tab.Ek[n-1] = ionW - ionEs;
+            iongamma = ionW/ionEs;
+            ionBeta = sqrt(1e0-1e0/sqr(iongamma));
+            SampleionK = 2*M_PI/(ionBeta*SampleLamda);
+            tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + (ionFy_o-ionFy_i)/multip;
+            tab.Beta[n-1] = ionBeta;
+            tab.Gamma[n-1] = iongamma;
         }
         std::cout << std::setw(10) << std::left << t_name << std::internal;
-        tab.show(std::cout, n);
+        tab.show(std::cout, n-1);
         std::cout << std::endl;
     }
 }
@@ -311,7 +314,7 @@ void init_long(Machine &sim)
 
 int main(int argc, char *argv[])
 {
-    CavDataType Data;
+    CavDataType Data[2];
     Machine::p_elements_t::const_iterator it;
 
     const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
@@ -346,9 +349,13 @@ int main(int argc, char *argv[])
     Machine sim(*conf);
     sim.set_trace(&std::cout);
 
-    Data.RdData(HomeDir+"/data/axisData_41.txt");
+    Data[0].RdData(HomeDir+"/data/axisData_41.txt");
+    Data[1].RdData(HomeDir+"/data/axisData_85.txt");
 
-    init_long(sim);
+    // Turn trac on/off.
+    if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
+
+    init_long(sim, Data);
 
 //    it = sim.p_elements.begin();
 

@@ -5,12 +5,12 @@ sim_type = "TransferMatrix";
 
 # Global parameters.
 
-# ionZ   = 33/238.0; # U_238.
 # ionChargeStates = {33.0/238.0, 34.0/238.0};
 # chargeAmount    = {10111.0, 10531.0};
 
 u = 931.49432e6; # Atomic mass unit.
 
+ionZ  = 33/238.0;      # U_238.
 ionEs = u;             # 
 ionEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
 ionW  = ionEs + ionEk; # Total energy [eV/u].
@@ -34,7 +34,7 @@ S: source, initial = [
 
 d1: drift, L = 0.072000, aper = 0.020000;
 d2: drift, L = 0.135064, aper = 0.020000;
-cav1_d1127: rfcavity, ctype = "0.041QWR", L = 0.240000, f = 80.500000e6,
+cav1_d1127: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6,
   phi = -35.000000, scl_fac = 0.640000, aper = 0.017000;
 d3: drift, L = 0.064263, aper = 0.020000;
 bpm_d1129: marker;
