@@ -258,7 +258,19 @@ void init_long(Machine &sim, const CavDataType CavData[])
             tab.Beta[n-1]   = tab.Beta[n-2];
             tab.Gamma[n-1]  = tab.Gamma[n-2];
         } else if (t_name == "sbend") {
+            n++;
+            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+            tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
+            tab.Ek[n-1]     = tab.Ek[n-2];
+            tab.Beta[n-1]   = tab.Beta[n-2];
+            tab.Gamma[n-1]  = tab.Gamma[n-2];
         } else if (t_name == "quadrupole") {
+            n++;
+            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+            tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
+            tab.Ek[n-1]     = tab.Ek[n-2];
+            tab.Beta[n-1]   = tab.Beta[n-2];
+            tab.Gamma[n-1]  = tab.Gamma[n-2];
         } else if (t_name == "solenoid") {
             n++;
             tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
@@ -277,7 +289,6 @@ void init_long(Machine &sim, const CavDataType CavData[])
                 std::cout << "*** init_long: undef. cavity type: " << CavType << std::endl;
                 exit(1);
             }
-            std::cout << "cavi = " << cavi << std:: endl;
             fRF      = conf.get<double>("f");
             multip   = fRF/SampleFref;
             caviionK = 2e0*M_PI/(ionBeta*c0/fRF);
