@@ -32,16 +32,29 @@ S: source, initial = [
   0,   0,   0,   0,   0,   0.6
 ];
 
-d1: drift, L = 0.072000, aper = 0.020000;
-d2: drift, L = 0.135064, aper = 0.020000;
-cav1_d1127: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6,
+drift_1: drift, L = 0.072000, aper = 0.020000;
+drift_2: drift, L = 0.135064, aper = 0.020000;
+ls1_ca01_cav1_d1127: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6,
   phi = -35.000000, scl_fac = 0.640000, aper = 0.017000;
-d3: drift, L = 0.064263, aper = 0.020000;
-bpm_d1129: marker;
-d4: drift, L = 0.055880, aper = 0.020000;
-d5: drift, L = 0.076123, aper = 0.020000;
-sol1_d1131: solenoid, L = 0.100000, B = 5.340000, aper = 0.020000;
+drift_3: drift, L = 0.064263, aper = 0.020000;
+ls1_ca01_bpm_d1129_1: marker;
+drift_4: drift, L = 0.055880, aper = 0.020000;
+drift_5: drift, L = 0.076123, aper = 0.020000;
+ls1_ca01_sol1_d1131_1: solenoid, L = 0.100000, B = 5.340000, aper = 0.020000;
+ls1_ca01_dch_d1131_2: marker;
+ls1_ca01_dcv_d1131_3: marker;
+ls1_ca01_sol1_d1131_2: solenoid, L = 0.100000, B = 5.340000, aper = 0.020000;
+drift_6: drift, L = 0.076123, aper = 0.020000;
+drift_7: drift, L = 0.067270, aper = 0.020000;
+ls1_ca01_cav2_d1135: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6,
+  phi = -35.000000, scl_fac = 0.700000, aper = 0.017000;
 
-cell: LINE = (S, d1, d2, cav1_d1127, d3, bpm_d1129, d4, d5, sol1_d1131);
+cell: LINE = (
+  S, drift_1, drift_2, ls1_ca01_cav1_d1127, drift_3, ls1_ca01_bpm_d1129_1,
+  drift_4, drift_5, ls1_ca01_sol1_d1131_1, ls1_ca01_dch_d1131_2,
+  ls1_ca01_dcv_d1131_3, ls1_ca01_sol1_d1131_2, drift_6, drift_7,
+  ls1_ca01_cav2_d1135
+
+);
 
 USE: cell;
