@@ -10,10 +10,10 @@ sim_type = "TransferMatrix";
 
 u = 931.49432e6; # Atomic mass unit.
 
-ionZ  = 33/238.0;      # U_238.
-ionEs = u;             # 
-ionEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
-ionW  = ionEs + ionEk; # Total energy [eV/u].
+IonZ  = 33/238.0;      # U_238.
+IonEs = u;             # 
+IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
+IonW  = IonEs + IonEk; # Total energy [eV/u].
 
 Brho = 1e0;
 

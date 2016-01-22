@@ -17,11 +17,10 @@ StateBase::~StateBase() {}
 
 StateBase::StateBase(const Config& c)
     :next_elem(0)
-    ,ionZ(c.get<double >("ionZ", 0))
-    ,ionEs(c.get<double>("ionEs", 0))
-    ,ionEk(c.get<double>("ionEk", 0))
-    ,ionW(c.get<double >("ionW", 0))
-    ,Brho(c.get<double >("Brho", 0))
+    ,IonZ(c.get<double >("IonZ", 0))
+    ,IonEs(c.get<double>("IonEs", 0))
+    ,IonEk(c.get<double>("IonEk", 0))
+    ,IonW(c.get<double >("IonW", 0))
     ,pyptr(0)
 {}
 
