@@ -25,7 +25,7 @@ public:
   int    n;              // Length of table.
   double s[MaxTab],      // Longitudinal position [m].
          Ek[MaxTab],     // Kinetic energy [eV/u].
-         Fy_abs[MaxTab], // Synchrotron phase [rad].
+         FyAbs[MaxTab], // Synchrotron phase [rad].
          Beta[MaxTab],   // Relativistic factor beta.
          Gamma[MaxTab];  // Relativistic factor gamma.
 
@@ -41,7 +41,7 @@ class CavDataType {
 public:
   int    n;                 // Lenght of data.
   double s[MaxCavData],     // s coordinate [m]
-    Elong[MaxCavData]; // Longitudinal Electric field [V/m].
+         Elong[MaxCavData]; // Longitudinal Electric field [V/m].
 
   void RdData(const std::string);
   void show(std::ostream& strm, const int) const;
@@ -50,7 +50,7 @@ public:
 
 void TableType::zero(const int k)
 {
-  this->s[k] = 0e0; this->Fy_abs[k] = 0e0; this->Ek[k] = 0e0;
+  this->s[k] = 0e0; this->FyAbs[k] = 0e0; this->Ek[k] = 0e0;
   this->Beta[k] = 0e0; this->Gamma[k] = 0e0;
 }
 
@@ -60,7 +60,7 @@ void TableType::show(std::ostream& strm, const int k) const
   strm << std::scientific << std::setprecision(10)
        << std::setw(18) << this->s[k]
        << std::setw(18) << this->Ek[k]*1e-6
-       << std::setw(18) << this->Fy_abs[k]
+       << std::setw(18) << this->FyAbs[k]
        << std::setw(18) << this->Beta[k]
        << std::setw(18) << this->Gamma[k];
 }
@@ -118,9 +118,7 @@ void prt_lat(Machine &sim)
        << sim.p_elements.size() << "\n";
   for(Machine::p_elements_t::const_iterator it = sim.p_elements.begin(),
         end = sim.p_elements.end(); it != end; ++it)
-    {
       (*it)->show(strm);
-    }
   std::cout << strm;
 }
 
@@ -140,65 +138,65 @@ void prt_lat(Machine &sim)
 //}
 
 
-double calFindPhaseTable_simplify(const int cavi, const double ionEk,
-				  const double ionFys, const double Fy_abs,
+double calFindPhaseTable_simplify(const int cavi, const double IonEk,
+                  const double IonFys, const double FyAbs,
 				  const double multip)
 {
   // Note, if the cavity is not at full power, the method gives synchrotron
   // phase slightly different from the nominal value.
 
-  double Fy_c;
+  double Fyc;
 
   switch (cavi) {
   case 1:
-    Fy_c = 4.394*pow(ionEk*1e-6, -0.4965) - 4.731;
+    Fyc = 4.394*pow(IonEk*1e-6, -0.4965) - 4.731;
     break;
   case 2:
-    Fy_c = 5.428*pow(ionEk*1e-6, -0.5008) + 1.6;
+    Fyc = 5.428*pow(IonEk*1e-6, -0.5008) + 1.6;
     break;
   case 3:
-    Fy_c = 22.35*pow(ionEk*1e-6, -0.5348) + 2.026;
+    Fyc = 22.35*pow(IonEk*1e-6, -0.5348) + 2.026;
     break;
   case 4:
-    Fy_c = 41.43*pow(ionEk*1e-6, -0.5775) + 2.59839;
+    Fyc = 41.43*pow(IonEk*1e-6, -0.5775) + 2.59839;
     break;
   case 5:
-    Fy_c = 5.428*pow(ionEk*1e-6, -0.5008) + 1.6;
+    Fyc = 5.428*pow(IonEk*1e-6, -0.5008) + 1.6;
     break;
   default:
     std::cout << "*** calFindPhaseTable_simplify: undef. cavity type"
 	      << std::endl;
   }
 
-  return ionFys - Fy_c - Fy_abs*multip;
+  return IonFys - Fyc - FyAbs*multip;
 }
 
-void calGapTrace(const CavDataType &CavData, const double ionW0,
-		 const double ionFy0, const double ionK0, const double ionZ,
-		 const double ionEs, const double ionLamda,
-		 const double E_fac_ad, double &ionW, double &ionFy)
+void calGapTrace(const CavDataType &CavData, const double IonW0,
+         const double IonFy0, const double IonK0, const double IonZ,
+         const double IonEs, const double IonLamda,
+         const double E_fac_ad, double &IonW, double &IonFy)
 {
   int n = CavData.n,
       k;
 
   double dis = CavData.s[n-1] - CavData.s[0],
          dz  = dis/(n-1),
-         ionK, ionFylast, iongamma, ionBeta;
+         IonK, IonFylast, Iongamma, IonBeta;
 
-  ionFy = ionFy0;
-  ionK  = ionK0;
+  IonFy = IonFy0;
+  IonK  = IonK0;
   for (k = 0; k < n-1; k++) {
-    ionFylast = ionFy;
-    ionFy += ionK*dz;
-    ionW  += ionZ*E_fac_ad*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
-      *cos((ionFylast+ionFy)/2e0)*dz; // MeV
-    iongamma = ionW/ionEs;
-    ionBeta = sqrt(1e0-1e0/sqr(iongamma));
-    if ((ionW-ionEs) < 0e0) {
-      ionW = ionEs;
-      ionBeta = 0e0;
+    IonFylast = IonFy;
+    IonFy += IonK*dz;
+    IonW  += IonZ*E_fac_ad*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
+      *cos((IonFylast+IonFy)/2e0)*dz; // MeV
+    Iongamma = IonW/IonEs;
+    IonBeta = sqrt(1e0-1e0/sqr(Iongamma));
+    if ((IonW-IonEs) < 0e0) {
+      IonW = IonEs;
+      IonBeta = 0e0;
     }
-    ionK = 2e0*M_PI/(ionBeta*ionLamda);
+    IonK = 2e0*M_PI/(IonBeta*IonLamda);
   }
 }
 
@@ -210,29 +208,29 @@ double calGauss(double in, const double Q_ave, const double d)
 }
 
 
-void calStripperCharge(const double ionProton, const double beta,
+void calStripperCharge(const double IonProton, const double beta,
                        double &Q_ave, double &d)
 {
   // Use Baron's formulafor carbon foil.
   double Q_ave1, Y;
 
-  Q_ave1 = ionProton*(1e0-exp(-83.275*(beta/pow(ionProton, 0.447))));
-  Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*ionProton-0.00122*sqr(ionProton)));
-  Y      = Q_ave1/ionProton;
+  Q_ave1 = IonProton*(1e0-exp(-83.275*(beta/pow(IonProton, 0.447))));
+  Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*IonProton-0.00122*sqr(IonProton)));
+  Y      = Q_ave1/IonProton;
   d      = sqrt(Q_ave1*(0.07535+0.19*Y-0.2654*sqr(Y)));
 }
 
 
-void ChargeStripper(const double ionMass, const double ionProton, const double beta,
-                    const int nChargeStates, const double ionChargeStates[],
+void ChargeStripper(const double IonMass, const double IonProton, const double beta,
+                    const int nChargeStates, const double IonChargeStates[],
                     double chargeAmount_Baron[])
 {
   int    k;
   double Q_ave, d;
 
-  calStripperCharge(ionProton, beta, Q_ave, d);
+  calStripperCharge(IonProton, beta, Q_ave, d);
   for (k = 0; k < nChargeStates; k++)
-    chargeAmount_Baron[k] = calGauss(ionChargeStates[k]*ionMass, Q_ave, d);
+    chargeAmount_Baron[k] = calGauss(IonChargeStates[k]*IonMass, Q_ave, d);
 }
 
 
@@ -241,9 +239,9 @@ void init_long(Machine &sim, const CavDataType CavData[])
   // Longitudinal initialization for reference particle.
   std::string CavType;
   int         n, cavi;
-  double      iongamma, ionBeta, SampleLamda, SampleionK, ionFy_i, multip;
-  double      caviionK, ionFys, E_fac_ad, fRF, caviFy, ionW, ionZ, ionEs;
-  double      ionFy_o, ionEk1;
+  double      Iongamma, IonBeta, SampleLamda, SampleIonK, IonFy_i, multip;
+  double      caviIonK, IonFys, E_fac_ad, fRF, caviFy, IonW, IonZ, IonEs;
+  double      IonFy_o, IonEk1;
   TableType   tab;
 
   const double c0         = 2.99792458e8,   // Speed of light [m/s].
@@ -253,17 +251,15 @@ void init_long(Machine &sim, const CavDataType CavData[])
                                             // must be set to RF freq.
 
   // Charge stripper parameters.
-  const int    Stripper_n                 = 5;
-  const double Stripper_ionZ              = 78e0/238e0,
-               Stripper_ionMass           = 238e0,
-               Stripper_ionProton         = 92e0,
-               Stripper_ionChargeStates[] = {76e0/238e0, 77e0/238e0,
-					     78e0/238e0, 79e0/238e0,
-					     80e0/238e0},
-               // Unit for last ???
+  const int    Stripper_n                 = 5;   // Number of charge states.
+  const double Stripper_IonZ              = 78e0/238e0,
+               Stripper_IonMass           = 238e0,
+               Stripper_IonProton         = 92e0,
+               Stripper_IonChargeStates[] = {76e0/238e0, 77e0/238e0, 78e0/238e0,
+                                             79e0/238e0, 80e0/238e0},
+               // Unit for last parmeter ???
                Stripper_E0Para[]          = {16.348e6, 1.00547, -0.10681},
-               // Thickness [microns], thickness variation [%],
-	       // reference energy [eV/u].
+               // Thickness [microns], thickness variation [%], reference energy [eV/u].
                StripperPara[]             = {3e0, 20e0, 16.623e6};
 
       double chargeAmount_Baron[Stripper_n];
@@ -273,25 +269,24 @@ void init_long(Machine &sim, const CavDataType CavData[])
       // Propagate through first element.
       sim.propagate(state.get(), 0, 1);
 
-      ionW  = state->ionW;
-      ionEs = state->ionEs;
-      ionZ  = state->ionZ;
+      IonW  = state->IonW;
+      IonEs = state->IonEs;
+      IonZ  = state->IonZ;
 
-      iongamma    = ionW/ionEs;
-      ionBeta     = sqrt(1e0-1e0/sqr(iongamma));
+      Iongamma    = IonW/IonEs;
+      IonBeta     = sqrt(1e0-1e0/sqr(Iongamma));
       SampleLamda = c0/SampleFref;
-      SampleionK  = 2e0*M_PI/(ionBeta*SampleLamda); // [m^-1].
-
+      SampleIonK  = 2e0*M_PI/(IonBeta*SampleLamda);
       std::cout << *state << std::endl;
       std::cout << std::scientific << std::setprecision(5)
-		<< "ionEs = " << ionEs  << ", ionEk = " << state->ionEk
-		<< ", ionW = " << ionW << std::endl << std::endl;
+        << "IonEs = " << IonEs  << ", IonEk = " << state->IonEk
+        << ", IonW = " << IonW << std::endl << std::endl;
 
       n               = 1;
       tab.zero(n-1);
-      tab.Ek[n-1]     = state->ionEk;
-      tab.Beta[n-1]   = ionBeta;
-      tab.Gamma[n-1]  = iongamma;
+      tab.Ek[n-1]     = state->IonEk;
+      tab.Beta[n-1]   = IonBeta;
+      tab.Gamma[n-1]  = Iongamma;
 
       for(Machine::p_elements_t::iterator it = sim.p_elements.begin(),
 	    end = sim.p_elements.end(); it != end; ++it)
@@ -304,41 +299,38 @@ void init_long(Machine &sim, const CavDataType CavData[])
 
 	  if (t_name == "marker") {
 	  } else if (t_name == "drift") {
-            n++;
-            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
-            tab.Fy_abs[n-1] =
-	      tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
-            tab.Ek[n-1]     = tab.Ek[n-2];
-            tab.Beta[n-1]   = tab.Beta[n-2];
-            tab.Gamma[n-1]  = tab.Gamma[n-2];
-	  } else if (t_name == "sbend") {
-            n++;
-            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
-            tab.Fy_abs[n-1] =
-	      tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
-            tab.Ek[n-1]     = tab.Ek[n-2];
-            tab.Beta[n-1]   = tab.Beta[n-2];
-            tab.Gamma[n-1]  = tab.Gamma[n-2];
-	  } else if (t_name == "quadrupole") {
-            n++;
-            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
-            tab.Fy_abs[n-1] =
-	      tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
-            tab.Ek[n-1]     = tab.Ek[n-2];
-            tab.Beta[n-1]   = tab.Beta[n-2];
-            tab.Gamma[n-1]  = tab.Gamma[n-2];
-	  } else if (t_name == "solenoid") {
-            n++;
-            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
-            tab.Fy_abs[n-1] =
-	      tab.Fy_abs[n-2] + SampleionK*conf.get<double>("L");
-            tab.Ek[n-1]     = tab.Ek[n-2];
-            tab.Beta[n-1]   = tab.Beta[n-2];
-            tab.Gamma[n-1]  = tab.Gamma[n-2];
-	  } else if (t_name == "rfcavity") {
-            n++;
-            CavType = conf.get<std::string>("cavtype");
-            if (CavType == "0.041QWR") {
+          n++;
+          tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+          tab.FyAbs[n-1] = tab.FyAbs[n-2] + SampleIonK*conf.get<double>("L");
+          tab.Ek[n-1]     = tab.Ek[n-2];
+          tab.Beta[n-1]   = tab.Beta[n-2];
+          tab.Gamma[n-1]  = tab.Gamma[n-2];
+      } else if (t_name == "sbend") {
+          n++;
+          tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+          tab.FyAbs[n-1] = tab.FyAbs[n-2] + SampleIonK*conf.get<double>("L");
+          tab.Ek[n-1]     = tab.Ek[n-2];
+          tab.Beta[n-1]   = tab.Beta[n-2];
+          tab.Gamma[n-1]  = tab.Gamma[n-2];
+      } else if (t_name == "quadrupole") {
+          n++;
+          tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+          tab.FyAbs[n-1] =
+                  tab.FyAbs[n-2] + SampleIonK*conf.get<double>("L");
+          tab.Ek[n-1]     = tab.Ek[n-2];
+          tab.Beta[n-1]   = tab.Beta[n-2];
+          tab.Gamma[n-1]  = tab.Gamma[n-2];
+      } else if (t_name == "solenoid") {
+          n++;
+          tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+          tab.FyAbs[n-1] = tab.FyAbs[n-2] + SampleIonK*conf.get<double>("L");
+          tab.Ek[n-1]     = tab.Ek[n-2];
+          tab.Beta[n-1]   = tab.Beta[n-2];
+          tab.Gamma[n-1]  = tab.Gamma[n-2];
+      } else if (t_name == "rfcavity") {
+          n++;
+          CavType = conf.get<std::string>("cavtype");
+          if (CavType == "0.041QWR") {
 	      cavi = 1;
             } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
 	      cavi = 2;
@@ -349,51 +341,49 @@ void init_long(Machine &sim, const CavDataType CavData[])
             }
             fRF      = conf.get<double>("f");
             multip   = fRF/SampleFref;
-            caviionK = 2e0*M_PI/(ionBeta*c0/fRF);
-	    // Synchrotron phase.
-            ionFys   = conf.get<double>("phi")*M_PI/180e0;
+            caviIonK = 2e0*M_PI/(IonBeta*c0/fRF);
+            // Synchrotron phase.
+            IonFys   = conf.get<double>("phi")*M_PI/180e0;
             // Electric field scale factor.
             E_fac_ad = conf.get<double>("scl_fac");
 
             caviFy = calFindPhaseTable_simplify(
-              cavi, ionW-ionEs, ionFys, tab.Fy_abs[n-1], multip);
+              cavi, IonW-IonEs, IonFys, tab.FyAbs[n-1], multip);
 
-            ionFy_i = multip*tab.Fy_abs[n-1] + caviFy;
+            IonFy_i = multip*tab.FyAbs[n-1] + caviFy;
             // Evaluate change of reference particle kinetic energy,
-	    // absolute phase, beta, and gamma.
-            calGapTrace(
-	       CavData[cavi-1], ionW, ionFy_i, caviionK, ionZ, ionEs, c0/fRF,
-	       E_fac_ad, ionW, ionFy_o);
-            iongamma = ionW/ionEs;
-            ionBeta = sqrt(1e0-1e0/sqr(iongamma));
-            SampleionK = 2e0*M_PI/(ionBeta*SampleLamda);
-            tab.s[n-1] = tab.s[n-2] + conf.get<double>("L");
-            tab.Ek[n-1] = ionW - ionEs;
-            tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + (ionFy_o-ionFy_i)/multip;
-            tab.Beta[n-1] = ionBeta;
-            tab.Gamma[n-1] = iongamma;
+            // absolute phase, beta, and gamma.
+            calGapTrace(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
+                        IonEs, c0/fRF, E_fac_ad, IonW, IonFy_o);
+            Iongamma = IonW/IonEs;
+            IonBeta = sqrt(1e0-1e0/sqr(Iongamma));
+            SampleIonK = 2e0*M_PI/(IonBeta*SampleLamda);
+            tab.s[n-1]      = tab.s[n-2] + conf.get<double>("L");
+            tab.Ek[n-1]     = IonW - IonEs;
+            tab.FyAbs[n-1] = tab.FyAbs[n-2] + (IonFy_o-IonFy_i)/multip;
+            tab.Beta[n-1]   = IonBeta;
+            tab.Gamma[n-1]  = Iongamma;
 	  } else if (t_name == "stripper") {
             // For the longitudinal plane evaluate change in reference and
-	    // multi-charge states, and charge amounts.
+            // multi-charge states, and charge amounts.
             n++;
-            ionZ = Stripper_ionZ;
-            ChargeStripper(Stripper_ionMass, Stripper_ionProton, ionBeta,
-                           Stripper_n, Stripper_ionChargeStates,
+            IonZ = Stripper_IonZ;
+            ChargeStripper(Stripper_IonMass, Stripper_IonProton, IonBeta,
+                           Stripper_n, Stripper_IonChargeStates,
 			   chargeAmount_Baron);
             // Evaluate change in reference particle energy due to stripper
-	    // model energy straggling.
-            ionEk1 =
-	      (tab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1]
-	      + Stripper_E0Para[0];
-            ionW = ionEk1 + ionEs;
-            iongamma = ionW/ionEs;
-            ionBeta = sqrt(1e0-1e0/sqr(iongamma));
-            SampleionK = 2e0*M_PI/(ionBeta*SampleLamda);
-            tab.s[n-1] = tab.s[n-2];    // Length is zero.
-            tab.Ek[n-1] = ionW - ionEs;
-            tab.Fy_abs[n-1] = tab.Fy_abs[n-2];
-            tab.Beta[n-1] = ionBeta;
-            tab.Gamma[n-1] = iongamma;
+            // model energy straggling.
+            IonEk1 = (tab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1]
+                    + Stripper_E0Para[0];
+            IonW = IonEk1 + IonEs;
+            Iongamma = IonW/IonEs;
+            IonBeta = sqrt(1e0-1e0/sqr(Iongamma));
+            SampleIonK = 2e0*M_PI/(IonBeta*SampleLamda);
+            tab.s[n-1]      = tab.s[n-2];    // Length is zero.
+            tab.Ek[n-1]     = IonW - IonEs;
+            tab.FyAbs[n-1] = tab.FyAbs[n-2];
+            tab.Beta[n-1]   = IonBeta;
+            tab.Gamma[n-1]  = Iongamma;
 	    //            chargeAmount = fribstripper.chargeAmount_Baron;
 	  }
 	  std::cout << std::setw(10) << std::left << t_name << std::internal;
@@ -401,6 +391,11 @@ void init_long(Machine &sim, const CavDataType CavData[])
 	  std::cout << std::endl;
 	  //        if (t_name == "stripper") break;
 	}
+}
+
+void calFribPropagate_MultiChargeStates()
+{
+
 }
 
 
@@ -490,4 +485,3 @@ int main(int argc, char *argv[])
   fclose(in);
   return 0;
 }
-
