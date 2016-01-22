@@ -176,8 +176,7 @@ void calGapTrace(const CavDataType &CavData, const double ionW0, const double io
                  const double ionK0, const double ionZ, const double ionEs, const double ionLamda,
                  const double E_fac_ad, double &ionW, double &ionFy)
 {
-    // axisData position [m], longitudinal electric field [V/m].
-    int    n     = CavData.n,
+    int    n = CavData.n,
            k;
 
     double dis   = CavData.s[n-1] - CavData.s[0],
@@ -202,19 +201,65 @@ void calGapTrace(const CavDataType &CavData, const double ionW0, const double io
 }
 
 
+double calGauss(double in, const double Q_ave, const double d)
+{
+    // Gaussian distribution.
+    return 1e0/sqrt(2e0*M_PI)/d*exp(-0.5e0*sqr(in-Q_ave)/sqr(d));
+}
+
+
+void calStripperCharge(const double ionProton, const double beta,
+                       double &Q_ave, double &d)
+{
+    // Use Baron's formulafor carbon foil.
+    double Q_ave1, Y;
+
+    Q_ave1 = ionProton*(1e0-exp(-83.275*(beta/pow(ionProton, 0.447))));
+    Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*ionProton-0.00122*sqr(ionProton)));
+    Y      = Q_ave1/ionProton;
+    d      = sqrt(Q_ave1*(0.07535+0.19*Y-0.2654*sqr(Y)));
+}
+
+
+void ChargeStripper(const double ionMass, const double ionProton, const double beta,
+                    const int nChargeStates, const double ionChargeStates[],
+                    double chargeAmount_Baron[])
+{
+    int    k;
+    double Q_ave, d;
+
+    calStripperCharge(ionProton, beta, Q_ave, d);
+    for (k = 0; k < nChargeStates; k++)
+        chargeAmount_Baron[k] = calGauss(ionChargeStates[k]*ionMass, Q_ave, d);
+}
+
+
 void init_long(Machine &sim, const CavDataType CavData[])
 {
     // Longitudinal initialization for reference particle.
     std::string    CavType;
     int       n, cavi;
     double    iongamma, ionBeta, SampleLamda, SampleionK, ionFy_i;
-    double    multip, caviionK, ionFys, E_fac_ad, fRF, caviFy, ionW, ionZ, ionEs, ionFy_o;
+    double    multip, caviionK, ionFys, E_fac_ad, fRF, caviFy, ionW, ionZ, ionEs, ionFy_o, ionEk1;
     TableType tab;
 
     const double c0         = 2.99792458e8,   // Speed of light [m/s].
                  u          = 931.49432e6,    // Atomic mass unit [eV/c^2].
                  mu0        = 4e0*M_PI*1e-7,  // Vacuum permeability.
                  SampleFref = 80.5e6;         // Long. sampling frequency [Hz]; must be set to RF freq.
+
+    // Charge stripper parameters.
+    const int    Stripper_n                 = 5;
+    const double Stripper_ionZ              = 78e0/238e0,
+                 Stripper_ionMass           = 238e0,
+                 Stripper_ionProton         = 92e0,
+                 Stripper_ionChargeStates[] = {76e0/238e0, 77e0/238e0, 78e0/238e0, 79e0/238e0, 80e0/238e0},
+                 Stripper_E0Para[]          = {16.348e6, 1.00547, -0.10681}, // Unit for last ???
+                 StripperPara[]             = {3e0, 20e0, 16.623e6}; // thickness [microns],
+                                                                      // thickness variation [%],
+                                                                      // reference energy [eV/u].
+
+    double chargeAmount_Baron[Stripper_n];
 
     Config D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -223,6 +268,7 @@ void init_long(Machine &sim, const CavDataType CavData[])
 
     ionW  = state->ionW;
     ionEs = state->ionEs;
+    ionZ  = state->ionZ;
 
     iongamma    = ionW/ionEs;
     ionBeta     = sqrt(1e0-1e0/sqr(iongamma));
@@ -301,24 +347,42 @@ void init_long(Machine &sim, const CavDataType CavData[])
                         cavi, ionW-ionEs, ionFys, tab.Fy_abs[n-1], multip);
 
             ionFy_i = multip*tab.Fy_abs[n-1] + caviFy;
-            // Calculate influence of the cavity of reference particle kinetic energy, absolute phase,
-            // beta and gamma
-            // The data is then recorded for later TLM tracking use
-            ionZ = conf.get<double>("ionZ");
+            // Evaluate change of reference particle kinetic energy, absolute phase, beta,
+            // and gamma.
             calGapTrace(CavData[cavi-1], ionW, ionFy_i, caviionK, ionZ, ionEs, c0/fRF, E_fac_ad,
                         ionW, ionFy_o);
-            tab.s[n-1] = tab.s[n-2] + conf.get<double>("L");
-            tab.Ek[n-1] = ionW - ionEs;
             iongamma = ionW/ionEs;
             ionBeta = sqrt(1e0-1e0/sqr(iongamma));
-            SampleionK = 2*M_PI/(ionBeta*SampleLamda);
+            SampleionK = 2e0*M_PI/(ionBeta*SampleLamda);
+            tab.s[n-1] = tab.s[n-2] + conf.get<double>("L");
+            tab.Ek[n-1] = ionW - ionEs;
             tab.Fy_abs[n-1] = tab.Fy_abs[n-2] + (ionFy_o-ionFy_i)/multip;
             tab.Beta[n-1] = ionBeta;
             tab.Gamma[n-1] = iongamma;
+        } else if (t_name == "stripper") {
+            // For the longitudinal plane evaluate change in reference and multi-charge states,
+            // and charge amounts.
+            n++;
+            ionZ = Stripper_ionZ;
+            ChargeStripper(Stripper_ionMass, Stripper_ionProton, ionBeta,
+                           Stripper_n, Stripper_ionChargeStates, chargeAmount_Baron);
+            // Evaluate change in reference particle energy due to stripper model energy straggling.
+            ionEk1 = (tab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
+            ionW = ionEk1 + ionEs;
+            iongamma = ionW/ionEs;
+            ionBeta = sqrt(1e0-1e0/sqr(iongamma));
+            SampleionK = 2e0*M_PI/(ionBeta*SampleLamda);
+            tab.s[n-1] = tab.s[n-2];    // Length is zero.
+            tab.Ek[n-1] = ionW - ionEs;
+            tab.Fy_abs[n-1] = tab.Fy_abs[n-2];
+            tab.Beta[n-1] = ionBeta;
+            tab.Gamma[n-1] = iongamma;
+//            chargeAmount = fribstripper.chargeAmount_Baron;
         }
         std::cout << std::setw(10) << std::left << t_name << std::internal;
         tab.show(std::cout, n-1);
         std::cout << std::endl;
+//        if (t_name == "stripper") break;
     }
 }
 

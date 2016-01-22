@@ -323,6 +323,22 @@ struct ElementRFCavity : public Base
 };
 
 template<typename Base>
+struct ElementStripper : public Base
+{
+    // Transport (identity) matrix for a Marker.
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementStripper(const Config& c)
+        :base_t(c)
+    {
+        // Identity matrix.
+    }
+    virtual ~ElementStripper() {}
+
+    virtual const char* type_name() const {return "stripper";}
+};
+
+template<typename Base>
 struct ElementEDipole : public Base
 {
     // Transport matrix for an Electric Dipole.
@@ -392,6 +408,10 @@ void registerLinear()
     Machine::registerElement<ElementRFCavity<LinearElementBase<VectorState> > >("Vector",         "rfcavity");
     Machine::registerElement<ElementRFCavity<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
     Machine::registerElement<ElementRFCavity<MomentElementBase>               >("MomentMatrix",   "rfcavity");
+
+    Machine::registerElement<ElementStripper<LinearElementBase<VectorState> > >("Vector",         "stripper");
+    Machine::registerElement<ElementStripper<LinearElementBase<MatrixState> > >("TransferMatrix", "stripper");
+    Machine::registerElement<ElementStripper<MomentElementBase>               >("MomentMatrix",   "stripper");
 
     Machine::registerElement<ElementEDipole<LinearElementBase<VectorState> > >("Vector",         "edipole");
     Machine::registerElement<ElementEDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "edipole");
