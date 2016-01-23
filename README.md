@@ -31,16 +31,13 @@ To build with a specific python version, call cmake with:
 cmake .. -DPYTHON_EXECUTABLE=/usr/bin/python3.4
 ```
 
+<p><a href="https://travis-ci.org/mdavidsaver/jmbgsddb">CI status
+<img src="https://travis-ci.org/mdavidsaver/jmbgsddb.svg" alt="Build Status Images">
+</a></p>
+
 Running tests
 -------------
 
 ```sh
 make test
-```
-
-Running examples
-----------------
-
-```sh
-./examples/example_linear
 ```
