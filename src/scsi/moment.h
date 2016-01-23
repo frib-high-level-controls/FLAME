@@ -28,6 +28,13 @@ struct MomentElementBase : public ElementVoid
 
     value_t transfer;
     //value_t transferT;
+
+    virtual void assign(const ElementVoid *other)
+    {
+        const MomentElementBase *O = static_cast<const MomentElementBase*>(other);
+        transfer = O->transfer;
+        ElementVoid::assign(other);
+    }
 };
 
 #endif // SCSI_MOMENT_H

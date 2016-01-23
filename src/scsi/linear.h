@@ -45,6 +45,14 @@ struct LinearElementBase : public ElementVoid
     typedef boost::numeric::ublas::matrix<double> value_t;
 
     value_t transfer;
+
+    virtual void assign(const ElementVoid *other)
+    {
+        const LinearElementBase *O = static_cast<const LinearElementBase*>(other);
+        transfer = O->transfer;
+        ElementVoid::assign(other);
+    }
+
 private:
     void advanceT(State& s) const
     {

@@ -30,6 +30,12 @@ void ElementVoid::show(std::ostream& strm) const
     strm<<"Element "<<index<<": "<<name<<" ("<<type_name()<<")\n";
 }
 
+void ElementVoid::assign(const ElementVoid *other)
+{
+    *const_cast<std::string*>(&name) = other->name;
+    *const_cast<size_t*>(&index) = other->index;
+}
+
 Machine::Machine(const Config& c)
     :p_elements()
     ,p_trace(NULL)
@@ -65,11 +71,11 @@ Machine::Machine(const Config& c)
         if(eit==p_info.elements.end())
             throw key_error(etype);
 
-        element_builder_t builder = eit->second;
+        element_builder_t* builder = eit->second;
 
         ElementVoid *E;
         try{
-            E = (*builder)(EC);
+            E = builder->build(EC);
         }catch(key_error& e){
             std::ostringstream strm;
             strm<<"Error while initializing element "<<idx<<" '"<<EC.get<std::string>("name", "<invalid>")
@@ -139,14 +145,9 @@ void Machine::reconfigure(size_t idx, const Config& c)
     if(eit==p_info.elements.end())
         throw key_error(etype);
 
-    element_builder_t builder = eit->second;
+    element_builder_t *builder = eit->second;
 
-    std::auto_ptr<ElementVoid> E((*builder)(c));
-
-    *const_cast<size_t*>(&E->index) = idx; // ugly
-
-    delete p_elements[idx];
-    p_elements[idx] = E.release();
+    builder->rebuild(p_elements[idx], c);
 }
 
 Machine::p_state_infos_t Machine::p_state_infos;
@@ -165,7 +166,7 @@ void Machine::p_registerState(const char *name, state_builder_t b)
     p_state_infos[name] = I;
 }
 
-void Machine::p_registerElement(const std::string& sname, const char *ename, element_builder_t b)
+void Machine::p_registerElement(const std::string& sname, const char *ename, element_builder_t *b)
 {
     info_mutex_t::scoped_lock G(info_mutex);
     p_state_infos_t::iterator it = p_state_infos.find(sname);

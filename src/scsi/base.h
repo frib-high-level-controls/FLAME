@@ -82,6 +82,10 @@ struct ElementVoid : public boost::noncopyable
 
     virtual void show(std::ostream&) const;
 
+    //! @internal
+    //! Used by Machine::reconfigure()
+    //! Assumes other has the same type
+    virtual void assign(const ElementVoid* other ) =0;
 private:
     const Config p_conf;
 };
@@ -141,24 +145,33 @@ private:
     std::ostream* p_trace;
 
     typedef StateBase* (*state_builder_t)(const Config& c);
-    typedef ElementVoid* (*element_builder_t)(const Config& c);
     template<typename State>
     struct state_builder_impl {
         static StateBase* build(const Config& c)
         { return new State(c); }
     };
+    struct element_builder_t {
+        virtual ElementVoid* build(const Config& c) =0;
+        virtual void rebuild(ElementVoid *o, const Config& c) =0;
+    };
     template<typename Element>
-    struct element_builder_impl {
-        static ElementVoid* build(const Config& c)
+    struct element_builder_impl : public element_builder_t {
+        ElementVoid* build(const Config& c)
         { return new Element(c); }
-        static ElementVoid* rebuild(Element *o, const Config& c)
-        { delete o; return new Element(c); }
+        void rebuild(ElementVoid *o, const Config& c)
+        {
+            std::auto_ptr<ElementVoid> N(build(c));
+            Element *m = dynamic_cast<Element*>(o);
+            if(!m)
+                throw std::runtime_error("reconfigure() can't change element type");
+            m->assign(N.get());
+        }
     };
 
     struct state_info {
         std::string name;
         state_builder_t builder;
-        typedef std::map<std::string, element_builder_t> elements_t;
+        typedef std::map<std::string, element_builder_t*> elements_t;
         elements_t elements;
     };
 
@@ -169,7 +182,7 @@ private:
 
     static void p_registerState(const char *name, state_builder_t b);
 
-    static void p_registerElement(const std::string& sname, const char *ename, element_builder_t b);
+    static void p_registerElement(const std::string& sname, const char *ename, element_builder_t* b);
 
 public:
 
@@ -182,7 +195,7 @@ public:
     template<typename Element>
     static void registerElement(const char *sname, const char *ename)
     {
-        p_registerElement(sname, ename, &element_builder_impl<Element>::build);
+        p_registerElement(sname, ename, new element_builder_impl<Element>);
     }
 
     friend std::ostream& operator<<(std::ostream&, const Machine& m);
