@@ -315,8 +315,8 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 }
 
 
-void PropagateLongChargeStripper(const Config &conf, const int n, double &IonZ, const double IonEs,
-                                 double &IonW, double &SampleIonK, double &IonBeta)
+void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const double IonEs,
+                           double &IonW, double &SampleIonK, double &IonBeta)
 {
     double IonEk, Iongamma;
     double chargeAmount_Baron[Stripper_n];
@@ -343,9 +343,10 @@ void InitLong(Machine &sim)
 {
     // Longitudinal initialization for reference particle.
     // Evaluate beam energy and cavity loaded phase along the lattice.
-    int     n;
-    double  Iongamma, IonBeta, SampleIonK;
-    double  IonW, IonZ, IonEs;
+    int                             n;
+    double                          Iongamma, IonBeta, SampleIonK;
+    double                          IonW, IonZ, IonEs;
+    Machine::p_elements_t::iterator it;
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -368,9 +369,10 @@ void InitLong(Machine &sim)
     n = 1;
     LongTab.set(n-1, 0e0, state->IonEk, 0e0, IonBeta, Iongamma);
 
-    for(Machine::p_elements_t::iterator it = sim.p_elements.begin(),
-        end = sim.p_elements.end(); it != end; ++it)
-    {
+    it = sim.p_elements.begin();
+    // Skip over state.
+    it++;
+    do {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
         std::string   t_name = elem->type_name(); // C string -> C++ string.
@@ -402,7 +404,7 @@ void InitLong(Machine &sim)
         } else if (t_name == "stripper") {
             // Evaluate change in reference particle energy and multi-charge states, and charge.
             n++;
-            PropagateLongChargeStripper(conf, n, IonZ, IonEs, IonW, SampleIonK, IonBeta);
+            PropagateLongStripper(conf, n, IonZ, IonEs, IonW, SampleIonK, IonBeta);
         }
 
         if (false) {
@@ -410,11 +412,12 @@ void InitLong(Machine &sim)
             LongTab.show(std::cout, n-1);
             std::cout << "\n";
         }
-    }
+        it++;
+    } while (it != sim.p_elements.end());
 }
 
 
-void PrtMat(value_t &M)
+void PrtMat(const value_t &M)
 {
     int j, k;
 
@@ -430,14 +433,15 @@ void PrtMat(value_t &M)
 }
 
 
-void PropagateState(Machine &sim)
+void InitLattice(Machine &sim)
 {
-    // Propagate through a lattice.
+    // Evaluate transport matrices for given beam intial conditions.
     typedef MatrixState state_t;
 
-    std::stringstream strm;
-    double            IonW, IonEs, IonEk, IonZ, IonLambda, s, L, beta, gamma;
-    double            alfac;
+    std::stringstream               strm;
+    double                          IonW, IonEs, IonEk, IonZ, IonLambda, s, L, beta, gamma;
+    double                          R56, Brho, K;
+    Machine::p_elements_t::iterator it;
     MomentElementBase *ElemPtr;
 //    LinearElementBase<MatrixState> *ElemPtr;
 
@@ -455,40 +459,64 @@ void PropagateState(Machine &sim)
 
     IonLambda = QWR1Lambda;
 
-    std::cout << "\n" << "PropagateState:" << "\n\n";
+    std::cout << "\n" << "InitLattice:" << "\n\n";
 //    std::cout << *state << "\n";
     std::cout << std::scientific << std::setprecision(5)
               << "IonEs [Mev/u] = " << IonEs*1e-6 << ", IonEk [Mev/u] = " << state->IonEk*1e-6
               << ", IonW [Mev/u] = " << IonW*1e-6 << ", IonLambda [m^-1] = " << IonLambda << "\n";
 
-    s = 0;
-    for(Machine::p_elements_t::iterator it = sim.p_elements.begin(),
-        end = sim.p_elements.end(); it != end; ++it)
-    {
+    s = 0e0;
+    it = sim.p_elements.begin();
+    // Skip over state.
+    it++;
+    do {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
+        Config        newconf(conf);
         std::string   t_name = elem->type_name(); // C string -> C++ string.
+
+//        ElemPtr = dynamic_cast<LinearElementBase<MatrixState> *>(elem);
+        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+        assert(ElemPtr != NULL);
+
+        std::cout << t_name << "\n";
+
+        if (t_name != "marker") {
+            L = conf.get<double>("L");
+            s += L;
+        }
+
+        gamma = (IonEk+IonEs)/IonEs;
+        beta = sqrt(1e0-1e0/sqr(gamma));
+        // Evaluate momentum compaction.
+        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
-//            ElemPtr = dynamic_cast<LinearElementBase<MatrixState> *>(elem);
-            ElemPtr = dynamic_cast<MomentElementBase *>(elem);
-            assert(ElemPtr != NULL);
-
-            L = conf.get<double>("L");
-            s += L;
-            gamma = (IonEk+IonEs)/IonEs;
-            beta = sqrt(1e0-1e0/sqr(gamma));
-            // Set momentum compaction.
-            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) =
-                    2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma));
+            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
             PrtMat(ElemPtr->transfer);
         } else if (t_name == "sbend") {
+            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+            PrtMat(ElemPtr->transfer);
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
+            Brho = c0*IonZ/(beta*IonW);
+            // Scale B field.
+            K = conf.get<double>("B")/(2e0*Brho);
+            size_t elem_index = ElemPtr->index;
+            Config newconf(sim[elem_index]->conf());
+            newconf.set<double>("K", K);
+            sim.reconfigure(elem_index, newconf);
+            // Re-initialize after re-allocation.
+            elem = *it;
+            ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+
+            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+            PrtMat(ElemPtr->transfer);
         } else if (t_name == "rfcavity") {
         }
-    }
+        it++;
+    } while (it != sim.p_elements.end());
 }
 
 
@@ -536,7 +564,7 @@ int main(int argc, char *argv[])
 
   InitLong(sim);
 
-  PropagateState(sim);
+  InitLattice(sim);
 
   //    it = sim.p_elements.begin();
 

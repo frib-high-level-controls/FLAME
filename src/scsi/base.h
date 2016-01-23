@@ -16,6 +16,11 @@
 #include "config.h"
 #include "util.h"
 
+// Macros:
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
+
 /** @brief The abstract base class for all simulation state objects.
  *
  * Represents the state of some bunch of particles moving through a @class Machine

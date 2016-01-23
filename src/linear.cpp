@@ -199,8 +199,8 @@ struct ElementSBend : public Base
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L",   0e0),
-               phi = c.get<double>("phi", 0e0), // [rad].
+        double L   = c.get<double>("L"),
+               phi = c.get<double>("phi"), // [rad].
                rho = L/phi,
                K   = c.get<double>("K",   0e0), // [1/m^2].
                Kx  = K + 1e0/sqr(rho),
@@ -253,7 +253,7 @@ struct ElementSolenoid : public Base
     {
         double L = c.get<double>("L"),
                B = c.get<double>("B"),
-               K = B,                  // Needs to be scaled.
+               K = c.get<double>("K"),
                C = ::cos(K*L),
                S = ::sin(K*L);
 
@@ -323,7 +323,7 @@ struct ElementRFCavity : public Base
 template<typename Base>
 struct ElementStripper : public Base
 {
-    // Transport (identity) matrix for a Marker.
+    // Transport (identity) matrix for a Charge Stripper.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementStripper(const Config& c)
