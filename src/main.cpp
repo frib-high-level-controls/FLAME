@@ -148,6 +148,22 @@ void CavDataType::show(std::ostream& strm, const int k) const
 }
 
 
+void PrtMat(const value_t &M)
+{
+    int j, k;
+
+    const int n = 6;
+
+    std::cout << "\n";
+    for (j = 0; j < n; j++) {
+        for (k = 0; k < n; k++)
+            std::cout << std::scientific << std::setprecision(5)
+                      << std::setw(13) << M(j, k);
+        std::cout << "\n";
+    }
+}
+
+
 void prt_lat(Machine &sim)
 {
   std::stringstream strm;
@@ -221,7 +237,7 @@ void calGapTrace(const CavDataType &CavData, const double IonW0,
 
     double dis = CavData.s[n-1] - CavData.s[0],
            dz  = dis/(n-1),
-           IonK, IonFylast, Iongamma, IonBeta;
+           IonK, IonFylast, IonGamma, IonBeta;
 
     IonFy = IonFy0;
     IonK  = IonK0;
@@ -229,9 +245,9 @@ void calGapTrace(const CavDataType &CavData, const double IonW0,
         IonFylast = IonFy;
         IonFy += IonK*dz;
         IonW  += IonZ*E_fac_ad*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
-                *cos((IonFylast+IonFy)/2e0)*dz; // MeV
-        Iongamma = IonW/IonEs;
-        IonBeta = sqrt(1e0-1e0/sqr(Iongamma));
+                 *cos((IonFylast+IonFy)/2e0)*dz;
+        IonGamma = IonW/IonEs;
+        IonBeta = sqrt(1e0-1e0/sqr(IonGamma));
         if ((IonW-IonEs) < 0e0) {
             IonW = IonEs;
             IonBeta = 0e0;
@@ -279,7 +295,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 {
     std::string CavType;
     int         cavi;
-    double      fRF, multip, caviIonK, IonFys, E_fac_ad, caviFy, IonFy_i, IonFy_o, Iongamma;
+    double      fRF, multip, caviIonK, IonFys, E_fac_ad, caviFy, IonFy_i, IonFy_o, IonGamma;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -294,8 +310,8 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 
     fRF      = conf.get<double>("f");
     multip   = fRF/SampleFreq;
-    caviIonK = 2e0*M_PI/(IonBeta*c0/fRF);
-    IonFys   = conf.get<double>("phi")*M_PI/180e0; // Synchrotron phase.
+    caviIonK = 2e0*M_PI*fRF/(IonBeta*c0);
+    IonFys   = conf.get<double>("phi")*M_PI/180e0; // Synchrotron phase [rad].
     E_fac_ad = conf.get<double>("scl_fac");        // Electric field scale factor.
 
     caviFy = calFindPhaseTable_simplify(
@@ -306,19 +322,19 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
     // absolute phase, beta, and gamma.
     calGapTrace(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
                 IonEs, c0/fRF, E_fac_ad, IonW, IonFy_o);
-    Iongamma   = IonW/IonEs;
-    IonBeta    = sqrt(1e0-1e0/sqr(Iongamma));
+    IonGamma   = IonW/IonEs;
+    IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
 
     LongTab.set(n-1, LongTab.s[n-2]+conf.get<double>("L"), IonW-IonEs,
-            LongTab.FyAbs[n-2]+(IonFy_o-IonFy_i)/multip, IonBeta, Iongamma);
+            LongTab.FyAbs[n-2]+(IonFy_o-IonFy_i)/multip, IonBeta, IonGamma);
 }
 
 
 void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const double IonEs,
                            double &IonW, double &SampleIonK, double &IonBeta)
 {
-    double IonEk, Iongamma;
+    double IonEk, IonGamma;
     double chargeAmount_Baron[Stripper_n];
 
     IonZ = Stripper_IonZ;
@@ -329,11 +345,11 @@ void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const 
     // model energy straggling.
     IonEk = (LongTab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
     IonW        = IonEk + IonEs;
-    Iongamma    = IonW/IonEs;
-    IonBeta     = sqrt(1e0-1e0/sqr(Iongamma));
+    IonGamma    = IonW/IonEs;
+    IonBeta     = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK  = 2e0*M_PI/(IonBeta*SampleLambda);
 
-    LongTab.set(n-1, LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, Iongamma);
+    LongTab.set(n-1, LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
 
     //            chargeAmount = fribstripper.chargeAmount_Baron;
 }
@@ -344,7 +360,7 @@ void InitLong(Machine &sim)
     // Longitudinal initialization for reference particle.
     // Evaluate beam energy and cavity loaded phase along the lattice.
     int                             n;
-    double                          Iongamma, IonBeta, SampleIonK;
+    double                          IonGamma, IonBeta, SampleIonK;
     double                          IonW, IonZ, IonEs;
     Machine::p_elements_t::iterator it;
 
@@ -357,8 +373,8 @@ void InitLong(Machine &sim)
     IonEs = state->IonEs;
     IonW  = state->IonW;
 
-    Iongamma   = IonW/IonEs;
-    IonBeta    = sqrt(1e0-1e0/sqr(Iongamma));
+    IonGamma   = IonW/IonEs;
+    IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
 
     std::cout << "\n" << "InitLong:" << "\n\n";
@@ -367,7 +383,7 @@ void InitLong(Machine &sim)
               << ", IonW [Mev/u] = " << IonW*1e-6 << "\n";
 
     n = 1;
-    LongTab.set(n-1, 0e0, state->IonEk, 0e0, IonBeta, Iongamma);
+    LongTab.set(n-1, 0e0, state->IonEk, 0e0, IonBeta, IonGamma);
 
     it = sim.p_elements.begin();
     // Skip over state.
@@ -417,30 +433,85 @@ void InitLong(Machine &sim)
 }
 
 
-void PrtMat(const value_t &M)
+void InitRFCav(const Config &conf, const double IonZ, const double IonEs,
+               double &IonW, double &beta, double &gamma)
 {
-    int j, k;
+    std::string CavType;
+    int         cavi, multip;
+    double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, E_fac_ad;
+    double      IonW1, IonFy_o, accIonW;
 
-    const int n = 6;
-
-    std::cout << "\n";
-    for (j = 0; j < n; j++) {
-        for (k = 0; k < n; k++)
-            std::cout << std::scientific << std::setprecision(5)
-                      << std::setw(13) << M(j, k);
-        std::cout << "\n";
+    CavType = conf.get<std::string>("cavtype");
+    if (CavType == "0.041QWR") {
+        cavi   = 1;
+        multip = 1;
+        Rm     = 17e0;
+    } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
+        cavi   = 2;
+        multip = 1;
+        Rm     = 17e0;
+    } else {
+        std::cout << "*** InitLong: undef. cavity type: "
+                  << CavType << "\n";
+        exit(1);
     }
+
+//    double IonFy_i = multip*Fy_abs[state]+tlmPara.DrivenPhase_tab.get(cvycnt)[1];
+//    double Ek_i = Ek[state];
+//    double IonW = Ek[state] + FRIBPara.IonEs;
+
+    avebeta    = beta;
+    avegamma   = gamma;
+    fRF        = conf.get<double>("f");
+    CaviIonK   = 2e0*M_PI*fRF/(beta*c0);
+    SampleIonK = 2e0*M_PI/(beta*c0/SampleFreq);
+    E_fac_ad   = conf.get<double>("scl_fac");   // Electric field scale factor.
+
+    calGapTrace(CavData[cavi-1], IonW, IonFy_i, CaviIonK, tlmPara.IonChargeStates[state],
+                FRIBPara.IonEs, c0/fRF, E_fac_ad);
+
+    accIonW = IonW1 - IonW;
+    IonW    = IonW1;
+//    Ek[state] = IonW - FRIBPara.IonEs;
+//    IonW = Ek[state] + FRIBPara.IonEs;
+//    gamma = IonW/FRIBPara.IonEs;
+//    beta = sqrt(1e0-1e0/sqr(gamma));
+//    avebeta = (avebeta+beta)/2e0;
+//    avegamma = (avegamma+gamma)/2e0;
+//    Fy_abs[state] = Fy_abs[state] + (IonFy_o-IonFy_i)/multip;
+//    mscpTracker.MCS_perchargeTracker.get(state).Ek = Ek[state];
+//    mscpTracker.MCS_perchargeTracker.get(state).gamma = gamma;
+//    mscpTracker.MCS_perchargeTracker.get(state).beta = beta;
+//    mscpTracker.MCS_perchargeTracker.get(state).Fy_abs = Fy_abs[state];
+
+//    PhaseMatrix CaviMatrix = calCavityTLM_Matrix(
+//                Rm, tlmPara.IonChargeStates[state], E_fac_ad, IonFy_i, Ek_i,
+//                caviLamda, cavi); // clabel 1,0.041QWR
+
+//    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
+//    TransVector[ii_state].setElem(4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
+//    TransVector[ii_state].setElem(5, Ek[ii_state]-tlmPara.Ek_tab.get(lattcnt+1)[1]);
+
+//    double aveX2i = ThetaMatrix[state].getElem(0, 0);
+//    double aveY2i = ThetaMatrix[state].getElem(2, 2);
+//    double IonFys = fribnode.attribute[3]/180e0*M_PI;
+//    double E0TL = accIonW/Math.cos(IonFys)/tlmPara.IonChargeStates[state];
+//    ThetaMatrix[state] = ThetaMatrix[state].conjugateTrans(CaviMatrix);
+//    ThetaMatrix[state] = calRFcaviEmitGrowth(
+//                ThetaMatrix[state], tlmPara.IonChargeStates[state], E0TL,
+//                avebeta, avegamma, beta, gamma, caviLamda, IonFys, aveX2i,
+//                TransVector[state].getElem(0), aveY2i, TransVector[state].getElem(2));
 }
 
 
 void InitLattice(Machine &sim)
 {
-    // Evaluate transport matrices for given beam intial conditions.
+    // Evaluate transport matrices for given beam initial conditions.
     typedef MatrixState state_t;
 
     std::stringstream               strm;
     double                          IonW, IonEs, IonEk, IonZ, IonLambda, s, L, beta, gamma;
-    double                          R56, Brho, K;
+    double                          R56, Brho, K, Ek_ini;
     Machine::p_elements_t::iterator it;
     MomentElementBase *ElemPtr;
 //    LinearElementBase<MatrixState> *ElemPtr;
@@ -458,6 +529,12 @@ void InitLattice(Machine &sim)
     IonW  = state->IonW;
 
     IonLambda = QWR1Lambda;
+
+    // Define initial conditions.
+//    Ek[state]          = IonEk + get(k).centerVector.getElem(5);
+//    TransVector[state] = get(k).centerVector;
+//    ThetaMatrix[state] = get(k).thetaMatrix;
+//    Fy_abs[state]      = get(k).centerVector.getElem(4);
 
     std::cout << "\n" << "InitLattice:" << "\n\n";
 //    std::cout << *state << "\n";
