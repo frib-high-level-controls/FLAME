@@ -8,14 +8,12 @@ sim_type = "MomentMatrix";
 # ionChargeStates = {33.0/238.0, 34.0/238.0};
 # chargeAmount    = {10111.0, 10531.0};
 
-u = 931.49432e6; # Atomic mass unit.
+AMU = 931.49432e6; # Atomic mass unit [eV/c^2].
 
-IonZ  = 33/238.0;      # U_238.
-IonEs = u;             # 
+IonZ  = 33.0/238.0;    # Charge state for U_238.
+IonEs = AMU;           # Nucleon mass [eV/u].
 IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
 IonW  = IonEs + IonEk; # Total energy [eV/u].
-
-Brho = 1e0;
 
 # Define Initial Conditions.
 

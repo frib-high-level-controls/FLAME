@@ -79,7 +79,7 @@ const int MaxNCav = 200;
 
 struct CavPhaseType {
     int    n;
-    double CavPhase[MaxNCav];
+    double Phase[MaxNCav];
 };
 
 
@@ -329,11 +329,11 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 
     IonFy_i = multip*LongTab.FyAbs[n-2] + caviFy;
     CavPhases.n++;
-    CavPhases.CavPhase[CavPhases.n-1] = caviFy;
-    if (true)
+    CavPhases.Phase[CavPhases.n-1] = caviFy;
+    if (false)
         std::cout << std::scientific << std::setprecision(10)
                   << "CavPhase: " << std::setw(3) << CavPhases.n
-                  << std::setw(18) << CavPhases.CavPhase[CavPhases.n-1] << "\n";
+                  << std::setw(18) << CavPhases.Phase[CavPhases.n-1] << "\n";
     // Evaluate change of reference particle kinetic energy,
     // absolute phase, beta, and gamma.
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
@@ -449,13 +449,278 @@ void InitLong(Machine &sim)
 }
 
 
-void InitRFCav(const Config &conf, const double IonZ, const double IonEs,
-               double &IonW, const double EkS, const double Fy_absS, double &beta, double &gamma)
+void calTransfac_simplify(const int cavilabel, double beta, const int gaplabel, double E_fac_ad)
+{
+    // Trans=INTERGRAL(-L/2->L/2)[Ez(z)coskz~dz]/INTERGRAL(-L/2->L/2)[Ez(z)~dz]
+    // Ecenter(1)=Ecenter(2)=INTERGRAL(-L/2->L/2)[Ez(z)*z~dz]/INTERGRAL(-L/2->L/2)[Ez(z)~dz]
+    // k=2*pi/beta*lamda
+    // Note: the speed nearly unchanged in one gap
+    // ezData(cz) is thought to be linespace
+    // Fy is included in chosing origin of z
+
+    double Ecenter = 0.0, Trans = 0.0, Transp = 0.0, Strans = 0.0, Stransp = 0.0, V0 = 0.0;
+
+    switch (cavilabel) {
+    case 41:
+        if (beta < 0.025 || beta > 0.08) {
+            std::cout << "Beta out of Range" << s << "\n";
+            exit(1);
+        }
+        switch (gaplabel) {
+        case 0:
+            // One gap evaluation.
+            Ecenter = 120; // [mm].
+            Trans   = 0;
+            Transp  = 0;
+            Strans  = 4.957e6*pow(beta, 5.0) - 1.569e6*pow(beta, 4.0) + 1.991e5*pow(beta, 3.0)
+                      - 1.269e4*pow(beta, 2.0) + 399.9*beta - 4.109;
+            Stransp = -2.926e8*pow(beta, 5.0) + 8.379e7*pow(beta, 4.0) + 9.284e6*pow(beta, 3.0)
+                      + 4.841e5*pow(beta, 2.0) - 1.073e4*beta + 61.98;
+            V0      = 0.98477*E_fac_ad;
+            break;
+        case 1:
+            // Two gap calculation, first gap.
+            Ecenter = 0.0006384*pow(beta, -1.884) + 86.69;
+            Trans   = -1.377e6*pow(beta, 5.0) + 4.316e5*pow(beta, 4.0) - 5.476e4*pow(beta, 3.0)
+                      + 3570*pow(beta, 2.0) - 123.2*beta + 0.9232;
+            Transp  = 2.277e7*pow(beta, 5.0) - 6.631e6 *pow(beta, 4.0) + 7.528e5*pow(beta, 3.0)
+                      - 4.062e4*pow(beta, 2.0) + 924.7*beta + 1.699;
+            Strans  = 0;
+            Stransp = -1.335e6*pow(beta, 5.0) + 3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
+                      + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
+            V0      = 0.492385*E_fac_ad;
+            break;
+        case 2:
+            // Two gap calculation, second gap.
+            Ecenter = -0.0006384*pow(beta, -1.884) + 33.31;
+            Trans   = 1.377e6*pow(beta, 5.0) - 4.316e5*pow(beta, 4.0) + 5.476e4*pow(beta, 3.0)
+                      - 3570*pow(beta, 2.0) + 123.2*beta - 0.9232;
+            Transp  = -2.277e7*pow(beta, 5.0) + 6.631e6*pow(beta, 4.0) - 7.528e5*pow(beta, 3.0)
+                      + 4.062e4*pow(beta, 2.0) - 924.7*beta - 1.699;
+            Strans  = 0;
+            Stransp = -1.335e6*pow(beta, 5.0) +  3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
+                      + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
+            V0      = 0.492385*E_fac_ad;
+            break;
+        default:
+            std::cout << "*** calTransfac_simplify: undef. number of gaps" << gaplabel << s << "\n";
+            exit(1);
+        }
+        break;
+    case 85:
+        if (beta < 0.05 || beta > 0.25) {
+            std::cout << "Beta out of range" << s << "\n";
+            exit(1);
+        }
+        switch (gaplabel) {
+          case 0:
+            Ecenter = 150; // [mm].
+            Trans   = 0;
+            Transp  = 0;
+            Strans  = 2.326e6*pow(beta,7.0) - 2.781e6*pow(beta,6.0) + 1.407e6*pow(beta, 5.0)
+                      - 3.914e5*pow(beta, 4.0) + 6.477e4*pow(beta, 3.0) - 6385*pow(beta, 2.0)
+                      + 343.9*beta - 6.811;
+            Stransp = -2.755e8*pow(beta,7.0) + 3.109e8*pow(beta,6.0) - 1.462e8*pow(beta, 5.0)
+                      + 3.691e7*pow(beta, 4.0) - 5.344e6*pow(beta, 3.0) + 4.315e5*pow(beta, 2.0)
+                      - 1.631e4*beta + 162.7;
+            V0      = 1.967715*E_fac_ad;
+            break;
+        case 1:
+            Ecenter = 0.0002838*pow(beta, -2.13) + 76.5;
+            Trans   = 0.0009467*pow(beta, -1.855) - 1.002;
+            Transp  = -1.928e4*pow(beta, 5.0) + 2.195e4*pow(beta, 4.0) - 1.017e4*pow(beta, 3.0)
+                      + 2468*pow(beta, 2.0) - 334*beta + 24.44;
+            Strans  = 0;
+            Stransp = -0.0009751*pow(beta, -1.898) + 0.001568;
+            V0      = 0.9838574*E_fac_ad;
+            break;
+        case 2:
+            Ecenter = -0.0002838*pow(beta, -2.13) + 73.5;
+            Trans   = -0.0009467*pow(beta, -1.855) + 1.002;
+            Transp  = 1.928e4*pow(beta, 5.0) - 2.195e4*pow(beta, 4.0) + 1.017e4*pow(beta, 3.0)
+                      - 2468*pow(beta, 2.0) + 334*beta - 24.44;
+            Strans  = 0;
+            Stransp = -0.0009751*pow(beta, -1.898) + 0.001568;
+            V0      = 0.9838574*E_fac_ad;
+            break;
+        default:
+            std::cout << "*** calTransfac_simplify: undef. number of gaps" << gaplabel << s << "\n";
+            exit(1);
+        }
+        break;
+    case 29:
+        if (beta < 0.15 || beta > 0.4) {
+            std::cout << "Beta out of range" << s << "\n";
+            exit(1);
+        }
+        switch (gaplabel) {
+        case 0:
+            Ecenter = 150; // [mm].
+            Trans   = 0;
+            Transp  = 0;
+            Strans  = 76.54*pow(beta, 5.0) - 405.6*pow(beta, 4.0) + 486*pow(beta, 3.0)
+                      - 248*pow(beta, 2.0) + 58.08*beta - 4.285;
+            Stransp = -2.025e6*pow(beta,7.0) + 4.751e6*pow(beta,6.0) - 4.791e6*pow(beta, 5.0)
+                      + 2.695e6*pow(beta, 4.0) - 9.127e5*pow(beta, 3.0) + 1.854e5*pow(beta, 2.0)
+                      - 2.043e4*beta + 888;
+            V0      = 2.485036*E_fac_ad;
+            break;
+        case 1:
+            Ecenter = 0.01163*pow(beta, -2.001) + 91.77;
+            Trans   = 0.02166*pow(beta, -1.618) - 1.022;
+            Transp  = 1.389e4*pow(beta, 5.0) - 2.147e4*pow(beta, 4.0) + 1.313e4*pow(beta, 3.0)
+                      - 3917*pow(beta, 2.0) + 534.7*beta - 11.25;
+            Strans  = 0;
+            Stransp = -454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
+                      + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
+            V0      = 1.242518*E_fac_ad;
+        case 2:
+            Ecenter = -0.01163*pow(beta, -2.001) + 58.23;
+            Trans   = -0.02166*pow(beta, -1.618) + 1.022;
+            Transp  = -1.389e4*pow(beta, 5.0) + 2.147e4*pow(beta, 4.0) - 1.313e4*pow(beta, 3.0)
+                      + 3917*pow(beta, 2.0) - 534.7*beta + 11.25;
+            Strans  = 0;
+            Stransp = -454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
+                      + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
+            V0      = 1.242518*E_fac_ad;
+        } else {
+            std::cout << "*** calTransfac_simplify: undef. number of gaps" << gaplabel << s << "\n";
+            exit(1);
+        }
+        break;
+    case 53:
+        if (beta < 0.3 || beta > 0.6) {
+            std::cout << "Beta out of range" << s << "\n";
+            exit(1);
+        }
+        switch (gaplabel) {
+        case 0:
+            Ecenter = 250; // [mm].
+            Trans   = 0;
+            Transp  = 0;
+            Strans  = -52.93*pow(beta, 5.0) + 84.12*pow(beta, 4.0) - 17.73*pow(beta, 3.0)
+                      - 38.49*pow(beta, 2.0) + 26.64*beta - 4.222;
+            Stransp = -4.167e4*pow(beta, 5.0) + 1.075e5*pow(beta, 4.0) - 1.111e5*pow(beta, 3.0)
+                      + 5.702e4*pow(beta, 2.0) - 1.413e4*beta - 1261;
+            V0      = 4.25756986*E_fac_ad;
+            break;
+        case 1:
+            Ecenter = 0.01219*pow(beta, -2.348) + 137.8;
+            Trans   = 0.04856*pow(beta, -1.68) - 1.018;
+            Transp  = 1641*pow(beta, 5.0) - 4109*pow(beta, 4.0) + 4081*pow(beta, 3.0)
+                      - 1973*pow(beta, 2.0) + 422.8*beta - 3.612;
+            Strans  = 0;
+            Stransp = -0.03969*pow(beta, -1.775) + 0.009034;
+            V0 = 2.12878493*E_fac_ad;
+            break;
+        case 2:
+            Ecenter = -0.01219*pow(beta, -2.348) + 112.2;
+            Trans   = -0.04856*pow(beta, -1.68) + 1.018;
+            Transp  = -1641*pow(beta, 5.0) + 4109*pow(beta, 4.0) - 4081*pow(beta, 3.0)
+                      + 1973*pow(beta, 2.0) - 422.8*beta + 3.612;
+            Strans  = 0;
+            Stransp = -0.03969*pow(beta, -1.775) + 0.009034;
+            V0      = 2.12878493*E_fac_ad;
+            break;
+        } else {
+            std::cout << "*** calTransfac_simplify: undef. number of gaps" << gaplabel << s << "\n";
+            exit(1);
+        }
+        break;
+    default:
+        std::out << "*** calTransfac_simplify: undef. cavity type" << "\n";
+        exit(1);
+    }
+
+    double[] output = {Ecenter,Trans,Transp,Strans,Stransp,V0};
+    return output;
+}
+
+
+void CavityMatrix(const double Rm, const double ionZ, const double E_fac_ad,
+                  const double ionFyi_s, const  double ionEk_s,
+                  const double ionLamda, int cavi)
+{
+    int    k;
+    double ionWi_s, gammai_s, betai_s, ionKi_s;
+
+    ionWi_s  = ionEk_s + IonEs;
+    gammai_s = ionWi_s/IonEs;
+    betai_s  = sqrt(1e0-1e0/sqr(gammai_s));
+    ionKi_s  = 2e0*M_PI/(betai_s*ionLamda);
+
+//	    axisData_41_ad(:,cExRe:9)=FRIBPara.QWR1.E_fac_ad*axisData_41_ad(:,cExRe:9);
+//	    axisData_41_1_ad=axisData_41_ad(1:FRIBPara.planeSize_z_41,:);
+//	    axisData_41_2_ad=axisData_41_ad(FRIBPara.planeSize_z_41:2*FRIBPara.planeSize_z_41-1,:);
+//
+
+    calTransfac_simplify(cavilabel, betai_s, 1 , E_fac_ad);
+
+    java.util.ArrayList<double[]> axisData_1_ad = new java.util.ArrayList<double[]>();
+    for (k = 0; k < round((axisData.size()-1)/2.0); k++) {
+        double[] entry = {axisData.get(k)[0],axisData.get(k)[1]*E_fac_ad};
+        axisData_1_ad.add(entry);
+    }
+    output = calTransfac(axisData_1_ad,ionKi_s);
+
+    double Ecen_1 = output[0]; //output = {Ecenter,Trans,Transp,Strans,Stransp,V0};
+    double T_1 = output[1];
+    double Tp_1 = output[2];
+    double S_1 = output[3];
+    double Sp_1 = output[4];
+    double V0_1 = output[5];
+    double dis = (axisData.get(axisData.size()-1)[0]-axisData.get(0)[0])/2; // should divided by 2!!!
+    output = calGapModel(dis,ionWi_s,ionFyi_s,ionKi_s,ionZ,ionLamda,Ecen_1,T_1,S_1,Tp_1,Sp_1,V0_1);
+    double ionWc_s = output[0];
+    double ionFyc_s = output[1];
+    double gammac_s = ionWc_s/FRIBPara.ionEs;
+    double betac_s = sqrt(1.0-1.0/(gammac_s*gammac_s));
+    double ionKc_s = 2*M_PI/(betac_s*ionLamda*1e3); //rad/mm
+
+    output = calTransfac_simplify(cavilabel,betac_s,2,E_fac_ad);
+    java.util.ArrayList<double[]> axisData_2_ad = new java.util.ArrayList<double[]>();
+    for (int k = 0; k < round((axisData.size()-1)/2.0); k++) {
+        double[] entry = {axisData.get(k)[0],axisData.get(k)[1]*E_fac_ad};
+        axisData_2_ad.add(entry);
+    }
+    output = calTransfac(axisData_2_ad,ionKc_s);
+    double Ecen_2 = output[0]; //output = {Ecenter,Trans,Transp,Strans,Stransp,V0};
+    double T_2 = output[1];
+    double Tp_2 = output[2];
+    double S_2 = output[3];
+    double Sp_2 = output[4];
+    double V0_2 = output[5];
+    output = calGapModel(dis,ionWc_s,ionFyc_s,ionKc_s,ionZ,ionLamda,Ecen_2,T_2,S_2,Tp_2,Sp_2,V0_2);
+    double ionWf_s = output[0];
+    double gammaf_s = ionWf_s/FRIBPara.ionEs;
+    double betaf_s = sqrt(1.0-1.0/(gammaf_s*gammaf_s));
+    double ionKf_s = 2*M_PI/(betaf_s*ionLamda*1e3); //rad/mm
+
+    Ecen_1 = Ecen_1-dis; // Switch Ecen_1 axis centered at cavity center// dis/2 to dis 14/12/12
+
+    double[] TTF_tab = {Ecen_1,T_1,Tp_1,S_1,Sp_1,V0_1,Ecen_2,T_2,Tp_2,S_2,Sp_2,V0_2};
+    double[] beta_tab = {betai_s,betac_s,betaf_s};
+    double[] gamma_tab = {gammai_s,gammac_s,gammaf_s};
+    double ionK_1 = (ionKi_s+ionKc_s)/2;
+    double ionK_2 = (ionKc_s+ionKf_s)/2;		    // Bug found 2015-01-07
+
+    PhaseMatrix matrix = PhaseMatrix.identity();
+    java.util.ArrayList<TlmNode> thinlenLine  =  new java.util.ArrayList<TlmNode>();
+    thinlenLine = calCavity_thinlenLine(beta_tab,gamma_tab,cavi,ionK_1,ionK_2);
+    matrix = calCavity_Matrix(dis,E_fac_ad,TTF_tab,beta_tab,gamma_tab,ionLamda,ionZ,ionFyi_s,ionFyc_s,thinlenLine,Rm);
+
+    return matrix;
+}
+
+
+void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const double IonEs, double &IonW,
+               const double IonChargeState, const double EkState, const double Fy_absState,
+               double &beta, double &gamma)
 {
     std::string CavType;
     int         cavi, multip;
     double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
-    double      IonW1, IonFy_o, accIonW;
+    double      IonW_o, IonFy_o, accIonW;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -472,9 +737,9 @@ void InitRFCav(const Config &conf, const double IonZ, const double IonEs,
         exit(1);
     }
 
-//    double IonFy_i = multip*Fy_absS+tlmPara.DrivenPhase_tab.get(cvycnt)[1];
-//    double Ek_i = EkS;
-//    double IonW = EkS + IonEs;
+    IonFy_i = multip*Fy_absState + CavPhases.Phase[CavCnt];
+    Ek_i    = EkState;
+    IonW    = EkState + IonEs;
 
     avebeta    = beta;
     avegamma   = gamma;
@@ -483,26 +748,20 @@ void InitRFCav(const Config &conf, const double IonZ, const double IonEs,
     SampleIonK = 2e0*M_PI/(beta*c0/SampleFreq);
     EfieldScl  = conf.get<double>("scl_fac");   // Electric field scale factor.
 
-//    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, tlmPara.IonChargeStates[state],
-//                FRIBPara.IonEs, c0/fRF, EfieldScl);
+    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, IonChargeState, IonEs,
+                c0/fRF, EfieldScl, IonW_o, IonFy_o);
 
-    accIonW = IonW1 - IonW;
-    IonW    = IonW1;
-//    EkS = IonW - FRIBPara.IonEs;
-//    IonW = EkS + FRIBPara.IonEs;
-//    gamma = IonW/FRIBPara.IonEs;
-//    beta = sqrt(1e0-1e0/sqr(gamma));
-//    avebeta = (avebeta+beta)/2e0;
-//    avegamma = (avegamma+gamma)/2e0;
-//    Fy_absS = Fy_absS + (IonFy_o-IonFy_i)/multip;
-//    mscpTracker.MCS_perchargeTracker.get(state).Ek = EkS;
-//    mscpTracker.MCS_perchargeTracker.get(state).gamma = gamma;
-//    mscpTracker.MCS_perchargeTracker.get(state).beta = beta;
-//    mscpTracker.MCS_perchargeTracker.get(state).Fy_abs = Fy_absS;
+    accIonW = IonW_o - IonW;
+    IonW    = IonW_o;
+    EkState = IonW - IonEs;
+    IonW    = EkState + IonEs;
+    gamma   = IonW/IonEs;
+    beta    = sqrt(1e0-1e0/sqr(gamma));
+    avebeta = (avebeta+beta)/2e0;
+    avegamma = (avegamma+gamma)/2e0;
 
-//    PhaseMatrix CaviMatrix = calCavityTLM_Matrix(
-//                Rm, tlmPara.IonChargeStates[state], EfieldScl, IonFy_i, Ek_i,
-//                caviLamda, cavi); // clabel 1,0.041QWR
+    CaviMatrix = calCavityTLM_Matrix(
+                Rm, IonChargeState, EfieldScl, IonFy_i, Ek_i, caviLamda, cavi);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state].setElem(4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
@@ -511,7 +770,7 @@ void InitRFCav(const Config &conf, const double IonZ, const double IonEs,
 //    double aveX2i = ThetaMatrix[state].getElem(0, 0);
 //    double aveY2i = ThetaMatrix[state].getElem(2, 2);
 //    double IonFys = fribnode.attribute[3]/180e0*M_PI;
-//    double E0TL = accIonW/Math.cos(IonFys)/tlmPara.IonChargeStates[state];
+//    double E0TL = accIonW/cos(IonFys)/tlmPara.IonChargeStates[state];
 //    ThetaMatrix[state] = ThetaMatrix[state].conjugateTrans(CaviMatrix);
 //    ThetaMatrix[state] = calRFcaviEmitGrowth(
 //                ThetaMatrix[state], tlmPara.IonChargeStates[state], E0TL,
@@ -520,14 +779,15 @@ void InitRFCav(const Config &conf, const double IonZ, const double IonEs,
 }
 
 
-void InitLattice(Machine &sim)
+void InitLattice(Machine &sim, const double P)
 {
     // Evaluate transport matrices for given beam initial conditions.
     typedef MatrixState state_t;
 
     std::stringstream               strm;
+    int                             CavCnt;
     double                          IonW, IonEs, IonEk, IonZ, IonLambda, s, L, beta, gamma;
-    double                          R56, Brho, K, Ek_ini;
+    double                          R56, Brho, K, Ek_ini, EkState;
     Machine::p_elements_t::iterator it;
     MomentElementBase *ElemPtr;
 //    LinearElementBase<MatrixState> *ElemPtr;
@@ -547,10 +807,10 @@ void InitLattice(Machine &sim)
     IonLambda = QWR1Lambda;
 
     // Define initial conditions.
-//    EkS          = IonEk + get(k).centerVector.getElem(5);
+    EkState          = IonEk + P;
 //    TransVector[state] = get(k).centerVector;
 //    ThetaMatrix[state] = get(k).thetaMatrix;
-//    Fy_absS      = get(k).centerVector.getElem(4);
+//    Fy_absState      = get(k).centerVector.getElem(4);
 
     std::cout << "\n" << "InitLattice:" << "\n\n";
 //    std::cout << *state << "\n";
@@ -562,6 +822,7 @@ void InitLattice(Machine &sim)
     it = sim.p_elements.begin();
     // Skip over state.
     it++;
+    CavCnt = 0;
     do {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
@@ -607,6 +868,7 @@ void InitLattice(Machine &sim)
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
             PrtMat(ElemPtr->transfer);
         } else if (t_name == "rfcavity") {
+            CavCnt++;
         }
         it++;
     } while (it != sim.p_elements.end());
@@ -657,7 +919,7 @@ int main(int argc, char *argv[])
 
   InitLong(sim);
 
-  InitLattice(sim);
+//  InitLattice(sim);
 
   //    it = sim.p_elements.begin();
 
