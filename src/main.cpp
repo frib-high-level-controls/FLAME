@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <vector>
+
 #include "scsi/config.h"
 
 #include <scsi/base.h>
@@ -18,18 +20,19 @@
 extern int glps_debug;
 
 
-typedef boost::numeric::ublas::matrix<double> value_t;
+// Global constansts.
 
+// Speed of light [m/s].
+# define c0           2.99792458e8
+// Atomic mass unit [eV/c^2].
+# define u            931.49432e6
+// Vacuum permeability.
+# define mu0          4e0*M_PI*1e-7
+// Long. sampling frequency [Hz]; must be set to RF freq.
+# define SampleFreq   80.5e6
+# define SampleLambda c0/SampleFreq
 
-// Global constants and parameters.
-// Make macros.
-//# define c0 2.99792458e8
-const double c0           = 2.99792458e8,   // Speed of light [m/s].
-             u            = 931.49432e6,    // Atomic mass unit [eV/c^2].
-             mu0          = 4e0*M_PI*1e-7,  // Vacuum permeability.
-             SampleFreq   = 80.5e6,         // Long. sampling frequency [Hz];
-                                           // must be set to RF freq.
-             SampleLambda = c0/SampleFreq;
+// Global constansts and parameters.
 
 // Charge stripper parameters.
 const int    Stripper_n                 = 5;   // Number of charge states.
@@ -44,70 +47,46 @@ const double Stripper_IonZ              = 78e0/238e0,
              StripperPara[]             = {3e0, 20e0, 16.623e6};
 
 
-const int MaxTab = 2000; // Max number of entries.
+typedef boost::numeric::ublas::matrix<double> value_t;
 
-//std::vector<double>
 
 class LongTabType {
 // Table for longitudinal initialization for reference particle.
 public:
-    int    n;         // Length of table.
-    double s[MaxTab], // Longitudinal position [m].
-    Ek[MaxTab],       // Kinetic energy [eV/u].
-    FyAbs[MaxTab],    // Synchrotron phase [rad].
-    Beta[MaxTab],     // Relativistic factor beta.
-    Gamma[MaxTab];    // Relativistic factor gamma.
+    std::vector<double> s,     // Longitudinal position [m].
+                        Ek,    // Kinetic energy [eV/u].
+                        FyAbs, // Synchrotron phase [rad].
+                        Beta,  // Relativistic factor beta.
+                        Gamma; // Relativistic factor gamma.
 
-    void zero(const int);
-    void set(const int, const double, const double, const double,
-             const double, const double);
+    void set(const double, const double, const double, const double, const double);
     void show(std::ostream& strm, const int) const;
 };
 
 
-const int MaxCavData = 1000; // Max number of data points.
-
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
 public:
-    int    n;                 // Lenght of data.
-    double s[MaxCavData],     // s coordinate [m]
-           Elong[MaxCavData]; // Longitudinal Electric field [V/m].
+    std::vector<double> s,     // s coordinate [m]
+                        Elong; // Longitudinal Electric field [V/m].
 
     void RdData(const std::string);
     void show(std::ostream& strm, const int) const;
 };
 
 
-const int MaxNCav = 200;
-
-struct CavPhaseType {
-    int    n;
-    double Phase[MaxNCav];
-};
-
-
 // Global variables.
 
-const int MaxCavTypes = 10;
-
-CavDataType  CavData[MaxCavTypes];
-LongTabType  LongTab;
-CavPhaseType CavPhases;
+CavDataType         CavData[5];
+LongTabType         LongTab;
+std::vector<double> CavPhases;
 
 
-void LongTabType::zero(const int k)
+void LongTabType::set(const double s, const double Ek, const double FyAbs,
+                      const double Beta, const double Gamma)
 {
-    this->s[k]    = 0e0; this->Ek[k]    = 0e0; this->FyAbs[k] = 0e0;
-    this->Beta[k] = 0e0; this->Gamma[k] = 0e0;
-}
-
-
-void LongTabType::set(const int k, const double s, const double Ek,
-                    const double FyAbs, const double Beta, const double Gamma)
-{
-    this->s[k]     = s;     this->Ek[k] = Ek; this->FyAbs[k] = FyAbs; this->Beta[k]  = Beta;
-    this->Gamma[k] = Gamma;
+    this->s.push_back(s);    this->Ek.push_back(Ek); this->FyAbs.push_back(FyAbs);
+    this->Beta.push_back(Beta); this->Gamma.push_back(Gamma);
 }
 
 
@@ -118,14 +97,15 @@ void LongTabType::show(std::ostream& strm, const int k) const
          << std::setw(18) << this->Ek[k]*1e-6
          << std::setw(18) << this->FyAbs[k]
          << std::setw(18) << this->Beta[k]
-         << std::setw(18) << this->Gamma[k];
+         << std::setw(18) << this->Gamma[k] << "\n";
 }
 
 
 void CavDataType::RdData(const std::string FileName)
 {
-    int          k;
     std::string  line;
+    int          k;
+    double       s, Elong;
     std::fstream inf;
 
     inf.open(FileName.c_str(), std::ifstream::in);
@@ -133,26 +113,18 @@ void CavDataType::RdData(const std::string FileName)
         std::cerr << "Failed to open " << FileName << "\n";
         exit(1);
     }
-    this->n = 0;
     while (getline(inf, line)) {
-        this->n++;
-        if (n > MaxCavData) {
-            std::cerr << "*** RdData: max data exceeded";
-            exit(1);
-        }
-        sscanf(line.c_str(), "%lf %lf",
-               &this->s[this->n-1], &this->Elong[this->n-1]);
+        sscanf(line.c_str(), "%lf %lf", &s, &Elong);
+        this->s.push_back(s), this->Elong.push_back(Elong);
         // Convert from [mm] to [m].
-        this->s[this->n-1] *= 1e-3;
+        this->s[this->s.size()-1] *= 1e-3;
     }
     inf.close();
 
     if (false) {
         std::cout << "\n";
-        for (k = 0; k < this->n; k++) {
+        for (k = 0; k < this->s.size(); k++)
             this->show(std::cout, k);
-            std::cout << "\n";
-        }
     }
 }
 
@@ -160,7 +132,7 @@ void CavDataType::RdData(const std::string FileName)
 void CavDataType::show(std::ostream& strm, const int k) const
 {
     strm << std::scientific << std::setprecision(5)
-         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k];
+         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k] << "\n";
 }
 
 
@@ -173,8 +145,8 @@ void PrtMat(const value_t &M)
     std::cout << "\n";
     for (j = 0; j < n; j++) {
         for (k = 0; k < n; k++)
-            std::cout << std::scientific << std::setprecision(5)
-                      << std::setw(13) << M(j, k);
+            std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << M(j, k);
         std::cout << "\n";
     }
 }
@@ -248,7 +220,7 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
                  const double IonEs, const double IonLamda,
                  const double EfieldScl, double &IonW, double &IonFy)
 {
-    int    n = CavData.n,
+    int    n = CavData.s.size(),
            k;
 
     double dis = CavData.s[n-1] - CavData.s[0],
@@ -332,12 +304,11 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
     caviFy = GetCavPhase(cavi, IonW-IonEs, IonFys, LongTab.FyAbs[n-2], multip);
 
     IonFy_i = multip*LongTab.FyAbs[n-2] + caviFy;
-    CavPhases.n++;
-    CavPhases.Phase[CavPhases.n-1] = caviFy;
+    CavPhases.push_back(caviFy);
     if (false)
         std::cout << std::scientific << std::setprecision(10)
-                  << "CavPhase: " << std::setw(3) << CavPhases.n
-                  << std::setw(18) << CavPhases.Phase[CavPhases.n-1] << "\n";
+                  << "CavPhase: " << std::setw(3) << CavPhases.size()
+                  << std::setw(18) << CavPhases[CavPhases.size()-1] << "\n";
     // Evaluate change of reference particle kinetic energy, absolute phase, beta, and gamma.
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
                 IonEs, c0/fRF, EfieldScl, IonW, IonFy_o);
@@ -345,7 +316,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
 
-    LongTab.set(n-1, LongTab.s[n-2]+conf.get<double>("L"), IonW-IonEs,
+    LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), IonW-IonEs,
             LongTab.FyAbs[n-2]+(IonFy_o-IonFy_i)/multip, IonBeta, IonGamma);
 }
 
@@ -367,7 +338,7 @@ void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const 
     IonBeta     = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK  = 2e0*M_PI/(IonBeta*SampleLambda);
 
-    LongTab.set(n-1, LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
+    LongTab.set(LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
 
     //            chargeAmount = fribstripper.chargeAmount_Baron;
 }
@@ -401,7 +372,7 @@ void InitLong(Machine &sim)
               << ", IonW [Mev/u] = " << IonW*1e-6 << "\n";
 
     n = 1;
-    LongTab.set(n-1, 0e0, state->IonEk, 0e0, IonBeta, IonGamma);
+    LongTab.set(0e0, state->IonEk, 0e0, IonBeta, IonGamma);
 
     it = sim.p_elements.begin();
     // Skip over state.
@@ -414,22 +385,22 @@ void InitLong(Machine &sim)
         if (t_name == "marker") {
         } else if (t_name == "drift") {
             n++;
-            LongTab.set(n-1, LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
+            LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
                     LongTab.FyAbs[n-2]+SampleIonK*conf.get<double>("L"),
                     LongTab.Beta[n-2], LongTab.Gamma[n-2]);
         } else if (t_name == "sbend") {
             n++;
-            LongTab.set(n-1, LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
+            LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
                     LongTab.FyAbs[n-2]+SampleIonK*conf.get<double>("L"),
                     LongTab.Beta[n-2], LongTab.Gamma[n-2]);
         } else if (t_name == "quadrupole") {
             n++;
-            LongTab.set(n-1, LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
+            LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
                     LongTab.FyAbs[n-2]+SampleIonK*conf.get<double>("L"),
                     LongTab.Beta[n-2], LongTab.Gamma[n-2]);
         } else if (t_name == "solenoid") {
             n++;
-            LongTab.set(n-1, LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
+            LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), LongTab.Ek[n-2],
                     LongTab.FyAbs[n-2]+SampleIonK*conf.get<double>("L"),
                     LongTab.Beta[n-2], LongTab.Gamma[n-2]);
         } else if (t_name == "rfcavity") {
@@ -441,10 +412,9 @@ void InitLong(Machine &sim)
             PropagateLongStripper(conf, n, IonZ, IonEs, IonW, SampleIonK, IonBeta);
         }
 
-        if (true) {
+        if (false) {
             std::cout << std::setw(10) << std::left << t_name << std::internal;
             LongTab.show(std::cout, n-1);
-            std::cout << "\n";
         }
         it++;
     } while (it != sim.p_elements.end());
@@ -858,7 +828,7 @@ void CavityTLMMatrix(const double Rm, const double ionZ, const double IonEs, con
 
 //    GetTransicFac(cavilabel, betai_s, 1 , E_fac_ad);
 
-//    java.util.ArrayList<double[]> axisData_1_ad = new java.util.ArrayList<double[]>();
+//    util.ArrayList<double[]> axisData_1_ad = new util.ArrayList<double[]>();
 //    for (k = 0; k < round((axisData.size()-1)/2.0); k++) {
 //        double[] entry = {axisData.get(k)[0],axisData.get(k)[1]*E_fac_ad};
 //        axisData_1_ad.add(entry);
@@ -880,7 +850,7 @@ void CavityTLMMatrix(const double Rm, const double ionZ, const double IonEs, con
 //    double ionKc_s = 2*M_PI/(betac_s*ionLamda*1e3); //rad/mm
 
 //    output = GetTransicFac(cavilabel,betac_s,2,E_fac_ad);
-//    java.util.ArrayList<double[]> axisData_2_ad = new java.util.ArrayList<double[]>();
+//    util.ArrayList<double[]> axisData_2_ad = new util.ArrayList<double[]>();
 //    for (int k = 0; k < round((axisData.size()-1)/2.0); k++) {
 //        double[] entry = {axisData.get(k)[0],axisData.get(k)[1]*E_fac_ad};
 //        axisData_2_ad.add(entry);
@@ -907,7 +877,7 @@ void CavityTLMMatrix(const double Rm, const double ionZ, const double IonEs, con
 //    double ionK_2 = (ionKc_s+ionKf_s)/2;		    // Bug found 2015-01-07
 
 //    PhaseMatrix matrix = PhaseMatrix.identity();
-//    java.util.ArrayList<TlmNode> thinlenLine  =  new java.util.ArrayList<TlmNode>();
+//    util.ArrayList<TlmNode> thinlenLine  =  new util.ArrayList<TlmNode>();
 //    thinlenLine = calCavity_thinlenLine(beta_tab,gamma_tab,cavi,ionK_1,ionK_2);
 //    matrix = calCavity_Matrix(dis,E_fac_ad,TTF_tab,beta_tab,gamma_tab,ionLamda,ionZ,ionFyi_s,ionFyc_s,thinlenLine,Rm);
 
@@ -915,7 +885,7 @@ void CavityTLMMatrix(const double Rm, const double ionZ, const double IonEs, con
 }
 
 
-void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const double IonEs, double &IonW,
+void InitRFCav(const Config &conf, const int &CavCnt, const double IonZ, const double IonEs, double &IonW,
                const double IonChargeState, double &EkState, const double Fy_absState,
                double &beta, double &gamma)
 {
@@ -939,7 +909,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
         exit(1);
     }
 
-    IonFy_i = multip*Fy_absState + CavPhases.Phase[CavCnt];
+    IonFy_i = multip*Fy_absState + CavPhases[CavCnt-1];
     Ek_i    = EkState;
     IonW    = EkState + IonEs;
 
@@ -1046,6 +1016,8 @@ void InitLattice(Machine &sim, const double P)
         beta = sqrt(1e0-1e0/sqr(gamma));
         // Evaluate momentum compaction.
         R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
+        // Convert from [m] and [eV/u] to [mm] and [MeV/u].
+        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L*1e-3;
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
@@ -1071,6 +1043,8 @@ void InitLattice(Machine &sim, const double P)
             PrtMat(ElemPtr->transfer);
         } else if (t_name == "rfcavity") {
             CavCnt++;
+//            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, IonChargeState, EkState,
+//                      Fy_absState, beta, gamma);
         }
         it++;
     } while (it != sim.p_elements.end());
@@ -1086,13 +1060,12 @@ void StateUnitFix(Machine &sim)
 
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
-    MatrixState* Mptr = dynamic_cast<MatrixState*>(state.get());
 
-    std::cout << "\n" << *state;
-    std::cout << Mptr->state(0, 0) << "\n";
-
-    Mptr->state(0, 0) = 1e0;
-    std::cout << Mptr->state(0, 0) << "\n";
+    MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+//    std::cout << "\n" << *state;
+    PrtMat(StatePtr->state);
+    StatePtr->state(0, 0) = 1e0;
+    PrtMat(StatePtr->state);
 }
 
 
@@ -1109,8 +1082,8 @@ void PropagateState(Machine &sim)
 
     //    std::cout << "# Machine configuration\n" << sim << "\n\n";
 
-    StateUnitFix(sim);
-    exit(1);
+//    StateUnitFix(sim);
+//    exit(1);
 
     for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
         elem = *it;
@@ -1121,7 +1094,9 @@ void PropagateState(Machine &sim)
         PrtMat(ElemPtr->transfer);
 //        sim.propagate(state.get(), elem->index, 1);
         elem->advance(*state);
-        outf<< "\n" << *state ;
+        MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+    //    std::cout << "\n" << *state;
+        PrtMat(StatePtr->state);
     }
 
     outf.close();
