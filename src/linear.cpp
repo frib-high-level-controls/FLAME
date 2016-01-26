@@ -163,6 +163,8 @@ struct ElementMark : public Base
     ElementMark(const Config& c)
         :base_t(c)
     {
+//        double L = c.get<double>("L", 0e0);
+
         // Identity matrix.
     }
     virtual ~ElementMark() {}
@@ -180,6 +182,8 @@ struct ElementDrift : public Base
         :base_t(c)
     {
         double L = c.get<double>("L");
+        // Convert from [m] to [mm].
+        L *= 1e3;
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
@@ -256,6 +260,8 @@ struct ElementSolenoid : public Base
                K = c.get<double>("K"),
                C = ::cos(K*L),
                S = ::sin(K*L);
+        // Convert from [m] to [mm].
+        L *= 1e3;
 
         this->transfer(state_t::PS_X, state_t::PS_X)
                 = this->transfer(state_t::PS_PX, state_t::PS_PX)

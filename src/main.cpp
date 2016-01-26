@@ -22,6 +22,8 @@ typedef boost::numeric::ublas::matrix<double> value_t;
 
 
 // Global constants and parameters.
+// Make macros.
+//# define c0 2.99792458e8
 const double c0           = 2.99792458e8,   // Speed of light [m/s].
              u            = 931.49432e6,    // Atomic mass unit [eV/c^2].
              mu0          = 4e0*M_PI*1e-7,  // Vacuum permeability.
@@ -43,6 +45,8 @@ const double Stripper_IonZ              = 78e0/238e0,
 
 
 const int MaxTab = 2000; // Max number of entries.
+
+//std::vector<double>
 
 class LongTabType {
 // Table for longitudinal initialization for reference particle.
@@ -437,7 +441,7 @@ void InitLong(Machine &sim)
             PropagateLongStripper(conf, n, IonZ, IonEs, IonW, SampleIonK, IonBeta);
         }
 
-        if (false) {
+        if (true) {
             std::cout << std::setw(10) << std::left << t_name << std::internal;
             LongTab.show(std::cout, n-1);
             std::cout << "\n";
@@ -1031,7 +1035,7 @@ void InitLattice(Machine &sim, const double P)
         ElemPtr = dynamic_cast<MomentElementBase *>(elem);
         assert(ElemPtr != NULL);
 
-        std::cout << t_name << "\n";
+        std::cout << t_name << " " << elem->name << "\n";
 
         if (t_name != "marker") {
             L = conf.get<double>("L");
@@ -1073,34 +1077,54 @@ void InitLattice(Machine &sim, const double P)
 }
 
 
-void PropagateState(Machine &sim)
+void StateUnitFix(Machine &sim)
 {
-    int                             k;
-    Machine::p_elements_t::iterator it;
-    MomentElementBase               *ElemPtr;
+    Config                   D;
+    std::auto_ptr<StateBase> state(sim.allocState(D));
 
 //    std::cout << "# Machine configuration\n" << sim << "\n\n";
 
-    Config                   D;
-    std::auto_ptr<StateBase> state(sim.allocState(D));
     // Propagate through first element (beam initial conditions).
-//    std::cout << "\n" << *state << "\n";
-//    sim.propagate(state.get(), 0, 1);
-//    std::cout << "\n" << *state << "\n";
+    sim.propagate(state.get(), 0, 1);
+    MatrixState* Mptr = dynamic_cast<MatrixState*>(state.get());
 
-    k = 0;
+    std::cout << "\n" << *state;
+    std::cout << Mptr->state(0, 0) << "\n";
+
+    Mptr->state(0, 0) = 1e0;
+    std::cout << Mptr->state(0, 0) << "\n";
+}
+
+
+void PropagateState(Machine &sim)
+{
+    Machine::p_elements_t::iterator it;
+    MomentElementBase               *ElemPtr;
+    Config                          D;
+    std::auto_ptr<StateBase>        state(sim.allocState(D));
+    ElementVoid                     *elem;
+    std::fstream                    outf;
+
+    outf.open("test_jb.out", std::ofstream::out);
+
+    //    std::cout << "# Machine configuration\n" << sim << "\n\n";
+
+    StateUnitFix(sim);
+    exit(1);
+
     for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
-        k++;
-        ElementVoid*  elem   = *it;
-        const Config& conf   = elem->conf();
+        elem = *it;
 
         ElemPtr = dynamic_cast<MomentElementBase *>(elem);
         assert(ElemPtr != NULL);
 
         PrtMat(ElemPtr->transfer);
-        sim.propagate(state.get(), k-1, k);
-        std::cout << "\n" << *state << "\n";
+//        sim.propagate(state.get(), elem->index, 1);
+        elem->advance(*state);
+        outf<< "\n" << *state ;
     }
+
+    outf.close();
 }
 
 
@@ -1134,6 +1158,9 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  std::vector<double> chgstate = conf->get<std::vector<double> >("ionChargeStates");
+  std::cout << chgstate[0] << " " << chgstate[1] << "\n";
+
   // register state and element types
   registerLinear();
   registerMoment();
@@ -1152,6 +1179,12 @@ int main(int argc, char *argv[])
 //  InitLattice(sim);
 
   PropagateState(sim);
+
+// for n states
+//   get Chg_n, S_n
+//   Initialize Lattice(Chg_n, S_n)
+//   PropagateState(sim, S);
+//
 
   //    it = sim.p_elements.begin();
 
