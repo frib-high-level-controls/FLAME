@@ -187,7 +187,8 @@ struct ElementDrift : public Base
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
-        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementDrift() {}
 
@@ -239,7 +240,8 @@ struct ElementQuad : public Base
         // Vertical plane.
         Get2by2Matrix<Base>(L, -K, (unsigned)state_t::PS_Y, this->transfer);
         // Longitudinal plane.
-        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementQuad() {}
 
@@ -298,7 +300,8 @@ struct ElementSolenoid : public Base
         this->transfer(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
 
         // Longitudinal plane.
-        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementSolenoid() {}
 
@@ -319,6 +322,7 @@ struct ElementRFCavity : public Base
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+        // For total path length.
 //        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementRFCavity() {}

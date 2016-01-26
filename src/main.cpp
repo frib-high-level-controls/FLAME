@@ -1012,12 +1012,12 @@ void InitLattice(Machine &sim, const double P)
             s += L;
         }
 
-        gamma = (IonEk+IonEs)/IonEs;
+        gamma = (EkState+IonEs)/IonEs;
         beta = sqrt(1e0-1e0/sqr(gamma));
         // Evaluate momentum compaction.
-        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
+//        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
         // Convert from [m] and [eV/u] to [mm] and [MeV/u].
-        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L*1e-3;
+        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L*1e6;
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
@@ -1151,7 +1151,7 @@ int main(int argc, char *argv[])
 
   InitLong(sim);
 
-//  InitLattice(sim);
+  InitLattice(sim, 0.000309995e6);
 
   PropagateState(sim);
 
