@@ -181,9 +181,7 @@ struct ElementDrift : public Base
     ElementDrift(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L");
-        // Convert from [m] to [mm].
-        L *= 1e3;
+        double L = c.get<double>("L")*1e3; // Convert from [m] to [mm].
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
@@ -251,19 +249,17 @@ struct ElementQuad : public Base
 template<typename Base>
 struct ElementSolenoid : public Base
 {
-    // Transport (identity) matrix for a Solenoid; K = B0/(B*rho).
+    // Transport (identity) matrix for a Solenoid; K = B0/(2 Brho).
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L"),
+        double L = c.get<double>("L")*1e3,  // Convert from [m] to [mm].
                B = c.get<double>("B"),
-               K = c.get<double>("K"),
+               K = c.get<double>("K")*1e-3, // Convert from [m] to [mm].
                C = ::cos(K*L),
                S = ::sin(K*L);
-        // Convert from [m] to [mm].
-        L *= 1e3;
 
         this->transfer(state_t::PS_X, state_t::PS_X)
                 = this->transfer(state_t::PS_PX, state_t::PS_PX)

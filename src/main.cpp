@@ -1028,7 +1028,7 @@ void InitLattice(Machine &sim, const double P)
             PrtMat(ElemPtr->transfer);
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
-            Brho = c0*IonZ/(beta*IonW);
+            Brho = beta*(EkState+IonEs)/(c0*IonZ);
             // Scale B field.
             K = conf.get<double>("B")/(2e0*Brho);
             size_t elem_index = ElemPtr->index;
@@ -1088,14 +1088,17 @@ void PropagateState(Machine &sim)
     for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
         elem = *it;
 
-        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
-        assert(ElemPtr != NULL);
+        std::cout << elem->type_name() << " " << elem->name << "\n";
 
-        PrtMat(ElemPtr->transfer);
+//        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+//        assert(ElemPtr != NULL);
+//        PrtMat(ElemPtr->transfer);
+
 //        sim.propagate(state.get(), elem->index, 1);
         elem->advance(*state);
+
         MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
-    //    std::cout << "\n" << *state;
+//        std::cout << "\n" << *state;
         PrtMat(StatePtr->state);
     }
 
