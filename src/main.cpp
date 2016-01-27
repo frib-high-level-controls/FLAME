@@ -32,6 +32,9 @@ extern int glps_debug;
 # define SampleFreq   80.5e6
 # define SampleLambda c0/SampleFreq
 
+// Phase space dimension.
+# define PS_Dim       6
+
 // Global constansts and parameters.
 
 // Charge stripper parameters.
@@ -141,9 +144,7 @@ void PrtVec(const std::vector<double> &a)
 {
     int k;
 
-    const int n = 6;
-
-    for (k = 0; k < n; k++)
+    for (k = 0; k < PS_Dim; k++)
         std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << a[k];
     std::cout << "\n";
@@ -154,10 +155,8 @@ void PrtMat(const value_mat &M)
 {
     int j, k;
 
-    const int n = 6;
-
-    for (j = 0; j < n; j++) {
-        for (k = 0; k < n; k++)
+    for (j = 0; j < PS_Dim; j++) {
+        for (k = 0; k < PS_Dim; k++)
             std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << M(j, k);
         std::cout << "\n";
@@ -175,7 +174,7 @@ void PrtLat(Machine &sim)
 
     std::cout << "\nPrtLat:\n";
 
-//    std::cout << "# Machine configuration\n" << sim << "\n\n";
+//    std::cout << "  Machine configuration:\n" << sim << "\n";
 
     std::cout << "  Simulation type:    " << sim.p_info.name
               << "\n  Number of elements: " << sim.p_elements.size() << "\n";
@@ -1072,18 +1071,36 @@ void InitLattice(Machine &sim, const double P)
 
 void StateUnitFix(Machine &sim)
 {
+    /* Change units from:
+     *   [mm, rad, mm, rad, rad, MeV/u]
+     * to:
+     *   [m, rad, m, rad, rad, eV/u].
+     * Note, state is only changed locally. */
+
+    int                      j, k;
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
 
-//    std::cout << "# Machine configuration\n" << sim << "\n\n";
+//    std::cout << "Machine configuration\n" << sim << "\n";
 
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
     MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
-//    std::cout << "\n" << *state;
+
+    std::cout << "\n";
     PrtMat(StatePtr->state);
-    StatePtr->state(0, 0) = 1e0;
+
+    for (j = 0; j < PS_Dim-2; j++)
+        for (k = 0; k < PS_Dim-2; k++) {
+            if (j % 2 == 0) StatePtr->state(j, k) *= 1e-3;
+            if (k % 2 == 0) StatePtr->state(j, k) *= 1e-3;
+        }
+
+    for (j = 0; j < PS_Dim; j++)
+        StatePtr->state(j, PS_Dim-1) *= 1e6;
+
+    std::cout << "\n";
     PrtMat(StatePtr->state);
 }
 
@@ -1170,8 +1187,8 @@ int main(int argc, char *argv[])
     // Turn trace on/off.
     if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
 
-//    StateUnitFix(sim);
-//    exit(1);
+    StateUnitFix(sim);
+    exit(1);
 
     // Charge states.
     std::vector<double> ChgState = conf->get<std::vector<double> >("ionChargeStates");
