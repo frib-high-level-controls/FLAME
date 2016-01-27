@@ -12,7 +12,7 @@ MatrixState::MatrixState(const Config& c)
 {
     try{
         const std::vector<double>& I = c.get<std::vector<double> >("initial");
-        if(I.size()<state.data().size())
+        if(I.size()>state.data().size())
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.data().begin());
     }catch(key_error&){
@@ -47,7 +47,7 @@ VectorState::VectorState(const Config& c)
 {
     try{
         const std::vector<double>& I = c.get<std::vector<double> >("initial");
-        if(I.size()<state.size())
+        if(I.size()>state.size())
             throw std::invalid_argument("Initial state size too big");
         std::copy(I.begin(), I.end(), state.begin());
     }catch(key_error&){
@@ -338,7 +338,7 @@ struct ElementGeneric : public Base
         :base_t(c)
     {
         std::vector<double> I = c.get<std::vector<double> >("transfer");
-        if(I.size()<this->transfer.data().size())
+        if(I.size()>this->transfer.data().size())
             throw std::invalid_argument("Initial transfer size too big");
         std::copy(I.begin(), I.end(), this->transfer.data().begin());
     }
