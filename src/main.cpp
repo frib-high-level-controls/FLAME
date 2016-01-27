@@ -47,7 +47,8 @@ const double Stripper_IonZ              = 78e0/238e0,
              StripperPara[]             = {3e0, 20e0, 16.623e6};
 
 
-typedef boost::numeric::ublas::matrix<double> value_t;
+typedef boost::numeric::ublas::vector<double> value_vec;
+typedef boost::numeric::ublas::matrix<double> value_mat;
 
 
 class LongTabType {
@@ -136,13 +137,25 @@ void CavDataType::show(std::ostream& strm, const int k) const
 }
 
 
-void PrtMat(const value_t &M)
+void PrtVec(const std::vector<double> &a)
+{
+    int k;
+
+    const int n = 6;
+
+    for (k = 0; k < n; k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+void PrtMat(const value_mat &M)
 {
     int j, k;
 
     const int n = 6;
 
-    std::cout << "\n";
     for (j = 0; j < n; j++) {
         for (k = 0; k < n; k++)
             std::cout << std::scientific << std::setprecision(10)
@@ -152,19 +165,30 @@ void PrtMat(const value_t &M)
 }
 
 
-void prt_lat(Machine &sim)
+void PrtLat(Machine &sim)
 {
-  std::stringstream strm;
+    Machine::p_elements_t::iterator it;
+    MomentElementBase               *ElemPtr;
+    Config                          D;
+    std::auto_ptr<StateBase>        state(sim.allocState(D));
+    ElementVoid                     *elem;
 
-  std::cout << "# Machine configuration\n" << sim << "\n\n";
+    std::cout << "\nPrtLat:\n";
 
-  strm << "sim_type: " << sim.p_info.name << "\n#Elements: "
-       << sim.p_elements.size() << "\n";
-  for (Machine::p_elements_t::const_iterator it = sim.p_elements.begin(),
-       end = sim.p_elements.end(); it != end; ++it) {
-      (*it)->show(strm);
-      std::cout << strm;
-  }
+//    std::cout << "# Machine configuration\n" << sim << "\n\n";
+
+    std::cout << "  Simulation type:    " << sim.p_info.name
+              << "\n  Number of elements: " << sim.p_elements.size() << "\n";
+
+    for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
+        elem = *it;
+
+        std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
+
+        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+        assert(ElemPtr != NULL);
+        PrtMat(ElemPtr->transfer);
+    }
 }
 
 
@@ -366,9 +390,9 @@ void InitLong(Machine &sim)
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
 
-    std::cout << "\n" << "InitLong:" << "\n\n";
-    std::cout << std::scientific << std::setprecision(5)
-              << "IonEs [Mev/u] = " << IonEs*1e-6 << ", IonEk [Mev/u] = " << state->IonEk*1e-6
+    std::cout << "\n" << "InitLong:" << "\n";
+    std::cout << std::fixed << std::setprecision(5)
+              << "  IonEs [Mev/u] = " << IonEs*1e-6 << ", IonEk [Mev/u] = " << state->IonEk*1e-6
               << ", IonW [Mev/u] = " << IonW*1e-6 << "\n";
 
     n = 1;
@@ -984,10 +1008,9 @@ void InitLattice(Machine &sim, const double P)
 //    ThetaMatrix[state] = get(k).thetaMatrix;
 //    Fy_absState      = get(k).centerVector.getElem(4);
 
-    std::cout << "\n" << "InitLattice:" << "\n\n";
-//    std::cout << *state << "\n";
-    std::cout << std::scientific << std::setprecision(5)
-              << "IonEs [Mev/u] = " << IonEs*1e-6 << ", IonEk [Mev/u] = " << state->IonEk*1e-6
+    std::cout << "\n" << "InitLattice:" << "\n";
+    std::cout << std::fixed << std::setprecision(5)
+              << "  IonEs [Mev/u] = " << IonEs*1e-6 << ", IonEk [Mev/u] = " << state->IonEk*1e-6
               << ", IonW [Mev/u] = " << IonW*1e-6 << ", IonLambda [m^-1] = " << IonLambda << "\n";
 
     s = 0e0;
@@ -1005,8 +1028,6 @@ void InitLattice(Machine &sim, const double P)
         ElemPtr = dynamic_cast<MomentElementBase *>(elem);
         assert(ElemPtr != NULL);
 
-        std::cout << t_name << " " << elem->name << "\n";
-
         if (t_name != "marker") {
             L = conf.get<double>("L");
             s += L;
@@ -1022,10 +1043,8 @@ void InitLattice(Machine &sim, const double P)
         if (t_name == "marker") {
         } else if (t_name == "drift") {
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-            PrtMat(ElemPtr->transfer);
         } else if (t_name == "sbend") {
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-            PrtMat(ElemPtr->transfer);
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
             Brho = beta*(EkState+IonEs)/(c0*IonZ);
@@ -1040,11 +1059,11 @@ void InitLattice(Machine &sim, const double P)
             ElemPtr = dynamic_cast<MomentElementBase *>(elem);
 
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-            PrtMat(ElemPtr->transfer);
         } else if (t_name == "rfcavity") {
             CavCnt++;
 //            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, IonChargeState, EkState,
 //                      Fy_absState, beta, gamma);
+//            PrtMat(ElemPtr->transfer);
         }
         it++;
     } while (it != sim.p_elements.end());
@@ -1080,15 +1099,12 @@ void PropagateState(Machine &sim)
 
     outf.open("test_jb.out", std::ofstream::out);
 
-    //    std::cout << "# Machine configuration\n" << sim << "\n\n";
-
-//    StateUnitFix(sim);
-//    exit(1);
+    std::cout << "\n" << "PropagateState:" << "\n";
 
     for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
         elem = *it;
 
-        std::cout << elem->type_name() << " " << elem->name << "\n";
+        std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
 
 //        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
 //        assert(ElemPtr != NULL);
@@ -1109,99 +1125,108 @@ void PropagateState(Machine &sim)
 
 int main(int argc, char *argv[])
 {
-  Machine::p_elements_t::const_iterator it;
+    typedef MatrixState state_t;
 
-  const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
+    int k;
 
-  FILE *in = stdin;
-  if(argc>1) {
-    in = fopen(argv[1], "r");
-    if (!in) {
-      fprintf(stderr, "Failed to open %s\n", argv[1]);
-      return 2;
+    const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
+
+    FILE *in = stdin;
+    if(argc>1) {
+        in = fopen(argv[1], "r");
+        if (!in) {
+            fprintf(stderr, "Failed to open %s\n", argv[1]);
+            return 2;
+        }
     }
-  }
 
-  glps_debug = 0; // 0 or 1.
+    glps_debug = 0; // 0 or 1.
 
-  std::auto_ptr<Config> conf;
+    std::auto_ptr<Config> conf;
 
-  try {
-    GLPSParser P;
-    conf.reset(P.parse(in));
-    fprintf(stderr, "Parsing succeeds\n");
-  } catch(std::exception& e) {
-    fprintf(stderr, "Parse error: %s\n", e.what());
-    fclose(in);
-    return 1;
-  }
-
-  std::vector<double> chgstate = conf->get<std::vector<double> >("ionChargeStates");
-  std::cout << chgstate[0] << " " << chgstate[1] << "\n";
-
-  // register state and element types
-  registerLinear();
-  registerMoment();
-
-  Machine sim(*conf);
-  sim.set_trace(&std::cout);
-
-  CavData[0].RdData(HomeDir+"/data/axisData_41.txt");
-  CavData[1].RdData(HomeDir+"/data/axisData_85.txt");
-
-  // Turn trace on/off.
-  if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
-
-  InitLong(sim);
-
-  InitLattice(sim, 0.000309995e6);
-
-  PropagateState(sim);
-
-// for n states
-//   get Chg_n, S_n
-//   Initialize Lattice(Chg_n, S_n)
-//   PropagateState(sim, S);
-//
-
-  //    it = sim.p_elements.begin();
-
-  std::cout << "\nLattice parameters:\n";
-  std::cout << "sim_type: " << sim.p_info.name
-	    << "\n#Elements: " << sim.p_elements.size()
-	    << "\n";
-
-//      prt_lat(sim);
-
-  //    std::cout<<"# Reduced lattice\n";
-  //    GLPSPrint(std::cout, *conf);
-  //    std::cout<<"\n";
-
-  //    std::cerr<<"Generic AST:\n";
-  //    std::cerr << *conf;
-  //    std::cerr<<"GLPS:\n";
-  //    GLPSPrint(std::cout, *conf);
-
-  if (false) {
     try {
-      Machine sim(*conf);
-      sim.set_trace(&std::cout);
-
-      std::cout << "# Machine configuration\n" << sim << "\n\n";
-
-      Config D;
-      std::auto_ptr<StateBase> state(sim.allocState(D));
-      sim.propagate(state.get());
-
-      std::cout << "\n# Final " << *state << "\n";
+        GLPSParser P;
+        conf.reset(P.parse(in));
+        fprintf(stderr, "Parsing succeeds\n");
     } catch(std::exception& e) {
-      std::cerr << "Simulation error: " << e.what() << "\n";
-      fclose(in);
-      return 1;
+        fprintf(stderr, "Parse error: %s\n", e.what());
+        fclose(in);
+        return 1;
     }
-  }
 
-  fprintf(stderr, "Done\n");
-  fclose(in);
-  return 0;
+    // Register state and element types.
+    registerLinear();
+    registerMoment();
+
+    Machine sim(*conf);
+    if (false)
+        sim.set_trace(&std::cout);
+    else
+        sim.set_trace(NULL);
+
+    CavData[0].RdData(HomeDir+"/data/axisData_41.txt");
+    CavData[1].RdData(HomeDir+"/data/axisData_85.txt");
+
+    // Turn trace on/off.
+    if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
+
+//    StateUnitFix(sim);
+//    exit(1);
+
+    // Charge states.
+    std::vector<double> ChgState = conf->get<std::vector<double> >("ionChargeStates");
+    std::vector<double> BaryCenter = conf->get<std::vector<double> >("BaryCenter");
+
+    std::cout << "\n" << "Ion charge states:\n";
+    for (k = 0; k < 2; k++)
+        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
+    std::cout << "\n";
+    std::cout << "\nBarycenter:\n";
+    PrtVec(BaryCenter);
+
+    InitLong(sim);
+
+    InitLattice(sim, BaryCenter[state_t::PS_PS]*1e6);
+
+//    PrtLat(sim);
+
+    PropagateState(sim);
+
+//     for n states
+//       get Chg_n, S_n
+//       Initialize Lattice(Chg_n, S_n)
+//       PropagateState(sim, S);
+
+
+//        std::cout<<"# Reduced lattice\n";
+//        GLPSPrint(std::cout, *conf);
+//        std::cout<<"\n";
+
+//        std::cerr<<"Generic AST:\n";
+//        std::cerr << *conf;
+//        std::cerr<<"GLPS:\n";
+//        GLPSPrint(std::cout, *conf);
+
+    if (false) {
+        try {
+            Machine sim(*conf);
+            sim.set_trace(&std::cout);
+
+            std::cout << "# Machine configuration\n" << sim << "\n\n";
+
+            Config D;
+            std::auto_ptr<StateBase> state(sim.allocState(D));
+            sim.propagate(state.get());
+
+            std::cout << "\n# Final " << *state << "\n";
+        } catch(std::exception& e) {
+            std::cerr << "Simulation error: " << e.what() << "\n";
+            fclose(in);
+            return 1;
+        }
+    }
+
+    fprintf(stderr, "Done\n");
+    fclose(in);
+    return 0;
 }

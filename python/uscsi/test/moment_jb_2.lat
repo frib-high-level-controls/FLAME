@@ -19,13 +19,11 @@ ionChargeStates = [33.0/238.0, 34.0/238.0];
 #chargeAmount    = [10111.0, 10531.0];
 
 # Define phase-space coordinates.
-#S1: source, initial = [
-# -0.0007886, 1.08371e-05, 0.01337343, 6.678534e-06, -0.0001847729, 0.000309995
-#];
+# Units are: [mm, rad, mm, rad, rad, MeV/u]
 
-#S2: source, initial = [
-# 0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886, 0.0020601 
-#];
+BaryCenter = [-0.0007886, 1.08371e-05, 0.01337343, 6.678534e-06, -0.0001847729, 0.000309995];
+
+#BaryCenter = [0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886, 0.0020601];
 
 # Define beam envelope parameters.
 # Units are: [mm, rad, mm, rad, rad, MeV/u]
@@ -82,9 +80,6 @@ ls1_ca01_cav2_d1135: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000
 #   ls1_ca01_cav2_d1135
 # );
 
-cell: LINE = (
-  S, drift_1, drift_2, drift_3, ls1_ca01_bpm_d1129_1,
-  drift_4, drift_5, ls1_ca01_sol1_d1131_1, ls1_ca01_dch_d1131_2,
-  ls1_ca01_dcv_d1131_3, ls1_ca01_sol1_d1131_2, drift_6, drift_7);
+cell: LINE = (S, drift_1, drift_2, ls1_ca01_cav1_d1127);
 
 USE: cell;

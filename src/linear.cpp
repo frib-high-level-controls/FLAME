@@ -7,6 +7,8 @@
 #include "scsi/state/vector.h"
 #include "scsi/state/matrix.h"
 
+#define MtoMM 1e3
+
 MatrixState::MatrixState(const Config& c)
     :StateBase(c)
     ,state(boost::numeric::ublas::identity_matrix<double>(6))
@@ -181,7 +183,7 @@ struct ElementDrift : public Base
     ElementDrift(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*1e3; // Convert from [m] to [mm].
+        double L = c.get<double>("L")*MtoMM; // Convert from [m] to [mm].
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
@@ -255,9 +257,9 @@ struct ElementSolenoid : public Base
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*1e3,  // Convert from [m] to [mm].
+        double L = c.get<double>("L")*MtoMM, // Convert from [m] to [mm].
                B = c.get<double>("B"),
-               K = c.get<double>("K")*1e-3, // Convert from [m] to [mm].
+               K = c.get<double>("K")/MtoMM, // Convert from [m] to [mm].
                C = ::cos(K*L),
                S = ::sin(K*L);
 
@@ -314,7 +316,7 @@ struct ElementRFCavity : public Base
         :base_t(c)
     {
         std::string cav_type = c.get<std::string>("cavtype");
-        double L             = c.get<double>("L");
+        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
