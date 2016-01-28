@@ -489,7 +489,7 @@ double PwrSeries(const double beta,
 }
 
 
-void GetTransitFac1(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
+void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
                    double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
     // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
@@ -579,109 +579,6 @@ void GetTransitFac1(const int cavilabel, double beta, const int gaplabel, const 
 }
 
 
-void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
-                   double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
-{
-    // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
-
-    switch (cavilabel) {
-    case 41:
-        if (beta < 0.025 || beta > 0.08) {
-            std::cerr << "*** GetTransitFac: beta out of Range" << "\n";
-            exit(1);
-        }
-        switch (gaplabel) {
-        case 0:
-            // One gap evaluation.
-            Ecen = 120.0; // [mm].
-            T    = 0.0;
-            Tp   = 0.0;
-            S    = 4.957e6*pow(beta, 5.0) - 1.569e6*pow(beta, 4.0) + 1.991e5*pow(beta, 3.0)
-                   - 1.269e4*pow(beta, 2.0) + 399.9*beta - 4.109;
-            Sp   = -2.926e8*pow(beta, 5.0) + 8.379e7*pow(beta, 4.0) + 9.284e6*pow(beta, 3.0)
-                   + 4.841e5*pow(beta, 2.0) - 1.073e4*beta + 61.98;
-            V0   = 0.98477*EfieldScl;
-            break;
-        case 1:
-            // Two gap calculation, first gap.
-            Ecen = 0.0006384*pow(beta, -1.884) + 86.69;
-            T    = -1.377e6*pow(beta, 5.0) + 4.316e5*pow(beta, 4.0) - 5.476e4*pow(beta, 3.0)
-                   + 3570*pow(beta, 2.0) - 123.2*beta + 0.9232;
-            Tp   = 2.277e7*pow(beta, 5.0) - 6.631e6 *pow(beta, 4.0) + 7.528e5*pow(beta, 3.0)
-                   - 4.062e4*pow(beta, 2.0) + 924.7*beta + 1.699;
-            S    = 0.0;
-            Sp   = -1.335e6*pow(beta, 5.0) + 3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
-                   + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
-            V0   = 0.492385*EfieldScl;
-            break;
-        case 2:
-            // Two gap calculation, second gap.
-            Ecen = -0.0006384*pow(beta, -1.884) + 33.31;
-            T    = 1.377e6*pow(beta, 5.0) - 4.316e5*pow(beta, 4.0) + 5.476e4*pow(beta, 3.0)
-                   - 3570*pow(beta, 2.0) + 123.2*beta - 0.9232;
-            Tp   = -2.277e7*pow(beta, 5.0) + 6.631e6*pow(beta, 4.0) - 7.528e5*pow(beta, 3.0)
-                   + 4.062e4*pow(beta, 2.0) - 924.7*beta - 1.699;
-            S    = 0.0;
-            Sp   = -1.335e6*pow(beta, 5.0) +  3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
-                   + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
-            V0   = 0.492385*EfieldScl;
-            break;
-        default:
-            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
-            exit(1);
-        }
-        break;
-    case 85:
-        if (beta < 0.05 || beta > 0.25) {
-            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
-            exit(1);
-        }
-        switch (gaplabel) {
-          case 0:
-            Ecen = 150.0; // [mm].
-            T    = 0.0;
-            Tp   = 0.0;
-            S    = 2.326e6*pow(beta, 7.0) - 2.781e6*pow(beta, 6.0) + 1.407e6*pow(beta, 5.0)
-                   - 3.914e5*pow(beta, 4.0) + 6.477e4*pow(beta, 3.0) - 6385*pow(beta, 2.0)
-                   + 343.9*beta - 6.811;
-            Sp   = -2.755e8*pow(beta,7.0) + 3.109e8*pow(beta,6.0) - 1.462e8*pow(beta, 5.0)
-                   + 3.691e7*pow(beta, 4.0) - 5.344e6*pow(beta, 3.0) + 4.315e5*pow(beta, 2.0)
-                   - 1.631e4*beta + 162.7;
-            V0   = 1.967715*EfieldScl;
-            break;
-        case 1:
-            Ecen = 0.0002838*pow(beta, -2.13) + 76.5;
-            T    = 0.0009467*pow(beta, -1.855) - 1.002;
-            Tp   = -1.928e4*pow(beta, 5.0) + 2.195e4*pow(beta, 4.0) - 1.017e4*pow(beta, 3.0)
-                   + 2468*pow(beta, 2.0) - 334*beta + 24.44;
-            S    = 0.0;
-            Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
-            V0   = 0.9838574*EfieldScl;
-            break;
-        case 2:
-            Ecen = -0.0002838*pow(beta, -2.13) + 73.5;
-            T    = -0.0009467*pow(beta, -1.855) + 1.002;
-            Tp   = 1.928e4*pow(beta, 5.0) - 2.195e4*pow(beta, 4.0) + 1.017e4*pow(beta, 3.0)
-                   - 2468*pow(beta, 2.0) + 334*beta - 24.44;
-            S    = 0.0;
-            Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
-            V0   = 0.9838574*EfieldScl;
-            break;
-        default:
-            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
-            exit(1);
-        }
-        break;
-    default:
-        std::cerr << "*** GetTransitFac: undef. cavity type" << "\n";
-        exit(1);
-    }
-
-    // Convert from [mm] to [m].
-    Ecen *= 1e-3;
-}
-
-
 double PwrSeries(const double beta,
                  const double a0, const double a1, const double a2, const double a3,
                  const double a4, const double a5, const double a6, const double a7,
@@ -701,132 +598,482 @@ double PwrSeries(const double beta,
 }
 
 
-void TransMultipole(const int cavi, const std::string flabel, const double IonK,
+void TransitFacMultipole(const int cavi, const std::string &flabel, const double IonK,
                     double &T, double &S)
 {
 
     if ((cavi == 1) && (IonK < 0.025 || IonK > 0.055)) {
-        std::cerr << "*** TransMultipole: IonK out of Range" << "\n";
+        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";
         exit(1);
     } else if ((cavi == 2) && (IonK < 0.006 || IonK > 0.035)) {
-        std::cerr << "*** TransMultipole: IonK out of Range" << "\n";
+        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";
     }
 
-//    switch (flabel) {
-//    case "CaviMlp_EFocus1":
-//        if (cavi==1) {
-//            T = PwrSeries(IonK, 1.256386e+02, -3.108322e+04, 3.354464e+06, -2.089452e+08, 8.280687e+09, -2.165867e+11,
-//                          , 3.739846e+12, -4.112154e+13, 2.613462e14, -7.316972e14);
-//            S = PwrSeries(IonK, 1.394183e+02, -3.299673e+04, 3.438044e+06, -2.070369e+08, 7.942886e+09, -2.013750e+11,
-//                         3.374738e+12, -3.605780e+13, 2.229446e+14, -6.079177e+14);
-//        } else if (cavi==2) {
-//            T = PwrSeries(IonK, -9.450041e-01, -3.641390e+01, 9.926186e+03, -1.449193e+06, 1.281752e+08, -7.150297e+09,
-//                          2.534164e+11, -5.535252e+12, 6.794778e+13, -3.586197e+14);
-//            S = PwrSeries(IonK, 9.928055e-02, -5.545119e+01, 1.280168e+04, -1.636888e+06, 1.279801e+08, 4.496323e+13,
-//                          -6.379800e+09, 2.036575e+11, -4.029152e+12, -2.161712e+14);
-//        }
-//        break;
-//    case "CaviMlp_EFocus2":
-//        if (cavi==1)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=-1.499544e+11*pow(IonK,9)+5.612073e+10*pow(IonK,8)+-9.246033e+09*pow(IonK,7)+8.799404e+08*pow(IonK,6)+-5.330725e+07*pow(IonK,5)+2.132552e+06*pow(IonK,4)+-5.619149e+04*pow(IonK,3)+8.943931e+02*pow(IonK,2)+-9.121320e+00*pow(IonK,1)+1.038803e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=-1.983302e+10*pow(IonK,9)+8.570757e+09*pow(IonK,8)+-1.604935e+09*pow(IonK,7)+1.714580e+08*pow(IonK,6)+-1.154148e+07*pow(IonK,5)+5.095765e+05*pow(IonK,4)+-1.488249e+04*pow(IonK,3)+2.696971e+02*pow(IonK,2)+-2.585211e+00*pow(IonK,1)+1.305154e-02;
-//        }
-//        else if (cavi==2)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=8.533351e+12*pow(IonK,9)+-1.584238e+12*pow(IonK,8)+1.265012e+11*pow(IonK,7)+-5.677804e+09*pow(IonK,6)+1.570331e+08*pow(IonK,5)+-2.753614e+06*pow(IonK,4)+3.052166e+04*pow(IonK,3)+-2.932580e+02*pow(IonK,2)+7.299233e-01*pow(IonK,1)+9.989307e-01;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=1.233014e+13*pow(IonK,9)+-2.339920e+12*pow(IonK,8)+1.923697e+11*pow(IonK,7)+-8.968899e+09*pow(IonK,6)+2.605444e+08*pow(IonK,5)+-4.873584e+06*pow(IonK,4)+5.855139e+04*pow(IonK,3)+-4.313590e+02*pow(IonK,2)+2.016667e+00*pow(IonK,1)+-3.040839e-03;
-//        }
-//        break;
-//    case "CaviMlp_EDipole":
-//        if (cavi==1)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=4.758398e+10*pow(IonK,9)+-1.656906e+10*pow(IonK,8)+2.535541e+09*pow(IonK,7)+-2.237287e+08*pow(IonK,6)+1.255841e+07*pow(IonK,5)+-4.669147e+05*pow(IonK,4)+1.125013e+04*pow(IonK,3)+-1.047651e+02*pow(IonK,2)+1.526489e+00*pow(IonK,1)+-1.005885e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=1.155597e+11*pow(IonK,9)+-4.227114e+10*pow(IonK,8)+6.817810e+09*pow(IonK,7)+-6.361033e+08*pow(IonK,6)+3.782592e+07*pow(IonK,5)+-1.488484e+06*pow(IonK,4)+3.888964e+04*pow(IonK,3)+-6.407538e+02*pow(IonK,2)+5.884367e+00*pow(IonK,1)+-2.586200e-02;
-//        }
-//        else if (cavi==2)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=-9.030017e+11*pow(IonK,9)+1.654958e+11*pow(IonK,8)+-1.303686e+10*pow(IonK,7)+5.770450e+08*pow(IonK,6)+-1.570742e+07*pow(IonK,5)+2.640980e+05*pow(IonK,4)+-2.950990e+03*pow(IonK,3)+1.415756e+02*pow(IonK,2)+-6.783669e-02*pow(IonK,1)+-9.999028e-01;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=-5.617061e+11*pow(IonK,9)+1.142835e+11*pow(IonK,8)+-1.002040e+10*pow(IonK,7)+4.958029e+08*pow(IonK,6)+-1.522679e+07*pow(IonK,5)+2.983061e+05*pow(IonK,4)+-3.502994e+03*pow(IonK,3)+2.851611e+01*pow(IonK,2)+-3.700608e-01*pow(IonK,1)+2.108581e-04;
-//        }
-//        break;
-//    case "CaviMlp_EQuad":
-//        if (cavi==1)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=-1.578312e+11*pow(IonK,9)+5.896915e+10*pow(IonK,8)+-9.691159e+09*pow(IonK,7)+9.192347e+08*pow(IonK,6)+-5.544764e+07*pow(IonK,5)+2.206120e+06*pow(IonK,4)+-5.779110e+04*pow(IonK,3)+9.127945e+02*pow(IonK,2)+-9.238897e+00*pow(IonK,1)+1.038941e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=-5.496217e+11*pow(IonK,9)+2.008767e+11*pow(IonK,8)+-3.239241e+10*pow(IonK,7)+3.024208e+09*pow(IonK,6)+-1.801113e+08*pow(IonK,5)+7.094882e+06*pow(IonK,4)+-1.848380e+05*pow(IonK,3)+3.069331e+03*pow(IonK,2)+-2.923507e+01*pow(IonK,1)+1.248096e-01;
-//        }
-//        else if (cavi==2)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=2.594631e+10*pow(IonK,9)+-4.385795e+09*pow(IonK,8)+3.128128e+08*pow(IonK,7)+-1.236263e+07*pow(IonK,6)+2.674841e+05*pow(IonK,5)+3.921401e+03*pow(IonK,4)+1.720764e+01*pow(IonK,3)+-1.215634e+02*pow(IonK,2)+-1.015639e-03*pow(IonK,1)+1.000003e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=6.540748e+10*pow(IonK,9)+-1.277425e+10*pow(IonK,8)+1.075958e+09*pow(IonK,7)+-5.135200e+07*pow(IonK,6)+1.552398e+06*pow(IonK,5)+-2.870201e+04*pow(IonK,4)+-4.840638e+01*pow(IonK,3)+-2.551122e+00*pow(IonK,2)+2.603597e-01*pow(IonK,1)+-1.756250e-05;
-//        }
-//        break;
-//    case "CaviMlp_HMono":
-//        if (cavi==1)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=-7.604796e+11*pow(IonK,9)+4.632851e+11*pow(IonK,8)+-1.014721e+11*pow(IonK,7)+1.165760e+10*pow(IonK,6)+-8.043084e+08*pow(IonK,5)+3.518178e+07*pow(IonK,4)+-9.843253e+05*pow(IonK,3)+1.697657e+04*pow(IonK,2)+-1.671357e+02*pow(IonK,1)+1.703336e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=-5.930241e+13*pow(IonK,9)+2.189668e+13*pow(IonK,8)+-3.565836e+12*pow(IonK,7)+3.360597e+11*pow(IonK,6)+-2.019481e+10*pow(IonK,5)+8.022856e+08*pow(IonK,4)+-2.106663e+07*pow(IonK,3)+3.524921e+05*pow(IonK,2)+-3.409550e+03*pow(IonK,1)+1.452657e+01;
-//        }
-//        else if (cavi==2)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=-8.000662e+12*pow(IonK,9)+1.617248e+12*pow(IonK,8)+-1.411958e+11*pow(IonK,7)+6.970488e+09*pow(IonK,6)+-2.139672e+08*pow(IonK,5)+4.242623e+06*pow(IonK,4)+-5.326467e+04*pow(IonK,3)+1.765330e+02*pow(IonK,2)+-1.783406e+00*pow(IonK,1)+1.003228e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=1.021016e+13*pow(IonK,9)+-1.910236e+12*pow(IonK,8)+1.539708e+11*pow(IonK,7)+-6.991916e+09*pow(IonK,6)+1.962939e+08*pow(IonK,5)+-3.513478e+06*pow(IonK,4)+3.966879e+04*pow(IonK,3)+-2.742508e+02*pow(IonK,2)+1.277444e+00*pow(IonK,1)+-1.581533e-03;
-//        }
-//        break;
-//    case "CaviMlp_HDipole":
-//        if (cavi==1)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=7.869717e+11*pow(IonK,9)+-3.116216e+11*pow(IonK,8)+5.414689e+10*pow(IonK,7)+-5.420826e+09*pow(IonK,6)+3.446369e+08*pow(IonK,5)+-1.442888e+07*pow(IonK,4)+3.985674e+05*pow(IonK,3)+-7.117391e+03*pow(IonK,2)+7.075414e+01*pow(IonK,1)+6.853803e-01;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=-4.941947e+12*pow(IonK,9)+1.791634e+12*pow(IonK,8)+-2.864139e+11*pow(IonK,7)+2.649289e+10*pow(IonK,6)+-1.562284e+09*pow(IonK,5)+6.090118e+07*pow(IonK,4)+-1.569273e+06*pow(IonK,3)+2.575274e+04*pow(IonK,2)+-2.441117e+02*pow(IonK,1)+1.021102e+00;
-//        }
-//        else if (cavi==2)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=-5.154137e+13*pow(IonK,9)+9.839613e+12*pow(IonK,8)+-8.140248e+11*pow(IonK,7)+3.821029e+10*pow(IonK,6)+-1.118723e+09*pow(IonK,5)+2.115355e+07*pow(IonK,4)+-2.561826e+05*pow(IonK,3)+1.631339e+03*pow(IonK,2)+-8.016304e+00*pow(IonK,1)+1.014129e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=2.725370e+13*pow(IonK,9)+-5.194592e+12*pow(IonK,8)+4.261388e+11*pow(IonK,7)+-1.967300e+10*pow(IonK,6)+5.607330e+08*pow(IonK,5)+-1.017331e+07*pow(IonK,4)+1.163814e+05*pow(IonK,3)+-8.101936e+02*pow(IonK,2)+3.299051e+00*pow(IonK,1)+-4.688714e-03;
-//        }
-//        break;
-//    case "CaviMlp_HQuad":
-//        if (cavi==1)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=5.600545e+12*pow(IonK,9)+-2.005326e+12*pow(IonK,8)+3.163675e+11*pow(IonK,7)+-2.885455e+10*pow(IonK,6)+1.676173e+09*pow(IonK,5)+-6.429625e+07*pow(IonK,4)+1.627837e+06*pow(IonK,3)+-2.613724e+04*pow(IonK,2)+2.439177e+02*pow(IonK,1)+-1.997432e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=1.131390e+13*pow(IonK,9)+-4.119861e+12*pow(IonK,8)+6.617859e+11*pow(IonK,7)+-6.153570e+10*pow(IonK,6)+3.649414e+09*pow(IonK,5)+-1.431267e+08*pow(IonK,4)+3.711527e+06*pow(IonK,3)+-6.135071e+04*pow(IonK,2)+5.862902e+02*pow(IonK,1)+-2.470704e+00;
-//        }
-//        else if (cavi==2)
-//        {
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            T=2.764042e+12*pow(IonK,9)+-5.420873e+11*pow(IonK,8)+4.603390e+10*pow(IonK,7)+-2.215417e+09*pow(IonK,6)+6.647808e+07*pow(IonK,5)+-1.302247e+06*pow(IonK,4)+1.591517e+04*pow(IonK,3)+9.311761e+01*pow(IonK,2)+5.170302e-01*pow(IonK,1)+-1.000925e+00;
-//            = PwrSeries(IonK, , , , , , , , , , );
-//            S=-1.755126e+12*pow(IonK,9)+3.377097e+11*pow(IonK,8)+-2.793705e+10*pow(IonK,7)+1.299263e+09*pow(IonK,6)+-3.728390e+07*pow(IonK,5)+6.792565e+05*pow(IonK,4)+-7.571946e+03*pow(IonK,3)+5.433028e+01*pow(IonK,2)+-4.540868e-01*pow(IonK,1)+3.119419e-04;
-//        }
-//        break;
-//    case "default":
-//        throw new Exception("Unknow Multipole label"+flabel);
+    if (flabel == "CaviMlp_EFocus1") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, 1.256386e+02, -3.108322e+04, 3.354464e+06, -2.089452e+08, 8.280687e+09, -2.165867e+11,
+                          3.739846e+12, -4.112154e+13, 2.613462e14, -7.316972e14);
+            S = PwrSeries(IonK, 1.394183e+02, -3.299673e+04, 3.438044e+06, -2.070369e+08, 7.942886e+09, -2.013750e+11,
+                         3.374738e+12, -3.605780e+13, 2.229446e+14, -6.079177e+14);
+            break;
+        case 2:
+            T = PwrSeries(IonK, -9.450041e-01, -3.641390e+01, 9.926186e+03, -1.449193e+06, 1.281752e+08, -7.150297e+09,
+                          2.534164e+11, -5.535252e+12, 6.794778e+13, -3.586197e+14);
+            S = PwrSeries(IonK, 9.928055e-02, -5.545119e+01, 1.280168e+04, -1.636888e+06, 1.279801e+08, -6.379800e+09,
+                          2.036575e+11, -4.029152e+12, 4.496323e+13, -2.161712e+14);
+            break;
+        }
+    } else if (flabel == "CaviMlp_EFocus2") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, 1.038803e+00, -9.121320e+00, 8.943931e+02, -5.619149e+04, 2.132552e+06, -5.330725e+07,
+                          8.799404e+08, -9.246033e+09, 5.612073e+10, -1.499544e+11);
+            S = PwrSeries(IonK, 1.305154e-02, -2.585211e+00, 2.696971e+02, -1.488249e+04, 5.095765e+05, -1.154148e+07,
+                          1.714580e+08, -1.604935e+09, 8.570757e+09, -1.983302e+10);
+            break;
+        case 2:
+            T = PwrSeries(IonK, 9.989307e-01, 7.299233e-01, -2.932580e+02, 3.052166e+04, -2.753614e+06, 1.570331e+08,
+                          -5.677804e+09, 1.265012e+11, -1.584238e+12, 8.533351e+12);
+            S = PwrSeries(IonK, -3.040839e-03, 2.016667e+00, -4.313590e+02, 5.855139e+04, -4.873584e+06, 2.605444e+08,
+                          -8.968899e+09, 1.923697e+11, -2.339920e+12, 1.233014e+13);
+            break;
+        }
+    } else if (flabel == "CaviMlp_EDipole") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, -1.005885e+00, 1.526489e+00, -1.047651e+02, 1.125013e+04, -4.669147e+05, 1.255841e+07,
+                          -2.237287e+08, 2.535541e+09, -1.656906e+10, 4.758398e+10);
+            S = PwrSeries(IonK, -2.586200e-02, 5.884367e+00, -6.407538e+02, 3.888964e+04, -1.488484e+06, 3.782592e+07,
+                          -6.361033e+08, 6.817810e+09, -4.227114e+10, 1.155597e+11);
+            break;
+        case 2:
+            T = PwrSeries(IonK, -9.999028e-01, -6.783669e-02, 1.415756e+02, -2.950990e+03, 2.640980e+05, -1.570742e+07,
+                          5.770450e+08, -1.303686e+10, 1.654958e+11, -9.030017e+11);
+            S = PwrSeries(IonK, 2.108581e-04, -3.700608e-01, 2.851611e+01, -3.502994e+03, 2.983061e+05, -1.522679e+07,
+                          4.958029e+08, -1.002040e+10, 1.142835e+11, -5.617061e+11);
+            break;
+        }
+    } else if (flabel == "CaviMlp_EQuad") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, 1.038941e+00, -9.238897e+00, 9.127945e+02, -5.779110e+04, 2.206120e+06, -5.544764e+07,
+                          9.192347e+08, -9.691159e+09, 5.896915e+10, -1.578312e+11);
+            S = PwrSeries(IonK, 1.248096e-01, -2.923507e+01, 3.069331e+03, -1.848380e+05, 7.094882e+06, -1.801113e+08,
+                          3.024208e+09, -3.239241e+10, 2.008767e+11, -5.496217e+11);
+            break;
+        case 2:
+            T = PwrSeries(IonK, 1.000003e+00, -1.015639e-03, -1.215634e+02, 1.720764e+01, 3.921401e+03, 2.674841e+05,
+                          -1.236263e+07, 3.128128e+08, -4.385795e+09, 2.594631e+10);
+            S = PwrSeries(IonK, -1.756250e-05, 2.603597e-01, -2.551122e+00, -4.840638e+01, -2.870201e+04, 1.552398e+06,
+                          -5.135200e+07, 1.075958e+09, -1.277425e+10, 6.540748e+10);
+            break;
+        }
+    } else if (flabel == "CaviMlp_HMono") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, 1.703336e+00, -1.671357e+02, 1.697657e+04, -9.843253e+05, 3.518178e+07, -8.043084e+08,
+                          1.165760e+10, -1.014721e+11, 4.632851e+11, -7.604796e+11);
+            S = PwrSeries(IonK, 1.452657e+01, -3.409550e+03, 3.524921e+05, -2.106663e+07, 8.022856e+08, 3.360597e+11,
+                          -2.019481e+10, -3.565836e+12, 2.189668e+13, -5.930241e+13);
+            break;
+        case 2:
+            T = PwrSeries(IonK, 1.003228e+00, -1.783406e+00, 1.765330e+02, -5.326467e+04, 4.242623e+06, -2.139672e+08,
+                          6.970488e+09, -1.411958e+11, 1.617248e+12, -8.000662e+12);
+            S = PwrSeries(IonK, -1.581533e-03, 1.277444e+00, -2.742508e+02, 3.966879e+04, -3.513478e+06, 1.962939e+08,
+                          -6.991916e+09, 1.539708e+11, -1.910236e+12, 1.021016e+13);
+            break;
+        }
+    } else if (flabel == "CaviMlp_HDipole") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, 6.853803e-01, 7.075414e+01, -7.117391e+03, 3.985674e+05, -1.442888e+07, 3.446369e+08,
+                          -5.420826e+09, 5.414689e+10, -3.116216e+11, 7.869717e+11);
+            S = PwrSeries(IonK, 1.021102e+00, -2.441117e+02, 2.575274e+04, -1.569273e+06, 6.090118e+07, -1.562284e+09,
+                          2.649289e+10, -2.864139e+11, 1.791634e+12, -4.941947e+12);
+            break;
+        case 2:
+            T = PwrSeries(IonK, 1.014129e+00, -8.016304e+00, 1.631339e+03, -2.561826e+05, 2.115355e+07, -1.118723e+09,
+                          3.821029e+10, -8.140248e+11, 9.839613e+12, -5.154137e+13);
+            S = PwrSeries(IonK, -4.688714e-03, 3.299051e+00, -8.101936e+02, 1.163814e+05, -1.017331e+07, 5.607330e+08,
+                          -1.967300e+10, 4.261388e+11, -5.194592e+12, 2.725370e+13);
+            break;
+        }
+    } else if (flabel == "CaviMlp_HQuad") {
+        switch (cavi) {
+        case 1:
+            T = PwrSeries(IonK, -1.997432e+00, 2.439177e+02, -2.613724e+04, 1.627837e+06, -6.429625e+07, 1.676173e+09,
+                          -2.885455e+10, 3.163675e+11, -2.005326e+12, 5.600545e+12);
+            S = PwrSeries(IonK, -2.470704e+00, 5.862902e+02, -6.135071e+04, 3.711527e+06, -1.431267e+08, 3.649414e+09,
+                          -6.153570e+10, 6.617859e+11, -4.119861e+12, 1.131390e+13);
+            break;
+        case 2:
+            T = PwrSeries(IonK, -1.000925e+00, 5.170302e-01, 9.311761e+01, 1.591517e+04, -1.302247e+06, 6.647808e+07,
+                          -2.215417e+09, 4.603390e+10, -5.420873e+11, 2.764042e+12);
+            S = PwrSeries(IonK, 3.119419e-04, -4.540868e-01, 5.433028e+01, -7.571946e+03, 6.792565e+05, -3.728390e+07,
+                          1.299263e+09, -2.793705e+10, 3.377097e+11, -1.755126e+12);
+            break;
+        }
+    } else {
+        std::cerr << "*** TransitFacMultipole: undef. multipole type" << flabel << "\n";
+        exit(1);
+    }
+}
+
+
+void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab[],
+                 const double ionK_1, double ionK_2)
+{
+//    java.util.ArrayList<TlmNode> thinlenLine=null;
+//    java.util.ArrayList<double[]> CaviMlp_EFocus1=null;
+//    java.util.ArrayList<double[]> CaviMlp_EFocus2=null;
+//    java.util.ArrayList<double[]> CaviMlp_EDipole=null;
+//    java.util.ArrayList<double[]> CaviMlp_EQuad=null;
+//    java.util.ArrayList<double[]> CaviMlp_HMono=null;
+//    java.util.ArrayList<double[]> CaviMlp_HDipole=null;
+//    java.util.ArrayList<double[]> CaviMlp_HQuad=null;
+
+//    if (cavi==1)
+//    {
+//        thinlenLine=tlmLattice.thinlenlon_41;
+//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_41;
+//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_41;
+//        CaviMlp_EDipole=tlmPara.CaviMlp_EDipole_41;
+//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_41;
+//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_41;
+//        CaviMlp_HDipole=tlmPara.CaviMlp_HDipole_41;
+//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_41;
+//    }
+//    else if (cavi==2)
+//    {
+//        thinlenLine=tlmLattice.thinlenlon_85;
+//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_85;
+//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_85;
+//        CaviMlp_EDipole=tlmPara.CaviMlp_EDipole_85;
+//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_85;
+//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_85;
+//        CaviMlp_HDipole=tlmPara.CaviMlp_HDipole_85;
+//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_85;
 
 //    }
+//    else if (cavi==3)
+//    {
+//        thinlenLine=tlmLattice.thinlenlon_29;
+//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_29;
+//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_29;
+//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_29;
+//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_29;
+//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_29;
+//    }
+//    else if (cavi==4)
+//    {
+//        thinlenLine=tlmLattice.thinlenlon_53;
+//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_53;
+//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_53;
+//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_53;
+//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_53;
+//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_53;
+//    }
+//    else if (cavi==5)
+//    {
+//        //Temporary place holder
+//        thinlenLine=tlmLattice.thinlenlon_53;
+//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_53;
+//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_53;
+//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_53;
+//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_53;
+//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_53;
+//    }
+//    else
+//    {
+//        throw new Exception("Unknow cavity type "+cavi);
+//    }
 
+//    double T=0.0, S=0.0, acc=0.0;
+//    double[] output;
+//    for(TlmNode fribnode:thinlenLine)
+//    {
+//        if (fribnode.label!=null)
+//        {
+//            // for speed test
+//            //				fribnode.attribute[2]=1.0;
+//            //				fribnode.attribute[3]=0.0;
+
+//            switch (fribnode.label)
+//            {
+//            case "drift":
+//                continue;
+//            case "EFocus1":
+//                if (fribnode.position<0) //First Gap, Note that by reflection, First Gap EFocus1 is actually Second Gap EFocus2
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus2",ionK_1);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=-output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EFocus2,ionK_1);
+//                        T=output[1]; //First gap *1, transverse E field the same
+//                        S=-output[3]; //Gap flip, S become -S
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus1",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EFocus1,ionK_2);
+//                        T=output[1]; //Second gap *1, original
+//                        S=output[3];
+//                        //							double[] temp = {0,0,0};
+//                        //							temp[0]=ionK_2;
+//                        //							temp[1]=output[1];
+//                        //							temp[2]=output[3];
+//                        //							if (cavi==1)
+//                        //							{
+//                        //								temp_K1.add(temp);
+//                        //							}
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "EFocus2":
+//                if (fribnode.position<0) //First Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus1",ionK_1);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=-output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EFocus1,ionK_1);
+//                        T=output[1]; //First gap *1
+//                        S=-output[3];
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus2",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EFocus2,ionK_2);
+//                        T=output[1]; //Second gap *1
+//                        S=output[3];
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "EDipole":
+//                if (multipoleLevel<1) break;
+//                if (fribnode.position<0)
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EDipole",ionK_1);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=-output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EDipole,ionK_1);
+//                        T=output[1]; //First Gap, transverse E field the same
+//                        S=-output[3]; //S Flip
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EDipole",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EDipole,ionK_2);
+//                        T=output[1]; //Second gap *1
+//                        S=output[3];
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "EQuad":
+//                if (multipoleLevel<2) break;
+//                if (fribnode.position<0) //First Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EQuad",ionK_1);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=-output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EQuad,ionK_1);
+//                        T=output[1]; //First gap *1, transverse E field the same
+//                        S=-output[3]; //Gap flip, S become -S
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EQuad",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_EQuad,ionK_2);
+//                        T=output[1]; //Second gap *1
+//                        S=output[3];
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "HMono":
+//                if (multipoleLevel<2) break;
+//                if (fribnode.position<0) //First Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HMono",ionK_1);
+//                        T=-output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_HMono,ionK_1);
+//                        T=-output[1]; //First Gap, transverse H field flip
+//                        S=output[3]; //Flip twice
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HMono",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_HMono,ionK_2);
+//                        T=output[1]; //Second gap *1
+//                        S=output[3];
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "HDipole":
+//                if (multipoleLevel<1) break;
+//                if (fribnode.position<0) //First Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HDipole",ionK_1);
+//                        T=-output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_HDipole,ionK_1);
+//                        T=-output[1]; //First Gap, transverse H field flip
+//                        S=output[3]; //Flip twice
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HDipole",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_HDipole,ionK_2);
+//                        T=output[1]; //Second gap *1
+//                        S=output[3];
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "HQuad":
+//                if (multipoleLevel<2) break;
+//                if (fribnode.position<0) //First Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HQuad",ionK_1);
+//                        T=-output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_HQuad,ionK_1);
+//                        T=-output[1]; //First Gap, transverse H field flip
+//                        S=output[3];//Flip twice
+//                    }
+//                }
+//                else // Second Gap
+//                {
+//                    try
+//                    {
+//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HQuad",ionK_2);
+//                        T=output[0]; //First gap *1, transverse E field the same
+//                        S=output[1]; //Gap flip, S become -S
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        output=calTransfac(CaviMlp_HQuad,ionK_2);
+//                        T=output[1]; //Second gap *1
+//                        S=output[3];
+//                    }
+//                }
+//                fribnode.attribute[2]=T;
+//                fribnode.attribute[3]=S;
+//                break;
+//            case "AccGap":
+//                if (fribnode.position<0) //First Gap
+//                {
+//                    acc=(beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
+//                }
+//                else // Second Gap
+//                {
+//                    acc=(beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
+//                }
+//                fribnode.attribute[1]=acc;
+//                break;
+
+//            default:
+//                throw new Exception("Unknow multipole element "+fribnode.label);
+//            }
+
+//        }
+//    }
+//    java.util.ArrayList<TlmNode> outputLine=thinlenLine;
+//    return outputLine;
 }
 
 
@@ -838,7 +1085,7 @@ void CavityTLM(const int cavi, const double beta[], const double gamma[], const 
 
 void CavityMatrix(const double dis, const double EfieldScl, const double TTF_tab[],
                   const double beta_tab[], const double gamma_tab[], const double lamda,
-                  const double ionZ, const double ionFy[], std::string *thinlenLine,
+                  const double ionZ, const double ionFy[], const std::string &thinlenLine,
                   const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing
@@ -1087,7 +1334,7 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const doubl
 
     CavityTLM(cavi, beta_s, gamma_s, IonK);
 
-//    CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLamda, IonZ, IonFy_s, "thinlenLine", Rm, M);
+    CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLamda, IonZ, IonFy_s, "thinlenLine", Rm, M);
 }
 
 
@@ -1099,6 +1346,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
     double      IonW_o, IonFy_o, accIonW;
+    value_mat   M;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -1141,8 +1389,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-//    CaviMatrix = calCavityTLM_Matrix(Rm, ChgState, EfieldScl, IonFy_i, Ek_i, caviLamda, cavi);
-//    CavTLMMat(cavi, cavilabel, Rm, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF);
+    CavTLMMat(cavi, cavilabel, Rm, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF, M);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state].setElem(4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
