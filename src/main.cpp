@@ -25,7 +25,7 @@ extern int glps_debug;
 // Speed of light [m/s].
 # define c0           2.99792458e8
 // Atomic mass unit [eV/c^2].
-# define u            931.49432e6
+//# define AU           931.49432e6
 // Vacuum permeability.
 # define mu0          4e0*M_PI*1e-7
 // Long. sampling frequency [Hz]; must be set to RF freq.
@@ -164,13 +164,13 @@ void PrtMat(const value_mat &M)
 }
 
 
-void PrtLat(Machine &sim)
+void PrtLat(const Machine &sim)
 {
-    Machine::p_elements_t::iterator it;
-    MomentElementBase               *ElemPtr;
-    Config                          D;
-    std::auto_ptr<StateBase>        state(sim.allocState(D));
-    ElementVoid                     *elem;
+    Machine::p_elements_t::const_iterator it;
+    MomentElementBase                     *ElemPtr;
+    Config                                D;
+    std::auto_ptr<StateBase>              state(sim.allocState(D));
+    ElementVoid                           *elem;
 
     std::cout << "\nPrtLat:\n";
 
@@ -204,6 +204,80 @@ void PrtLat(Machine &sim)
 //            (*p_trace) << "After "<< i << " " << *S;
 //    }
 //}
+
+
+double calGauss(double in, const double Q_ave, const double d)
+{
+    // Gaussian distribution.
+    return 1e0/sqrt(2e0*M_PI)/d*exp(-0.5e0*sqr(in-Q_ave)/sqr(d));
+}
+
+
+void calStripperCharge(const double IonProton, const double beta,
+                       double &Q_ave, double &d)
+{
+    // Use Baron's formula for carbon foil.
+    double Q_ave1, Y;
+
+    Q_ave1 = IonProton*(1e0-exp(-83.275*(beta/pow(IonProton, 0.447))));
+    Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*IonProton-0.00122*sqr(IonProton)));
+    Y      = Q_ave1/IonProton;
+    d      = sqrt(Q_ave1*(0.07535+0.19*Y-0.2654*sqr(Y)));
+}
+
+
+void ChargeStripper(const double IonMass, const double IonProton, const double beta,
+                    const int nChargeStates, const double IonChargeStates[],
+                    double chargeAmount_Baron[])
+{
+    int    k;
+    double Q_ave, d;
+
+    calStripperCharge(IonProton, beta, Q_ave, d);
+    for (k = 0; k < nChargeStates; k++)
+        chargeAmount_Baron[k] = calGauss(IonChargeStates[k]*IonMass, Q_ave, d);
+}
+
+
+void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const double IonEs,
+                           double &IonW, double &SampleIonK, double &IonBeta)
+{
+    double IonEk, IonGamma;
+    double chargeAmount_Baron[Stripper_n];
+
+    IonZ = Stripper_IonZ;
+    ChargeStripper(Stripper_IonMass, Stripper_IonProton, IonBeta,
+                   Stripper_n, Stripper_IonChargeStates,
+                   chargeAmount_Baron);
+    // Evaluate change in reference particle energy due to stripper model energy straggling.
+    IonEk = (LongTab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
+    IonW        = IonEk + IonEs;
+    IonGamma    = IonW/IonEs;
+    IonBeta     = sqrt(1e0-1e0/sqr(IonGamma));
+    SampleIonK  = 2e0*M_PI/(IonBeta*SampleLambda);
+
+    LongTab.set(LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
+
+    //            chargeAmount = fribstripper.chargeAmount_Baron;
+}
+
+
+void calGapModel(const double dis, const double IonW0, const double IonEs, const double IonFy0,
+                 const double k, const double IonZ, const double lamda, const double Ecen,
+                 const double T, const double S, const double Tp, const double Sp, const double V0,
+                 double &IonW_f, double &IonFy_f)
+{
+    double Iongamma_f, IonBeta_f, k_f;
+
+    IonW_f     = IonW0 + IonZ*V0*T*cos(IonFy0+k*Ecen) - IonZ*V0*S*sin(IonFy0+k*Ecen);
+    Iongamma_f = IonW_f/IonEs;
+    IonBeta_f  = sqrt(1e0-1e0/sqr(Iongamma_f));
+//    k_f        = 2e0*M_PI/(IonBeta_f*lamda*1e3); // rad/mm
+    k_f        = 2e0*M_PI/(IonBeta_f*lamda*1e3);
+
+    IonFy_f = IonFy0 + k*Ecen + k_f*(dis-Ecen)
+              + IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-IonEs));
+}
 
 
 double GetCavPhase(const int cavi, const double IonEk, const double IonFys,
@@ -252,6 +326,7 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
 
     IonFy = IonFy0;
     IonK  = IonK0;
+    IonW  = IonW0;
     for (k = 0; k < n-1; k++) {
         IonFylast = IonFy;
         IonFy += IonK*dz;
@@ -265,39 +340,6 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
         }
         IonK = 2e0*M_PI/(IonBeta*IonLamda);
     }
-}
-
-
-double calGauss(double in, const double Q_ave, const double d)
-{
-    // Gaussian distribution.
-    return 1e0/sqrt(2e0*M_PI)/d*exp(-0.5e0*sqr(in-Q_ave)/sqr(d));
-}
-
-
-void calStripperCharge(const double IonProton, const double beta,
-                       double &Q_ave, double &d)
-{
-    // Use Baron's formula for carbon foil.
-    double Q_ave1, Y;
-
-    Q_ave1 = IonProton*(1e0-exp(-83.275*(beta/pow(IonProton, 0.447))));
-    Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*IonProton-0.00122*sqr(IonProton)));
-    Y      = Q_ave1/IonProton;
-    d      = sqrt(Q_ave1*(0.07535+0.19*Y-0.2654*sqr(Y)));
-}
-
-
-void ChargeStripper(const double IonMass, const double IonProton, const double beta,
-                    const int nChargeStates, const double IonChargeStates[],
-                    double chargeAmount_Baron[])
-{
-    int    k;
-    double Q_ave, d;
-
-    calStripperCharge(IonProton, beta, Q_ave, d);
-    for (k = 0; k < nChargeStates; k++)
-        chargeAmount_Baron[k] = calGauss(IonChargeStates[k]*IonMass, Q_ave, d);
 }
 
 
@@ -344,37 +386,14 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 }
 
 
-void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const double IonEs,
-                           double &IonW, double &SampleIonK, double &IonBeta)
-{
-    double IonEk, IonGamma;
-    double chargeAmount_Baron[Stripper_n];
-
-    IonZ = Stripper_IonZ;
-    ChargeStripper(Stripper_IonMass, Stripper_IonProton, IonBeta,
-                   Stripper_n, Stripper_IonChargeStates,
-                   chargeAmount_Baron);
-    // Evaluate change in reference particle energy due to stripper model energy straggling.
-    IonEk = (LongTab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
-    IonW        = IonEk + IonEs;
-    IonGamma    = IonW/IonEs;
-    IonBeta     = sqrt(1e0-1e0/sqr(IonGamma));
-    SampleIonK  = 2e0*M_PI/(IonBeta*SampleLambda);
-
-    LongTab.set(LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
-
-    //            chargeAmount = fribstripper.chargeAmount_Baron;
-}
-
-
-void InitLong(Machine &sim)
+void InitLong(const Machine &sim)
 {
     /* Longitudinal initialization for reference particle.
      * Evaluate beam energy and cavity loaded phase along the lattice. */
-    int                             n;
-    double                          IonGamma, IonBeta, SampleIonK;
-    double                          IonW, IonZ, IonEs;
-    Machine::p_elements_t::iterator it;
+    int                                   n;
+    double                                IonGamma, IonBeta, SampleIonK;
+    double                                IonW, IonZ, IonEs;
+    Machine::p_elements_t::const_iterator it;
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -444,15 +463,15 @@ void InitLong(Machine &sim)
 }
 
 
-void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const double E_fac_ad,
-                 double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
+void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
+                   double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
     // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
 
     switch (cavilabel) {
     case 41:
         if (beta < 0.025 || beta > 0.08) {
-            std::cerr << "*** GetTransicFac: beta out of Range" << "\n";
+            std::cerr << "*** GetTransitFac: beta out of Range" << "\n";
             exit(1);
         }
         switch (gaplabel) {
@@ -465,7 +484,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
                       - 1.269e4*pow(beta, 2.0) + 399.9*beta - 4.109;
             Sp   = -2.926e8*pow(beta, 5.0) + 8.379e7*pow(beta, 4.0) + 9.284e6*pow(beta, 3.0)
                       + 4.841e5*pow(beta, 2.0) - 1.073e4*beta + 61.98;
-            V0   = 0.98477*E_fac_ad;
+            V0   = 0.98477*EfieldScl;
             break;
         case 1:
             // Two gap calculation, first gap.
@@ -477,7 +496,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
             S    = 0.0;
             Sp   =-1.335e6*pow(beta, 5.0) + 3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
                       + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
-            V0   = 0.492385*E_fac_ad;
+            V0   = 0.492385*EfieldScl;
             break;
         case 2:
             // Two gap calculation, second gap.
@@ -489,16 +508,16 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
             S    = 0.0;
             Sp   =-1.335e6*pow(beta, 5.0) +  3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
                       + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
-            V0   = 0.492385*E_fac_ad;
+            V0   = 0.492385*EfieldScl;
             break;
         default:
-            std::cerr << "*** GetTransicFac: undef. number of gaps " << gaplabel << "\n";
+            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             exit(1);
         }
         break;
     case 85:
         if (beta < 0.05 || beta > 0.25) {
-            std::cerr << "*** GetTransicFac: beta out of range" << "\n";
+            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
             exit(1);
         }
         switch (gaplabel) {
@@ -512,7 +531,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
             Sp   =-2.755e8*pow(beta,7.0) + 3.109e8*pow(beta,6.0) - 1.462e8*pow(beta, 5.0)
                       + 3.691e7*pow(beta, 4.0) - 5.344e6*pow(beta, 3.0) + 4.315e5*pow(beta, 2.0)
                       - 1.631e4*beta + 162.7;
-            V0   = 1.967715*E_fac_ad;
+            V0   = 1.967715*EfieldScl;
             break;
         case 1:
             Ecen = 0.0002838*pow(beta, -2.13) + 76.5;
@@ -521,7 +540,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
                       + 2468*pow(beta, 2.0) - 334*beta + 24.44;
             S    = 0.0;
             Sp   =-0.0009751*pow(beta, -1.898) + 0.001568;
-            V0   = 0.9838574*E_fac_ad;
+            V0   = 0.9838574*EfieldScl;
             break;
         case 2:
             Ecen = -0.0002838*pow(beta, -2.13) + 73.5;
@@ -530,16 +549,16 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
                       - 2468*pow(beta, 2.0) + 334*beta - 24.44;
             S    = 0.0;
             Sp   =-0.0009751*pow(beta, -1.898) + 0.001568;
-            V0   = 0.9838574*E_fac_ad;
+            V0   = 0.9838574*EfieldScl;
             break;
         default:
-            std::cerr << "*** GetTransicFac: undef. number of gaps " << gaplabel << "\n";
+            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             exit(1);
         }
         break;
     case 29:
         if (beta < 0.15 || beta > 0.4) {
-            std::cerr << "*** GetTransicFac: beta out of range" << "\n";
+            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
             exit(1);
         }
         switch (gaplabel) {
@@ -552,7 +571,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
             Sp   =-2.025e6*pow(beta,7.0) + 4.751e6*pow(beta,6.0) - 4.791e6*pow(beta, 5.0)
                       + 2.695e6*pow(beta, 4.0) - 9.127e5*pow(beta, 3.0) + 1.854e5*pow(beta, 2.0)
                       - 2.043e4*beta + 888;
-            V0   = 2.485036*E_fac_ad;
+            V0   = 2.485036*EfieldScl;
             break;
         case 1:
             Ecen = 0.01163*pow(beta, -2.001) + 91.77;
@@ -562,7 +581,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
             S    = 0.0;
             Sp   =-454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
                       + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
-            V0   = 1.242518*E_fac_ad;
+            V0   = 1.242518*EfieldScl;
         case 2:
             Ecen = -0.01163*pow(beta, -2.001) + 58.23;
             T    = -0.02166*pow(beta, -1.618) + 1.022;
@@ -571,16 +590,16 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
             S    = 0.0;
             Sp   =-454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
                       + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
-            V0   = 1.242518*E_fac_ad;
+            V0   = 1.242518*EfieldScl;
             break;
         default:
-            std::cerr << "*** GetTransicFac: undef. number of gaps " << gaplabel << "\n";
+            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             exit(1);
         }
         break;
     case 53:
         if (beta < 0.3 || beta > 0.6) {
-            std::cerr << "*** GetTransicFac: beta out of range" << "\n";
+            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
             exit(1);
         }
         switch (gaplabel) {
@@ -592,7 +611,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
                       - 38.49*pow(beta, 2.0) + 26.64*beta - 4.222;
             Sp   =-4.167e4*pow(beta, 5.0) + 1.075e5*pow(beta, 4.0) - 1.111e5*pow(beta, 3.0)
                       + 5.702e4*pow(beta, 2.0) - 1.413e4*beta - 1261;
-            V0   = 4.25756986*E_fac_ad;
+            V0   = 4.25756986*EfieldScl;
             break;
         case 1:
             Ecen = 0.01219*pow(beta, -2.348) + 137.8;
@@ -601,7 +620,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
                       - 1973*pow(beta, 2.0) + 422.8*beta - 3.612;
             S    = 0.0;
             Sp   =-0.03969*pow(beta, -1.775) + 0.009034;
-            V0   = 2.12878493*E_fac_ad;
+            V0   = 2.12878493*EfieldScl;
             break;
         case 2:
             Ecen = -0.01219*pow(beta, -2.348) + 112.2;
@@ -610,15 +629,15 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
                       + 1973*pow(beta, 2.0) - 422.8*beta + 3.612;
             S    = 0.0;
             Sp   = -0.03969*pow(beta, -1.775) + 0.009034;
-            V0   = 2.12878493*E_fac_ad;
+            V0   = 2.12878493*EfieldScl;
             break;
         default:
-            std::cerr << "*** GetTransicFac: undef. number of gaps " << gaplabel << "\n";
+            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             exit(1);
         }
         break;
     default:
-        std::cerr << "*** GetTransicFac: undef. cavity type" << "\n";
+        std::cerr << "*** GetTransitFac: undef. cavity type" << "\n";
         exit(1);
     }
 
@@ -627,7 +646,7 @@ void GetTransicFac(const int cavilabel, double beta, const int gaplabel, const d
 }
 
 
-void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab[], double gamma_tab[],
+void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_tab[], double gamma_tab[],
                   double lamda, double ionZ, double ionFy0, double ionFyc,
                   std::string *thinlenLine, double Rm)
 {
@@ -713,7 +732,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                Mprob.setElem(2, 3, fribnode.length);
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "EFocus1") {
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -725,7 +744,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                Mprob.setElem(3, 2, kfdy);
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "EFocus2") {
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -738,7 +757,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "EDipole") {
 //                if (multipoleLevel<1) break;
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                dpy    = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -748,7 +767,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "EQuad") {
 //                if (multipoleLevel<2) break;
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -761,7 +780,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "HMono") {
 //                if (multipoleLevel<2) break;
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -774,7 +793,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "HDipole") {
 //                if (multipoleLevel<1) break;
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                dpy    = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -792,7 +811,7 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 //                    beta = (beta_tab[1]+beta_tab[2])/2.0;
 //                    gamma = (gamma_tab[1]+gamma_tab[2])/2.0;
 //                }
-//                V0     = fribnode.attribute[1]*E_fac_ad;
+//                V0     = fribnode.attribute[1]*EfieldScl;
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
@@ -832,100 +851,75 @@ void CavityMatrix(double dis, double E_fac_ad, double TTF_tab[], double beta_tab
 }
 
 
-void CavityTLMMatrix(const double Rm, const double ionZ, const double IonEs, const double E_fac_ad,
-                     const double ionFyi_s, const  double ionEk_s,
-                     const double ionLamda, int cavi)
+void CavTLMMat(const int cavilabel, const double Rm, const double IonZ, const double IonEs,
+                  const double EfieldScl, const double IonFyi_s, const double IonEk_s,
+                  const double IonLamda)
 {
     int    k;
-    double ionWi_s, gammai_s, betai_s, ionKi_s;
+    double IonWi_s, gammai_s, betai_s, IonKi_s;
+    double Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
+    double dis, IonW_s[2], IonFy_s[2], gamma_s[2], beta_s[2], IonK_s[2];
 
-    ionWi_s  = ionEk_s + IonEs;
-    gammai_s = ionWi_s/IonEs;
+    const int NGaps = 1;
+
+    IonWi_s  = IonEk_s + IonEs;
+    gammai_s = IonWi_s/IonEs;
     betai_s  = sqrt(1e0-1e0/sqr(gammai_s));
-    ionKi_s  = 2e0*M_PI/(betai_s*ionLamda);
+    IonKi_s  = 2e0*M_PI/(betai_s*IonLamda);
 
-//	    axisData_41_ad(:,cExRe:9)=FRIBPara.QWR1.E_fac_ad*axisData_41_ad(:,cExRe:9);
-//	    axisData_41_1_ad=axisData_41_ad(1:FRIBPara.planeSize_z_41,:);
-//	    axisData_41_2_ad=axisData_41_ad(FRIBPara.planeSize_z_41:2*FRIBPara.planeSize_z_41-1,:);
-//
-
-//    GetTransicFac(cavilabel, betai_s, 1 , E_fac_ad);
-
-//    util.ArrayList<double[]> axisData_1_ad = new util.ArrayList<double[]>();
-//    for (k = 0; k < round((axisData.size()-1)/2.0); k++) {
-//        double[] entry = {axisData.get(k)[0],axisData.get(k)[1]*E_fac_ad};
-//        axisData_1_ad.add(entry);
-//    }
-//    output = calTransfac(axisData_1_ad,ionKi_s);
-
-//    double Ecen_1 = output[0]; //output = {Ecen,T,Tp,S,Sp,V0};
-//    double T_1 = output[1];
-//    double Tp_1 = output[2];
-//    double S_1 = output[3];
-//    double Sp_1 = output[4];
-//    double V0_1 = output[5];
+    GetTransitFac(cavilabel, betai_s, NGaps, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
 //    double dis = (axisData.get(axisData.size()-1)[0]-axisData.get(0)[0])/2; // should divided by 2!!!
-//    output = calGapModel(dis,ionWi_s,ionFyi_s,ionKi_s,ionZ,ionLamda,Ecen_1,T_1,S_1,Tp_1,Sp_1,V0_1);
-//    double ionWc_s = output[0];
-//    double ionFyc_s = output[1];
-//    double gammac_s = ionWc_s/FRIBPara.ionEs;
-//    double betac_s = sqrt(1.0-1.0/(gammac_s*gammac_s));
-//    double ionKc_s = 2*M_PI/(betac_s*ionLamda*1e3); //rad/mm
+    calGapModel(dis, IonWi_s, IonEs, IonFyi_s, IonKi_s, IonZ, IonLamda,
+                Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[0], IonFy_s[0]);
+    gamma_s[0] = IonW_s[0]/IonEs;
+    beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
+    IonK_s[0]  = 2*M_PI/(beta_s[0]*IonLamda);
 
-//    output = GetTransicFac(cavilabel,betac_s,2,E_fac_ad);
-//    util.ArrayList<double[]> axisData_2_ad = new util.ArrayList<double[]>();
-//    for (int k = 0; k < round((axisData.size()-1)/2.0); k++) {
-//        double[] entry = {axisData.get(k)[0],axisData.get(k)[1]*E_fac_ad};
-//        axisData_2_ad.add(entry);
-//    }
-//    output = calTransfac(axisData_2_ad,ionKc_s);
-//    double Ecen_2 = output[0]; //output = {Ecen,T,Tp,S,Sp,V0};
-//    double T_2 = output[1];
-//    double Tp_2 = output[2];
-//    double S_2 = output[3];
-//    double Sp_2 = output[4];
-//    double V0_2 = output[5];
-//    output = calGapModel(dis,ionWc_s,ionFyc_s,ionKc_s,ionZ,ionLamda,Ecen_2,T_2,S_2,Tp_2,Sp_2,V0_2);
-//    double ionWf_s = output[0];
-//    double gammaf_s = ionWf_s/FRIBPara.ionEs;
-//    double betaf_s = sqrt(1.0-1.0/(gammaf_s*gammaf_s));
-//    double ionKf_s = 2*M_PI/(betaf_s*ionLamda*1e3); //rad/mm
+    GetTransitFac(cavilabel, betai_s, NGaps, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
+    calGapModel(dis, IonWi_s, IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLamda,
+                Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[1], IonFy_s[1]);
+    gamma_s[1] = IonW_s[1]/IonEs;
+    beta_s[1]  = sqrt(1e0-1e0/sqr(gamma_s[1]));
+    IonK_s[1]  = 2*M_PI/(beta_s[1]*IonLamda);
 
 //    Ecen_1 = Ecen_1-dis; // Switch Ecen_1 axis centered at cavity center// dis/2 to dis 14/12/12
 
-//    double[] TTF_tab = {Ecen_1,T_1,Tp_1,S_1,Sp_1,V0_1,Ecen_2,T_2,Tp_2,S_2,Sp_2,V0_2};
-//    double[] beta_tab = {betai_s,betac_s,betaf_s};
-//    double[] gamma_tab = {gammai_s,gammac_s,gammaf_s};
-//    double ionK_1 = (ionKi_s+ionKc_s)/2;
-//    double ionK_2 = (ionKc_s+ionKf_s)/2;		    // Bug found 2015-01-07
+//    double[] TTF_tab = {Ecen_1, T_1, Tp_1, S_1, Sp_1, V0_1, Ecen_2, T_2, Tp_2, S_2, Sp_2, V0_2};
+//    double[] beta_tab = {betai_s, betac_s, betaf_s};
+//    double[] gamma_tab = {gammai_s, gammac_s, gammaf_s};
+//    double IonK_1 = (IonKi_s+IonKc_s)/2;
+//    double IonK_2 = (IonKc_s+IonKf_s)/2;		    // Bug found 2015-01-07
 
 //    PhaseMatrix matrix = PhaseMatrix.identity();
 //    util.ArrayList<TlmNode> thinlenLine  =  new util.ArrayList<TlmNode>();
-//    thinlenLine = calCavity_thinlenLine(beta_tab,gamma_tab,cavi,ionK_1,ionK_2);
-//    matrix = calCavity_Matrix(dis,E_fac_ad,TTF_tab,beta_tab,gamma_tab,ionLamda,ionZ,ionFyi_s,ionFyc_s,thinlenLine,Rm);
+//    thinlenLine = calCavity_thinlenLine(beta_tab, gamma_tab, cavi, IonK_1, IonK_2);
+//    matrix = calCavity_Matrix(dis, EfieldScl, TTF_tab, beta_tab, gamma_tab, IonLamda, IonZ, IonFyi_s,
+//    IonFyc_s, thinlenLine, Rm);
 
 //    return matrix;
 }
 
 
-void InitRFCav(const Config &conf, const int &CavCnt, const double IonZ, const double IonEs, double &IonW,
-               const double IonChargeState, double &EkState, const double Fy_absState,
-               double &beta, double &gamma)
+void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const double IonEs, double &IonW,
+               const double ChgState,
+               double &EkState, double &Fy_absState, double &beta, double &gamma)
 {
     std::string CavType;
-    int         cavi, multip;
+    int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
     double      IonW_o, IonFy_o, accIonW;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
-        cavi   = 1;
-        multip = 1;
-        Rm     = 17e0;
+        cavi      = 1;
+        cavilabel = 41;
+        multip    = 1;
+        Rm        = 17e0;
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
-        cavi   = 2;
-        multip = 1;
-        Rm     = 17e0;
+        cavi      = 2;
+        cavilabel = 85;
+        multip    = 1;
+        Rm        = 17e0;
     } else {
         std::cerr << "*** InitLong: undef. cavity type: "
                   << CavType << "\n";
@@ -943,20 +937,21 @@ void InitRFCav(const Config &conf, const int &CavCnt, const double IonZ, const d
     SampleIonK = 2e0*M_PI/(beta*c0/SampleFreq);
     EfieldScl  = conf.get<double>("scl_fac");   // Electric field scale factor.
 
-    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, IonChargeState, IonEs,
+    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, ChgState, IonEs,
                 c0/fRF, EfieldScl, IonW_o, IonFy_o);
 
-    accIonW = IonW_o - IonW;
-    IonW    = IonW_o;
-    EkState = IonW - IonEs;
-    IonW    = EkState + IonEs;
-    gamma   = IonW/IonEs;
-    beta    = sqrt(1e0-1e0/sqr(gamma));
-    avebeta = (avebeta+beta)/2e0;
-    avegamma = (avegamma+gamma)/2e0;
+    accIonW      = IonW_o - IonW;
+    IonW         = IonW_o;
+    EkState      = IonW - IonEs;
+    IonW         = EkState + IonEs;
+    gamma        = IonW/IonEs;
+    beta         = sqrt(1e0-1e0/sqr(gamma));
+    avebeta      = (avebeta+beta)/2e0;
+    avegamma     = (avegamma+gamma)/2e0;
+    Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-//    CaviMatrix = calCavityTLM_Matrix(
-//                Rm, IonChargeState, EfieldScl, IonFy_i, Ek_i, caviLamda, cavi);
+//    CaviMatrix = calCavityTLM_Matrix(Rm, ChgState, EfieldScl, IonFy_i, Ek_i, caviLamda, cavi);
+    CavTLMMat(cavilabel, Rm, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state].setElem(4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
@@ -974,7 +969,7 @@ void InitRFCav(const Config &conf, const int &CavCnt, const double IonZ, const d
 }
 
 
-void InitLattice(Machine &sim, const double P)
+void InitLattice(Machine &sim, const double ChgState, const std::vector<double> BaryCenter)
 {
     // Evaluate transport matrices for given beam initial conditions.
     typedef MatrixState state_t;
@@ -982,10 +977,10 @@ void InitLattice(Machine &sim, const double P)
     std::stringstream               strm;
     int                             CavCnt;
     double                          IonW, IonEs, IonEk, IonZ, IonLambda, s, L, beta, gamma;
-    double                          R56, Brho, K, Ek_ini, EkState;
+    double                          SampleionK, R56, Brho, K, Ek_ini, EkState, Fy_absState;
     Machine::p_elements_t::iterator it;
     MomentElementBase               *ElemPtr;
-//    LinearElementBase<MatrixState> *ElemPtr;
+//    LinearElementBase<MatrixState>  *ElemPtr;
 
     const double QWR1f = 80.5e6, QWR1Lambda = c0/QWR1f;
 
@@ -1002,7 +997,9 @@ void InitLattice(Machine &sim, const double P)
     IonLambda = QWR1Lambda;
 
     // Define initial conditions.
-    EkState          = IonEk + P;
+    Fy_absState = BaryCenter[state_t::PS_S];
+    EkState     = IonEk + BaryCenter[state_t::PS_PS];
+
 //    TransVector[state] = get(k).centerVector;
 //    ThetaMatrix[state] = get(k).thetaMatrix;
 //    Fy_absState      = get(k).centerVector.getElem(4);
@@ -1032,8 +1029,10 @@ void InitLattice(Machine &sim, const double P)
             s += L;
         }
 
-        gamma = (EkState+IonEs)/IonEs;
-        beta = sqrt(1e0-1e0/sqr(gamma));
+        gamma      = (EkState+IonEs)/IonEs;
+        beta       = sqrt(1e0-1e0/sqr(gamma));
+        SampleionK = 2e0*M_PI/(beta*SampleLambda);
+
         // Evaluate momentum compaction.
 //        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
         // Convert from [m] and [eV/u] to [mm] and [MeV/u].
@@ -1041,11 +1040,14 @@ void InitLattice(Machine &sim, const double P)
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
+            Fy_absState += SampleionK*L;
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "sbend") {
+            Fy_absState += SampleionK*L;
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
+            Fy_absState += SampleionK*L;
             Brho = beta*(EkState+IonEs)/(c0*IonZ);
             // Scale B field.
             K = conf.get<double>("B")/(2e0*Brho);
@@ -1060,12 +1062,47 @@ void InitLattice(Machine &sim, const double P)
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "rfcavity") {
             CavCnt++;
-//            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, IonChargeState, EkState,
-//                      Fy_absState, beta, gamma);
+            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, ChgState, EkState,
+                      Fy_absState, beta, gamma);
 //            PrtMat(ElemPtr->transfer);
         }
         it++;
     } while (it != sim.p_elements.end());
+}
+
+
+//void PropagateState(const Machine &sim, value_mat &S)
+void PropagateState(const Machine &sim)
+{
+    Machine::p_elements_t::const_iterator it;
+    MomentElementBase                     *ElemPtr;
+    Config                                D;
+    std::auto_ptr<StateBase>              state(sim.allocState(D));
+    ElementVoid                           *elem;
+    std::fstream                          outf;
+
+    outf.open("test_jb.out", std::ofstream::out);
+
+    std::cout << "\n" << "PropagateState:" << "\n";
+
+    for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
+        elem = *it;
+
+        std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
+
+//        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+//        assert(ElemPtr != NULL);
+//        PrtMat(ElemPtr->transfer);
+
+//        sim.propagate(state.get(), elem->index, 1);
+        elem->advance(*state);
+
+        MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+//        std::cout << "\n" << *state;
+        PrtMat(StatePtr->state);
+    }
+
+    outf.close();
 }
 
 
@@ -1075,7 +1112,8 @@ void StateUnitFix(Machine &sim)
      *   [mm, rad, mm, rad, rad, MeV/u]
      * to:
      *   [m, rad, m, rad, rad, eV/u].
-     * Note, state is only changed locally. */
+     * Notes: State is only changed locally.
+     *        Etot could be scaled wit p0. */
 
     int                      j, k;
     Config                   D;
@@ -1105,46 +1143,13 @@ void StateUnitFix(Machine &sim)
 }
 
 
-void PropagateState(Machine &sim)
-{
-    Machine::p_elements_t::iterator it;
-    MomentElementBase               *ElemPtr;
-    Config                          D;
-    std::auto_ptr<StateBase>        state(sim.allocState(D));
-    ElementVoid                     *elem;
-    std::fstream                    outf;
-
-    outf.open("test_jb.out", std::ofstream::out);
-
-    std::cout << "\n" << "PropagateState:" << "\n";
-
-    for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
-        elem = *it;
-
-        std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
-
-//        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
-//        assert(ElemPtr != NULL);
-//        PrtMat(ElemPtr->transfer);
-
-//        sim.propagate(state.get(), elem->index, 1);
-        elem->advance(*state);
-
-        MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
-//        std::cout << "\n" << *state;
-        PrtMat(StatePtr->state);
-    }
-
-    outf.close();
-}
-
-
-
 int main(int argc, char *argv[])
 {
     typedef MatrixState state_t;
 
-    int k;
+    int                 k;
+    std::vector<double> ChgState;
+    std::vector<double> BaryCenter[2];
 
     const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
 
@@ -1184,30 +1189,51 @@ int main(int argc, char *argv[])
     CavData[0].RdData(HomeDir+"/data/axisData_41.txt");
     CavData[1].RdData(HomeDir+"/data/axisData_85.txt");
 
-    // Turn trace on/off.
+     // Turn trace on/off.
     if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
 
-    StateUnitFix(sim);
-    exit(1);
+//    StateUnitFix(sim);
 
     // Charge states.
-    std::vector<double> ChgState = conf->get<std::vector<double> >("ionChargeStates");
-    std::vector<double> BaryCenter = conf->get<std::vector<double> >("BaryCenter");
+    ChgState      = conf->get<std::vector<double> >("IonChargeStates");
+    BaryCenter[0] = conf->get<std::vector<double> >("BaryCenter1");
+    BaryCenter[1] = conf->get<std::vector<double> >("BaryCenter2");
+    // Change units from [mm, rad, mm, rad, rad, MeV/u] to [m, rad, m, rad, rad, eV/u].
+    BaryCenter[0][state_t::PS_X]  *= 1e-3;
+    BaryCenter[0][state_t::PS_Y]  *= 1e-3;
+    BaryCenter[0][state_t::PS_PS] *= 1e6;
+    BaryCenter[1][state_t::PS_X]  *= 1e-3;
+    BaryCenter[1][state_t::PS_Y]  *= 1e-3;
+    BaryCenter[1][state_t::PS_PS] *= 1e6;
+
+
+//    value_mat S1 = conf->get<value_mat>("S1");
+    const std::vector<double>& S1vec = conf->get<std::vector<double> >("S1");
+
+    value_mat S1(PS_Dim, PS_Dim);
+    if (S1vec.size() > S1.data().size())
+        throw std::invalid_argument("Initial state size too big");
+    std::copy(S1vec.begin(), S1vec.end(), S1.data().begin());
+
 
     std::cout << "\n" << "Ion charge states:\n";
     for (k = 0; k < 2; k++)
         std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
     std::cout << "\n";
     std::cout << "\nBarycenter:\n";
-    PrtVec(BaryCenter);
+    PrtVec(BaryCenter[0]);
+    PrtVec(BaryCenter[1]);
+    std::cout << "\nBeam envelope:\n";
+    PrtMat(S1);
 
     InitLong(sim);
 
-    InitLattice(sim, BaryCenter[state_t::PS_PS]*1e6);
+    InitLattice(sim, ChgState[0], BaryCenter[0]);
 
 //    PrtLat(sim);
 
-    PropagateState(sim);
+//    PropagateState(sim, S);
+//    PropagateState(sim);
 
 //     for n states
 //       get Chg_n, S_n

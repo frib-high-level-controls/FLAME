@@ -7,7 +7,14 @@
 #include "scsi/state/vector.h"
 #include "scsi/state/matrix.h"
 
-#define MtoMM 1e3
+
+#if true
+    // Use [m, rad, m, rad, rad, eV/u].
+    #define MtoMM 1e0
+#else
+    // Use [mm, rad, mm, rad, rad, MeV/u].
+    #define MtoMM 1e3
+#endif
 
 MatrixState::MatrixState(const Config& c)
     :StateBase(c)
