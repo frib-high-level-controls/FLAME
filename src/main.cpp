@@ -19,6 +19,7 @@
 
 extern int glps_debug;
 
+
 #if true
     // Use [m, rad, m, rad, rad, eV/u].
     #define MeVtoeV 1e0
@@ -467,6 +468,114 @@ void InitLong(const Machine &sim)
         }
         it++;
     } while (it != sim.p_elements.end());
+}
+
+
+double PwrSeries(const double beta,
+                 const double a0, const double a1, const double a2, const double a3,
+                 const double a4, const double a5, const double a6, const double a7)
+{
+    int    k;
+    double f;
+
+    const int    n   = 7;
+    const double a[] = {a0, a1, a2, a3, a4, a5, a6, a7};
+
+    f = a[0];
+    for (k = 1; k < n; k++)
+        f += a[k]*pow(beta, k);
+
+    return f;
+}
+
+
+void GetTransitFac1(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
+                   double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
+{
+    // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
+    std::vector<double> vec;
+
+    switch (cavilabel) {
+    case 41:
+        if (beta < 0.025 || beta > 0.08) {
+            std::cerr << "*** GetTransitFac: beta out of Range" << "\n";
+            exit(1);
+        }
+        switch (gaplabel) {
+        case 0:
+            // One gap evaluation.
+            Ecen = 120.0; // [mm].
+            T    = 0.0;
+            Tp   = 0.0;
+            S    = PwrSeries(beta, -4.109, 399.9, -1.269e4, 1.991e5, -1.569e6, 4.957e6, 0.0, 0.0);
+            Sp   = PwrSeries(beta, 61.98, -1.073e4, 4.841e5, 9.284e6, 8.379e7, -2.926e8, 0.0, 0.0);
+            V0   = 0.98477*EfieldScl;
+            break;
+        case 1:
+            // Two gap calculation, first gap.
+            Ecen = 0.0006384*pow(beta, -1.884) + 86.69;
+            T    = PwrSeries(beta, 0.9232, -123.2, 3570, -5.476e4, 4.316e5, -1.377e6, 0.0, 0.0);
+            Tp   = PwrSeries(beta, 1.699, 924.7, -4.062e4, 7.528e5, -6.631e6, 2.277e7, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = PwrSeries(beta, -1.571, 25.59, 806.6, -2.98e4, 3.385e5, -1.335e6, 0.0, 0.0);
+            V0   = 0.492385*EfieldScl;
+            break;
+        case 2:
+            // Two gap calculation, second gap.
+            Ecen = -0.0006384*pow(beta, -1.884) + 33.31;
+            T    = PwrSeries(beta, -0.9232, 123.2, -3570, 5.476e4, -4.316e5, 1.377e6, 0.0, 0.0);
+            Tp   = PwrSeries(beta, -1.699, -924.7, 4.062e4, -7.528e5, 6.631e6, -2.277e7, 0.0, 0.0);
+            S    = 0.0;
+            Sp    = PwrSeries(beta, -1.571, 25.59, 806.6, -2.98e4, 3.385e5, -1.335e6, 0.0, 0.0);
+            V0   = 0.492385*EfieldScl;
+            break;
+        default:
+            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
+            exit(1);
+        }
+        break;
+    case 85:
+        if (beta < 0.05 || beta > 0.25) {
+            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
+            exit(1);
+        }
+        switch (gaplabel) {
+          case 0:
+            Ecen = 150.0; // [mm].
+            T    = 0.0;
+            Tp   = 0.0;
+            S    = PwrSeries(beta, -6.811, 343.9, -6385, 6.477e4, -3.914e5, 1.407e6, -2.781e6, 2.326e6);
+            Sp   = PwrSeries(beta, 162.7, -1.631e4, 4.315e5, -5.344e6, 3.691e7, -1.462e8, 3.109e8, -2.755e8);
+            V0   = 1.967715*EfieldScl;
+            break;
+        case 1:
+            Ecen = 0.0002838*pow(beta, -2.13) + 76.5;
+            T    = 0.0009467*pow(beta, -1.855) - 1.002;
+            Tp   = PwrSeries(beta, 24.44, -334, 2468, -1.017e4, 2.195e4, -1.928e4, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
+            V0   = 0.9838574*EfieldScl;
+            break;
+        case 2:
+            Ecen = -0.0002838*pow(beta, -2.13) + 73.5;
+            T    = -0.0009467*pow(beta, -1.855) + 1.002;
+            Tp   = PwrSeries(beta,  24.44, 334,  2468, 1.017e4, -2.195e4, 1.928e4, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
+            V0   = 0.9838574*EfieldScl;
+            break;
+        default:
+            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
+            exit(1);
+        }
+        break;
+    default:
+        std::cerr << "*** GetTransitFac: undef. cavity type" << "\n";
+        exit(1);
+    }
+
+    // Convert from [mm] to [m].
+    Ecen *= 1e-3;
 }
 
 
