@@ -672,86 +672,6 @@ void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const d
             exit(1);
         }
         break;
-    case 29:
-        if (beta < 0.15 || beta > 0.4) {
-            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
-            exit(1);
-        }
-        switch (gaplabel) {
-        case 0:
-            Ecen = 150.0; // [mm].
-            T    = 0.0;
-            Tp   = 0.0;
-            S    = 76.54*pow(beta, 5.0) - 405.6*pow(beta, 4.0) + 486*pow(beta, 3.0)
-                   - 248*pow(beta, 2.0) + 58.08*beta - 4.285;
-            Sp   = -2.025e6*pow(beta,7.0) + 4.751e6*pow(beta,6.0) - 4.791e6*pow(beta, 5.0)
-                   + 2.695e6*pow(beta, 4.0) - 9.127e5*pow(beta, 3.0) + 1.854e5*pow(beta, 2.0)
-                   - 2.043e4*beta + 888;
-            V0   = 2.485036*EfieldScl;
-            break;
-        case 1:
-            Ecen = 0.01163*pow(beta, -2.001) + 91.77;
-            T    = 0.02166*pow(beta, -1.618) - 1.022;
-            Tp   = 1.389e4*pow(beta, 5.0) - 2.147e4*pow(beta, 4.0) + 1.313e4*pow(beta, 3.0)
-                   - 3917*pow(beta, 2.0) + 534.7*beta - 11.25;
-            S    = 0.0;
-            Sp   = -454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
-                   + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
-            V0   = 1.242518*EfieldScl;
-        case 2:
-            Ecen = -0.01163*pow(beta, -2.001) + 58.23;
-            T    = -0.02166*pow(beta, -1.618) + 1.022;
-            Tp   = -1.389e4*pow(beta, 5.0) + 2.147e4*pow(beta, 4.0) - 1.313e4*pow(beta, 3.0)
-                   + 3917*pow(beta, 2.0) - 534.7*beta + 11.25;
-            S    = 0.0;
-            Sp   = -454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
-                   + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
-            V0   = 1.242518*EfieldScl;
-            break;
-        default:
-            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
-            exit(1);
-        }
-        break;
-    case 53:
-        if (beta < 0.3 || beta > 0.6) {
-            std::cerr << "*** GetTransitFac: beta out of range" << "\n";
-            exit(1);
-        }
-        switch (gaplabel) {
-        case 0:
-            Ecen = 250.0; // [mm].
-            T    = 0.0;
-            Tp   = 0.0;
-            S    = -52.93*pow(beta, 5.0) + 84.12*pow(beta, 4.0) - 17.73*pow(beta, 3.0)
-                   - 38.49*pow(beta, 2.0) + 26.64*beta - 4.222;
-            Sp   = -4.167e4*pow(beta, 5.0) + 1.075e5*pow(beta, 4.0) - 1.111e5*pow(beta, 3.0)
-                   + 5.702e4*pow(beta, 2.0) - 1.413e4*beta - 1261;
-            V0   = 4.25756986*EfieldScl;
-            break;
-        case 1:
-            Ecen = 0.01219*pow(beta, -2.348) + 137.8;
-            T    = 0.04856*pow(beta, -1.68) - 1.018;
-            Tp   = 1641*pow(beta, 5.0) - 4109*pow(beta, 4.0) + 4081*pow(beta, 3.0)
-                   - 1973*pow(beta, 2.0) + 422.8*beta - 3.612;
-            S    = 0.0;
-            Sp   = -0.03969*pow(beta, -1.775) + 0.009034;
-            V0   = 2.12878493*EfieldScl;
-            break;
-        case 2:
-            Ecen = -0.01219*pow(beta, -2.348) + 112.2;
-            T    = -0.04856*pow(beta, -1.68) + 1.018;
-            Tp   = -1641*pow(beta, 5.0) + 4109*pow(beta, 4.0) - 4081*pow(beta, 3.0)
-                   + 1973*pow(beta, 2.0) - 422.8*beta + 3.612;
-            S    = 0.0;
-            Sp   = -0.03969*pow(beta, -1.775) + 0.009034;
-            V0   = 2.12878493*EfieldScl;
-            break;
-        default:
-            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
-            exit(1);
-        }
-        break;
     default:
         std::cerr << "*** GetTransitFac: undef. cavity type" << "\n";
         exit(1);
@@ -762,9 +682,164 @@ void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const d
 }
 
 
-void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_tab[], double gamma_tab[],
-                  double lamda, double ionZ, double ionFy0, double ionFyc,
-                  std::string *thinlenLine, double Rm)
+double PwrSeries(const double beta,
+                 const double a0, const double a1, const double a2, const double a3,
+                 const double a4, const double a5, const double a6, const double a7,
+                 const double a8, const double a9)
+{
+    int    k;
+    double f;
+
+    const int    n   = 9;
+    const double a[] = {a0, a1, a2, a3, a4, a5, a6, a7, a8, a9};
+
+    f = a[0];
+    for (k = 1; k < n; k++)
+        f += a[k]*pow(beta, k);
+
+    return f;
+}
+
+
+void TransMultipole(const int cavi, const std::string flabel, const double IonK,
+                    double &T, double &S)
+{
+
+    if ((cavi == 1) && (IonK < 0.025 || IonK > 0.055)) {
+        std::cerr << "*** TransMultipole: IonK out of Range" << "\n";
+        exit(1);
+    } else if ((cavi == 2) && (IonK < 0.006 || IonK > 0.035)) {
+        std::cerr << "*** TransMultipole: IonK out of Range" << "\n";
+    }
+
+//    switch (flabel) {
+//    case "CaviMlp_EFocus1":
+//        if (cavi==1) {
+//            T = PwrSeries(IonK, 1.256386e+02, -3.108322e+04, 3.354464e+06, -2.089452e+08, 8.280687e+09, -2.165867e+11,
+//                          , 3.739846e+12, -4.112154e+13, 2.613462e14, -7.316972e14);
+//            S = PwrSeries(IonK, 1.394183e+02, -3.299673e+04, 3.438044e+06, -2.070369e+08, 7.942886e+09, -2.013750e+11,
+//                         3.374738e+12, -3.605780e+13, 2.229446e+14, -6.079177e+14);
+//        } else if (cavi==2) {
+//            T = PwrSeries(IonK, -9.450041e-01, -3.641390e+01, 9.926186e+03, -1.449193e+06, 1.281752e+08, -7.150297e+09,
+//                          2.534164e+11, -5.535252e+12, 6.794778e+13, -3.586197e+14);
+//            S = PwrSeries(IonK, 9.928055e-02, -5.545119e+01, 1.280168e+04, -1.636888e+06, 1.279801e+08, 4.496323e+13,
+//                          -6.379800e+09, 2.036575e+11, -4.029152e+12, -2.161712e+14);
+//        }
+//        break;
+//    case "CaviMlp_EFocus2":
+//        if (cavi==1)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=-1.499544e+11*pow(IonK,9)+5.612073e+10*pow(IonK,8)+-9.246033e+09*pow(IonK,7)+8.799404e+08*pow(IonK,6)+-5.330725e+07*pow(IonK,5)+2.132552e+06*pow(IonK,4)+-5.619149e+04*pow(IonK,3)+8.943931e+02*pow(IonK,2)+-9.121320e+00*pow(IonK,1)+1.038803e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=-1.983302e+10*pow(IonK,9)+8.570757e+09*pow(IonK,8)+-1.604935e+09*pow(IonK,7)+1.714580e+08*pow(IonK,6)+-1.154148e+07*pow(IonK,5)+5.095765e+05*pow(IonK,4)+-1.488249e+04*pow(IonK,3)+2.696971e+02*pow(IonK,2)+-2.585211e+00*pow(IonK,1)+1.305154e-02;
+//        }
+//        else if (cavi==2)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=8.533351e+12*pow(IonK,9)+-1.584238e+12*pow(IonK,8)+1.265012e+11*pow(IonK,7)+-5.677804e+09*pow(IonK,6)+1.570331e+08*pow(IonK,5)+-2.753614e+06*pow(IonK,4)+3.052166e+04*pow(IonK,3)+-2.932580e+02*pow(IonK,2)+7.299233e-01*pow(IonK,1)+9.989307e-01;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=1.233014e+13*pow(IonK,9)+-2.339920e+12*pow(IonK,8)+1.923697e+11*pow(IonK,7)+-8.968899e+09*pow(IonK,6)+2.605444e+08*pow(IonK,5)+-4.873584e+06*pow(IonK,4)+5.855139e+04*pow(IonK,3)+-4.313590e+02*pow(IonK,2)+2.016667e+00*pow(IonK,1)+-3.040839e-03;
+//        }
+//        break;
+//    case "CaviMlp_EDipole":
+//        if (cavi==1)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=4.758398e+10*pow(IonK,9)+-1.656906e+10*pow(IonK,8)+2.535541e+09*pow(IonK,7)+-2.237287e+08*pow(IonK,6)+1.255841e+07*pow(IonK,5)+-4.669147e+05*pow(IonK,4)+1.125013e+04*pow(IonK,3)+-1.047651e+02*pow(IonK,2)+1.526489e+00*pow(IonK,1)+-1.005885e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=1.155597e+11*pow(IonK,9)+-4.227114e+10*pow(IonK,8)+6.817810e+09*pow(IonK,7)+-6.361033e+08*pow(IonK,6)+3.782592e+07*pow(IonK,5)+-1.488484e+06*pow(IonK,4)+3.888964e+04*pow(IonK,3)+-6.407538e+02*pow(IonK,2)+5.884367e+00*pow(IonK,1)+-2.586200e-02;
+//        }
+//        else if (cavi==2)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=-9.030017e+11*pow(IonK,9)+1.654958e+11*pow(IonK,8)+-1.303686e+10*pow(IonK,7)+5.770450e+08*pow(IonK,6)+-1.570742e+07*pow(IonK,5)+2.640980e+05*pow(IonK,4)+-2.950990e+03*pow(IonK,3)+1.415756e+02*pow(IonK,2)+-6.783669e-02*pow(IonK,1)+-9.999028e-01;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=-5.617061e+11*pow(IonK,9)+1.142835e+11*pow(IonK,8)+-1.002040e+10*pow(IonK,7)+4.958029e+08*pow(IonK,6)+-1.522679e+07*pow(IonK,5)+2.983061e+05*pow(IonK,4)+-3.502994e+03*pow(IonK,3)+2.851611e+01*pow(IonK,2)+-3.700608e-01*pow(IonK,1)+2.108581e-04;
+//        }
+//        break;
+//    case "CaviMlp_EQuad":
+//        if (cavi==1)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=-1.578312e+11*pow(IonK,9)+5.896915e+10*pow(IonK,8)+-9.691159e+09*pow(IonK,7)+9.192347e+08*pow(IonK,6)+-5.544764e+07*pow(IonK,5)+2.206120e+06*pow(IonK,4)+-5.779110e+04*pow(IonK,3)+9.127945e+02*pow(IonK,2)+-9.238897e+00*pow(IonK,1)+1.038941e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=-5.496217e+11*pow(IonK,9)+2.008767e+11*pow(IonK,8)+-3.239241e+10*pow(IonK,7)+3.024208e+09*pow(IonK,6)+-1.801113e+08*pow(IonK,5)+7.094882e+06*pow(IonK,4)+-1.848380e+05*pow(IonK,3)+3.069331e+03*pow(IonK,2)+-2.923507e+01*pow(IonK,1)+1.248096e-01;
+//        }
+//        else if (cavi==2)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=2.594631e+10*pow(IonK,9)+-4.385795e+09*pow(IonK,8)+3.128128e+08*pow(IonK,7)+-1.236263e+07*pow(IonK,6)+2.674841e+05*pow(IonK,5)+3.921401e+03*pow(IonK,4)+1.720764e+01*pow(IonK,3)+-1.215634e+02*pow(IonK,2)+-1.015639e-03*pow(IonK,1)+1.000003e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=6.540748e+10*pow(IonK,9)+-1.277425e+10*pow(IonK,8)+1.075958e+09*pow(IonK,7)+-5.135200e+07*pow(IonK,6)+1.552398e+06*pow(IonK,5)+-2.870201e+04*pow(IonK,4)+-4.840638e+01*pow(IonK,3)+-2.551122e+00*pow(IonK,2)+2.603597e-01*pow(IonK,1)+-1.756250e-05;
+//        }
+//        break;
+//    case "CaviMlp_HMono":
+//        if (cavi==1)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=-7.604796e+11*pow(IonK,9)+4.632851e+11*pow(IonK,8)+-1.014721e+11*pow(IonK,7)+1.165760e+10*pow(IonK,6)+-8.043084e+08*pow(IonK,5)+3.518178e+07*pow(IonK,4)+-9.843253e+05*pow(IonK,3)+1.697657e+04*pow(IonK,2)+-1.671357e+02*pow(IonK,1)+1.703336e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=-5.930241e+13*pow(IonK,9)+2.189668e+13*pow(IonK,8)+-3.565836e+12*pow(IonK,7)+3.360597e+11*pow(IonK,6)+-2.019481e+10*pow(IonK,5)+8.022856e+08*pow(IonK,4)+-2.106663e+07*pow(IonK,3)+3.524921e+05*pow(IonK,2)+-3.409550e+03*pow(IonK,1)+1.452657e+01;
+//        }
+//        else if (cavi==2)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=-8.000662e+12*pow(IonK,9)+1.617248e+12*pow(IonK,8)+-1.411958e+11*pow(IonK,7)+6.970488e+09*pow(IonK,6)+-2.139672e+08*pow(IonK,5)+4.242623e+06*pow(IonK,4)+-5.326467e+04*pow(IonK,3)+1.765330e+02*pow(IonK,2)+-1.783406e+00*pow(IonK,1)+1.003228e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=1.021016e+13*pow(IonK,9)+-1.910236e+12*pow(IonK,8)+1.539708e+11*pow(IonK,7)+-6.991916e+09*pow(IonK,6)+1.962939e+08*pow(IonK,5)+-3.513478e+06*pow(IonK,4)+3.966879e+04*pow(IonK,3)+-2.742508e+02*pow(IonK,2)+1.277444e+00*pow(IonK,1)+-1.581533e-03;
+//        }
+//        break;
+//    case "CaviMlp_HDipole":
+//        if (cavi==1)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=7.869717e+11*pow(IonK,9)+-3.116216e+11*pow(IonK,8)+5.414689e+10*pow(IonK,7)+-5.420826e+09*pow(IonK,6)+3.446369e+08*pow(IonK,5)+-1.442888e+07*pow(IonK,4)+3.985674e+05*pow(IonK,3)+-7.117391e+03*pow(IonK,2)+7.075414e+01*pow(IonK,1)+6.853803e-01;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=-4.941947e+12*pow(IonK,9)+1.791634e+12*pow(IonK,8)+-2.864139e+11*pow(IonK,7)+2.649289e+10*pow(IonK,6)+-1.562284e+09*pow(IonK,5)+6.090118e+07*pow(IonK,4)+-1.569273e+06*pow(IonK,3)+2.575274e+04*pow(IonK,2)+-2.441117e+02*pow(IonK,1)+1.021102e+00;
+//        }
+//        else if (cavi==2)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=-5.154137e+13*pow(IonK,9)+9.839613e+12*pow(IonK,8)+-8.140248e+11*pow(IonK,7)+3.821029e+10*pow(IonK,6)+-1.118723e+09*pow(IonK,5)+2.115355e+07*pow(IonK,4)+-2.561826e+05*pow(IonK,3)+1.631339e+03*pow(IonK,2)+-8.016304e+00*pow(IonK,1)+1.014129e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=2.725370e+13*pow(IonK,9)+-5.194592e+12*pow(IonK,8)+4.261388e+11*pow(IonK,7)+-1.967300e+10*pow(IonK,6)+5.607330e+08*pow(IonK,5)+-1.017331e+07*pow(IonK,4)+1.163814e+05*pow(IonK,3)+-8.101936e+02*pow(IonK,2)+3.299051e+00*pow(IonK,1)+-4.688714e-03;
+//        }
+//        break;
+//    case "CaviMlp_HQuad":
+//        if (cavi==1)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=5.600545e+12*pow(IonK,9)+-2.005326e+12*pow(IonK,8)+3.163675e+11*pow(IonK,7)+-2.885455e+10*pow(IonK,6)+1.676173e+09*pow(IonK,5)+-6.429625e+07*pow(IonK,4)+1.627837e+06*pow(IonK,3)+-2.613724e+04*pow(IonK,2)+2.439177e+02*pow(IonK,1)+-1.997432e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=1.131390e+13*pow(IonK,9)+-4.119861e+12*pow(IonK,8)+6.617859e+11*pow(IonK,7)+-6.153570e+10*pow(IonK,6)+3.649414e+09*pow(IonK,5)+-1.431267e+08*pow(IonK,4)+3.711527e+06*pow(IonK,3)+-6.135071e+04*pow(IonK,2)+5.862902e+02*pow(IonK,1)+-2.470704e+00;
+//        }
+//        else if (cavi==2)
+//        {
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            T=2.764042e+12*pow(IonK,9)+-5.420873e+11*pow(IonK,8)+4.603390e+10*pow(IonK,7)+-2.215417e+09*pow(IonK,6)+6.647808e+07*pow(IonK,5)+-1.302247e+06*pow(IonK,4)+1.591517e+04*pow(IonK,3)+9.311761e+01*pow(IonK,2)+5.170302e-01*pow(IonK,1)+-1.000925e+00;
+//            = PwrSeries(IonK, , , , , , , , , , );
+//            S=-1.755126e+12*pow(IonK,9)+3.377097e+11*pow(IonK,8)+-2.793705e+10*pow(IonK,7)+1.299263e+09*pow(IonK,6)+-3.728390e+07*pow(IonK,5)+6.792565e+05*pow(IonK,4)+-7.571946e+03*pow(IonK,3)+5.433028e+01*pow(IonK,2)+-4.540868e-01*pow(IonK,1)+3.119419e-04;
+//        }
+//        break;
+//    case "default":
+//        throw new Exception("Unknow Multipole label"+flabel);
+
+//    }
+
+}
+
+
+void CavityTLM(const int cavi, const double beta[], const double gamma[], const double IonK[])
+{
+
+}
+
+
+void CavityMatrix(const double dis, const double EfieldScl, const double TTF_tab[],
+                  const double beta_tab[], const double gamma_tab[], const double lamda,
+                  const double ionZ, const double ionFy[], std::string *thinlenLine,
+                  const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing
      * 2-gap matrix model                                            */
@@ -774,7 +849,7 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
     double Ecen1, T_1, S_1, V0_1, k_1, L1;
     double Ecen2, T_2, S_2, V0_2, k_2, L2;
     double L3;
-    double beta, gamma, ionFy, k, V0, T, S, kfdx, kfdy, dpy, acc;
+    double beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, acc;
 
 
 //    PhaseMatrix matrix = PhaseMatrix.identity();
@@ -799,7 +874,7 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //    Mlon_L1.setElem(4, 5,
 //                    -2*M_PI/lamda/1e3*1e0/cube(beta_tab[0]*gamma_tab[0])/FRIBPara.ionEs*L1));
 //     Pay attention, original is -k1-k2
-//    Mlon_K1.setElem(5, 4, -ionZ*V0_1*T_1*Math.sin(ionFy0+k_1*L1)-ionZ*V0_1*S_1*Math.cos(ionFy0+k_1*L1));
+//    Mlon_K1.setElem(5, 4, -ionZ*V0_1*T_1*sin(ionFy0+k_1*L1)-ionZ*V0_1*S_1*cos(ionFy0+k_1*L1));
 
 //    Ecen2 = TTF_tab[6];
 //    T_2   = TTF_tab[7];
@@ -811,7 +886,7 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //    PhaseMatrix Mlon_K2 = PhaseMatrix.identity();
 //    Mlon_L2.setElem(4, 5,
 //                    -2*M_PI/lamda/1e3*1e0/cube(beta_tab[1]*gamma_tab[1])/FRIBPara.ionEs*L2)); //Problem is Here!!
-//    Mlon_K2.setElem(5, 4, -ionZ*V0_2*T_2*Math.sin(ionFyc+k_2*Ecen2)-ionZ*V0_2*S_2*Math.cos(ionFyc+k_2*Ecen2));
+//    Mlon_K2.setElem(5, 4, -ionZ*V0_2*T_2*sin(ionFyc+k_2*Ecen2)-ionZ*V0_2*S_2*cos(ionFyc+k_2*Ecen2));
 
 
 //    L3 = dis-Ecen2; //try change dis/2 to dis 14/12/12
@@ -852,9 +927,9 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy))/Rm;
+//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
 //                kfdy   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy))/Rm;
+//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
 //                Mprob = PhaseMatrix.identity();
 //                Mprob.setElem(1, 0, kfdx);
 //                Mprob.setElem(3, 2, kfdy);
@@ -864,9 +939,9 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy))/Rm;
+//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
 //                kfdy   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy))/Rm;
+//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
 //                Mprob  = PhaseMatrix.identity();
 //                Mprob.setElem(1, 0, kfdx);
 //                Mprob.setElem(3, 2, kfdy);
@@ -877,7 +952,7 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                dpy    = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy));
+//                         *(T*cos(ionFy)-S*sin(ionFy));
 //                Mprob  = PhaseMatrix.identity();
 //                Mprob.setElem(3, 6, dpy);
 //                Mtrans = Mprob.times(Mtrans);
@@ -887,9 +962,9 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy))/Rm;
+//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
 //                kfdy   = -ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy)-S*Math.sin(ionFy))/Rm;
+//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
 //                Mprob  = PhaseMatrix.identity();
 //                Mprob.setElem(1, 0, kfdx);
 //                Mprob.setElem(3, 2, kfdy);
@@ -900,9 +975,9 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy+M_PI/2)-S*Math.sin(ionFy+M_PI/2))/Rm;
+//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
 //                kfdy   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy+M_PI/2)-S*Math.sin(ionFy+M_PI/2))/Rm;
+//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
 //                Mprob  = PhaseMatrix.identity();
 //                Mprob.setElem(1, 0, kfdx);
 //                Mprob.setElem(3, 2, kfdy);
@@ -913,7 +988,7 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                dpy    = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy+M_PI/2)-S*Math.sin(ionFy+M_PI/2));
+//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2));
 //                Mprob  = PhaseMatrix.identity();
 //                Mprob.setElem(3, 6, dpy);
 //                Mtrans = Mprob.times(Mtrans);
@@ -931,16 +1006,16 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 //                T      = fribnode.attribute[2];
 //                S      = fribnode.attribute[3];
 //                kfdx   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy+M_PI/2)-S*Math.sin(ionFy+M_PI/2))/Rm;
+//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
 //                kfdy   = FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*Math.cos(ionFy+M_PI/2)-S*Math.sin(ionFy+M_PI/2))/Rm;
+//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
 //                Mprob  = PhaseMatrix.identity();
 //                Mprob.setElem(1, 0, kfdx);
 //                Mprob.setElem(3, 2, kfdy);
 //                Mtrans = Mprob.times(Mtrans);
 //            } else if (fribnode.label == "AccGap") {
-//                //ionFy = ionFy + ionZ*V0_1*k*(TTF_tab[2]*Math.sin(ionFy)
-//                //        + TTF_tab[4]*Math.cos(ionFy))/2/((gamma-1)*FRIBPara.ionEs); //TTF_tab[2]~Tp
+//                //ionFy = ionFy + ionZ*V0_1*k*(TTF_tab[2]*sin(ionFy)
+//                //        + TTF_tab[4]*cos(ionFy))/2/((gamma-1)*FRIBPara.ionEs); //TTF_tab[2]~Tp
 //                seg    = seg + 1;
 //                beta   = beta_tab[seg];
 //                gamma  = gamma_tab[seg];
@@ -967,52 +1042,52 @@ void CavityMatrix(double dis, double EfieldScl, double TTF_tab[], double beta_ta
 }
 
 
-void CavTLMMat(const int cavilabel, const double Rm, const double IonZ, const double IonEs,
-                  const double EfieldScl, const double IonFyi_s, const double IonEk_s,
-                  const double IonLamda)
+void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const double IonZ,
+               const double IonEs, const double EfieldScl, const double IonFyi_s,
+               const double IonEk_s, const double IonLamda, value_mat &M)
 {
-    int    k;
-    double IonWi_s, gammai_s, betai_s, IonKi_s;
+    int    k, n;
+    double IonWi_s;
     double Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
-    double dis, IonW_s[2], IonFy_s[2], gamma_s[2], beta_s[2], IonK_s[2];
+    double dis, IonW_s[2], IonFy_s[2], gamma_s[3], beta_s[3], IonK_s[2], Ecen_1;
+    double IonK[2];
 
     const int NGaps = 1;
 
-    IonWi_s  = IonEk_s + IonEs;
-    gammai_s = IonWi_s/IonEs;
-    betai_s  = sqrt(1e0-1e0/sqr(gammai_s));
-    IonKi_s  = 2e0*M_PI/(betai_s*IonLamda);
-
-    GetTransitFac(cavilabel, betai_s, NGaps, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
-//    double dis = (axisData.get(axisData.size()-1)[0]-axisData.get(0)[0])/2; // should divided by 2!!!
-    calGapModel(dis, IonWi_s, IonEs, IonFyi_s, IonKi_s, IonZ, IonLamda,
-                Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[0], IonFy_s[0]);
-    gamma_s[0] = IonW_s[0]/IonEs;
+    IonWi_s    = IonEk_s + IonEs;
+    gamma_s[0] = IonWi_s/IonEs;
     beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
-    IonK_s[0]  = 2*M_PI/(beta_s[0]*IonLamda);
+    IonK_s[0]  = 2e0*M_PI/(beta_s[0]*IonLamda);
 
-    GetTransitFac(cavilabel, betai_s, NGaps, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
-    calGapModel(dis, IonWi_s, IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLamda,
-                Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[1], IonFy_s[1]);
-    gamma_s[1] = IonW_s[1]/IonEs;
+    n = CavData[cavi-1].s.size();
+    dis = (CavData[cavi-1].s[n-1]-CavData[cavi-1].s[0])/2e0;
+
+    GetTransitFac(cavilabel, beta_s[0], NGaps, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
+    calGapModel(dis, IonWi_s, IonEs, IonFyi_s, IonK_s[0], IonZ, IonLamda,
+                Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[0], IonFy_s[0]);
+    gamma_s[1] = IonW_s[0]/IonEs;
     beta_s[1]  = sqrt(1e0-1e0/sqr(gamma_s[1]));
     IonK_s[1]  = 2*M_PI/(beta_s[1]*IonLamda);
 
-//    Ecen_1 = Ecen_1-dis; // Switch Ecen_1 axis centered at cavity center// dis/2 to dis 14/12/12
+    GetTransitFac(cavilabel, beta_s[1], NGaps, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
+    calGapModel(dis, IonWi_s, IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLamda,
+                Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[1], IonFy_s[1]);
+    gamma_s[2] = IonW_s[1]/IonEs;
+    beta_s[2]  = sqrt(1e0-1e0/sqr(gamma_s[2]));
+    IonK_s[2]  = 2*M_PI/(beta_s[2]*IonLamda);
 
-//    double[] TTF_tab = {Ecen_1, T_1, Tp_1, S_1, Sp_1, V0_1, Ecen_2, T_2, Tp_2, S_2, Sp_2, V0_2};
-//    double[] beta_tab = {betai_s, betac_s, betaf_s};
-//    double[] gamma_tab = {gammai_s, gammac_s, gammaf_s};
-//    double IonK_1 = (IonKi_s+IonKc_s)/2;
-//    double IonK_2 = (IonKc_s+IonKf_s)/2;		    // Bug found 2015-01-07
+    Ecen[1] = Ecen[1] - dis;
+
+    double TTF_tab[] = {Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0], Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]};
+    IonK[0] = (IonK_s[0]+IonK_s[1])/2;
+    IonK[1] = (IonK_s[1]+IonK_s[2])/2;
 
 //    PhaseMatrix matrix = PhaseMatrix.identity();
 //    util.ArrayList<TlmNode> thinlenLine  =  new util.ArrayList<TlmNode>();
-//    thinlenLine = calCavity_thinlenLine(beta_tab, gamma_tab, cavi, IonK_1, IonK_2);
-//    matrix = calCavity_Matrix(dis, EfieldScl, TTF_tab, beta_tab, gamma_tab, IonLamda, IonZ, IonFyi_s,
-//    IonFyc_s, thinlenLine, Rm);
 
-//    return matrix;
+    CavityTLM(cavi, beta_s, gamma_s, IonK);
+
+//    CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLamda, IonZ, IonFy_s, "thinlenLine", Rm, M);
 }
 
 
@@ -1067,7 +1142,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
 //    CaviMatrix = calCavityTLM_Matrix(Rm, ChgState, EfieldScl, IonFy_i, Ek_i, caviLamda, cavi);
-    CavTLMMat(cavilabel, Rm, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF);
+//    CavTLMMat(cavi, cavilabel, Rm, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state].setElem(4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
