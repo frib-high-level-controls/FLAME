@@ -122,7 +122,7 @@ void CavDataType::RdData(const std::string FileName)
 
     inf.open(FileName.c_str(), std::ifstream::in);
     if (!inf.is_open()) {
-        std::cerr << "Failed to open " << FileName << "\n";
+        std::cerr << "*** RdData: failed to open " << FileName << "\n";
         exit(1);
     }
     while (getline(inf, line)) {
@@ -599,7 +599,7 @@ double PwrSeries(const double beta,
 
 
 void TransitFacMultipole(const int cavi, const std::string &flabel, const double IonK,
-                    double &T, double &S)
+                         double &T, double &S)
 {
 
     if ((cavi == 1) && (IonK < 0.025 || IonK > 0.055)) {
@@ -715,364 +715,190 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             break;
         }
     } else {
-        std::cerr << "*** TransitFacMultipole: undef. multipole type" << flabel << "\n";
+        std::cerr << "*** TransitFacMultipole: undef. multipole type " << flabel << "\n";
         exit(1);
     }
 }
 
 
 void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab[],
-                 const double ionK_1, double ionK_2)
+                 const double IonK[], double &S, double &T, double &acc)
 {
-//    java.util.ArrayList<TlmNode> thinlenLine=null;
-//    java.util.ArrayList<double[]> CaviMlp_EFocus1=null;
-//    java.util.ArrayList<double[]> CaviMlp_EFocus2=null;
-//    java.util.ArrayList<double[]> CaviMlp_EDipole=null;
-//    java.util.ArrayList<double[]> CaviMlp_EQuad=null;
-//    java.util.ArrayList<double[]> CaviMlp_HMono=null;
-//    java.util.ArrayList<double[]> CaviMlp_HDipole=null;
-//    java.util.ArrayList<double[]> CaviMlp_HQuad=null;
+    std::string label;
+    int         MpoleLevel;
+    double      s;
 
-//    if (cavi==1)
-//    {
-//        thinlenLine=tlmLattice.thinlenlon_41;
-//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_41;
-//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_41;
-//        CaviMlp_EDipole=tlmPara.CaviMlp_EDipole_41;
-//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_41;
-//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_41;
-//        CaviMlp_HDipole=tlmPara.CaviMlp_HDipole_41;
-//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_41;
-//    }
-//    else if (cavi==2)
-//    {
-//        thinlenLine=tlmLattice.thinlenlon_85;
-//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_85;
-//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_85;
-//        CaviMlp_EDipole=tlmPara.CaviMlp_EDipole_85;
-//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_85;
-//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_85;
-//        CaviMlp_HDipole=tlmPara.CaviMlp_HDipole_85;
-//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_85;
+//    util.ArrayList<TlmNode> thinlenLine=null;
+//    util.ArrayList<double[]> CaviMlp_EFocus1=null;
+//    util.ArrayList<double[]> CaviMlp_EFocus2=null;
+//    util.ArrayList<double[]> CaviMlp_EDipole=null;
+//    util.ArrayList<double[]> CaviMlp_EQuad=null;
+//    util.ArrayList<double[]> CaviMlp_HMono=null;
+//    util.ArrayList<double[]> CaviMlp_HDipole=null;
+//    util.ArrayList<double[]> CaviMlp_HQuad=null;
 
-//    }
-//    else if (cavi==3)
-//    {
-//        thinlenLine=tlmLattice.thinlenlon_29;
-//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_29;
-//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_29;
-//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_29;
-//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_29;
-//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_29;
-//    }
-//    else if (cavi==4)
-//    {
-//        thinlenLine=tlmLattice.thinlenlon_53;
-//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_53;
-//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_53;
-//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_53;
-//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_53;
-//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_53;
-//    }
-//    else if (cavi==5)
-//    {
-//        //Temporary place holder
-//        thinlenLine=tlmLattice.thinlenlon_53;
-//        CaviMlp_EFocus1=tlmPara.CaviMlp_EFocus1_53;
-//        CaviMlp_EFocus2=tlmPara.CaviMlp_EFocus2_53;
-//        CaviMlp_EQuad=tlmPara.CaviMlp_EQuad_53;
-//        CaviMlp_HMono=tlmPara.CaviMlp_HMono_53;
-//        CaviMlp_HQuad=tlmPara.CaviMlp_HQuad_53;
-//    }
-//    else
-//    {
-//        throw new Exception("Unknow cavity type "+cavi);
-//    }
+    switch (cavi) {
+    case 1:
+//        thinlenLine     = tlmLattice.thinlenlon_41;
+//        CaviMlp_EFocus1 = tlmPara.CaviMlp_EFocus1_41;
+//        CaviMlp_EFocus2 = tlmPara.CaviMlp_EFocus2_41;
+//        CaviMlp_EDipole = tlmPara.CaviMlp_EDipole_41;
+//        CaviMlp_EQuad   = tlmPara.CaviMlp_EQuad_41;
+//        CaviMlp_HMono   = tlmPara.CaviMlp_HMono_41;
+//        CaviMlp_HDipole = tlmPara.CaviMlp_HDipole_41;
+//        CaviMlp_HQuad   = tlmPara.CaviMlp_HQuad_41;
+        break;
+    case 2:
+//        thinlenLine     = tlmLattice.thinlenlon_85;
+//        CaviMlp_EFocus1 = tlmPara.CaviMlp_EFocus1_85;
+//        CaviMlp_EFocus2 = tlmPara.CaviMlp_EFocus2_85;
+//        CaviMlp_EDipole = tlmPara.CaviMlp_EDipole_85;
+//        CaviMlp_EQuad   = tlmPara.CaviMlp_EQuad_85;
+//        CaviMlp_HMono   = tlmPara.CaviMlp_HMono_85;
+//        CaviMlp_HDipole = tlmPara.CaviMlp_HDipole_85;
+//        CaviMlp_HQuad   = tlmPara.CaviMlp_HQuad_85;
+        break;
+    default:
+        std::cerr << "*** thinlenLine: undef. cavity type " << cavi << "\n";
+        exit(1);
+    }
 
-//    double T=0.0, S=0.0, acc=0.0;
-//    double[] output;
-//    for(TlmNode fribnode:thinlenLine)
-//    {
-//        if (fribnode.label!=null)
-//        {
-//            // for speed test
-//            //				fribnode.attribute[2]=1.0;
-//            //				fribnode.attribute[3]=0.0;
+    T   = 0e0;
+    S   = 0e0;
+    acc = 0e0;
+    label = "";
+    s = 0e0;
+//    for (TlmNode fribnode:thinlenLine) {
+    while (true) {
+        if (label == "drift") {
+            continue;
+        } else if (label == "EFocus1") {
+            if (s < 0e0) {
+                // First Gap, Note that by reflection, First Gap EFocus1 is actually Second Gap EFocus2
+                TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                S = -S;
+            } else {
+                // Second Gap.
+                TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "EFocus2") {
+            if (s < 0e0) {
+                // First Gap.
+                TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                S = -S;
+            } else {
+                // Second Gap.
+                TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "EDipole") {
+            if (MpoleLevel < 1) break;
+            if (s < 0e0) {
+                TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                S = -S;
+            } else {
+                // Second Gap
+                TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "EQuad") {
+            if (MpoleLevel < 2) break;
+            if (s < 0e0) {
+                // First Gap.
+                TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                S = -S;
+            } else {
+                // Second Gap
+                TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "HMono") {
+            if (MpoleLevel < 2) break;
+            if (s < 0e0) {
+                // First Gap
+                TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                T = -T;
+            } else {
+                // Second Gap
+                TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "HDipole") {
+            if (MpoleLevel < 1) break;
+            if (s < 0e0) {
+                // First Gap
+                TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                T = -T;
+            }  else {
+                // Second Gap
+                TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "HQuad") {
+            if (MpoleLevel < 2) break;
+            if (s < 0e0) {
+                // First Gap
+                TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[0], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+                T = -T;
+            } else {
+                // Second Gap
+                TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[1], T, S);
+                // First gap *1, transverse E field the same.
+                // Gap flip, S become -S.
+            }
+//            fribnode.attribute[2] = T;
+//            fribnode.attribute[3] = S;
+        } else if (label == "AccGap") {
+            if (s < 0e0) {
+                // First Gap.
+                acc = (beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
+            } else {
+                // Second Gap.
+                acc = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
+            }
+//            fribnode.attribute[1] = acc;
 
-//            switch (fribnode.label)
-//            {
-//            case "drift":
-//                continue;
-//            case "EFocus1":
-//                if (fribnode.position<0) //First Gap, Note that by reflection, First Gap EFocus1 is actually Second Gap EFocus2
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus2",ionK_1);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=-output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EFocus2,ionK_1);
-//                        T=output[1]; //First gap *1, transverse E field the same
-//                        S=-output[3]; //Gap flip, S become -S
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus1",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EFocus1,ionK_2);
-//                        T=output[1]; //Second gap *1, original
-//                        S=output[3];
-//                        //							double[] temp = {0,0,0};
-//                        //							temp[0]=ionK_2;
-//                        //							temp[1]=output[1];
-//                        //							temp[2]=output[3];
-//                        //							if (cavi==1)
-//                        //							{
-//                        //								temp_K1.add(temp);
-//                        //							}
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "EFocus2":
-//                if (fribnode.position<0) //First Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus1",ionK_1);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=-output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EFocus1,ionK_1);
-//                        T=output[1]; //First gap *1
-//                        S=-output[3];
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EFocus2",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EFocus2,ionK_2);
-//                        T=output[1]; //Second gap *1
-//                        S=output[3];
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "EDipole":
-//                if (multipoleLevel<1) break;
-//                if (fribnode.position<0)
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EDipole",ionK_1);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=-output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EDipole,ionK_1);
-//                        T=output[1]; //First Gap, transverse E field the same
-//                        S=-output[3]; //S Flip
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EDipole",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EDipole,ionK_2);
-//                        T=output[1]; //Second gap *1
-//                        S=output[3];
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "EQuad":
-//                if (multipoleLevel<2) break;
-//                if (fribnode.position<0) //First Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EQuad",ionK_1);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=-output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EQuad,ionK_1);
-//                        T=output[1]; //First gap *1, transverse E field the same
-//                        S=-output[3]; //Gap flip, S become -S
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_EQuad",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_EQuad,ionK_2);
-//                        T=output[1]; //Second gap *1
-//                        S=output[3];
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "HMono":
-//                if (multipoleLevel<2) break;
-//                if (fribnode.position<0) //First Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HMono",ionK_1);
-//                        T=-output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_HMono,ionK_1);
-//                        T=-output[1]; //First Gap, transverse H field flip
-//                        S=output[3]; //Flip twice
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HMono",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_HMono,ionK_2);
-//                        T=output[1]; //Second gap *1
-//                        S=output[3];
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "HDipole":
-//                if (multipoleLevel<1) break;
-//                if (fribnode.position<0) //First Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HDipole",ionK_1);
-//                        T=-output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_HDipole,ionK_1);
-//                        T=-output[1]; //First Gap, transverse H field flip
-//                        S=output[3]; //Flip twice
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HDipole",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_HDipole,ionK_2);
-//                        T=output[1]; //Second gap *1
-//                        S=output[3];
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "HQuad":
-//                if (multipoleLevel<2) break;
-//                if (fribnode.position<0) //First Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HQuad",ionK_1);
-//                        T=-output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_HQuad,ionK_1);
-//                        T=-output[1]; //First Gap, transverse H field flip
-//                        S=output[3];//Flip twice
-//                    }
-//                }
-//                else // Second Gap
-//                {
-//                    try
-//                    {
-//                        output=calTransfac_simplify_transMultpipole(cavi,"CaviMlp_HQuad",ionK_2);
-//                        T=output[0]; //First gap *1, transverse E field the same
-//                        S=output[1]; //Gap flip, S become -S
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        output=calTransfac(CaviMlp_HQuad,ionK_2);
-//                        T=output[1]; //Second gap *1
-//                        S=output[3];
-//                    }
-//                }
-//                fribnode.attribute[2]=T;
-//                fribnode.attribute[3]=S;
-//                break;
-//            case "AccGap":
-//                if (fribnode.position<0) //First Gap
-//                {
-//                    acc=(beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
-//                }
-//                else // Second Gap
-//                {
-//                    acc=(beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
-//                }
-//                fribnode.attribute[1]=acc;
-//                break;
+        } else {
+            std::cerr << "*** thinlenLine: undef. multipole element " << label << "\n";
+            exit(1);
+        }
 
-//            default:
-//                throw new Exception("Unknow multipole element "+fribnode.label);
-//            }
+    }
 
-//        }
-//    }
-//    java.util.ArrayList<TlmNode> outputLine=thinlenLine;
+//    util.ArrayList<TlmNode> outputLine=thinlenLine;
 //    return outputLine;
 }
 
