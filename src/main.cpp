@@ -19,6 +19,13 @@
 
 extern int glps_debug;
 
+#if true
+    // Use [m, rad, m, rad, rad, eV/u].
+    #define MeVtoeV 1e0
+#else
+    // Use [mm, rad, mm, rad, rad, MeV/u].
+    #define MeVtoeV 1e6
+#endif
 
 // Global constansts.
 
@@ -481,33 +488,33 @@ void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const d
             T    = 0.0;
             Tp   = 0.0;
             S    = 4.957e6*pow(beta, 5.0) - 1.569e6*pow(beta, 4.0) + 1.991e5*pow(beta, 3.0)
-                      - 1.269e4*pow(beta, 2.0) + 399.9*beta - 4.109;
+                   - 1.269e4*pow(beta, 2.0) + 399.9*beta - 4.109;
             Sp   = -2.926e8*pow(beta, 5.0) + 8.379e7*pow(beta, 4.0) + 9.284e6*pow(beta, 3.0)
-                      + 4.841e5*pow(beta, 2.0) - 1.073e4*beta + 61.98;
+                   + 4.841e5*pow(beta, 2.0) - 1.073e4*beta + 61.98;
             V0   = 0.98477*EfieldScl;
             break;
         case 1:
             // Two gap calculation, first gap.
             Ecen = 0.0006384*pow(beta, -1.884) + 86.69;
             T    = -1.377e6*pow(beta, 5.0) + 4.316e5*pow(beta, 4.0) - 5.476e4*pow(beta, 3.0)
-                      + 3570*pow(beta, 2.0) - 123.2*beta + 0.9232;
+                   + 3570*pow(beta, 2.0) - 123.2*beta + 0.9232;
             Tp   = 2.277e7*pow(beta, 5.0) - 6.631e6 *pow(beta, 4.0) + 7.528e5*pow(beta, 3.0)
-                      - 4.062e4*pow(beta, 2.0) + 924.7*beta + 1.699;
+                   - 4.062e4*pow(beta, 2.0) + 924.7*beta + 1.699;
             S    = 0.0;
-            Sp   =-1.335e6*pow(beta, 5.0) + 3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
-                      + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
+            Sp   = -1.335e6*pow(beta, 5.0) + 3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
+                   + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
             V0   = 0.492385*EfieldScl;
             break;
         case 2:
             // Two gap calculation, second gap.
             Ecen = -0.0006384*pow(beta, -1.884) + 33.31;
             T    = 1.377e6*pow(beta, 5.0) - 4.316e5*pow(beta, 4.0) + 5.476e4*pow(beta, 3.0)
-                      - 3570*pow(beta, 2.0) + 123.2*beta - 0.9232;
+                   - 3570*pow(beta, 2.0) + 123.2*beta - 0.9232;
             Tp   = -2.277e7*pow(beta, 5.0) + 6.631e6*pow(beta, 4.0) - 7.528e5*pow(beta, 3.0)
-                      + 4.062e4*pow(beta, 2.0) - 924.7*beta - 1.699;
+                   + 4.062e4*pow(beta, 2.0) - 924.7*beta - 1.699;
             S    = 0.0;
-            Sp   =-1.335e6*pow(beta, 5.0) +  3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
-                      + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
+            Sp   = -1.335e6*pow(beta, 5.0) +  3.385e5*pow(beta, 4.0) - 2.98e4*pow(beta, 3.0)
+                   + 806.6*pow(beta, 2.0) + 25.59*beta - 1.571;
             V0   = 0.492385*EfieldScl;
             break;
         default:
@@ -526,29 +533,29 @@ void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const d
             T    = 0.0;
             Tp   = 0.0;
             S    = 2.326e6*pow(beta, 7.0) - 2.781e6*pow(beta, 6.0) + 1.407e6*pow(beta, 5.0)
-                      - 3.914e5*pow(beta, 4.0) + 6.477e4*pow(beta, 3.0) - 6385*pow(beta, 2.0)
-                      + 343.9*beta - 6.811;
-            Sp   =-2.755e8*pow(beta,7.0) + 3.109e8*pow(beta,6.0) - 1.462e8*pow(beta, 5.0)
-                      + 3.691e7*pow(beta, 4.0) - 5.344e6*pow(beta, 3.0) + 4.315e5*pow(beta, 2.0)
-                      - 1.631e4*beta + 162.7;
+                   - 3.914e5*pow(beta, 4.0) + 6.477e4*pow(beta, 3.0) - 6385*pow(beta, 2.0)
+                   + 343.9*beta - 6.811;
+            Sp   = -2.755e8*pow(beta,7.0) + 3.109e8*pow(beta,6.0) - 1.462e8*pow(beta, 5.0)
+                   + 3.691e7*pow(beta, 4.0) - 5.344e6*pow(beta, 3.0) + 4.315e5*pow(beta, 2.0)
+                   - 1.631e4*beta + 162.7;
             V0   = 1.967715*EfieldScl;
             break;
         case 1:
             Ecen = 0.0002838*pow(beta, -2.13) + 76.5;
             T    = 0.0009467*pow(beta, -1.855) - 1.002;
             Tp   = -1.928e4*pow(beta, 5.0) + 2.195e4*pow(beta, 4.0) - 1.017e4*pow(beta, 3.0)
-                      + 2468*pow(beta, 2.0) - 334*beta + 24.44;
+                   + 2468*pow(beta, 2.0) - 334*beta + 24.44;
             S    = 0.0;
-            Sp   =-0.0009751*pow(beta, -1.898) + 0.001568;
+            Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
             V0   = 0.9838574*EfieldScl;
             break;
         case 2:
             Ecen = -0.0002838*pow(beta, -2.13) + 73.5;
             T    = -0.0009467*pow(beta, -1.855) + 1.002;
             Tp   = 1.928e4*pow(beta, 5.0) - 2.195e4*pow(beta, 4.0) + 1.017e4*pow(beta, 3.0)
-                      - 2468*pow(beta, 2.0) + 334*beta - 24.44;
+                   - 2468*pow(beta, 2.0) + 334*beta - 24.44;
             S    = 0.0;
-            Sp   =-0.0009751*pow(beta, -1.898) + 0.001568;
+            Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
             V0   = 0.9838574*EfieldScl;
             break;
         default:
@@ -567,29 +574,29 @@ void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const d
             T    = 0.0;
             Tp   = 0.0;
             S    = 76.54*pow(beta, 5.0) - 405.6*pow(beta, 4.0) + 486*pow(beta, 3.0)
-                      - 248*pow(beta, 2.0) + 58.08*beta - 4.285;
-            Sp   =-2.025e6*pow(beta,7.0) + 4.751e6*pow(beta,6.0) - 4.791e6*pow(beta, 5.0)
-                      + 2.695e6*pow(beta, 4.0) - 9.127e5*pow(beta, 3.0) + 1.854e5*pow(beta, 2.0)
-                      - 2.043e4*beta + 888;
+                   - 248*pow(beta, 2.0) + 58.08*beta - 4.285;
+            Sp   = -2.025e6*pow(beta,7.0) + 4.751e6*pow(beta,6.0) - 4.791e6*pow(beta, 5.0)
+                   + 2.695e6*pow(beta, 4.0) - 9.127e5*pow(beta, 3.0) + 1.854e5*pow(beta, 2.0)
+                   - 2.043e4*beta + 888;
             V0   = 2.485036*EfieldScl;
             break;
         case 1:
             Ecen = 0.01163*pow(beta, -2.001) + 91.77;
             T    = 0.02166*pow(beta, -1.618) - 1.022;
             Tp   = 1.389e4*pow(beta, 5.0) - 2.147e4*pow(beta, 4.0) + 1.313e4*pow(beta, 3.0)
-                      - 3917*pow(beta, 2.0) + 534.7*beta - 11.25;
+                   - 3917*pow(beta, 2.0) + 534.7*beta - 11.25;
             S    = 0.0;
-            Sp   =-454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
-                      + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
+            Sp   = -454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
+                   + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
             V0   = 1.242518*EfieldScl;
         case 2:
             Ecen = -0.01163*pow(beta, -2.001) + 58.23;
             T    = -0.02166*pow(beta, -1.618) + 1.022;
             Tp   = -1.389e4*pow(beta, 5.0) + 2.147e4*pow(beta, 4.0) - 1.313e4*pow(beta, 3.0)
-                      + 3917*pow(beta, 2.0) - 534.7*beta + 11.25;
+                   + 3917*pow(beta, 2.0) - 534.7*beta + 11.25;
             S    = 0.0;
-            Sp   =-454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
-                      + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
+            Sp   = -454.4*pow(beta, 5.0) + 645.1*pow(beta, 4.0) - 343.9*pow(beta, 3.0)
+                   + 78.77*pow(beta, 2.0) - 4.409*beta - 0.8283;
             V0   = 1.242518*EfieldScl;
             break;
         default:
@@ -608,25 +615,25 @@ void GetTransitFac(const int cavilabel, double beta, const int gaplabel, const d
             T    = 0.0;
             Tp   = 0.0;
             S    = -52.93*pow(beta, 5.0) + 84.12*pow(beta, 4.0) - 17.73*pow(beta, 3.0)
-                      - 38.49*pow(beta, 2.0) + 26.64*beta - 4.222;
-            Sp   =-4.167e4*pow(beta, 5.0) + 1.075e5*pow(beta, 4.0) - 1.111e5*pow(beta, 3.0)
-                      + 5.702e4*pow(beta, 2.0) - 1.413e4*beta - 1261;
+                   - 38.49*pow(beta, 2.0) + 26.64*beta - 4.222;
+            Sp   = -4.167e4*pow(beta, 5.0) + 1.075e5*pow(beta, 4.0) - 1.111e5*pow(beta, 3.0)
+                   + 5.702e4*pow(beta, 2.0) - 1.413e4*beta - 1261;
             V0   = 4.25756986*EfieldScl;
             break;
         case 1:
             Ecen = 0.01219*pow(beta, -2.348) + 137.8;
             T    = 0.04856*pow(beta, -1.68) - 1.018;
             Tp   = 1641*pow(beta, 5.0) - 4109*pow(beta, 4.0) + 4081*pow(beta, 3.0)
-                      - 1973*pow(beta, 2.0) + 422.8*beta - 3.612;
+                   - 1973*pow(beta, 2.0) + 422.8*beta - 3.612;
             S    = 0.0;
-            Sp   =-0.03969*pow(beta, -1.775) + 0.009034;
+            Sp   = -0.03969*pow(beta, -1.775) + 0.009034;
             V0   = 2.12878493*EfieldScl;
             break;
         case 2:
             Ecen = -0.01219*pow(beta, -2.348) + 112.2;
             T    = -0.04856*pow(beta, -1.68) + 1.018;
             Tp   = -1641*pow(beta, 5.0) + 4109*pow(beta, 4.0) - 4081*pow(beta, 3.0)
-                      + 1973*pow(beta, 2.0) - 422.8*beta + 3.612;
+                   + 1973*pow(beta, 2.0) - 422.8*beta + 3.612;
             S    = 0.0;
             Sp   = -0.03969*pow(beta, -1.775) + 0.009034;
             V0   = 2.12878493*EfieldScl;
@@ -1036,7 +1043,7 @@ void InitLattice(Machine &sim, const double ChgState, const std::vector<double> 
         // Evaluate momentum compaction.
 //        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
         // Convert from [m] and [eV/u] to [mm] and [MeV/u].
-        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L*1e6;
+        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L*1e6; // Convert from [eV/u] to [MeV/u].
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
