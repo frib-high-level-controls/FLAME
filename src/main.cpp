@@ -33,7 +33,7 @@ extern int glps_debug;
 // Speed of light [m/s].
 # define c0           2.99792458e8
 // Atomic mass unit [eV/c^2].
-//# define AU           931.49432e6
+# define AU           931.49432e6
 // Vacuum permeability.
 # define mu0          4e0*M_PI*1e-7
 // Long. sampling frequency [Hz]; must be set to RF freq.
@@ -785,8 +785,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "EFocus2") {
             if (s < 0e0) {
                 // First Gap.
@@ -800,8 +800,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "EDipole") {
             if (MpoleLevel < 1) break;
             if (s < 0e0) {
@@ -815,8 +815,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "EQuad") {
             if (MpoleLevel < 2) break;
             if (s < 0e0) {
@@ -831,8 +831,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "HMono") {
             if (MpoleLevel < 2) break;
             if (s < 0e0) {
@@ -847,8 +847,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "HDipole") {
             if (MpoleLevel < 1) break;
             if (s < 0e0) {
@@ -863,8 +863,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "HQuad") {
             if (MpoleLevel < 2) break;
             if (s < 0e0) {
@@ -879,8 +879,8 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // First gap *1, transverse E field the same.
                 // Gap flip, S become -S.
             }
-//            fribnode.attribute[2] = T;
-//            fribnode.attribute[3] = S;
+//            attribute[2] = T;
+//            attribute[3] = S;
         } else if (label == "AccGap") {
             if (s < 0e0) {
                 // First Gap.
@@ -889,7 +889,7 @@ void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab
                 // Second Gap.
                 acc = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
             }
-//            fribnode.attribute[1] = acc;
+//            attribute[1] = acc;
 
         } else {
             std::cerr << "*** thinlenLine: undef. multipole element " << label << "\n";
@@ -911,212 +911,210 @@ void CavityTLM(const int cavi, const double beta[], const double gamma[], const 
 
 void CavityMatrix(const double dis, const double EfieldScl, const double TTF_tab[],
                   const double beta_tab[], const double gamma_tab[], const double lamda,
-                  const double ionZ, const double ionFy[], const std::string &thinlenLine,
+                  const double ionZ, const double ionEs, const double ionFys[], const std::string &thinlenLine,
                   const double Rm, value_mat &M)
 {
-    /* RF cavity model, transverse only defocusing
-     * 2-gap matrix model                                            */
+    /* RF cavity model, transverse only defocusing.
+     * 2-gap matrix model.                                            */
 
-    int    seg;
-    double ki_s, kc_s, kf_s;
-    double Ecen1, T_1, S_1, V0_1, k_1, L1;
-    double Ecen2, T_2, S_2, V0_2, k_2, L2;
-    double L3;
-    double beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, acc;
+    std::string label;
+    int         seg, multipoleLevel;
+    double      ki_s, kc_s, kf_s;
+    double      Ecen1, T_1, S_1, V0_1, k_1, L1;
+    double      Ecen2, T_2, S_2, V0_2, k_2, L2;
+    double      L3, position;
+    double      beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, acc, ionFy, length;
+    value_mat   Idmat, matrix, Mlon_L1, Mlon_K1, Mlon_L2;
+    value_mat   Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
+
+    const double ionA = 1e0;
+
+    const double attribute[] {0e0, 0e0, 0e0};
+
+    using boost::numeric::ublas::prod;
+
+    Idmat = boost::numeric::ublas::identity_matrix<double>(6);
+
+    M = Idmat;
+
+    ki_s = 2e0*M_PI/(beta_tab[0]*lamda*1e3); // rad/mm
+    kc_s = 2e0*M_PI/(beta_tab[1]*lamda*1e3); // rad/mm
+    kf_s = 2e0*M_PI/(beta_tab[2]*lamda*1e3); // rad/mm
+
+    // Longitudinal model: Drift-Kick-Drift, dis: total lenghth centered at 0,
+    // Ecen1&Ecen2: Electric Center position where acc kick applies, Ecen1 < 0
+    // TTFtab: 2*6 vector, Ecen, T Tp S Sp, V0;
+
+    Ecen1 = TTF_tab[0];
+    T_1   = TTF_tab[1];
+    S_1   = TTF_tab[3];
+    V0_1  = TTF_tab[5];
+    k_1   = 0.5*(ki_s+kc_s);
+    L1    = dis + Ecen1; //try change dis/2 to dis 14/12/12
+    Mlon_L1 = Idmat;
+    Mlon_K1 = Idmat;
+    // Pay attention, original is -
+    Mlon_L1(4, 5) = -2e0*M_PI/lamda/1e3*(1e0/cube(beta_tab[0]*gamma_tab[0])/ionEs*L1);
+    // Pay attention, original is -k1-k2
+    Mlon_K1(5, 4) = -ionZ*V0_1*T_1*sin(ionFys[0]+k_1*L1)-ionZ*V0_1*S_1*cos(ionFys[0]+k_1*L1);
+
+    Ecen2 = TTF_tab[6];
+    T_2   = TTF_tab[7];
+    S_2   = TTF_tab[9];
+    V0_2  = TTF_tab[11];
+    k_2   = 0.5*(kc_s+kf_s);
+    L2    = Ecen2 - Ecen1;
+    Mlon_L2 = Idmat;
+    Mlon_K2 = Idmat;
+
+    Mlon_L2(4, 5) = -2*M_PI/lamda/1e3*(1e0/cube(beta_tab[1]*gamma_tab[1])/ionEs*L2); //Problem is Here!!
+    Mlon_K2(5, 4) = -ionZ*V0_2*T_2*sin(ionFys[1]+k_2*Ecen2)-ionZ*V0_2*S_2*cos(ionFys[1]+k_2*Ecen2);
 
 
-//    PhaseMatrix matrix = PhaseMatrix.identity();
+    L3 = dis - Ecen2; //try change dis/2 to dis 14/12/12
+    Mlon_L3 = Idmat;
+    Mlon_L3(4, 5) = -2e0*M_PI/lamda/1e3*(1e0/cube(beta_tab[2]*gamma_tab[2])/ionEs*L3);
 
-//    ki_s = 2*M_PI/(beta_tab[0]*lamda*1e3); // rad/mm
-//    kc_s = 2*M_PI/(beta_tab[1]*lamda*1e3); // rad/mm
-//    kf_s = 2*M_PI/(beta_tab[2]*lamda*1e3); // rad/mm
+    Mlon = Idmat;
+//    Mlon = prod(Mlon_L3, prod(Mlon_K2, prod(Mlon_L2, prod(Mlon_K1, Mlon_L1))));
+    Mlon = prod(Mlon_K1, Mlon_L1);
+    Mlon = prod(Mlon_L2, Mlon);
+    Mlon = prod(Mlon_K2, Mlon);
+    Mlon = prod(Mlon_L3, Mlon);
 
-//    // Longitudinal model: Drift-Kick-Drift, dis: total lenghth centered at 0,
-//    // Ecen1&Ecen2: Electric Center position where acc kick applies, Ecen1<0
-//    // TTFtab: 2*6 vector, Ecen, T Tp S Sp, V0;
+    // Transverse model
+    // Drift-FD-Drift-LongiKick-Drift-FD-Drift-0-Drift-FD-Drift-LongiKick-Drift-FD-Drift
 
-//    Ecen1 = TTF_tab[0];
-//    T_1   = TTF_tab[1];
-//    S_1   = TTF_tab[3];
-//    V0_1  = TTF_tab[5];
-//    k_1   = 0.5*(ki_s+kc_s);
-//    L1    = dis + Ecen1; //try change dis/2 to dis 14/12/12
-//    PhaseMatrix Mlon_L1 = PhaseMatrix.identity();
-//    PhaseMatrix Mlon_K1 = PhaseMatrix.identity();
-//    // Pay attention, original is -
-//    Mlon_L1.setElem(4, 5,
-//                    -2*M_PI/lamda/1e3*1e0/cube(beta_tab[0]*gamma_tab[0])/FRIBPara.ionEs*L1));
-//     Pay attention, original is -k1-k2
-//    Mlon_K1.setElem(5, 4, -ionZ*V0_1*T_1*sin(ionFy0+k_1*L1)-ionZ*V0_1*S_1*cos(ionFy0+k_1*L1));
+    Mtrans = Idmat;
+    Mprob  = Idmat;
+    beta  = beta_tab[0];
+    gamma = gamma_tab[0];
+    seg   = 0;
+    ionFy = ionFys[0];
+    k     = ki_s;
+    V0    = 0e0;
+    T     = 0e0;
+    S     = 0e0;
+    kfdx  = 0e0;
+    kfdy  = 0e0;
+    dpy   = 0e0;
 
-//    Ecen2 = TTF_tab[6];
-//    T_2   = TTF_tab[7];
-//    S_2   = TTF_tab[9];
-//    V0_2  = TTF_tab[11];
-//    k_2   = 0.5*(kc_s+kf_s);
-//    L2    = Ecen2-Ecen1;
-//    PhaseMatrix Mlon_L2 = PhaseMatrix.identity();
-//    PhaseMatrix Mlon_K2 = PhaseMatrix.identity();
-//    Mlon_L2.setElem(4, 5,
-//                    -2*M_PI/lamda/1e3*1e0/cube(beta_tab[1]*gamma_tab[1])/FRIBPara.ionEs*L2)); //Problem is Here!!
-//    Mlon_K2.setElem(5, 4, -ionZ*V0_2*T_2*sin(ionFyc+k_2*Ecen2)-ionZ*V0_2*S_2*cos(ionFyc+k_2*Ecen2));
-
-
-//    L3 = dis-Ecen2; //try change dis/2 to dis 14/12/12
-//    PhaseMatrix Mlon_L3 = PhaseMatrix.identity();
-//    Mlon_L3.setElem(4, 5,
-//                    -2*M_PI/lamda/1e3*1e0/cube(beta_tab[2]*gamma_tab[2])/FRIBPara.ionEs*L3));
-
-//    PhaseMatrix Mlon = PhaseMatrix.identity();
-//    Mlon = Mlon_L3.times(Mlon_K2.times(Mlon_L2.times(Mlon_K1.times(Mlon_L1))));
-
-//    // Transverse model
-//    // Drift-FD-Drift-LongiKick-Drift-FD-Drift-0-Drift-FD-Drift-LongiKick-Drift-FD-Drift
-
-//    PhaseMatrix Mtrans = PhaseMatrix.identity();
-//    PhaseMatrix Mprob = PhaseMatrix.identity();
-//    beta  = beta_tab[0];
-//    gamma = gamma_tab[0];
-//    seg   = 0;
-//    ionFy = ionFy0;
-//    k     = ki_s;
-//    V0    = 0.0;
-//    T     = 0.0;
-//    S     = 0.0;
-//    kfdx  = 0.0;
-//    kfdy  = 0.0;
-//    dpy   = 0.0;
-
+    length = 0e0; label = ""; multipoleLevel = 0; position = 0e0;
+    while (true) {
 //    for(TlmNode fribnode:thinlenLine) {
-//        if (fribnode.label! = null) {
-//            if (fribnode.label == "drift") {
-//                ionFy  = ionFy + k*fribnode.length; // lenghth already in mm
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(0, 1, fribnode.length);
-//                Mprob.setElem(2, 3, fribnode.length);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "EFocus1") {
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
-//                kfdy   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
-//                Mprob = PhaseMatrix.identity();
-//                Mprob.setElem(1, 0, kfdx);
-//                Mprob.setElem(3, 2, kfdy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "EFocus2") {
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
-//                kfdy   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(1, 0, kfdx);
-//                Mprob.setElem(3, 2, kfdy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "EDipole") {
-//                if (multipoleLevel<1) break;
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                dpy    = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy));
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(3, 6, dpy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "EQuad") {
-//                if (multipoleLevel<2) break;
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                kfdx   = ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
-//                kfdy   = -ionZ*V0/(beta*beta)/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy)-S*sin(ionFy))/Rm;
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(1, 0, kfdx);
-//                Mprob.setElem(3, 2, kfdy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "HMono") {
-//                if (multipoleLevel<2) break;
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                kfdx   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
-//                kfdy   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(1, 0, kfdx);
-//                Mprob.setElem(3, 2, kfdy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "HDipole") {
-//                if (multipoleLevel<1) break;
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                dpy    = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2));
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(3, 6, dpy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "HQuad") {
-//                if (multipoleLevel < 2) break;
-//                if (fribnode.position < 0) {
-//                    // First gap.
-//                    beta  = (beta_tab[0]+beta_tab[1])/2.0;
-//                    gamma = (gamma_tab[0]+gamma_tab[1])/2.0;
-//                } else {
-//                    beta = (beta_tab[1]+beta_tab[2])/2.0;
-//                    gamma = (gamma_tab[1]+gamma_tab[2])/2.0;
-//                }
-//                V0     = fribnode.attribute[1]*EfieldScl;
-//                T      = fribnode.attribute[2];
-//                S      = fribnode.attribute[3];
-//                kfdx   = -FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
-//                kfdy   = FRIBPara.MU0*FRIBPara.C*ionZ*V0/beta/gamma/FRIBPara.ionA/FRIBPara.AU
-//                         *(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(1, 0, kfdx);
-//                Mprob.setElem(3, 2, kfdy);
-//                Mtrans = Mprob.times(Mtrans);
-//            } else if (fribnode.label == "AccGap") {
-//                //ionFy = ionFy + ionZ*V0_1*k*(TTF_tab[2]*sin(ionFy)
-//                //        + TTF_tab[4]*cos(ionFy))/2/((gamma-1)*FRIBPara.ionEs); //TTF_tab[2]~Tp
-//                seg    = seg + 1;
-//                beta   = beta_tab[seg];
-//                gamma  = gamma_tab[seg];
-//                k      = 2*M_PI/(beta*lamda*1e3); // rad/mm
-//                acc    = fribnode.attribute[1];
-//                Mprob  = PhaseMatrix.identity();
-//                Mprob.setElem(1, 1, acc);
-//                Mprob.setElem(3, 3, acc);
-//                Mtrans = Mprob.times(Mtrans);
-//            else {
-//                std::cerr << "*** CavityMatrix: undef. multipole type " << fribnode.label << "\n";
-//                exit(1);
-//            }
-//        }
-//    }
+        if (label == "drift") {
+            ionFy  = ionFy + k*length; // lenghth already in mm
+            Mprob  = Idmat;
+            Mprob(0, 1) = length;
+            Mprob(2, 3) = length;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "EFocus1") {
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            kfdx   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            kfdy   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            Mprob = Idmat;
+            Mprob(1, 0) = kfdx;
+            Mprob(3, 2) = kfdy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "EFocus2") {
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            kfdx   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            kfdy   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            Mprob  = Idmat;
+            Mprob(1, 0) = kfdx;
+            Mprob(3, 2) = kfdy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "EDipole") {
+            if (multipoleLevel < 1) break;
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            dpy    = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy));
+            Mprob  = Idmat;
+            Mprob(3, 6) = dpy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "EQuad") {
+            if (multipoleLevel<2) break;
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            kfdx   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            kfdy   = -ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            Mprob  = Idmat;
+            Mprob(1, 0) = kfdx;
+            Mprob(3, 2) = kfdy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "HMono") {
+            if (multipoleLevel<2) break;
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            kfdx   = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
+            kfdy   = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
+            Mprob  = Idmat;
+            Mprob(1, 0) = kfdx;
+            Mprob(3, 2) = kfdy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "HDipole") {
+            if (multipoleLevel<1) break;
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            dpy    = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2));
+            Mprob  = Idmat;
+            Mprob(3, 6) = dpy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "HQuad") {
+            if (multipoleLevel < 2) break;
+            if (position < 0e0) {
+                // First gap.
+                beta  = (beta_tab[0]+beta_tab[1])/2.0;
+                gamma = (gamma_tab[0]+gamma_tab[1])/2.0;
+            } else {
+                beta = (beta_tab[1]+beta_tab[2])/2.0;
+                gamma = (gamma_tab[1]+gamma_tab[2])/2.0;
+            }
+            V0     = attribute[1]*EfieldScl;
+            T      = attribute[2];
+            S      = attribute[3];
+            kfdx   = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
+            kfdy   =  mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2)-S*sin(ionFy+M_PI/2))/Rm;
+            Mprob  = Idmat;
+            Mprob(1, 0) = kfdx;
+            Mprob(3, 2) = kfdy;
+            Mtrans = prod(Mprob, Mtrans);
+        } else if (label == "AccGap") {
+            //ionFy = ionFy + ionZ*V0_1*k*(TTF_tab[2]*sin(ionFy)
+            //        + TTF_tab[4]*cos(ionFy))/2/((gamma-1)*ionEs); //TTF_tab[2]~Tp
+            seg    = seg + 1;
+            beta   = beta_tab[seg];
+            gamma  = gamma_tab[seg];
+            k      = 2*M_PI/(beta*lamda*1e3); // rad/mm
+            acc    = attribute[1];
+            Mprob  = Idmat;
+            Mprob(1, 1) = acc;
+            Mprob(3, 3) = acc;
+            Mtrans = prod(Mprob, Mtrans);
+        } else {
+                std::cerr << "*** CavityMatrix: undef. multipole type " << label << "\n";
+                exit(1);
+        }
+    }
 
-//    matrix = Mtrans;
-//    matrix.setElem(4, 4, Mlon.getElem(4, 4));
-//    matrix.setElem(4, 5, Mlon.getElem(4, 5));
-//    matrix.setElem(5, 4, Mlon.getElem(5, 4));
-//    matrix.setElem(5, 5, Mlon.getElem(5, 5));
-
-//    return matrix;
+    M = Mtrans;
+    M(4, 4) = Mlon(4, 4);
+    M(4, 5) = Mlon(4, 5);
+    M(5, 4) = Mlon(5, 4);
+    M(5, 5) = Mlon(5, 5);
 }
 
 
-void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const double IonZ,
-               const double IonEs, const double EfieldScl, const double IonFyi_s,
+void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::string &thinlenLine,
+               const double IonZ, const double IonEs, const double EfieldScl, const double IonFyi_s,
                const double IonEk_s, const double IonLamda, value_mat &M)
 {
     int    k, n;
@@ -1155,12 +1153,12 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const doubl
     IonK[0] = (IonK_s[0]+IonK_s[1])/2;
     IonK[1] = (IonK_s[1]+IonK_s[2])/2;
 
-//    PhaseMatrix matrix = PhaseMatrix.identity();
+//    PhaseMatrix matrix = Id;
 //    util.ArrayList<TlmNode> thinlenLine  =  new util.ArrayList<TlmNode>();
 
     CavityTLM(cavi, beta_s, gamma_s, IonK);
 
-    CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLamda, IonZ, IonFy_s, "thinlenLine", Rm, M);
+    CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLamda, IonZ, IonEs, IonFy_s, "thinlenLine", Rm, M);
 }
 
 
@@ -1168,7 +1166,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
                const double ChgState,
                double &EkState, double &Fy_absState, double &beta, double &gamma)
 {
-    std::string CavType;
+    std::string CavType, thinlenLine;
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
     double      IonW_o, IonFy_o, accIonW;
@@ -1176,15 +1174,17 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
-        cavi      = 1;
-        cavilabel = 41;
-        multip    = 1;
-        Rm        = 17e0;
+        cavi        = 1;
+        cavilabel   = 41;
+        multip      = 1;
+        Rm          = 17e0;
+        thinlenLine = "Multipole41/thinlenlon_41.txt";
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
-        cavi      = 2;
-        cavilabel = 85;
-        multip    = 1;
-        Rm        = 17e0;
+        cavi        = 2;
+        cavilabel   = 85;
+        multip      = 1;
+        Rm          = 17e0;
+        thinlenLine = "Multipole85/thinlenlon_85.txt";
     } else {
         std::cerr << "*** InitLong: undef. cavity type: "
                   << CavType << "\n";
@@ -1215,15 +1215,15 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-    CavTLMMat(cavi, cavilabel, Rm, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF, M);
+    CavTLMMat(cavi, cavilabel, Rm, thinlenLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF, M);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
-//    TransVector[ii_state].setElem(4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
-//    TransVector[ii_state].setElem(5, Ek[ii_state]-tlmPara.Ek_tab.get(lattcnt+1)[1]);
+//    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
+//    TransVector[ii_state](5, Ek[ii_state]-tlmPara.Ek_tab.get(lattcnt+1)[1]);
 
 //    double aveX2i = ThetaMatrix[state].getElem(0, 0);
 //    double aveY2i = ThetaMatrix[state].getElem(2, 2);
-//    double IonFys = fribnode.attribute[3]/180e0*M_PI;
+//    double IonFys = attribute[3]/180e0*M_PI;
 //    double E0TL = accIonW/cos(IonFys)/tlmPara.IonChargeStates[state];
 //    ThetaMatrix[state] = ThetaMatrix[state].conjugateTrans(CaviMatrix);
 //    ThetaMatrix[state] = calRFcaviEmitGrowth(
