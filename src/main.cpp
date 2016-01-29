@@ -93,6 +93,8 @@ CavDataType         CavData[5];
 LongTabType         LongTab;
 std::vector<double> CavPhases;
 
+const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
+
 
 void LongTabType::set(const double s, const double Ek, const double FyAbs,
                       const double Beta, const double Gamma)
@@ -721,191 +723,131 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 }
 
 
-void thinlenLine(const int cavi, const double beta_tab[], const double gamma_tab[],
-                 const double IonK[], double &S, double &T, double &acc)
+void CavityTLM(const int cavi, const std::string &thinlenLine,
+               const double beta_tab[], const double gamma_tab[],
+               const double IonK[], double &S, double &T, double &acc)
 {
-    std::string label;
-    int         MpoleLevel;
-    double      s;
+    char         cElem[80], cName[80];
+    std::string  line, Elem, Name;
+    double       Length, s;
+    std::fstream inf;
 
-//    util.ArrayList<TlmNode> thinlenLine=null;
-//    util.ArrayList<double[]> CaviMlp_EFocus1=null;
-//    util.ArrayList<double[]> CaviMlp_EFocus2=null;
-//    util.ArrayList<double[]> CaviMlp_EDipole=null;
-//    util.ArrayList<double[]> CaviMlp_EQuad=null;
-//    util.ArrayList<double[]> CaviMlp_HMono=null;
-//    util.ArrayList<double[]> CaviMlp_HDipole=null;
-//    util.ArrayList<double[]> CaviMlp_HQuad=null;
+    // multipoleLevel: 0 only focusing and defocusing effects
+    //                 1 include dipole term into consideration
+    //                 2 include quadrupole term.
+    const int  MpoleLevel = 0;
 
-    switch (cavi) {
-    case 1:
-//        thinlenLine     = tlmLattice.thinlenlon_41;
-//        CaviMlp_EFocus1 = tlmPara.CaviMlp_EFocus1_41;
-//        CaviMlp_EFocus2 = tlmPara.CaviMlp_EFocus2_41;
-//        CaviMlp_EDipole = tlmPara.CaviMlp_EDipole_41;
-//        CaviMlp_EQuad   = tlmPara.CaviMlp_EQuad_41;
-//        CaviMlp_HMono   = tlmPara.CaviMlp_HMono_41;
-//        CaviMlp_HDipole = tlmPara.CaviMlp_HDipole_41;
-//        CaviMlp_HQuad   = tlmPara.CaviMlp_HQuad_41;
-        break;
-    case 2:
-//        thinlenLine     = tlmLattice.thinlenlon_85;
-//        CaviMlp_EFocus1 = tlmPara.CaviMlp_EFocus1_85;
-//        CaviMlp_EFocus2 = tlmPara.CaviMlp_EFocus2_85;
-//        CaviMlp_EDipole = tlmPara.CaviMlp_EDipole_85;
-//        CaviMlp_EQuad   = tlmPara.CaviMlp_EQuad_85;
-//        CaviMlp_HMono   = tlmPara.CaviMlp_HMono_85;
-//        CaviMlp_HDipole = tlmPara.CaviMlp_HDipole_85;
-//        CaviMlp_HQuad   = tlmPara.CaviMlp_HQuad_85;
-        break;
-    default:
-        std::cerr << "*** thinlenLine: undef. cavity type " << cavi << "\n";
+    T = 0e0, S = 0e0, acc = 0e0;
+    s = 0e0;
+//    for (TlmNode fribnode:CavityTLM) {
+
+    inf.open((HomeDir+thinlenLine).c_str(), std::ifstream::in);
+    if (!inf.is_open()) {
+        std::cerr << "*** CavityTLM: failed to open " << thinlenLine << "\n";
         exit(1);
     }
-
-    T   = 0e0;
-    S   = 0e0;
-    acc = 0e0;
-    label = "";
-    s = 0e0;
-//    for (TlmNode fribnode:thinlenLine) {
-    while (true) {
-        if (label == "drift") {
-            continue;
-        } else if (label == "EFocus1") {
-            if (s < 0e0) {
-                // First Gap, Note that by reflection, First Gap EFocus1 is actually Second Gap EFocus2
-                TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                S = -S;
-            } else {
-                // Second Gap.
-                TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "EFocus2") {
-            if (s < 0e0) {
-                // First Gap.
-                TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                S = -S;
-            } else {
-                // Second Gap.
-                TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "EDipole") {
-            if (MpoleLevel < 1) break;
-            if (s < 0e0) {
-                TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                S = -S;
-            } else {
-                // Second Gap
-                TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "EQuad") {
-            if (MpoleLevel < 2) break;
-            if (s < 0e0) {
-                // First Gap.
-                TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                S = -S;
-            } else {
-                // Second Gap
-                TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "HMono") {
-            if (MpoleLevel < 2) break;
-            if (s < 0e0) {
-                // First Gap
-                TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                T = -T;
-            } else {
-                // Second Gap
-                TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "HDipole") {
-            if (MpoleLevel < 1) break;
-            if (s < 0e0) {
-                // First Gap
-                TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                T = -T;
-            }  else {
-                // Second Gap
-                TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "HQuad") {
-            if (MpoleLevel < 2) break;
-            if (s < 0e0) {
-                // First Gap
-                TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[0], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-                T = -T;
-            } else {
-                // Second Gap
-                TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[1], T, S);
-                // First gap *1, transverse E field the same.
-                // Gap flip, S become -S.
-            }
-//            attribute[2] = T;
-//            attribute[3] = S;
-        } else if (label == "AccGap") {
-            if (s < 0e0) {
-                // First Gap.
-                acc = (beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
-            } else {
-                // Second Gap.
-                acc = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
-            }
-//            attribute[1] = acc;
-
+    while (getline(inf, line)) {
+        if (line[0] == '%') {
+            // Comment.
         } else {
-            std::cerr << "*** thinlenLine: undef. multipole element " << label << "\n";
-            exit(1);
+            sscanf(line.c_str(), "%s %s %lf", cElem, cName, &Length);
+            Elem = cElem;
+            Name = cName;
+            std::cout << Elem << " " << Name << " " << Length << "\n";
+            if (Elem == "drift") {
+                continue;
+            } else if (Elem == "EFocus1") {
+                if (s < 0e0) {
+                    // First gap. By reflection 1st Gap EFocus1 is 2nd gap EFocus2.
+                    TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[0], T, S);
+                    // First gap *1, transverse E field the same.
+                    S = -S;
+                } else {
+                    // Second gap.
+                    TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[1], T, S);
+                }
+            } else if (Elem == "EFocus2") {
+                if (s < 0e0) {
+                    // First gap.
+                    TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[0], T, S);
+                    S = -S;
+                } else {
+                    // Second gap.
+                    TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[1], T, S);
+                }
+            } else if (Elem == "EDipole") {
+                if (MpoleLevel >= 1) {
+                    if (s < 0e0) {
+                        TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[0], T, S);
+                        // First gap *1, transverse E field the same.
+                        S = -S;
+                    } else {
+                        // Second gap.
+                        TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[1], T, S);
+                    }
+                }
+            } else if (Elem == "EQuad") {
+                if (MpoleLevel >= 2) {
+                    if (s < 0e0) {
+                        // First gap.
+                        TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[0], T, S);
+                        S = -S;
+                    } else {
+                        // Second Gap
+                        TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[1], T, S);
+                    }
+                }
+            } else if (Elem == "HMono") {
+                if (MpoleLevel >= 2) {
+                    if (s < 0e0) {
+                        // First gap.
+                        TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[0], T, S);
+                        T = -T;
+                    } else {
+                        // Second Gap
+                        TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[1], T, S);
+                    }
+                }
+            } else if (Elem == "HDipole") {
+                if (MpoleLevel >= 1) {
+                    if (s < 0e0) {
+                        // First gap.
+                        TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[0], T, S);
+                        T = -T;
+                    }  else {
+                        // Second gap.
+                        TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[1], T, S);
+                    }
+                }
+            } else if (Elem == "HQuad") {
+                if (MpoleLevel >= 2) {
+                    if (s < 0e0) {
+                        // First gap.
+                        TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[0], T, S);
+                        T = -T;
+                    } else {
+                        // Second gap.
+                        TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[1], T, S);
+                    }
+                }
+            } else if (Elem == "AccGap") {
+                if (s < 0e0) {
+                    // First gap.
+                    acc = (beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
+                } else {
+                    // Second gap.
+                    acc = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
+                }
+            } else {
+                std::cerr << "*** CavityTLM: undef. multipole element " << Elem << "\n";
+                exit(1);
+            }
         }
-
     }
 
-//    util.ArrayList<TlmNode> outputLine=thinlenLine;
-//    return outputLine;
-}
-
-
-void CavityTLM(const int cavi, const double beta[], const double gamma[], const double IonK[])
-{
-
+    std::cout << "\n" << "CavityTLM:" << "\n";
+    std::cout << std::scientific << std::setprecision(10)
+              << "  T = " << T << ", S = " << S << ", acc = " << acc << "\n";
 }
 
 
@@ -1121,7 +1063,7 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::
     double IonWi_s;
     double Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
     double dis, IonW_s[2], IonFy_s[2], gamma_s[3], beta_s[3], IonK_s[2], Ecen_1;
-    double IonK[2];
+    double IonK[2], S1, T1, acc;
 
     const int NGaps = 1;
 
@@ -1153,10 +1095,13 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::
     IonK[0] = (IonK_s[0]+IonK_s[1])/2;
     IonK[1] = (IonK_s[1]+IonK_s[2])/2;
 
+    IonK[0] *= 1e-3;
+    IonK[1] *= 1e-3;
+
 //    PhaseMatrix matrix = Id;
 //    util.ArrayList<TlmNode> thinlenLine  =  new util.ArrayList<TlmNode>();
 
-    CavityTLM(cavi, beta_s, gamma_s, IonK);
+    CavityTLM(cavi, thinlenLine, beta_s, gamma_s, IonK, S1, T1, acc);
 
     CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLamda, IonZ, IonEs, IonFy_s, "thinlenLine", Rm, M);
 }
@@ -1178,13 +1123,13 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
         cavilabel   = 41;
         multip      = 1;
         Rm          = 17e0;
-        thinlenLine = "Multipole41/thinlenlon_41.txt";
+        thinlenLine = "/data/Multipole41/thinlenlon_41.txt";
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
         cavi        = 2;
         cavilabel   = 85;
         multip      = 1;
         Rm          = 17e0;
-        thinlenLine = "Multipole85/thinlenlon_85.txt";
+        thinlenLine = "/data/Multipole85/thinlenlon_85.txt";
     } else {
         std::cerr << "*** InitLong: undef. cavity type: "
                   << CavType << "\n";
@@ -1414,8 +1359,6 @@ int main(int argc, char *argv[])
     int                 k;
     std::vector<double> ChgState;
     std::vector<double> BaryCenter[2];
-
-    const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
 
     FILE *in = stdin;
     if(argc>1) {
