@@ -8,6 +8,7 @@
 #include "scsi/state/matrix.h"
 
 
+// Phase-space units.
 #if false
     // Use [m, rad, m, rad, rad, eV/u].
     #define MtoMM 1e0

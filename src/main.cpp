@@ -19,7 +19,7 @@
 
 extern int glps_debug;
 
-
+// Phase-space units.
 #if false
     // Use [m, rad, m, rad, rad, eV/u].
     #define MtoMM   1e0
@@ -122,10 +122,11 @@ void LongTabType::show(std::ostream& strm, const int k) const
 
 void CavDataType::RdData(const std::string FileName)
 {
-    std::string  line;
-    int          k;
-    double       s, Elong;
-    std::fstream inf;
+    std::string       line;
+    int               k;
+    double            s, Elong;
+    std::stringstream str;
+    std::fstream      inf;
 
     inf.open(FileName.c_str(), std::ifstream::in);
     if (!inf.is_open()) {
@@ -133,7 +134,8 @@ void CavDataType::RdData(const std::string FileName)
         exit(1);
     }
     while (getline(inf, line)) {
-        sscanf(line.c_str(), "%lf %lf", &s, &Elong);
+        str.str(line);
+        str >> s >> Elong;
         this->s.push_back(s), this->Elong.push_back(Elong);
         // Convert from [mm] to [m].
 //        this->s[this->s.size()-1] *= 1e-3;
@@ -287,8 +289,7 @@ void calGapModel(const double dis, const double IonW0, const double IonEs, const
     IonW_f     = IonW0 + IonZ*V0*T*cos(IonFy0+k*Ecen) - IonZ*V0*S*sin(IonFy0+k*Ecen);
     Iongamma_f = IonW_f/IonEs;
     IonBeta_f  = sqrt(1e0-1e0/sqr(Iongamma_f));
-//    k_f        = 2e0*M_PI/(IonBeta_f*lamda*1e3); // rad/mm
-    k_f        = 2e0*M_PI/(IonBeta_f*lamda*1e3);
+    k_f        = 2e0*M_PI/(IonBeta_f*lamda);
 
     IonFy_f = IonFy0 + k*Ecen + k_f*(dis-Ecen)
               + IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-IonEs));
@@ -386,7 +387,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 
     IonFy_i = multip*LongTab.FyAbs[n-2] + caviFy;
     CavPhases.push_back(caviFy);
-    if (true)
+    if (false)
         std::cout << std::scientific << std::setprecision(10)
                   << "CavPhase: " << std::setw(3) << CavPhases.size()
                   << std::setw(18) << CavPhases[CavPhases.size()-1] << "\n";
@@ -471,7 +472,7 @@ void InitLong(const Machine &sim)
             PropagateLongStripper(conf, n, IonZ, IonEs, IonW, SampleIonK, IonBeta);
         }
 
-        if (false) {
+        if (true) {
             std::cout << std::setw(10) << std::left << t_name << std::setw(25)
                       << elem->name << std::internal;
             LongTab.show(std::cout, n-1);
@@ -488,7 +489,7 @@ double PwrSeries(const double beta,
     int    k;
     double f;
 
-    const int    n   = 7;
+    const int    n   = 8;
     const double a[] = {a0, a1, a2, a3, a4, a5, a6, a7};
 
     f = a[0];
@@ -735,10 +736,10 @@ void CavityTLM(const int cavi, const std::string &thinlenLine,
                const double beta_tab[], const double gamma_tab[],
                const double IonK[], double &S, double &T, double &acc)
 {
-    std::string  line, Elem, Name;
-    double       Length, Aper, Param, s;
+    std::string       line, Elem, Name;
+    double            Length, Aper, Param, s;
     std::stringstream str;
-    std::fstream inf;
+    std::fstream      inf;
 
     // multipoleLevel: 0 only focusing and defocusing effects
     //                 1 include dipole term into consideration
@@ -746,14 +747,6 @@ void CavityTLM(const int cavi, const std::string &thinlenLine,
     const int  MpoleLevel = 0;
 
     std::cout << "\n" << "CavityTLM:" << "\n";
-    std::cout << std::fixed << std::setprecision(10)
-              << "IonK:  " << std::setw(14) << IonK[0] << std::setw(14) << IonK[1] << "\n";
-    std::cout << std::fixed << std::setprecision(10)
-              << "beta:  " << std::setw(14) << beta_tab[0] << std::setw(14) << beta_tab[1]
-              << std::setw(14) << beta_tab[2] << "\n";
-    std::cout << std::fixed << std::setprecision(10)
-              << "gamma: " << std::setw(14) << gamma_tab[0] << std::setw(14) << gamma_tab[1]
-              << std::setw(14) << gamma_tab[2] << "\n";
 
     T = 0e0, S = 0e0, acc = 0e0;
     s = 0e0;
@@ -1084,40 +1077,54 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::
                const double IonEk_s, const double IonLamda, value_mat &M)
 {
     int    k, n;
-    double IonWi_s;
     double Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
-    double dis, IonW_s[2], IonFy_s[2], gamma_s[3], beta_s[3], IonK_s[2], Ecen_1;
+    double dis, IonW_s[3], IonFy_s[3], gamma_s[3], beta_s[3], IonK_s[3];
     double IonK[2], S1, T1, acc;
 
-    const int NGaps = 1;
-
-    IonWi_s    = IonEk_s + IonEs;
-    gamma_s[0] = IonWi_s/IonEs;
+    IonW_s[0]  = IonEk_s + IonEs;
+    IonFy_s[0] = IonFyi_s;
+    gamma_s[0] = IonW_s[0]/IonEs;
     beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
     IonK_s[0]  = 2e0*M_PI/(beta_s[0]*IonLamda);
 
-    n = CavData[cavi-1].s.size();
+    n   = CavData[cavi-1].s.size();
     dis = (CavData[cavi-1].s[n-1]-CavData[cavi-1].s[0])/2e0;
 
-    GetTransitFac(cavilabel, beta_s[0], NGaps, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
-    calGapModel(dis, IonWi_s, IonEs, IonFyi_s, IonK_s[0], IonZ, IonLamda,
-                Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[0], IonFy_s[0]);
-    gamma_s[1] = IonW_s[0]/IonEs;
+    GetTransitFac(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
+    calGapModel(dis, IonW_s[0], IonEs, IonFy_s[0], IonK_s[0], IonZ, IonLamda,
+                Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[1], IonFy_s[1]);
+    gamma_s[1] = IonW_s[1]/IonEs;
     beta_s[1]  = sqrt(1e0-1e0/sqr(gamma_s[1]));
-    IonK_s[1]  = 2*M_PI/(beta_s[1]*IonLamda);
+    IonK_s[1]  = 2e0*M_PI/(beta_s[1]*IonLamda);
 
-    GetTransitFac(cavilabel, beta_s[1], NGaps, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
-    calGapModel(dis, IonWi_s, IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLamda,
-                Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[1], IonFy_s[1]);
-    gamma_s[2] = IonW_s[1]/IonEs;
+    GetTransitFac(cavilabel, beta_s[1], 2, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
+    calGapModel(dis, IonW_s[1], IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLamda,
+                Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[2], IonFy_s[2]);
+    gamma_s[2] = IonW_s[2]/IonEs;
     beta_s[2]  = sqrt(1e0-1e0/sqr(gamma_s[2]));
-    IonK_s[2]  = 2*M_PI/(beta_s[2]*IonLamda);
+    IonK_s[2]  = 2e0*M_PI/(beta_s[2]*IonLamda);
 
-    Ecen[1] = Ecen[1] - dis;
+    Ecen[0] = Ecen[0] - dis;
 
     double TTF_tab[] = {Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0], Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]};
-    IonK[0] = (IonK_s[0]+IonK_s[1])/2;
-    IonK[1] = (IonK_s[1]+IonK_s[2])/2;
+    IonK[0] = (IonK_s[0]+IonK_s[1])/2e0;
+    IonK[1] = (IonK_s[1]+IonK_s[2])/2e0;
+
+    if (false) {
+        printf("\n CavTLMMat:\n");
+        printf("IonK  : %15.10f %15.10f%15.10f\n", IonK_s[0], IonK_s[1], IonK_s[2]);
+        printf("IonK  : %15.10f %15.10f\n", IonK[0], IonK[1]);
+        printf("beta  : %15.10f %15.10f %15.10f\n", beta_s[0], beta_s[1], beta_s[2]);
+        printf("gamma : %15.10f %15.10f %15.10f\n", gamma_s[0], gamma_s[1], gamma_s[2]);
+        printf("Ecen  : %15.10f %15.10f\n", Ecen[0], Ecen[1]);
+        printf("T     : %15.10f %15.10f\n", T[0], T[1]);
+        printf("Tp    : %15.10f %15.10f\n", Tp[0], Tp[1]);
+        printf("S     : %15.10f %15.10f\n", S[0], S[1]);
+        printf("Sp    : %15.10f %15.10f\n", Sp[0], Sp[1]);
+        printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
+    }
+
+    exit(0);
 
 //    PhaseMatrix matrix = Id;
 //    util.ArrayList<TlmNode> thinlenLine  =  new util.ArrayList<TlmNode>();
@@ -1152,8 +1159,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
         Rm          = 17e0;
         thinlenLine = "/data/Multipole85/thinlenlon_85.txt";
     } else {
-        std::cerr << "*** InitLong: undef. cavity type: "
-                  << CavType << "\n";
+        std::cerr << "*** InitLong: undef. cavity type: " << CavType << "\n";
         exit(1);
     }
 
@@ -1164,8 +1170,8 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
     avebeta    = beta;
     avegamma   = gamma;
     fRF        = conf.get<double>("f");
-    CaviIonK   = 2e0*M_PI*fRF/(beta*c0);
-    SampleIonK = 2e0*M_PI/(beta*c0/SampleFreq);
+    CaviIonK   = 2e0*M_PI*fRF/(beta*c0*MtoMM);
+    SampleIonK = 2e0*M_PI/(beta*c0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");   // Electric field scale factor.
 
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, ChgState, IonEs,
