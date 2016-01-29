@@ -141,7 +141,7 @@ void CavDataType::RdData(const std::string FileName)
         str >> s >> Elong;
         this->s.push_back(s), this->Elong.push_back(Elong);
         // Convert from [mm] to [m].
-//        this->s[this->s.size()-1] *= 1e-3;
+//        this->s[this->s.size()-1] /= MtoMM;
     }
     inf.close();
 
@@ -593,7 +593,7 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
     }
 
     // Convert from [mm] to [m].
-//    Ecen *= 1e-3;
+//    Ecen /= MtoMM;
 }
 
 
@@ -749,9 +749,10 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
     std::stringstream str;
     std::fstream      inf;
 
-    std::cout << "\n" << "CavityTLM:" << "\n";
+    const bool prt = true;
 
-    T = 0e0, S = 0e0, Accel = 0e0;
+    if (prt) printf("\nCavityTLM:\n");
+
 //    for (TlmNode fribnode:CavityTLM) {
 
     inf.open((HomeDir+thinlenLine).c_str(), std::ifstream::in);
@@ -775,11 +776,12 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
             else
                 Param = 0e0;
 
-            if (false)
-                printf("%8s %s %9.5f %9.5f %9.5f\n", Elem.c_str(), Name.c_str(), Length, Aper, Param);
+            if (prt)
+                printf("%8s %s %9.5f %9.5f %9.5f",
+                       Elem.c_str(), Name.c_str(), Length, Aper, Param);
 
             if (Elem == "drift") {
-                continue;
+                T = 0e0, S = 0e0, Accel = 0e0;
             } else if (Elem == "EFocus1") {
                 if (s < 0e0) {
                     // First gap. By reflection 1st Gap EFocus1 is 2nd gap EFocus2.
@@ -866,12 +868,9 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
                 std::cerr << "*** CavityTLM: undef. multipole element " << Elem << "\n";
                 exit(1);
             }
+            if (prt) printf("%18.10e %18.10e %18.10e\n", T, S, Accel);
         }
     }
-
-    std::cout << "\n" << "CavityTLM:" << "\n";
-    std::cout << std::scientific << std::setprecision(10)
-              << "  T = " << T << ", S = " << S << ", Accel = " << Accel << "\n";
 }
 
 
@@ -903,9 +902,9 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
 
     M = Idmat;
 
-    ki_s = 2e0*M_PI/(beta_tab[0]*Lambda*1e3); // rad/mm
-    kc_s = 2e0*M_PI/(beta_tab[1]*Lambda*1e3); // rad/mm
-    kf_s = 2e0*M_PI/(beta_tab[2]*Lambda*1e3); // rad/mm
+    ki_s = 2e0*M_PI/(beta_tab[0]*Lambda);
+    kc_s = 2e0*M_PI/(beta_tab[1]*Lambda);
+    kf_s = 2e0*M_PI/(beta_tab[2]*Lambda);
 
     // Longitudinal model: Drift-Kick-Drift, dis: total lenghth centered at 0,
     // Ecen1 & Ecen2: Electric Center position where acc kick applies, Ecen1 < 0
@@ -920,7 +919,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     Mlon_L1 = Idmat;
     Mlon_K1 = Idmat;
     // Pay attention, original is -
-    Mlon_L1(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[0]*gamma_tab[0])/IonEs*L1);
+    Mlon_L1(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[0]*gamma_tab[0])/IonEs*L1);
     // Pay attention, original is -k1-k2
     Mlon_K1(5, 4) = -IonZ*V0_1*T_1*sin(IonFys[0]+k_1*L1)-IonZ*V0_1*S_1*cos(IonFys[0]+k_1*L1);
 
@@ -933,13 +932,13 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     Mlon_L2 = Idmat;
     Mlon_K2 = Idmat;
 
-    Mlon_L2(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[1]*gamma_tab[1])/IonEs*L2); //Problem is Here!!
+    Mlon_L2(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[1]*gamma_tab[1])/IonEs*L2); //Problem is Here!!
     Mlon_K2(5, 4) = -IonZ*V0_2*T_2*sin(IonFys[1]+k_2*Ecen2)-IonZ*V0_2*S_2*cos(IonFys[1]+k_2*Ecen2);
 
 
     L3 = dis - Ecen2; //try change dis/2 to dis 14/12/12
     Mlon_L3 = Idmat;
-    Mlon_L3(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[2]*gamma_tab[2])/IonEs*L3);
+    Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])/IonEs*L3);
 
     Mlon = Idmat;
 //    Mlon = prod(Mlon_L3, prod(Mlon_K2, prod(Mlon_L2, prod(Mlon_K1, Mlon_L1))));
@@ -1059,7 +1058,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             seg    = seg + 1;
             beta   = beta_tab[seg];
             gamma  = gamma_tab[seg];
-            k      = 2*M_PI/(beta*Lambda*1e3); // rad/mm
+            k      = 2*M_PI/(beta*Lambda);
             acc    = attribute[1];
             Mprob  = Idmat;
             Mprob(1, 1) = acc;
@@ -1082,12 +1081,14 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
 void GetCavMat(const int cavi, const int cavilabel, const double Rm,
                const std::string &thinlenLine,
                const double IonZ, const double IonEs, const double EfieldScl, const double IonFyi_s,
-               const double IonEk_s, const double IonLambda, value_mat &M)
+               const double IonEk_s, const double fRF, value_mat &M)
 {
     int    k, n;
-    double Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
+    double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
     double dis, IonW_s[3], IonFy_s[3], gamma_s[3], beta_s[3], IonK_s[3];
     double IonK[2], S1, T1, acc;
+
+    IonLambda  = c0/fRF*MtoMM;
 
     IonW_s[0]  = IonEk_s + IonEs;
     IonFy_s[0] = IonFyi_s;
@@ -1192,7 +1193,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-    GetCavMat(cavi, cavilabel, Rm, thinlenLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF*MtoMM, M);
+    GetCavMat(cavi, cavilabel, Rm, thinlenLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
@@ -1377,12 +1378,12 @@ void StateUnitFix(Machine &sim)
 
     for (j = 0; j < PS_Dim-2; j++)
         for (k = 0; k < PS_Dim-2; k++) {
-            if (j % 2 == 0) StatePtr->state(j, k) *= 1e-3;
-            if (k % 2 == 0) StatePtr->state(j, k) *= 1e-3;
+            if (j % 2 == 0) StatePtr->state(j, k) /= MtoMM;
+            if (k % 2 == 0) StatePtr->state(j, k) /= MtoMM;
         }
 
     for (j = 0; j < PS_Dim; j++)
-        StatePtr->state(j, PS_Dim-1) *= 1e6;
+        StatePtr->state(j, PS_Dim-1) *= MeVtoeV;
 
     std::cout << "\n";
     PrtMat(StatePtr->state);
