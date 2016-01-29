@@ -775,7 +775,7 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
             else
                 Param = 0e0;
 
-            if (true)
+            if (false)
                 printf("%8s %s %9.5f %9.5f %9.5f\n", Elem.c_str(), Name.c_str(), Length, Aper, Param);
 
             if (Elem == "drift") {
@@ -877,7 +877,7 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
 
 void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
                const double beta_tab[], const double gamma_tab[], const double Lambda,
-               const double ionZ, const double ionEs, const double ionFys[], const std::string &thinlenLine,
+               const double IonZ, const double IonEs, const double IonFys[], const std::string &thinlenLine,
                const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing.
@@ -889,11 +889,11 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     double      Ecen1, T_1, S_1, V0_1, k_1, L1;
     double      Ecen2, T_2, S_2, V0_2, k_2, L2;
     double      L3, position;
-    double      beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, acc, ionFy, length;
+    double      beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, acc, IonFy, length;
     value_mat   Idmat, matrix, Mlon_L1, Mlon_K1, Mlon_L2;
     value_mat   Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
 
-    const double ionA = 1e0;
+    const double IonA = 1e0;
 
     const double attribute[] {0e0, 0e0, 0e0};
 
@@ -920,9 +920,9 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     Mlon_L1 = Idmat;
     Mlon_K1 = Idmat;
     // Pay attention, original is -
-    Mlon_L1(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[0]*gamma_tab[0])/ionEs*L1);
+    Mlon_L1(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[0]*gamma_tab[0])/IonEs*L1);
     // Pay attention, original is -k1-k2
-    Mlon_K1(5, 4) = -ionZ*V0_1*T_1*sin(ionFys[0]+k_1*L1)-ionZ*V0_1*S_1*cos(ionFys[0]+k_1*L1);
+    Mlon_K1(5, 4) = -IonZ*V0_1*T_1*sin(IonFys[0]+k_1*L1)-IonZ*V0_1*S_1*cos(IonFys[0]+k_1*L1);
 
     Ecen2 = TTF_tab[6];
     T_2   = TTF_tab[7];
@@ -933,13 +933,13 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     Mlon_L2 = Idmat;
     Mlon_K2 = Idmat;
 
-    Mlon_L2(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[1]*gamma_tab[1])/ionEs*L2); //Problem is Here!!
-    Mlon_K2(5, 4) = -ionZ*V0_2*T_2*sin(ionFys[1]+k_2*Ecen2)-ionZ*V0_2*S_2*cos(ionFys[1]+k_2*Ecen2);
+    Mlon_L2(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[1]*gamma_tab[1])/IonEs*L2); //Problem is Here!!
+    Mlon_K2(5, 4) = -IonZ*V0_2*T_2*sin(IonFys[1]+k_2*Ecen2)-IonZ*V0_2*S_2*cos(IonFys[1]+k_2*Ecen2);
 
 
     L3 = dis - Ecen2; //try change dis/2 to dis 14/12/12
     Mlon_L3 = Idmat;
-    Mlon_L3(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[2]*gamma_tab[2])/ionEs*L3);
+    Mlon_L3(4, 5) = -2e0*M_PI/Lambda/1e3*(1e0/cube(beta_tab[2]*gamma_tab[2])/IonEs*L3);
 
     Mlon = Idmat;
 //    Mlon = prod(Mlon_L3, prod(Mlon_K2, prod(Mlon_L2, prod(Mlon_K1, Mlon_L1))));
@@ -956,7 +956,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     beta  = beta_tab[0];
     gamma = gamma_tab[0];
     seg   = 0;
-    ionFy = ionFys[0];
+    IonFy = IonFys[0];
     k     = ki_s;
     V0    = 0e0;
     T     = 0e0;
@@ -969,7 +969,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     while (true) {
 //    for(TlmNode fribnode:thinlenLine) {
         if (label == "drift") {
-            ionFy  = ionFy + k*length; // lenghth already in mm
+            IonFy  = IonFy + k*length; // lenghth already in mm
             Mprob  = Idmat;
             Mprob(0, 1) = length;
             Mprob(2, 3) = length;
@@ -978,8 +978,8 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            kfdx   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
-            kfdy   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            kfdx   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+            kfdy   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             Mprob = Idmat;
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -988,8 +988,8 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            kfdx   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
-            kfdy   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            kfdx   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+            kfdy   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             Mprob  = Idmat;
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -999,7 +999,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            dpy    = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy));
+            dpy    = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
             Mprob  = Idmat;
             Mprob(3, 6) = dpy;
             Mtrans = prod(Mprob, Mtrans);
@@ -1008,8 +1008,8 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            kfdx   = ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
-            kfdy   = -ionZ*V0/(beta*beta)/gamma/ionA/AU*(T*cos(ionFy)-S*sin(ionFy))/Rm;
+            kfdx   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+            kfdy   = -IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             Mprob  = Idmat;
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -1019,8 +1019,8 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            kfdx   = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2e0)-S*sin(ionFy+M_PI/2e0))/Rm;
-            kfdy   = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2e0)-S*sin(ionFy+M_PI/2e0))/Rm;
+            kfdx   = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+            kfdy   = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
             Mprob  = Idmat;
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -1030,7 +1030,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            dpy    = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2e0)-S*sin(ionFy+M_PI/2e0));
+            dpy    = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
             Mprob  = Idmat;
             Mprob(3, 6) = dpy;
             Mtrans = prod(Mprob, Mtrans);
@@ -1047,15 +1047,15 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
             V0     = attribute[1]*EfieldScl;
             T      = attribute[2];
             S      = attribute[3];
-            kfdx   = -mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2e0)-S*sin(ionFy+M_PI/2e0))/Rm;
-            kfdy   =  mu0*c0*ionZ*V0/beta/gamma/ionA/AU*(T*cos(ionFy+M_PI/2e0)-S*sin(ionFy+M_PI/2e0))/Rm;
+            kfdx   = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+            kfdy   =  mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
             Mprob  = Idmat;
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
             Mtrans = prod(Mprob, Mtrans);
         } else if (label == "AccGap") {
-            //ionFy = ionFy + ionZ*V0_1*k*(TTF_tab[2]*sin(ionFy)
-            //        + TTF_tab[4]*cos(ionFy))/2/((gamma-1)*ionEs); //TTF_tab[2]~Tp
+            //IonFy = IonFy + IonZ*V0_1*k*(TTF_tab[2]*sin(IonFy)
+            //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*IonEs); //TTF_tab[2]~Tp
             seg    = seg + 1;
             beta   = beta_tab[seg];
             gamma  = gamma_tab[seg];
