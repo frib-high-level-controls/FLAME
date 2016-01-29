@@ -605,7 +605,7 @@ double PwrSeries(const double beta,
     int    k;
     double f;
 
-    const int    n   = 9;
+    const int    n   = 10;
     const double a[] = {a0, a1, a2, a3, a4, a5, a6, a7, a8, a9};
 
     f = a[0];
@@ -739,18 +739,19 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 }
 
 
-void CavTLM(const int cavi, const std::string &thinlenLine,
-            const double beta_tab[], const double gamma_tab[],
-            const double IonK[], double &S, double &T, double &acc)
+void GetCavMatParams(const int cavi, const std::string &thinlenLine,
+                     const double beta_tab[], const double gamma_tab[],
+                     const double IonK[], double &S, double &T, double &Accel)
 {
+    // Evaluate time transit factors and acceleration.
     std::string       line, Elem, Name;
-    double            Length, Aper, Param, s;
+    double            s, Length, Aper, Param;
     std::stringstream str;
     std::fstream      inf;
 
     std::cout << "\n" << "CavityTLM:" << "\n";
 
-    T = 0e0, S = 0e0, acc = 0e0, s = 0e0;
+    T = 0e0, S = 0e0, Accel = 0e0;
 //    for (TlmNode fribnode:CavityTLM) {
 
     inf.open((HomeDir+thinlenLine).c_str(), std::ifstream::in);
@@ -759,6 +760,7 @@ void CavTLM(const int cavi, const std::string &thinlenLine,
         exit(1);
     }
 
+    s = CavData[cavi-1].s[0];
     while (getline(inf, line)) {
         if (line[0] == '%') {
             // Comment.
@@ -766,14 +768,15 @@ void CavTLM(const int cavi, const std::string &thinlenLine,
             str.str(line);
             str >> Elem >> Name >> Length >> Aper;
 
+            s += Length;
+
             if ((Elem != "drift") && (Elem != "AccGap"))
                 str >> Param;
             else
                 Param = 0e0;
 
-            std::cout << std::fixed << std::setprecision(5)
-                      << std::setw(8) << Elem << std::setw(8) << Name << std::setw(9) << Length
-                      << std::setw(9) << Aper << std::setw(9) << Param << "\n";
+            if (true)
+                printf("%8s %s %9.5f %9.5f %9.5f\n", Elem.c_str(), Name.c_str(), Length, Aper, Param);
 
             if (Elem == "drift") {
                 continue;
@@ -854,10 +857,10 @@ void CavTLM(const int cavi, const std::string &thinlenLine,
             } else if (Elem == "AccGap") {
                 if (s < 0e0) {
                     // First gap.
-                    acc = (beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
+                    Accel = (beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
                 } else {
                     // Second gap.
-                    acc = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
+                    Accel = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
                 }
             } else {
                 std::cerr << "*** CavityTLM: undef. multipole element " << Elem << "\n";
@@ -868,14 +871,14 @@ void CavTLM(const int cavi, const std::string &thinlenLine,
 
     std::cout << "\n" << "CavityTLM:" << "\n";
     std::cout << std::scientific << std::setprecision(10)
-              << "  T = " << T << ", S = " << S << ", acc = " << acc << "\n";
+              << "  T = " << T << ", S = " << S << ", Accel = " << Accel << "\n";
 }
 
 
-void CavityMatrix(const double dis, const double EfieldScl, const double TTF_tab[],
-                  const double beta_tab[], const double gamma_tab[], const double Lambda,
-                  const double ionZ, const double ionEs, const double ionFys[], const std::string &thinlenLine,
-                  const double Rm, value_mat &M)
+void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
+               const double beta_tab[], const double gamma_tab[], const double Lambda,
+               const double ionZ, const double ionEs, const double ionFys[], const std::string &thinlenLine,
+               const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
@@ -1063,7 +1066,7 @@ void CavityMatrix(const double dis, const double EfieldScl, const double TTF_tab
             Mprob(3, 3) = acc;
             Mtrans = prod(Mprob, Mtrans);
         } else {
-                std::cerr << "*** CavityMatrix: undef. multipole type " << label << "\n";
+                std::cerr << "*** GenCavMat: undef. multipole type " << label << "\n";
                 exit(1);
         }
     }
@@ -1076,7 +1079,8 @@ void CavityMatrix(const double dis, const double EfieldScl, const double TTF_tab
 }
 
 
-void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::string &thinlenLine,
+void GetCavMat(const int cavi, const int cavilabel, const double Rm,
+               const std::string &thinlenLine,
                const double IonZ, const double IonEs, const double EfieldScl, const double IonFyi_s,
                const double IonEk_s, const double IonLambda, value_mat &M)
 {
@@ -1115,7 +1119,7 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::
     IonK[1] = (IonK_s[1]+IonK_s[2])/2e0;
 
     if (false) {
-        printf("\n CavTLMMat:\n");
+        printf("\n GetCavMat:\n");
         printf("IonK  : %15.10f %15.10f %15.10f\n", IonK_s[0], IonK_s[1], IonK_s[2]);
         printf("IonK  : %15.10f %15.10f\n", IonK[0], IonK[1]);
         printf("beta  : %15.10f %15.10f %15.10f\n", beta_s[0], beta_s[1], beta_s[2]);
@@ -1128,16 +1132,16 @@ void CavTLMMat(const int cavi, const int cavilabel, const double Rm, const std::
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    CavTLM(cavi, thinlenLine, beta_s, gamma_s, IonK, S1, T1, acc);
+    GetCavMatParams(cavi, thinlenLine, beta_s, gamma_s, IonK, S1, T1, acc);
 
     exit(0);
 
-    CavityMatrix(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, "thinlenLine", Rm, M);
+    GenCavMat(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, "thinlenLine", Rm, M);
 }
 
 
-void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const double IonEs, double &IonW,
-               const double ChgState,
+void InitRFCav(const Config &conf, const int CavCnt,
+               const double IonZ, const double IonEs, double &IonW, const double ChgState,
                double &EkState, double &Fy_absState, double &beta, double &gamma)
 {
     std::string CavType, thinlenLine;
@@ -1188,7 +1192,7 @@ void InitRFCav(const Config &conf, const int CavCnt, const double IonZ, const do
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-    CavTLMMat(cavi, cavilabel, Rm, thinlenLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF*MtoMM, M);
+    GetCavMat(cavi, cavilabel, Rm, thinlenLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, c0/fRF*MtoMM, M);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
@@ -1239,7 +1243,7 @@ void InitLattice(Machine &sim, const double ChgState, const std::vector<double> 
 
     std::cout << "\n" << "InitLattice:" << "\n";
     std::cout << std::fixed << std::setprecision(5)
-              << "  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << state->IonEk
+              << "  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
               << ", IonW [Mev/u] = " << IonW << "\n";
 
     s = 0e0;
