@@ -5,7 +5,7 @@ sim_type = "MomentMatrix";
 
 # Global parameters.
 
-AMU = 931.49432e6; # Atomic mass unit [eV/c^2].
+AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
 
 IonZ  = 33.0/238.0;    # Charge state for U_238.
 IonEs = AMU;           # Nucleon mass [eV/u].
@@ -21,9 +21,9 @@ IonChargeStates = [33.0/238.0, 34.0/238.0];
 # Define phase-space coordinates.
 # Units are: [mm, rad, mm, rad, rad, MeV/u]
 
-BaryCenter = [-0.0007886, 1.08371e-05, 0.01337343, 6.678534e-06, -0.0001847729, 0.000309995];
+BaryCenter1 = [-0.0007886, 1.08371e-05, 0.01337343, 6.678534e-06, -0.0001847729, 0.000309995];
 
-#BaryCenter = [0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886, 0.0020601];
+BaryCenter2 = [0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886, 0.0020601];
 
 # Define beam envelope parameters.
 # Units are: [mm, rad, mm, rad, rad, MeV/u]
