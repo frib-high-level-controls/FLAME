@@ -41,7 +41,7 @@ extern int glps_debug;
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6
 // Sampling distance [m].
-# define SampleLambda C0/SampleFreq*MtoMM
+# define SampleLambda (C0/SampleFreq*MtoMM)
 
 // Phase space dimension.
 # define PS_Dim       6
