@@ -33,28 +33,28 @@ extern int glps_debug;
 // Global constansts.
 
 // Speed of light [m/s].
-# define c0           2.99792458e8
+# define C0           2.99792458e8
 // Atomic mass unit [eV/c^2].
 # define AU           931.49432e6/MeVtoeV
 // Vacuum permeability.
-# define mu0          4e0*M_PI*1e-7
+# define MU0          4e0*M_PI*1e-7
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6
 // Sampling distance [m].
-# define SampleLambda c0/SampleFreq*MtoMM
+# define SampleLambda C0/SampleFreq*MtoMM
 
 // Phase space dimension.
 # define PS_Dim       6
 
 // Global constansts and parameters.
 
-// MpoleLevel: 0 only include focusing and defocusing effects,
-//             1 include dipole terms,
-//             2 include quadrupole terms.
+// Mpultipole level: 0 only include focusing and defocusing effects,
+//                   1 include dipole terms,
+//                   2 include quadrupole terms.
 const int  MpoleLevel = 0;
 
 // Charge stripper parameters.
-const int    Stripper_n                 = 5;   // Number of charge states.
+const int    Stripper_n                 = 5;            // Number of charge states.
 const double Stripper_IonZ              = 78e0/238e0,
              Stripper_IonMass           = 238e0,
              Stripper_IonProton         = 92e0,
@@ -278,14 +278,14 @@ void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const 
 
     LongTab.set(LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
 
-    //            chargeAmount = fribstripper.chargeAmount_Baron;
+    // chargeAmount = fribstripper.chargeAmount_Baron;
 }
 
 
-void calGapModel(const double dis, const double IonW0, const double IonEs, const double IonFy0,
-                 const double k, const double IonZ, const double Lambda, const double Ecen,
-                 const double T, const double S, const double Tp, const double Sp, const double V0,
-                 double &IonW_f, double &IonFy_f)
+void EvalGapModel(const double dis, const double IonW0, const double IonEs, const double IonFy0,
+                  const double k, const double IonZ, const double Lambda, const double Ecen,
+                  const double T, const double S, const double Tp, const double Sp, const double V0,
+                  double &IonW_f, double &IonFy_f)
 {
     double Iongamma_f, IonBeta_f, k_f;
 
@@ -343,7 +343,7 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
            dz  = dis/(n-1),
            IonLambda, IonK, IonFylast, IonGamma, IonBeta;
 
-    IonLambda = c0/fRF*MtoMM;
+    IonLambda = C0/fRF*MtoMM;
 
     IonFy = IonFy0;
     IonK  = IonK0;
@@ -384,7 +384,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 
     fRF       = conf.get<double>("f");
     multip    = fRF/SampleFreq;
-    caviIonK  = 2e0*M_PI*fRF/(IonBeta*c0)/MtoMM;
+    caviIonK  = 2e0*M_PI*fRF/(IonBeta*C0)/MtoMM;
     IonFys    = conf.get<double>("phi")*M_PI/180e0; // Synchrotron phase [rad].
     EfieldScl = conf.get<double>("scl_fac");       // Electric field scale factor.
 
@@ -398,7 +398,8 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
                   << "CavPhase: " << std::setw(3) << CavPhases.size()
                   << std::setw(18) << CavPhases[CavPhases.size()-1] << "\n";
 
-    // Evaluate change of reference particle kinetic energy, absolute phase, beta, and gamma.
+    // For the reference particle, evaluate the change of:
+    // kinetic energy, absolute phase, beta, and gamma.
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
                 IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
     IonW       = IonW_o;
@@ -739,7 +740,7 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 }
 
 
-void GetCavMatParams(const int cavi, const std::string &thinlenLine,
+void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
                      const double beta_tab[], const double gamma_tab[],
                      const double IonK[], double &S, double &T, double &Accel)
 {
@@ -749,15 +750,13 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
     std::stringstream str;
     std::fstream      inf;
 
-    const bool prt = true;
+    const bool prt = false;
 
-    if (prt) printf("\nCavityTLM:\n");
+    if (prt) printf("\nGetCavMatParams:\n");
 
-//    for (TlmNode fribnode:CavityTLM) {
-
-    inf.open((HomeDir+thinlenLine).c_str(), std::ifstream::in);
+    inf.open((HomeDir+CavTLMLine).c_str(), std::ifstream::in);
     if (!inf.is_open()) {
-        std::cerr << "*** CavityTLM: failed to open " << thinlenLine << "\n";
+        std::cerr << "*** GetCavMatParams: failed to open " << CavTLMLine << "\n";
         exit(1);
     }
 
@@ -777,8 +776,8 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
                 Param = 0e0;
 
             if (prt)
-                printf("%8s %s %9.5f %9.5f %9.5f",
-                       Elem.c_str(), Name.c_str(), Length, Aper, Param);
+                printf("%9.5f %8s %8s %9.5f %9.5f %9.5f",
+                       s, Elem.c_str(), Name.c_str(), Length, Aper, Param);
 
             if (Elem == "drift") {
                 T = 0e0, S = 0e0, Accel = 0e0;
@@ -865,32 +864,35 @@ void GetCavMatParams(const int cavi, const std::string &thinlenLine,
                     Accel = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
                 }
             } else {
-                std::cerr << "*** CavityTLM: undef. multipole element " << Elem << "\n";
+                std::cerr << "*** GetCavMatParams: undef. multipole element " << Elem << "\n";
                 exit(1);
             }
             if (prt) printf("%18.10e %18.10e %18.10e\n", T, S, Accel);
         }
     }
+    inf.close();
 }
 
 
-void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
+void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                const double beta_tab[], const double gamma_tab[], const double Lambda,
-               const double IonZ, const double IonEs, const double IonFys[], const std::string &thinlenLine,
+               const double IonZ, const double IonEs, const double IonFys[], const std::string &CavTLMLine,
                const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
 
-    std::string label;
-    int         seg, multipoleLevel;
-    double      ki_s, kc_s, kf_s;
-    double      Ecen1, T_1, S_1, V0_1, k_1, L1;
-    double      Ecen2, T_2, S_2, V0_2, k_2, L2;
-    double      L3, position;
-    double      beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, acc, IonFy, length;
-    value_mat   Idmat, matrix, Mlon_L1, Mlon_K1, Mlon_L2;
-    value_mat   Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
+    std::string       line, Elem, Name;
+    int               seg;
+    double            Length, Aper, Param, s;
+    double            ki_s, kc_s, kf_s;
+    double            Ecen1, T_1, S_1, V0_1, k_1, L1;
+    double            Ecen2, T_2, S_2, V0_2, k_2, L2, L3;
+    double            beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy, length;
+    value_mat         Idmat, matrix, Mlon_L1, Mlon_K1, Mlon_L2;
+    value_mat         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
+    std::stringstream str;
+    std::fstream      inf;
 
     const double IonA = 1e0;
 
@@ -900,6 +902,12 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
 
     Idmat = boost::numeric::ublas::identity_matrix<double>(6);
 
+    inf.open((HomeDir+CavTLMLine).c_str(), std::ifstream::in);
+    if (!inf.is_open()) {
+        std::cerr << "*** GenCavMat: failed to open " << CavTLMLine << "\n";
+        exit(1);
+    }
+
     M = Idmat;
 
     ki_s = 2e0*M_PI/(beta_tab[0]*Lambda);
@@ -907,7 +915,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     kf_s = 2e0*M_PI/(beta_tab[2]*Lambda);
 
     // Longitudinal model: Drift-Kick-Drift, dis: total lenghth centered at 0,
-    // Ecen1 & Ecen2: Electric Center position where acc kick applies, Ecen1 < 0
+    // Ecen1 & Ecen2: Electric Center position where accel kick applies, Ecen1 < 0
     // TTFtab: 2*6 vector, Ecen, T Tp S Sp, V0;
 
     Ecen1 = TTF_tab[0];
@@ -915,7 +923,8 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     S_1   = TTF_tab[3];
     V0_1  = TTF_tab[5];
     k_1   = 0.5*(ki_s+kc_s);
-    L1    = dis + Ecen1; //try change dis/2 to dis 14/12/12
+    L1    = dis + Ecen1;     //try change dis/2 to dis 14/12/12
+
     Mlon_L1 = Idmat;
     Mlon_K1 = Idmat;
     // Pay attention, original is -
@@ -929,14 +938,15 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
     V0_2  = TTF_tab[11];
     k_2   = 0.5*(kc_s+kf_s);
     L2    = Ecen2 - Ecen1;
+
     Mlon_L2 = Idmat;
     Mlon_K2 = Idmat;
 
     Mlon_L2(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[1]*gamma_tab[1])/IonEs*L2); //Problem is Here!!
     Mlon_K2(5, 4) = -IonZ*V0_2*T_2*sin(IonFys[1]+k_2*Ecen2)-IonZ*V0_2*S_2*cos(IonFys[1]+k_2*Ecen2);
 
-
     L3 = dis - Ecen2; //try change dis/2 to dis 14/12/12
+
     Mlon_L3 = Idmat;
     Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])/IonEs*L3);
 
@@ -952,123 +962,151 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
 
     Mtrans = Idmat;
     Mprob  = Idmat;
-    beta  = beta_tab[0];
-    gamma = gamma_tab[0];
-    seg   = 0;
-    IonFy = IonFys[0];
-    k     = ki_s;
-    V0    = 0e0;
-    T     = 0e0;
-    S     = 0e0;
-    kfdx  = 0e0;
-    kfdy  = 0e0;
-    dpy   = 0e0;
+    beta   = beta_tab[0];
+    gamma  = gamma_tab[0];
+    seg    = 0;
+    IonFy  = IonFys[0];
+    k      = ki_s;
 
-    length = 0e0; label = ""; multipoleLevel = 0; position = 0e0;
-    while (true) {
-//    for(TlmNode fribnode:thinlenLine) {
-        if (label == "drift") {
-            IonFy  = IonFy + k*length; // lenghth already in mm
-            Mprob  = Idmat;
-            Mprob(0, 1) = length;
-            Mprob(2, 3) = length;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "EFocus1") {
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            kfdx   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-            kfdy   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-            Mprob = Idmat;
-            Mprob(1, 0) = kfdx;
-            Mprob(3, 2) = kfdy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "EFocus2") {
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            kfdx   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-            kfdy   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-            Mprob  = Idmat;
-            Mprob(1, 0) = kfdx;
-            Mprob(3, 2) = kfdy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "EDipole") {
-            if (multipoleLevel < 1) break;
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            dpy    = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
-            Mprob  = Idmat;
-            Mprob(3, 6) = dpy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "EQuad") {
-            if (multipoleLevel < 2) break;
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            kfdx   = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-            kfdy   = -IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-            Mprob  = Idmat;
-            Mprob(1, 0) = kfdx;
-            Mprob(3, 2) = kfdy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "HMono") {
-            if (multipoleLevel < 2) break;
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            kfdx   = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-            kfdy   = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-            Mprob  = Idmat;
-            Mprob(1, 0) = kfdx;
-            Mprob(3, 2) = kfdy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "HDipole") {
-            if (multipoleLevel < 1) break;
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            dpy    = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
-            Mprob  = Idmat;
-            Mprob(3, 6) = dpy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "HQuad") {
-            if (multipoleLevel < 2) break;
-            if (position < 0e0) {
-                // First gap.
-                beta  = (beta_tab[0]+beta_tab[1])/2e0;
-                gamma = (gamma_tab[0]+gamma_tab[1])/2e0;
-            } else {
-                beta = (beta_tab[1]+beta_tab[2])/2e0;
-                gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
-            }
-            V0     = attribute[1]*EfieldScl;
-            T      = attribute[2];
-            S      = attribute[3];
-            kfdx   = -mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-            kfdy   =  mu0*c0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-            Mprob  = Idmat;
-            Mprob(1, 0) = kfdx;
-            Mprob(3, 2) = kfdy;
-            Mtrans = prod(Mprob, Mtrans);
-        } else if (label == "AccGap") {
-            //IonFy = IonFy + IonZ*V0_1*k*(TTF_tab[2]*sin(IonFy)
-            //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*IonEs); //TTF_tab[2]~Tp
-            seg    = seg + 1;
-            beta   = beta_tab[seg];
-            gamma  = gamma_tab[seg];
-            k      = 2*M_PI/(beta*Lambda);
-            acc    = attribute[1];
-            Mprob  = Idmat;
-            Mprob(1, 1) = acc;
-            Mprob(3, 3) = acc;
-            Mtrans = prod(Mprob, Mtrans);
+    V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
+
+    s = CavData[cavi-1].s[0];
+    while (getline(inf, line)) {
+        if (line[0] == '%') {
+            // Comment.
         } else {
-                std::cerr << "*** GenCavMat: undef. multipole type " << label << "\n";
+            str.str(line);
+            str >> Elem >> Name >> Length >> Aper;
+
+            s += Length;
+
+            if (true)
+                printf("%9.5f %8s %8s %9.5f %9.5f %9.5f\n",
+                       s, Elem.c_str(), Name.c_str(), Length, Aper, Param);
+
+            if ((Elem != "drift") && (Elem != "AccGap"))
+                str >> Param;
+            else
+                Param = 0e0;
+
+            if (Elem == "drift") {
+                IonFy  = IonFy + k*length; // lenghth already in mm
+
+                Mprob       = Idmat;
+                Mprob(0, 1) = length;
+                Mprob(2, 3) = length;
+                Mtrans      = prod(Mprob, Mtrans);
+            } else if (Elem == "EFocus1") {
+                V0   = attribute[1]*EfieldScl;
+                T    = attribute[2];
+                S    = attribute[3];
+                kfdx = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+                kfdy = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+
+                Mprob       = Idmat;
+                Mprob(1, 0) = kfdx;
+                Mprob(3, 2) = kfdy;
+                Mtrans      = prod(Mprob, Mtrans);
+            } else if (Elem == "EFocus2") {
+                V0   = attribute[1]*EfieldScl;
+                T    = attribute[2];
+                S    = attribute[3];
+                kfdx = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+                kfdy = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+
+                Mprob       = Idmat;
+                Mprob(1, 0) = kfdx;
+                Mprob(3, 2) = kfdy;
+                Mtrans      = prod(Mprob, Mtrans);
+            } else if (Elem == "EDipole") {
+                if (MpoleLevel >= 1) {
+                    V0  = attribute[1]*EfieldScl;
+                    T   = attribute[2];
+                    S   = attribute[3];
+                    dpy = IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
+
+                    Mprob       = Idmat;
+                    Mprob(3, 6) = dpy;
+                    Mtrans      = prod(Mprob, Mtrans);
+                }
+            } else if (Elem == "EQuad") {
+                if (MpoleLevel >= 2) {
+                    V0   = attribute[1]*EfieldScl;
+                    T    = attribute[2];
+                    S    = attribute[3];
+                    kfdx =  IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+                    kfdy = -IonZ*V0/(beta*beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+
+                    Mprob       = Idmat;
+                    Mprob(1, 0) = kfdx;
+                    Mprob(3, 2) = kfdy;
+                    Mtrans      = prod(Mprob, Mtrans);
+                }
+            } else if (Elem == "HMono") {
+                if (MpoleLevel >= 2) {
+                    V0   = attribute[1]*EfieldScl;
+                    T    = attribute[2];
+                    S    = attribute[3];
+                    kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+                    kfdy = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+
+                    Mprob       = Idmat;
+                    Mprob(1, 0) = kfdx;
+                    Mprob(3, 2) = kfdy;
+                    Mtrans      = prod(Mprob, Mtrans);
+                }
+            } else if (Elem == "HDipole") {
+                if (MpoleLevel >= 1) {
+                    V0  = attribute[1]*EfieldScl;
+                    T   = attribute[2];
+                    S   = attribute[3];
+                    dpy = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
+
+                    Mprob       = Idmat;
+                    Mprob(3, 6) = dpy;
+                    Mtrans      = prod(Mprob, Mtrans);
+                }
+            } else if (Elem == "HQuad") {
+                if (MpoleLevel >= 2) {
+                    if (s < 0e0) {
+                        // First gap.
+                        beta  = (beta_tab[0]+beta_tab[1])/2e0;
+                        gamma = (gamma_tab[0]+gamma_tab[1])/2e0;
+                    } else {
+                        beta = (beta_tab[1]+beta_tab[2])/2e0;
+                        gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
+                    }
+                    V0   = attribute[1]*EfieldScl;
+                    T    = attribute[2];
+                    S    = attribute[3];
+                    kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+                    kfdy =  MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+
+                    Mprob       = Idmat;
+                    Mprob(1, 0) = kfdx;
+                    Mprob(3, 2) = kfdy;
+                    Mtrans      = prod(Mprob, Mtrans);
+                }
+            } else if (Elem == "AccGap") {
+                //IonFy = IonFy + IonZ*V0_1*k*(TTF_tab[2]*sin(IonFy)
+                //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*IonEs); //TTF_tab[2]~Tp
+                seg    = seg + 1;
+                beta   = beta_tab[seg];
+                gamma  = gamma_tab[seg];
+                k      = 2*M_PI/(beta*Lambda);
+                Accel    = attribute[1];
+
+                Mprob       = Idmat;
+                Mprob(1, 1) = Accel;
+                Mprob(3, 3) = Accel;
+                Mtrans      = prod(Mprob, Mtrans);
+            } else {
+                std::cerr << "*** GenCavMat: undef. multipole type " << Elem << "\n";
                 exit(1);
+            }
         }
     }
+    inf.close();
 
     M       = Mtrans;
     M(4, 4) = Mlon(4, 4);
@@ -1079,7 +1117,7 @@ void GenCavMat(const double dis, const double EfieldScl, const double TTF_tab[],
 
 
 void GetCavMat(const int cavi, const int cavilabel, const double Rm,
-               const std::string &thinlenLine,
+               const std::string &CavTLMLine,
                const double IonZ, const double IonEs, const double EfieldScl, const double IonFyi_s,
                const double IonEk_s, const double fRF, value_mat &M)
 {
@@ -1088,7 +1126,7 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     double dis, IonW_s[3], IonFy_s[3], gamma_s[3], beta_s[3], IonK_s[3];
     double IonK[2], S1, T1, acc;
 
-    IonLambda  = c0/fRF*MtoMM;
+    IonLambda  = C0/fRF*MtoMM;
 
     IonW_s[0]  = IonEk_s + IonEs;
     IonFy_s[0] = IonFyi_s;
@@ -1100,14 +1138,14 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     dis = (CavData[cavi-1].s[n-1]-CavData[cavi-1].s[0])/2e0;
 
     TransFacts(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
-    calGapModel(dis, IonW_s[0], IonEs, IonFy_s[0], IonK_s[0], IonZ, IonLambda,
+    EvalGapModel(dis, IonW_s[0], IonEs, IonFy_s[0], IonK_s[0], IonZ, IonLambda,
                 Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[1], IonFy_s[1]);
     gamma_s[1] = IonW_s[1]/IonEs;
     beta_s[1]  = sqrt(1e0-1e0/sqr(gamma_s[1]));
     IonK_s[1]  = 2e0*M_PI/(beta_s[1]*IonLambda);
 
     TransFacts(cavilabel, beta_s[1], 2, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
-    calGapModel(dis, IonW_s[1], IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLambda,
+    EvalGapModel(dis, IonW_s[1], IonEs, IonFy_s[1], IonK_s[1], IonZ, IonLambda,
                 Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[2], IonFy_s[2]);
     gamma_s[2] = IonW_s[2]/IonEs;
     beta_s[2]  = sqrt(1e0-1e0/sqr(gamma_s[2]));
@@ -1133,11 +1171,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    GetCavMatParams(cavi, thinlenLine, beta_s, gamma_s, IonK, S1, T1, acc);
-
-    exit(0);
-
-    GenCavMat(dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, "thinlenLine", Rm, M);
+    GetCavMatParams(cavi, CavTLMLine, beta_s, gamma_s, IonK, S1, T1, acc);
+    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMLine, Rm, M);
 }
 
 
@@ -1145,7 +1180,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
                const double IonZ, const double IonEs, double &IonW, const double ChgState,
                double &EkState, double &Fy_absState, double &beta, double &gamma)
 {
-    std::string CavType, thinlenLine;
+    std::string CavType, CavTLMLine;
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
     double      IonW_o, IonFy_o, accIonW;
@@ -1153,17 +1188,17 @@ void InitRFCav(const Config &conf, const int CavCnt,
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
-        cavi        = 1;
-        cavilabel   = 41;
-        multip      = 1;
-        Rm          = 17e0;
-        thinlenLine = "/data/Multipole41/thinlenlon_41.txt";
+        cavi       = 1;
+        cavilabel  = 41;
+        multip     = 1;
+        Rm         = 17e0;
+        CavTLMLine = "/data/Multipole41/thinlenlon_41.txt";
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
-        cavi        = 2;
-        cavilabel   = 85;
-        multip      = 1;
-        Rm          = 17e0;
-        thinlenLine = "/data/Multipole85/thinlenlon_85.txt";
+        cavi       = 2;
+        cavilabel  = 85;
+        multip     = 1;
+        Rm         = 17e0;
+        CavTLMLine = "/data/Multipole85/thinlenlon_85.txt";
     } else {
         std::cerr << "*** InitLong: undef. cavity type: " << CavType << "\n";
         exit(1);
@@ -1176,8 +1211,8 @@ void InitRFCav(const Config &conf, const int CavCnt,
     avebeta    = beta;
     avegamma   = gamma;
     fRF        = conf.get<double>("f");
-    CaviIonK   = 2e0*M_PI*fRF/(beta*c0*MtoMM);
-    SampleIonK = 2e0*M_PI/(beta*c0/SampleFreq*MtoMM);
+    CaviIonK   = 2e0*M_PI*fRF/(beta*C0*MtoMM);
+    SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");   // Electric field scale factor.
 
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, ChgState, IonEs,
@@ -1193,7 +1228,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-    GetCavMat(cavi, cavilabel, Rm, thinlenLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
+    GetCavMat(cavi, cavilabel, Rm, CavTLMLine, ChgState, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
 
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
@@ -1284,7 +1319,7 @@ void InitLattice(Machine &sim, const double ChgState, const std::vector<double> 
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
             Fy_absState += SampleionK*L;
-            Brho = beta*(EkState+IonEs)/(c0*IonZ);
+            Brho = beta*(EkState+IonEs)/(C0*IonZ);
             // Scale B field.
             K = conf.get<double>("B")/(2e0*Brho);
             size_t elem_index = ElemPtr->index;
