@@ -11,7 +11,7 @@ class testBasic(unittest.TestCase):
     self.M = Machine({
       'sim_type':'Vector',
       'elements':[
-        {'name':'elem0', 'type':'drift', 'L':1.0},
+        {'name':'elem0', 'type':'drift', 'L':1.0e-3},
       ],
     })
 
@@ -49,7 +49,7 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
     S.state[:] = [1, 1e-3, 0, 0, 0, 0]
     assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
 
-    self.M.reconfigure(0, {"L": 2.0})
+    self.M.reconfigure(0, {"L": 2.0e-3})
 
     self.M.propagate(S)
 
@@ -86,8 +86,8 @@ class TestMatrix(unittest.TestCase):
     self.M = Machine({
       'sim_type':'TransferMatrix',
       'elements':[
-        {'name':'elem0', 'type':'drift', 'L':1.0},
-        {'name':'elem1', 'type':'drift', 'L':1.0},
+        {'name':'elem0', 'type':'drift', 'L':1.0e-3},
+        {'name':'elem1', 'type':'drift', 'L':1.0e-3},
       ],
     })
 
@@ -123,7 +123,7 @@ class TestGlobal(unittest.TestCase):
         "Test global scope when parsing"
         M = Machine(b"""
 sim_type = "Vector";
-L = 2.0;
+L = 2.0e-3;
 elem0: drift;
 elem1: drift;
 elem2: drift;

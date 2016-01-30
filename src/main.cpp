@@ -211,21 +211,6 @@ void PrtLat(const Machine &sim)
 }
 
 
-//Machine::propagate_jb(StateBase* S, size_t start, size_t max) const
-//{
-//    const size_t nelem = p_elements.size();
-
-//    for(size_t i=start; S->next_elem<nelem && i<max; i++)
-//    {
-//        ElementVoid* E = p_elements[S->next_elem];
-//        S->next_elem++;
-//        E->advance(*S);
-//        if(p_trace)
-//            (*p_trace) << "After "<< i << " " << *S;
-//    }
-//}
-
-
 double calGauss(double in, const double Q_ave, const double d)
 {
     // Gaussian distribution.
@@ -741,12 +726,11 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 
 
 void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
-                     const double beta_tab[], const double gamma_tab[],
-                     const double IonK[], double &S, double &T, double &Accel)
+                     const double beta_tab[], const double gamma_tab[], const double IonK[])
 {
     // Evaluate time transit factors and acceleration.
     std::string       line, Elem, Name;
-    double            s, Length, Aper, Param;
+    double            s, Length, Aper, Efield, T, S, Accel;
     std::stringstream str;
     std::fstream      inf;
 
@@ -771,13 +755,13 @@ void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
             s += Length;
 
             if ((Elem != "drift") && (Elem != "AccGap"))
-                str >> Param;
+                str >> Efield;
             else
-                Param = 0e0;
+                Efield = 0e0;
 
             if (prt)
                 printf("%9.5f %8s %8s %9.5f %9.5f %9.5f",
-                       s, Elem.c_str(), Name.c_str(), Length, Aper, Param);
+                       s, Elem.c_str(), Name.c_str(), Length, Aper, Efield);
 
             if (Elem == "drift") {
                 T = 0e0, S = 0e0, Accel = 0e0;
@@ -884,11 +868,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     std::string       line, Elem, Name;
     int               seg;
-    double            Length, Aper, Param, s;
-    double            ki_s, kc_s, kf_s;
-    double            Ecen1, T_1, S_1, V0_1, k_1, L1;
-    double            Ecen2, T_2, S_2, V0_2, k_2, L2, L3;
-    double            beta, gamma, k, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy, length;
+    double            Length, Aper, Efield, s, k_s[3];
+    double            Ecens[2], Ts[2], Ss[2], V0s[2], ks[2], L1, L2, L3;
+    double            beta, gamma, kfac, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy;
     value_mat         Idmat, matrix, Mlon_L1, Mlon_K1, Mlon_L2;
     value_mat         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
     std::stringstream str;
@@ -910,48 +892,47 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     M = Idmat;
 
-    ki_s = 2e0*M_PI/(beta_tab[0]*Lambda);
-    kc_s = 2e0*M_PI/(beta_tab[1]*Lambda);
-    kf_s = 2e0*M_PI/(beta_tab[2]*Lambda);
+    k_s[0] = 2e0*M_PI/(beta_tab[0]*Lambda);
+    k_s[1] = 2e0*M_PI/(beta_tab[1]*Lambda);
+    k_s[2] = 2e0*M_PI/(beta_tab[2]*Lambda);
 
     // Longitudinal model: Drift-Kick-Drift, dis: total lenghth centered at 0,
-    // Ecen1 & Ecen2: Electric Center position where accel kick applies, Ecen1 < 0
-    // TTFtab: 2*6 vector, Ecen, T Tp S Sp, V0;
+    // Ecens[0] & Ecens[1]: Electric Center position where accel kick applies, Ecens[0] < 0
+    // TTFtab: 2*6 vector, Ecens, T Tp S Sp, V0;
 
-    Ecen1 = TTF_tab[0];
-    T_1   = TTF_tab[1];
-    S_1   = TTF_tab[3];
-    V0_1  = TTF_tab[5];
-    k_1   = 0.5*(ki_s+kc_s);
-    L1    = dis + Ecen1;     //try change dis/2 to dis 14/12/12
+    Ecens[0] = TTF_tab[0];
+    Ts[0]    = TTF_tab[1];
+    Ss[0]    = TTF_tab[3];
+    V0s[0]   = TTF_tab[5];
+    ks[0]    = 0.5*(k_s[0]+k_s[1]);
+    L1       = dis + Ecens[0];       //try change dis/2 to dis 14/12/12
 
     Mlon_L1 = Idmat;
     Mlon_K1 = Idmat;
     // Pay attention, original is -
     Mlon_L1(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[0]*gamma_tab[0])/IonEs*L1);
     // Pay attention, original is -k1-k2
-    Mlon_K1(5, 4) = -IonZ*V0_1*T_1*sin(IonFys[0]+k_1*L1)-IonZ*V0_1*S_1*cos(IonFys[0]+k_1*L1);
+    Mlon_K1(5, 4) = -IonZ*V0s[0]*Ts[0]*sin(IonFys[0]+ks[0]*L1)-IonZ*V0s[0]*Ss[0]*cos(IonFys[0]+ks[0]*L1);
 
-    Ecen2 = TTF_tab[6];
-    T_2   = TTF_tab[7];
-    S_2   = TTF_tab[9];
-    V0_2  = TTF_tab[11];
-    k_2   = 0.5*(kc_s+kf_s);
-    L2    = Ecen2 - Ecen1;
+    Ecens[1] = TTF_tab[6];
+    Ts[1]    = TTF_tab[7];
+    Ss[1]    = TTF_tab[9];
+    V0s[1]   = TTF_tab[11];
+    ks[1]    = 0.5*(k_s[1]+k_s[2]);
+    L2      = Ecens[1] - Ecens[0];
 
     Mlon_L2 = Idmat;
     Mlon_K2 = Idmat;
 
     Mlon_L2(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[1]*gamma_tab[1])/IonEs*L2); //Problem is Here!!
-    Mlon_K2(5, 4) = -IonZ*V0_2*T_2*sin(IonFys[1]+k_2*Ecen2)-IonZ*V0_2*S_2*cos(IonFys[1]+k_2*Ecen2);
+    Mlon_K2(5, 4) = -IonZ*V0s[1]*Ts[1]*sin(IonFys[1]+ks[1]*Ecens[1])-IonZ*V0s[1]*Ss[1]*cos(IonFys[1]+ks[1]*Ecens[1]);
 
-    L3 = dis - Ecen2; //try change dis/2 to dis 14/12/12
+    L3 = dis - Ecens[1]; //try change dis/2 to dis 14/12/12
 
-    Mlon_L3 = Idmat;
+    Mlon_L3       = Idmat;
     Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])/IonEs*L3);
 
     Mlon = Idmat;
-//    Mlon = prod(Mlon_L3, prod(Mlon_K2, prod(Mlon_L2, prod(Mlon_K1, Mlon_L1))));
     Mlon = prod(Mlon_K1, Mlon_L1);
     Mlon = prod(Mlon_L2, Mlon);
     Mlon = prod(Mlon_K2, Mlon);
@@ -960,13 +941,14 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
     // Transverse model
     // Drift-FD-Drift-LongiKick-Drift-FD-Drift-0-Drift-FD-Drift-LongiKick-Drift-FD-Drift
 
+    seg    = 0;
+
     Mtrans = Idmat;
     Mprob  = Idmat;
     beta   = beta_tab[0];
     gamma  = gamma_tab[0];
-    seg    = 0;
     IonFy  = IonFys[0];
-    k      = ki_s;
+    kfac   = k_s[0];
 
     V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
 
@@ -980,21 +962,21 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
             s += Length;
 
+            if ((Elem != "drift") && (Elem != "AccGap"))
+                str >> Efield;
+            else
+                Efield = 0e0;
+
             if (true)
                 printf("%9.5f %8s %8s %9.5f %9.5f %9.5f\n",
-                       s, Elem.c_str(), Name.c_str(), Length, Aper, Param);
-
-            if ((Elem != "drift") && (Elem != "AccGap"))
-                str >> Param;
-            else
-                Param = 0e0;
+                       s, Elem.c_str(), Name.c_str(), Length, Aper, Efield);
 
             if (Elem == "drift") {
-                IonFy  = IonFy + k*length; // lenghth already in mm
+                IonFy  = IonFy + kfac*Length;
 
                 Mprob       = Idmat;
-                Mprob(0, 1) = length;
-                Mprob(2, 3) = length;
+                Mprob(0, 1) = Length;
+                Mprob(2, 3) = Length;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus1") {
                 V0   = attribute[1]*EfieldScl;
@@ -1073,7 +1055,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                         beta  = (beta_tab[0]+beta_tab[1])/2e0;
                         gamma = (gamma_tab[0]+gamma_tab[1])/2e0;
                     } else {
-                        beta = (beta_tab[1]+beta_tab[2])/2e0;
+                        beta  = (beta_tab[1]+beta_tab[2])/2e0;
                         gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
                     }
                     V0   = attribute[1]*EfieldScl;
@@ -1088,13 +1070,13 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     Mtrans      = prod(Mprob, Mtrans);
                 }
             } else if (Elem == "AccGap") {
-                //IonFy = IonFy + IonZ*V0_1*k*(TTF_tab[2]*sin(IonFy)
+                //IonFy = IonFy + IonZ*V0s[0]*kfac*(TTF_tab[2]*sin(IonFy)
                 //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*IonEs); //TTF_tab[2]~Tp
                 seg    = seg + 1;
                 beta   = beta_tab[seg];
                 gamma  = gamma_tab[seg];
-                k      = 2*M_PI/(beta*Lambda);
-                Accel    = attribute[1];
+                kfac   = 2e0*M_PI/(beta*Lambda);
+                Accel  = attribute[1];
 
                 Mprob       = Idmat;
                 Mprob(1, 1) = Accel;
@@ -1124,7 +1106,7 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     int    k, n;
     double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
     double dis, IonW_s[3], IonFy_s[3], gamma_s[3], beta_s[3], IonK_s[3];
-    double IonK[2], S1, T1, acc;
+    double IonK[2], S1, T1, Accel;
 
     IonLambda  = C0/fRF*MtoMM;
 
@@ -1171,8 +1153,10 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    GetCavMatParams(cavi, CavTLMLine, beta_s, gamma_s, IonK, S1, T1, acc);
+    GetCavMatParams(cavi, CavTLMLine, beta_s, gamma_s, IonK);
     GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMLine, Rm, M);
+
+    PrtMat(M);
 }
 
 
@@ -1423,6 +1407,21 @@ void StateUnitFix(Machine &sim)
     std::cout << "\n";
     PrtMat(StatePtr->state);
 }
+
+
+//Machine::propagate_jb(StateBase* S, size_t start, size_t max) const
+//{
+//    const size_t nelem = p_elements.size();
+
+//    for(size_t i=start; S->next_elem<nelem && i<max; i++)
+//    {
+//        ElementVoid* E = p_elements[S->next_elem];
+//        S->next_elem++;
+//        E->advance(*S);
+//        if(p_trace)
+//            (*p_trace) << "After "<< i << " " << *S;
+//    }
+//}
 
 
 int main(int argc, char *argv[])
