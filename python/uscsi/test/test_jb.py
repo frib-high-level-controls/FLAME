@@ -301,40 +301,40 @@ class testBasic(unittest.TestCase):
     # Propagate a state matrix through a lattice defined by a lattice file.
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'moment_jb.lat'), 'r')
-    self.M = Machine(inf.read())
+    with open(os.path.join(datadir, 'moment_jb.lat'), 'rb') as inf:
+        self.M = Machine(inf.read())
 
-    S = self.M.allocState({})
+        S = self.M.allocState({})
 
-    self.M.propagate(S)
-#    print_state(S)
+        self.M.propagate(S)
+        #    print_state(S)
 
-#    assert_aequal(S.state, [
-#      [ 2.06834162e-01, -2.65104858e+01,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
-#      [-2.65104858e+01,  3.39801632e+03,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
-#      [ 0.00000000e+00,  0.00000000e+00,  9.13155916e-01,  4.95249132e-01,  0.00000000e+00,  0.00000000e+00],
-#      [ 0.00000000e+00,  0.00000000e+00,  4.95249132e-01,  4.00010224e-01,  0.00000000e+00,  0.00000000e+00],
-#      [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  2.00000000e-06,  0.00000000e+00],
-#      [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  6.00000000e-01]
-#    ], decimal=6)
+        #    assert_aequal(S.state, [
+        #      [ 2.06834162e-01, -2.65104858e+01,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+        #      [-2.65104858e+01,  3.39801632e+03,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+        #      [ 0.00000000e+00,  0.00000000e+00,  9.13155916e-01,  4.95249132e-01,  0.00000000e+00,  0.00000000e+00],
+        #      [ 0.00000000e+00,  0.00000000e+00,  4.95249132e-01,  4.00010224e-01,  0.00000000e+00,  0.00000000e+00],
+        #      [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  2.00000000e-06,  0.00000000e+00],
+        #      [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  6.00000000e-01]
+        #    ], decimal=6)
 
   def test_parse(self):
     "Test global scope when parsing"
     # Propagate a state matrix through a lattice defined by a lattice file.
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'moment_jb_2.lat'), 'r')
-    self.M = Machine(inf.read())
-#    print self.M
+    with open(os.path.join(datadir, 'moment_jb_2.lat'), 'rb') as inf:
+        self.M = Machine(inf.read())
+        #    print self.M
 
-    S = self.M.allocState({})
-#    print S
+        S = self.M.allocState({})
+        #    print S
 
- #    assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
+        #    assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
 
-    self.M.propagate(S)
+        self.M.propagate(S)
 
-#    assert_aequal(S.state, [0, 0, 1.006, 1e-3, 0, 0])
+        #    assert_aequal(S.state, [0, 0, 1.006, 1e-3, 0, 0])
 
   def test_LS1(self):
     # Propagate a state matrix through a lattice defined by a lattice file.
@@ -353,19 +353,19 @@ class testBasic(unittest.TestCase):
 
     P = GLPSParser()
 
-    inf = open(os.path.join(datadir, 'latticeout_IMP_withPV_consolidate.lat'), 'r')
-    self.M = Machine(inf.read())
-#    print self.M
+    with open(os.path.join(datadir, 'latticeout_IMP_withPV_consolidate.lat'), 'rb') as inf:
+        self.M = Machine(inf.read())
+        #    print self.M
 
-    S = self.M.allocState({})
+        S = self.M.allocState({})
 
-    self.M.propagate(S)
-#    print_state(S)
-    # assert_aequal(S.state, [
-    #   [ 5.367983,  0.300692,  0.000000,  0.000000,  0.000000,  0.000000],
-    #   [ 0.300692,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],
-    #   [ 0.000000,  0.000000,  9.390504,  2.603222,  0.000000,  0.000000],
-    #   [ 0.000000,  0.000000,  2.603222,  0.734440,  0.000000,  0.000000],
-    #   [ 0.000000,  0.000000,  0.000000,  0.000000, 13.430708,  0.000000],
-    #   [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
-    # ], decimal=6)
+        self.M.propagate(S)
+        #    print_state(S)
+        # assert_aequal(S.state, [
+        #   [ 5.367983,  0.300692,  0.000000,  0.000000,  0.000000,  0.000000],
+        #   [ 0.300692,  0.020569,  0.000000,  0.000000,  0.000000,  0.000000],
+        #   [ 0.000000,  0.000000,  9.390504,  2.603222,  0.000000,  0.000000],
+        #   [ 0.000000,  0.000000,  2.603222,  0.734440,  0.000000,  0.000000],
+        #   [ 0.000000,  0.000000,  0.000000,  0.000000, 13.430708,  0.000000],
+        #   [ 0.000000,  0.000000,  0.000000,  0.000000,  0.000000,  0.600000]
+        # ], decimal=6)
