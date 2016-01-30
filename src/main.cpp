@@ -190,7 +190,7 @@ void CavDataType::show(std::ostream& strm, const int k) const
 
 void CavDataType::show(std::ostream& strm) const
 {
-    for (int k = 0; k < this->s.size(); k++)
+    for (unsigned int k = 0; k < this->s.size(); k++)
         this->show(strm, k);
 }
 
@@ -214,7 +214,7 @@ void CavTLMLineType::show(std::ostream& strm, const int k) const
 
 void CavTLMLineType::show(std::ostream& strm) const
 {
-    for (int k = 0; k < this->s.size(); k++)
+    for (unsigned int k = 0; k < this->s.size(); k++)
         this->show(strm, k);
 }
 
@@ -946,8 +946,6 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
         exit(1);
     }
 
-    M = Idmat;
-
     k_s[0] = 2e0*M_PI/(beta_tab[0]*Lambda);
     k_s[1] = 2e0*M_PI/(beta_tab[1]*Lambda);
     k_s[2] = 2e0*M_PI/(beta_tab[2]*Lambda);
@@ -1001,6 +999,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     Mtrans = Idmat;
     Mprob  = Idmat;
+
     beta   = beta_tab[0];
     gamma  = gamma_tab[0];
     IonFy  = IonFys[0];
@@ -1029,10 +1028,10 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 printf("%9.5f %8s %8s %9.5f %9.5f %9.5f\n",
                        s, Elem.c_str(), Name.c_str(), Length, Aper, Efield);
 
+            Mprob = Idmat;
             if (Elem == "drift") {
-                IonFy  = IonFy + kfac*Length;
+                IonFy = IonFy + kfac*Length;
 
-                Mprob       = Idmat;
                 Mprob(0, 1) = Length;
                 Mprob(2, 3) = Length;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1041,9 +1040,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 T    = CavTLMLineTab[cavi-1].T[n-1];
                 S    = CavTLMLineTab[cavi-1].S[n-1];
                 kfdx = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-                kfdy = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+                kfdy = kfdx;
 
-                Mprob       = Idmat;
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1052,9 +1050,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 T    = CavTLMLineTab[cavi-1].T[n-1];
                 S    = CavTLMLineTab[cavi-1].S[n-1];
                 kfdx = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-                kfdy = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+                kfdy = kfdx;
 
-                Mprob       = Idmat;
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1065,7 +1062,6 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     S   = CavTLMLineTab[cavi-1].S[n-1];
                     dpy = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
 
-                    Mprob       = Idmat;
                     Mprob(3, 6) = dpy;
                     Mtrans      = prod(Mprob, Mtrans);
                 }
@@ -1075,9 +1071,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     T    = CavTLMLineTab[cavi-1].T[n-1];
                     S    = CavTLMLineTab[cavi-1].S[n-1];
                     kfdx =  IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-                    kfdy = -IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
+                    kfdy = -kfdx;
 
-                    Mprob       = Idmat;
                     Mprob(1, 0) = kfdx;
                     Mprob(3, 2) = kfdy;
                     Mtrans      = prod(Mprob, Mtrans);
@@ -1088,9 +1083,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     T    = CavTLMLineTab[cavi-1].T[n-1];
                     S    = CavTLMLineTab[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-                    kfdy = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+                    kfdy = kfdx;
 
-                    Mprob       = Idmat;
                     Mprob(1, 0) = kfdx;
                     Mprob(3, 2) = kfdy;
                     Mtrans      = prod(Mprob, Mtrans);
@@ -1102,7 +1096,6 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     S   = CavTLMLineTab[cavi-1].S[n-1];
                     dpy = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
 
-                    Mprob       = Idmat;
                     Mprob(3, 6) = dpy;
                     Mtrans      = prod(Mprob, Mtrans);
                 }
@@ -1120,9 +1113,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     T    = CavTLMLineTab[cavi-1].T[n-1];
                     S    = CavTLMLineTab[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-                    kfdy =  MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
+                    kfdy =  kfdx;
 
-                    Mprob       = Idmat;
                     Mprob(1, 0) = kfdx;
                     Mprob(3, 2) = kfdy;
                     Mtrans      = prod(Mprob, Mtrans);
@@ -1136,7 +1128,6 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 kfac   = 2e0*M_PI/(beta*Lambda);
                 Accel  = CavTLMLineTab[cavi-1].Accel[n-1];
 
-                Mprob       = Idmat;
                 Mprob(1, 1) = Accel;
                 Mprob(3, 3) = Accel;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1146,9 +1137,11 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
             }
         }
     }
+
     inf.close();
 
-    M       = Mtrans;
+    M = Mtrans;
+
     M(4, 4) = Mlon(4, 4);
     M(4, 5) = Mlon(4, 5);
     M(5, 4) = Mlon(5, 4);
@@ -1161,10 +1154,10 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
                const double IonZ, const double IonEs, const double EfieldScl, const double IonFyi_s,
                const double IonEk_s, const double fRF, value_mat &M)
 {
-    int    k, n;
+    int    n;
     double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
     double dis, IonW_s[3], IonFy_s[3], gamma_s[3], beta_s[3], IonK_s[3];
-    double IonK[2], S1, T1, Accel;
+    double IonK[2];
 
     IonLambda  = C0/fRF*MtoMM;
 
@@ -1256,7 +1249,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     fRF        = conf.get<double>("f");
     CaviIonK   = 2e0*M_PI*fRF/(beta*C0*MtoMM);
     SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
-    EfieldScl  = conf.get<double>("scl_fac");   // Electric field scale factor.
+    EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
 
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
                 fRF, EfieldScl, IonW_o, IonFy_o);
@@ -1297,7 +1290,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     std::stringstream               strm;
     int                             CavCnt;
     double                          IonW, IonEs, IonEk, s, L, beta, gamma;
-    double                          SampleionK, R56, Brho, K, Ek_ini, EkState, Fy_absState;
+    double                          SampleionK, R56, Brho, K, EkState, Fy_absState;
     Machine::p_elements_t::iterator it;
     MomentElementBase               *ElemPtr;
 //    LinearElementBase<MatrixState>  *ElemPtr;
@@ -1555,7 +1548,7 @@ int main(int argc, char *argv[])
 
     InitLong(sim);
 
-//    InitLattice(sim, ChgState[0], BaryCenter[0]);
+    InitLattice(sim, ChgState[0], BaryCenter[0]);
     InitLattice(sim, ChgState[1], BaryCenter[1]);
 
 //    PrtLat(sim);
