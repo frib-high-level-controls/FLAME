@@ -6,8 +6,8 @@ import sys
 
 # Script to translate from TLM flat file to U-SCSI lattice.
 #
-#  type            name          length [m]  type [-18, -21, -28]
-#  mark     LS1_CA01:BPM_D1129    0.000000      -28.000000 
+#  type            name          length [m]  type [-18: Stripper, -21: Corrector, -28: BPM, -30: Matrix]
+#  mark     LS1_CA01:BPM_D1129    0.000000                             -28.000000 
 #
 #  type            name          length [m]  aper [m]
 #  drift           DRIFT          0.072000   0.020000 
@@ -30,30 +30,31 @@ def get_index(tokens, token):
 
 
 def marker(line, tokens):
-    global beam_line, n_marker
+    global beam_line, n_marker, add_ind
     if float(tokens[2]) != 0:
         print '*** marker with non zero length: '
         exit(1)
-    n_marker += 1; tokens[1] += '_%d' % (n_marker)
+    if add_ind: n_marker += 1; tokens[1] += '_%d' % (n_marker)
     beam_line.append(tokens[1])
     return '%s: marker;' % (tokens[1])
 
 def drift(line, tokens):
     global beam_line, n_drift
-    n_drift += 1; tokens[1] += '_%d' % (n_drift)
+    if add_ind: n_drift += 1; tokens[1] += '_%d' % (n_drift)
     beam_line.append(tokens[1])
     return '%s: drift, L = %s, aper = %s;' % (tokens[1], tokens[2], tokens[3])
 
 def sbend(line, tokens):
-    global beam_line, n_sbend
-    n_sbend += 1; tokens[1] += '_%d' % (n_sbend)
+    global beam_line, n_sbend, add_ind
+    if add_ind: n_sbend += 1; tokens[1] += '_%d' % (n_sbend)
     beam_line.append(tokens[1])
-    return '%s: sbend, L = %s, phi = %s, phi1 = %s, phi2 = %s, bg = %s, type = %s, aper = %s;' \
-        % (tokens[1], tokens[2], tokens[4], tokens[7], tokens[8], tokens[5], tokens[6], tokens[3])
+    str = '%s: sbend, L = %s, phi = %s, phi1 = %s, phi2 = %s, bg = %s, aper = %s;' \
+          % (tokens[1], tokens[2], tokens[4], tokens[7], tokens[8], tokens[5], tokens[3])
+    return str
 
 def solenoid(line, tokens):
-    global beam_line, n_solenoid
-    n_solenoid += 1; tokens[1] += '_%d' % (n_solenoid)
+    global beam_line, n_solenoid, add_ind
+    if add_ind: n_solenoid += 1; tokens[1] += '_%d' % (n_solenoid)
     beam_line.append(tokens[1])
     return '%s: solenoid, L = %s, B = %s, aper = %s;' \
         % (tokens[1], tokens[2], tokens[4], tokens[3])
@@ -74,7 +75,7 @@ def rfcavity(line, tokens):
 
 def e_dipole(line, tokens):
     global beam_line, n_e_dipole
-    n_e_dipole += 1; tokens[1] += '_%d' % (n_e_dipole)
+    # n_e_dipole += 1; tokens[1] += '_%d' % (n_e_dipole)
     beam_line.append(tokens[1])
     return '%s: edipole, L = %s, phi = %s, phi1 = %s, phi2 = %s, E= %s, scl_fac = %s,' \
         ' aper = %s;' \
@@ -160,6 +161,8 @@ def transl_file(file_name):
 home_dir = ''
 
 n_marker = 0; n_drift = 0; n_sbend = 0; n_solenoid = 0; n_e_dipole = 0
+
+add_ind = True
 
 beam_line = [];
 

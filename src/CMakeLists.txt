@@ -62,6 +62,13 @@ target_link_libraries(test_lex
   uscsi_core
 )
 
+add_executable(main
+  main.cpp
+)
+target_link_libraries(main
+  uscsi_core
+)
+
 add_executable(test_parse
   test_parse.cpp
 )

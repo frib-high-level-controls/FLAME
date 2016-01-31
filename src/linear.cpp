@@ -1,10 +1,21 @@
 
+#include <string>
 #include <algorithm>
 
 #include "scsi/linear.h"
 #include "scsi/moment.h"
 #include "scsi/state/vector.h"
 #include "scsi/state/matrix.h"
+
+
+// Phase-space units.
+#if false
+    // Use [m, rad, m, rad, rad, eV/u].
+    #define MtoMM 1e0
+#else
+    // Use [mm, rad, mm, rad, rad, MeV/u].
+    #define MtoMM 1e3
+#endif
 
 MatrixState::MatrixState(const Config& c)
     :StateBase(c)
@@ -133,6 +144,10 @@ struct ElementSource : public Base
         state_t& ST = static_cast<state_t&>(s);
         // Replace state with our initial values
         ST.state = this->istate.state;
+        ST.IonZ  = this->istate.IonZ;
+        ST.IonEs = this->istate.IonEs;
+        ST.IonEk = this->istate.IonEk;
+        ST.IonW  = this->istate.IonW;
     }
 
     virtual void show(std::ostream& strm) const
@@ -158,6 +173,8 @@ struct ElementMark : public Base
     ElementMark(const Config& c)
         :base_t(c)
     {
+//        double L = c.get<double>("L", 0e0);
+
         // Identity matrix.
     }
     virtual ~ElementMark() {}
@@ -174,10 +191,12 @@ struct ElementDrift : public Base
     ElementDrift(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("L");
-        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
-        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
+        double L = c.get<double>("L")*MtoMM; // Convert from [m] to [mm].
+
+        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementDrift() {}
 
@@ -193,8 +212,8 @@ struct ElementSBend : public Base
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L",   0e0),
-               phi = c.get<double>("phi", 0e0), // [rad].
+        double L   = c.get<double>("L"),
+               phi = c.get<double>("phi"), // [rad].
                rho = L/phi,
                K   = c.get<double>("K",   0e0), // [1/m^2].
                Kx  = K + 1e0/sqr(rho),
@@ -229,7 +248,8 @@ struct ElementQuad : public Base
         // Vertical plane.
         Get2by2Matrix<Base>(L, -K, (unsigned)state_t::PS_Y, this->transfer);
         // Longitudinal plane.
-        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementQuad() {}
 
@@ -239,14 +259,15 @@ struct ElementQuad : public Base
 template<typename Base>
 struct ElementSolenoid : public Base
 {
-    // Transport (identity) matrix for a Solenoid; K = B0/(B*rho).
+    // Transport (identity) matrix for a Solenoid; K = B0/(2 Brho).
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L"),
-               K = c.get<double>("K", 0e0),
+        double L = c.get<double>("L")*MtoMM, // Convert from [m] to [mm].
+               B = c.get<double>("B"),
+               K = c.get<double>("K")/MtoMM, // Convert from [m] to [mm].
                C = ::cos(K*L),
                S = ::sin(K*L);
 
@@ -285,7 +306,8 @@ struct ElementSolenoid : public Base
         this->transfer(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
 
         // Longitudinal plane.
-        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementSolenoid() {}
 
@@ -301,15 +323,33 @@ struct ElementRFCavity : public Base
     ElementRFCavity(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("L");
+        std::string cav_type = c.get<std::string>("cavtype");
+        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
-        this->transfer(state_t::PS_X, state_t::PS_PX) = len;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = len;
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = len;
+        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementRFCavity() {}
 
     virtual const char* type_name() const {return "rfcavity";}
+};
+
+template<typename Base>
+struct ElementStripper : public Base
+{
+    // Transport (identity) matrix for a Charge Stripper.
+    typedef Base base_t;
+    typedef typename base_t::state_t state_t;
+    ElementStripper(const Config& c)
+        :base_t(c)
+    {
+        // Identity matrix.
+    }
+    virtual ~ElementStripper() {}
+
+    virtual const char* type_name() const {return "stripper";}
 };
 
 template<typename Base>
@@ -321,7 +361,7 @@ struct ElementEDipole : public Base
     ElementEDipole(const Config& c)
         :base_t(c)
     {
-        double len = c.get<double>("L");
+        double L = c.get<double>("L");
 
     }
     virtual ~ElementEDipole() {}
@@ -355,25 +395,25 @@ void registerLinear()
     Machine::registerState<MatrixState>("TransferMatrix");
     Machine::registerState<MatrixState>("MomentMatrix");
 
-    Machine::registerElement<ElementSource<LinearElementBase<VectorState> > >("Vector",         "source");
-    Machine::registerElement<ElementSource<LinearElementBase<MatrixState> > >("TransferMatrix", "source");
-    Machine::registerElement<ElementSource<MomentElementBase>               >("MomentMatrix",   "source");
+    Machine::registerElement<ElementSource<LinearElementBase<VectorState>   > >("Vector",         "source");
+    Machine::registerElement<ElementSource<LinearElementBase<MatrixState>   > >("TransferMatrix", "source");
+    Machine::registerElement<ElementSource<MomentElementBase>                 >("MomentMatrix",   "source");
 
-    Machine::registerElement<ElementMark<LinearElementBase<VectorState> > >("Vector",         "marker");
-    Machine::registerElement<ElementMark<LinearElementBase<MatrixState> > >("TransferMatrix", "marker");
-    Machine::registerElement<ElementMark<MomentElementBase>               >("MomentMatrix",   "marker");
+    Machine::registerElement<ElementMark<LinearElementBase<VectorState>     > >("Vector",         "marker");
+    Machine::registerElement<ElementMark<LinearElementBase<MatrixState>     > >("TransferMatrix", "marker");
+    Machine::registerElement<ElementMark<MomentElementBase>                   >("MomentMatrix",   "marker");
 
-    Machine::registerElement<ElementDrift<LinearElementBase<VectorState> > >("Vector",         "drift");
-    Machine::registerElement<ElementDrift<LinearElementBase<MatrixState> > >("TransferMatrix", "drift");
-    Machine::registerElement<ElementDrift<MomentElementBase>               >("MomentMatrix",   "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<VectorState>    > >("Vector",         "drift");
+    Machine::registerElement<ElementDrift<LinearElementBase<MatrixState>    > >("TransferMatrix", "drift");
+    Machine::registerElement<ElementDrift<MomentElementBase>                  >("MomentMatrix",   "drift");
 
-    Machine::registerElement<ElementSBend<LinearElementBase<VectorState> > >("Vector",         "sbend");
-    Machine::registerElement<ElementSBend<LinearElementBase<MatrixState> > >("TransferMatrix", "sbend");
-    Machine::registerElement<ElementSBend<MomentElementBase>               >("MomentMatrix",   "sbend");
+    Machine::registerElement<ElementSBend<LinearElementBase<VectorState>    > >("Vector",         "sbend");
+    Machine::registerElement<ElementSBend<LinearElementBase<MatrixState>    > >("TransferMatrix", "sbend");
+    Machine::registerElement<ElementSBend<MomentElementBase>                  >("MomentMatrix",   "sbend");
 
-    Machine::registerElement<ElementQuad<LinearElementBase<VectorState> > >("Vector",         "quadrupole");
-    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState> > >("TransferMatrix", "quadrupole");
-    Machine::registerElement<ElementQuad<MomentElementBase>               >("MomentMatrix",   "quadrupole");
+    Machine::registerElement<ElementQuad<LinearElementBase<VectorState>     > >("Vector",         "quadrupole");
+    Machine::registerElement<ElementQuad<LinearElementBase<MatrixState>     > >("TransferMatrix", "quadrupole");
+    Machine::registerElement<ElementQuad<MomentElementBase>                   >("MomentMatrix",   "quadrupole");
 
     Machine::registerElement<ElementSolenoid<LinearElementBase<VectorState> > >("Vector",         "solenoid");
     Machine::registerElement<ElementSolenoid<LinearElementBase<MatrixState> > >("TransferMatrix", "solenoid");
@@ -383,11 +423,15 @@ void registerLinear()
     Machine::registerElement<ElementRFCavity<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
     Machine::registerElement<ElementRFCavity<MomentElementBase>               >("MomentMatrix",   "rfcavity");
 
-    Machine::registerElement<ElementEDipole<LinearElementBase<VectorState> > >("Vector",         "edipole");
-    Machine::registerElement<ElementEDipole<LinearElementBase<MatrixState> > >("TransferMatrix", "edipole");
-    Machine::registerElement<ElementEDipole<MomentElementBase>               >("MomentMatrix",   "edipole");
+    Machine::registerElement<ElementStripper<LinearElementBase<VectorState> > >("Vector",         "stripper");
+    Machine::registerElement<ElementStripper<LinearElementBase<MatrixState> > >("TransferMatrix", "stripper");
+    Machine::registerElement<ElementStripper<MomentElementBase>               >("MomentMatrix",   "stripper");
 
-    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState> > >("Vector",         "generic");
-    Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState> > >("TransferMatrix", "generic");
-    Machine::registerElement<ElementGeneric<MomentElementBase>               >("MomentMatrix",   "generic");
+    Machine::registerElement<ElementEDipole<LinearElementBase<VectorState>  > >("Vector",         "edipole");
+    Machine::registerElement<ElementEDipole<LinearElementBase<MatrixState>  > >("TransferMatrix", "edipole");
+    Machine::registerElement<ElementEDipole<MomentElementBase>                >("MomentMatrix",   "edipole");
+
+    Machine::registerElement<ElementGeneric<LinearElementBase<VectorState>  > >("Vector",         "generic");
+    Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState>  > >("TransferMatrix", "generic");
+    Machine::registerElement<ElementGeneric<MomentElementBase>                >("MomentMatrix",   "generic");
 }

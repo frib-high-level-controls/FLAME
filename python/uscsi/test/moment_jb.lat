@@ -20,7 +20,7 @@ d1: drift, L = 1.234;
 b1: sbend, L = 2.0, phi = 25.0*degree, K = -0.1;
 q1: quadrupole,  L = 2.1, K = 0.1;
 
-cav: rfcavity, L = 1.0;
+cav: rfcavity, cavtype = "cav1", L = 1.0;
 
 cell: LINE = (S, d1, b1, q1, cav);
 USE: cell;
