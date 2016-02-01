@@ -231,7 +231,7 @@ void PrtVec(const std::vector<double> &a)
 {
     int k;
 
-    for (k = 0; k < PS_Dim; k++)
+    for (k = 0; k < a.size(); k++)
         std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << a[k];
     std::cout << "\n";
@@ -242,8 +242,8 @@ void PrtMat(const value_mat &M)
 {
     int j, k;
 
-    for (j = 0; j < PS_Dim; j++) {
-        for (k = 0; k < PS_Dim; k++)
+    for (j = 0; j < M.size1(); j++) {
+        for (k = 0; k < M.size2(); k++)
             std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << M(j, k);
         std::cout << "\n";
@@ -1144,8 +1144,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 std::cerr << "*** GenCavMat: undef. multipole type " << Elem << "\n";
                 exit(1);
             }
-            std::cout << Elem << "\n";
-            PrtMat(Mprob);
+//            std::cout << Elem << "\n";
+//            PrtMat(Mprob);
         }
     }
 
@@ -1222,12 +1222,13 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
 
 void InitRFCav(const Config &conf, const int CavCnt,
                const double IonZ, const double IonEs, double &IonW, double &EkState,
-               double &Fy_absState, double &beta, double &gamma, value_mat &M)
+               double &Fy_absState, double &accIonW,
+               double &beta, double &gamma, double &avebeta, double &avegamma, value_mat &M)
 {
     std::string CavType, CavTLMLine;
     int         cavi, cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
-    double      IonW_o, IonFy_o, accIonW;
+    double      Rm, IonFy_i, Ek_i, fRF, CaviIonK, SampleIonK, EfieldScl;
+    double      IonW_o, IonFy_o;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -1276,31 +1277,82 @@ void InitRFCav(const Config &conf, const int CavCnt,
 //    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
 //    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
 //    TransVector[ii_state](5, Ek[ii_state]-tlmPara.Ek_tab.get(lattcnt+1)[1]);
-
-//    if (emitGrowthFlag) {
-//        double aveX2i = ThetaMatrix[state].getElem(0, 0);
-//        double aveY2i = ThetaMatrix[state].getElem(2, 2);
-//        double IonFys = CavTLMLineTab[cavi-1].S[n-1]/180e0*M_PI;
-//        double E0TL = accIonW/cos(IonFys)/tlmPara.IonChargeStates[state];
-//        ThetaMatrix[state] = ThetaMatrix[state].conjugateTrans(CaviMatrix);
-//        ThetaMatrix[state] = calRFcaviEmitGrowth(
-//                    ThetaMatrix[state], tlmPara.IonChargeStates[state], E0TL,
-//                    avebeta, avegamma, beta, gamma, caviLambda, IonFys, aveX2i,
-//                    TransVector[state].getElem(0), aveY2i, TransVector[state].getElem(2));
-//    } else {
-//    }
 }
 
 
-void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter)
+void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double ionEs, double &E0TL,
+                         const double aveBeta, const double aveGama,
+                         const double betaf, const double gamaf, const double fRF, const double ionFys,
+                         const double aveX2i, const double cenX, const double aveY2i, const double cenY)
+{
+    int       k;
+    double    ionLamda, DeltaPhi, kpX, fDeltaPhi, f2DeltaPhi, gPhisDeltaPhi, deltaAveXp2f, XpIncreaseFactor;
+    double    kpY, deltaAveYp2f, YpIncreaseFactor, kpZ, ionK, aveZ2i, deltaAveZp2, longiTransFactor, ZpIncreaseFactor;
+    value_mat matOut;
+
+    matOut = boost::numeric::ublas::identity_matrix<double>(6);
+
+    matOut = matIn;
+
+    ionLamda = C0/fRF*MtoMM;
+
+    // for rebuncher, because no acceleration, E0TL would be wrong when cos(ionFys) is devided.
+    if (cos(ionFys) > -0.0001 && cos(ionFys) < 0.0001) E0TL = 0e0;
+    // Implement from Trace3D emittance growth routine
+    DeltaPhi = sqrt(matIn(4, 4));
+    // ionLamda in m, kpX in 1/mm
+    kpX              = -M_PI*fabs(ionZ)*E0TL/ionEs/aveBeta/aveBeta/aveGama/aveGama/betaf/gamaf/ionLamda;
+    fDeltaPhi        = 15e0/DeltaPhi/DeltaPhi*(3/DeltaPhi/DeltaPhi*(sin(DeltaPhi)/DeltaPhi-cos(DeltaPhi))-(sin(DeltaPhi)/DeltaPhi));
+    f2DeltaPhi       = 15e0/(2e0*DeltaPhi)/(2e0*DeltaPhi)*(3/(2e0*DeltaPhi)/(2e0*DeltaPhi)
+                       *(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)-cos(2e0*DeltaPhi))-(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)));
+    gPhisDeltaPhi    = 0.5e0*(1+(sin(ionFys)*sin(ionFys)-cos(ionFys)*cos(ionFys))*f2DeltaPhi);
+    deltaAveXp2f     = kpX*kpX*(gPhisDeltaPhi-sin(ionFys)*sin(ionFys)*fDeltaPhi*fDeltaPhi)*(aveX2i+cenX*cenX);
+    XpIncreaseFactor = 1e0;
+
+    if (deltaAveXp2f+matIn(1, 1) > 0e0) XpIncreaseFactor = sqrt((deltaAveXp2f+matIn(1, 1))/matIn(1, 1));
+
+     // ionLamda in m
+    kpY = -M_PI*fabs(ionZ)*E0TL/ionEs/aveBeta/aveBeta/aveGama/aveGama/betaf/gamaf/ionLamda;
+    deltaAveYp2f = kpY*kpY*(gPhisDeltaPhi-sin(ionFys)*sin(ionFys)*fDeltaPhi*fDeltaPhi)*(aveY2i+cenY*cenY);
+    YpIncreaseFactor = 1.0;
+    if (deltaAveYp2f+matIn(3, 3)>0) {
+        YpIncreaseFactor = sqrt((deltaAveYp2f+matIn(3, 3))/matIn(3, 3));
+    }
+
+    kpZ = -2e0*kpX*aveGama*aveGama;
+     //unit: 1/mm
+    ionK = 2e0*M_PI/(aveBeta*ionLamda);
+    aveZ2i = DeltaPhi*DeltaPhi/ionK/ionK;
+    deltaAveZp2 = kpZ*kpZ*DeltaPhi*DeltaPhi*aveZ2i*(cos(ionFys)*cos(ionFys)/8+DeltaPhi*sin(ionFys)/576);
+    longiTransFactor = 1e0/(aveGama-1e0)/ionEs;
+    ZpIncreaseFactor = 1e0;
+    if (deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor > 0e0)
+        ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor)/(matIn(5, 5)*longiTransFactor*longiTransFactor));
+
+    for (k = 0; k < 6; k++) {
+        matOut(1, k) *= XpIncreaseFactor;
+        matOut(k, 1) *= XpIncreaseFactor;
+        matOut(3, k) *= YpIncreaseFactor;
+        matOut(k, 3) *= YpIncreaseFactor;
+        matOut(5, k) *= ZpIncreaseFactor;
+        matOut(k, 5) *= ZpIncreaseFactor;
+    }
+
+    std::cout << "\n";
+    PrtMat(matOut);
+}
+
+
+void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter, const double ChgState)
 {
     // Evaluate transport matrices for given beam initial conditions.
     typedef MatrixState state_t;
 
     std::stringstream               strm;
     int                             CavCnt;
-    double                          IonW, IonEs, IonEk, s, L, beta, gamma;
+    double                          IonW, IonEs, IonEk, s, L, beta, gamma, avebeta, avegamma;
     double                          SampleionK, R56, Brho, K, EkState, Fy_absState;
+    double                          fRF, phiRF, accIonW, aveX2i, aveY2i, ionFys, E0TL;
     Machine::p_elements_t::iterator it;
     MomentElementBase               *ElemPtr;
 //    LinearElementBase<MatrixState>  *ElemPtr;
@@ -1354,7 +1406,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
         SampleionK = 2e0*M_PI/(beta*SampleLambda);
 
         // Evaluate momentum compaction.
-        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L*MeVtoeV;
+        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
@@ -1382,12 +1434,34 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             Fy_absState += SampleionK*L;
         } else if (t_name == "rfcavity") {
             CavCnt++;
-            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, beta, gamma, M);
+            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
+                      beta, gamma, avebeta, avegamma, M);
             ElemPtr->transfer = M;
+
+            fRF = conf.get<double>("f");
+            phiRF = conf.get<double>("phi");
+            MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+            aveX2i = StatePtr->state(0, 0);
+            aveY2i = StatePtr->state(2, 2);
+            ionFys = phiRF/180e0*M_PI;
+            E0TL   = accIonW/cos(ionFys)/ChgState;
+
+            elem->advance(*state);
+
+            calRFcaviEmitGrowth(StatePtr->state, ChgState, IonEs,
+                                E0TL, avebeta, avegamma, beta, gamma, fRF, ionFys,
+                                aveX2i, 0e0, aveY2i, 0e0);
         }
-        std::cout << "\n" << t_name << "\n";
-        PrtMat(ElemPtr->transfer);
+
+        if (t_name != "rfcavity") elem->advance(*state);
+
+//        std::cout << "\n" << t_name << "\n";
+//        PrtMat(ElemPtr->transfer);
     }
+
+    MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+    std::cout << "\n";
+    PrtMat(StatePtr->state);
 }
 
 
@@ -1409,18 +1483,22 @@ void PropagateState(const Machine &sim)
         elem = *it;
 
         std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
-
-//        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
-//        assert(ElemPtr != NULL);
-//        PrtMat(ElemPtr->transfer);
+        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+        assert(ElemPtr != NULL);
+        PrtMat(ElemPtr->transfer);
 
 //        sim.propagate(state.get(), elem->index, 1);
         elem->advance(*state);
 
         MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
 //        std::cout << "\n" << *state;
-        PrtMat(StatePtr->state);
+//        std::cout << "\n";
+//        PrtMat(StatePtr->state);
     }
+
+    MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+    std::cout << "\n";
+    PrtMat(StatePtr->state);
 
     outf.close();
 }
@@ -1558,13 +1636,13 @@ int main(int argc, char *argv[])
 
         InitLong(sim);
 
-        InitLattice(sim, ChgState[0], BaryCenter[0]);
+        InitLattice(sim, ChgState[0], BaryCenter[0], ChgState[0]);
 //        InitLattice(sim, ChgState[1], BaryCenter[1]);
 
         //    PrtLat(sim);
 
-        //    PropagateState(sim, S);
-        //    PropagateState(sim);
+//        PropagateState(sim, S);
+//        PropagateState(sim);
 
         //     for n states
         //       get Chg_n, S_n
