@@ -129,7 +129,7 @@ std::vector<double> CavPhases;
 CavTLMLineType      CavTLMLineTab[MaxNCav];
 RFCavType           RFCav[MaxNCav];
 
-const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
+std::string HomeDir = "";
 
 
 void LongTabType::set(const double s, const double Ek, const double FyAbs,
@@ -164,7 +164,7 @@ void CavDataType::RdData(const std::string FileName)
         std::cerr << "*** RdData: failed to open " << FileName << "\n";
         exit(1);
     }
-    while (getline(inf, line)) {
+    while (getline(inf, line) && !inf.fail()) {
         str.str(line);
         str >> s >> Elong;
         this->s.push_back(s), this->Elong.push_back(Elong);
@@ -489,7 +489,7 @@ void InitLong(const Machine &sim)
     it = sim.p_elements.begin();
     // Skip over state.
     it++;
-    do {
+    for (; it != sim.p_elements.end(); ++it) {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
         std::string   t_name = elem->type_name(); // C string -> C++ string.
@@ -529,8 +529,7 @@ void InitLong(const Machine &sim)
                       << elem->name << std::internal;
             LongTab.show(std::cout, n-1);
         }
-        it++;
-    } while (it != sim.p_elements.end());
+    }
 }
 
 
@@ -800,7 +799,7 @@ void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
     }
 
     s = CavData[cavi-1].s[0];
-    while (getline(inf, line)) {
+    while (std::getline(inf, line) && !inf.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
         if (line[0] == '%') {
             // Comment.
@@ -973,7 +972,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
     Ss[1]    = TTF_tab[9];
     V0s[1]   = TTF_tab[11];
     ks[1]    = 0.5*(k_s[1]+k_s[2]);
-    L2      = Ecens[1] - Ecens[0];
+    L2       = Ecens[1] - Ecens[0];
 
     Mlon_L2 = Idmat;
     Mlon_K2 = Idmat;
@@ -1009,7 +1008,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     s = CavData[cavi-1].s[0];
     n = 0;
-    while (getline(inf, line)) {
+    while (getline(inf, line) && !inf.fail()) {
         if (line[0] == '%') {
             // Comment.
         } else {
@@ -1190,7 +1189,7 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     IonK[0] = (IonK_s[0]+IonK_s[1])/2e0;
     IonK[1] = (IonK_s[1]+IonK_s[2])/2e0;
 
-    if (false) {
+    if (true) {
         printf("\n GetCavMat:\n");
         printf("IonK  : %15.10f %15.10f %15.10f\n", IonK_s[0], IonK_s[1], IonK_s[2]);
         printf("IonK  : %15.10f %15.10f\n", IonK[0], IonK[1]);
@@ -1206,21 +1205,17 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
 
     GetCavMatParams(cavi, CavTLMLine, beta_s, gamma_s, IonK);
     GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMLine, Rm, M);
-
-    std::cout << "\n";
-    PrtMat(M);
 }
 
 
 void InitRFCav(const Config &conf, const int CavCnt,
                const double IonZ, const double IonEs, double &IonW, double &EkState,
-               double &Fy_absState, double &beta, double &gamma)
+               double &Fy_absState, double &beta, double &gamma, value_mat &M)
 {
     std::string CavType, CavTLMLine;
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, avebeta, avegamma, fRF, CaviIonK, SampleIonK, EfieldScl;
     double      IonW_o, IonFy_o, accIonW;
-    value_mat   M;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -1294,6 +1289,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     Machine::p_elements_t::iterator it;
     MomentElementBase               *ElemPtr;
 //    LinearElementBase<MatrixState>  *ElemPtr;
+    value_mat                       M;
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -1323,7 +1319,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     // Skip over state.
     it++;
     CavCnt = 0;
-    do {
+    for (; it != sim.p_elements.end(); ++it) {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
         Config        newconf(conf);
@@ -1334,7 +1330,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
         assert(ElemPtr != NULL);
 
         if (t_name != "marker") {
-            L = conf.get<double>("L");
+            L = conf.get<double>("L")*MtoMM;
             s += L;
         }
 
@@ -1354,10 +1350,10 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "quadrupole") {
         } else if (t_name == "solenoid") {
-            Fy_absState += SampleionK*L;
-            Brho = beta*(EkState+IonEs)/(C0*IonZ);
+            Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
             // Scale B field.
             K = conf.get<double>("B")/(2e0*Brho);
+
             size_t elem_index = ElemPtr->index;
             Config newconf(sim[elem_index]->conf());
             newconf.set<double>("K", K);
@@ -1367,13 +1363,16 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             ElemPtr = dynamic_cast<MomentElementBase *>(elem);
 
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+
+            Fy_absState += SampleionK*L;
         } else if (t_name == "rfcavity") {
             CavCnt++;
-            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, beta, gamma);
-//            PrtMat(ElemPtr->transfer);
+            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, beta, gamma, M);
+            ElemPtr->transfer = M;
         }
-        it++;
-    } while (it != sim.p_elements.end());
+        std::cout << "\n" << t_name << "\n";
+        PrtMat(ElemPtr->transfer);
+    }
 }
 
 
@@ -1425,13 +1424,7 @@ void BaryCenterUnitFix(std::vector<double> &BaryCenter)
 
 void StateUnitFix(Machine &sim)
 {
-    /* Change units from:
-     *   [mm, rad, mm, rad, rad, MeV/u]
-     * to:
-     *   [m, rad, m, rad, rad, eV/u].
-     * Notes: State is only changed locally.
-     *        Etot could be scaled wit p0. */
-
+    // Change units from: [mm, rad, mm, rad, rad, MeV/u] to [m, rad, m, rad, rad, eV/u].
     int                      j, k;
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -1477,120 +1470,126 @@ void StateUnitFix(Machine &sim)
 
 int main(int argc, char *argv[])
 {
-    int                 k;
-    std::vector<double> ChgState;
-    std::vector<double> BaryCenter[2];
+ try {
+        int                 k;
+        std::vector<double> ChgState;
+        std::vector<double> BaryCenter[2];
 
-    FILE *in = stdin;
-    if(argc>1) {
-        in = fopen(argv[1], "r");
-        if (!in) {
-            fprintf(stderr, "Failed to open %s\n", argv[1]);
-            return 2;
+        FILE *in = stdin;
+        if(argc > 1) {
+            HomeDir = argv[2];
+            in = fopen(argv[1], "r");
+            if (!in) {
+                fprintf(stderr, "Failed to open %s\n", argv[1]);
+                return 2;
+            }
         }
-    }
 
-    glps_debug = 0; // 0 or 1.
+        glps_debug = 0; // 0 or 1.
 
-    std::auto_ptr<Config> conf;
+        std::auto_ptr<Config> conf;
 
-    try {
-        GLPSParser P;
-        conf.reset(P.parse(in));
-        fprintf(stderr, "Parsing succeeds\n");
-    } catch(std::exception& e) {
-        fprintf(stderr, "Parse error: %s\n", e.what());
-        fclose(in);
-        return 1;
-    }
-
-    // Register state and element types.
-    registerLinear();
-    registerMoment();
-
-    Machine sim(*conf);
-    if (false)
-        sim.set_trace(&std::cout);
-    else
-        sim.set_trace(NULL);
-
-    CavData[0].RdData(HomeDir+"/data/axisData_41.txt");
-    CavData[1].RdData(HomeDir+"/data/axisData_85.txt");
-
-    // Turn trace on/off.
-    if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
-
-//    StateUnitFix(sim);
-
-    // Charge states.
-    ChgState      = conf->get<std::vector<double> >("IonChargeStates");
-    BaryCenter[0] = conf->get<std::vector<double> >("BaryCenter1");
-    BaryCenter[1] = conf->get<std::vector<double> >("BaryCenter2");
-
-//    value_mat S1 = conf->get<value_mat>("S1");
-    const std::vector<double>& S1vec = conf->get<std::vector<double> >("S1");
-
-    value_mat S1(PS_Dim, PS_Dim);
-    if (S1vec.size() > S1.data().size())
-        throw std::invalid_argument("Initial state size too big");
-    std::copy(S1vec.begin(), S1vec.end(), S1.data().begin());
-
-
-    std::cout << "\n" << "Ion charge states:\n";
-    for (k = 0; k < 2; k++)
-        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
-    std::cout << "\n";
-    std::cout << "\nBarycenter:\n";
-    PrtVec(BaryCenter[0]);
-    PrtVec(BaryCenter[1]);
-    std::cout << "\nBeam envelope:\n";
-    PrtMat(S1);
-
-    InitLong(sim);
-
-    InitLattice(sim, ChgState[0], BaryCenter[0]);
-    InitLattice(sim, ChgState[1], BaryCenter[1]);
-
-//    PrtLat(sim);
-
-//    PropagateState(sim, S);
-//    PropagateState(sim);
-
-//     for n states
-//       get Chg_n, S_n
-//       Initialize Lattice(Chg_n, S_n)
-//       PropagateState(sim, S);
-
-
-//        std::cout<<"# Reduced lattice\n";
-//        GLPSPrint(std::cout, *conf);
-//        std::cout<<"\n";
-
-//        std::cerr<<"Generic AST:\n";
-//        std::cerr << *conf;
-//        std::cerr<<"GLPS:\n";
-//        GLPSPrint(std::cout, *conf);
-
-    if (false) {
         try {
-            Machine sim(*conf);
-            sim.set_trace(&std::cout);
-
-            std::cout << "# Machine configuration\n" << sim << "\n\n";
-
-            Config D;
-            std::auto_ptr<StateBase> state(sim.allocState(D));
-            sim.propagate(state.get());
-
-            std::cout << "\n# Final " << *state << "\n";
+            GLPSParser P;
+            conf.reset(P.parse(in));
+            fprintf(stderr, "Parsing succeeds\n");
         } catch(std::exception& e) {
-            std::cerr << "Simulation error: " << e.what() << "\n";
+            fprintf(stderr, "Parse error: %s\n", e.what());
             fclose(in);
             return 1;
         }
-    }
 
-    fprintf(stderr, "Done\n");
-    fclose(in);
-    return 0;
+        // Register state and element types.
+        registerLinear();
+        registerMoment();
+
+        Machine sim(*conf);
+        if (false)
+            sim.set_trace(&std::cout);
+        else
+            sim.set_trace(NULL);
+
+        CavData[0].RdData(HomeDir+"/data/axisData_41.txt");
+        CavData[1].RdData(HomeDir+"/data/axisData_85.txt");
+
+        // Turn trace on/off.
+        if (false) sim.set_trace(&std::cout); else sim.set_trace(NULL);
+
+        //    StateUnitFix(sim);
+
+        // Charge states.
+        ChgState      = conf->get<std::vector<double> >("IonChargeStates");
+        BaryCenter[0] = conf->get<std::vector<double> >("BaryCenter1");
+        BaryCenter[1] = conf->get<std::vector<double> >("BaryCenter2");
+
+        //    value_mat S1 = conf->get<value_mat>("S1");
+        const std::vector<double>& S1vec = conf->get<std::vector<double> >("S1");
+
+        value_mat S1(PS_Dim, PS_Dim);
+        if (S1vec.size() > S1.data().size())
+            throw std::invalid_argument("Initial state size too big");
+        std::copy(S1vec.begin(), S1vec.end(), S1.data().begin());
+
+
+        std::cout << "\n" << "Ion charge states:\n";
+        for (k = 0; k < 2; k++)
+            std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
+        std::cout << "\n";
+        std::cout << "\nBarycenter:\n";
+        PrtVec(BaryCenter[0]);
+        PrtVec(BaryCenter[1]);
+        std::cout << "\nBeam envelope:\n";
+        PrtMat(S1);
+
+        InitLong(sim);
+
+        InitLattice(sim, ChgState[0], BaryCenter[0]);
+//        InitLattice(sim, ChgState[1], BaryCenter[1]);
+
+        //    PrtLat(sim);
+
+        //    PropagateState(sim, S);
+        //    PropagateState(sim);
+
+        //     for n states
+        //       get Chg_n, S_n
+        //       Initialize Lattice(Chg_n, S_n)
+        //       PropagateState(sim, S);
+
+
+        //        std::cout<<"# Reduced lattice\n";
+        //        GLPSPrint(std::cout, *conf);
+        //        std::cout<<"\n";
+
+        //        std::cerr<<"Generic AST:\n";
+        //        std::cerr << *conf;
+        //        std::cerr<<"GLPS:\n";
+        //        GLPSPrint(std::cout, *conf);
+
+        if (false) {
+            try {
+                Machine sim(*conf);
+                sim.set_trace(&std::cout);
+
+                std::cout << "# Machine configuration\n" << sim << "\n\n";
+
+                Config D;
+                std::auto_ptr<StateBase> state(sim.allocState(D));
+                sim.propagate(state.get());
+
+                std::cout << "\n# Final " << *state << "\n";
+            } catch(std::exception& e) {
+                std::cerr << "Simulation error: " << e.what() << "\n";
+                fclose(in);
+                return 1;
+            }
+        }
+
+        fprintf(stderr, "Done\n");
+        fclose(in);
+        return 0;
+    } catch(std::exception& e) {
+        std::cerr << "Main exception: " << e.what() << "\n";
+        return 1;
+    }
 }

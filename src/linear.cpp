@@ -212,7 +212,7 @@ struct ElementSBend : public Base
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L"),
+        double L   = c.get<double>("L")*MtoMM,
                phi = c.get<double>("phi"), // [rad].
                rho = L/phi,
                K   = c.get<double>("K",   0e0), // [1/m^2].
@@ -240,7 +240,7 @@ struct ElementQuad : public Base
     ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L    = c.get<double>("L"),
+        double L    = c.get<double>("L")*MtoMM,
                K    = c.get<double>("K", 0e0);
 
         // Horizontal plane.
@@ -361,7 +361,7 @@ struct ElementEDipole : public Base
     ElementEDipole(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L");
+        double L = c.get<double>("L")*MtoMM;
 
     }
     virtual ~ElementEDipole() {}
