@@ -213,9 +213,9 @@ struct ElementSBend : public Base
         :base_t(c)
     {
         double L   = c.get<double>("L")*MtoMM,
-               phi = c.get<double>("phi"), // [rad].
+               phi = c.get<double>("phi"),          // [rad].
                rho = L/phi,
-               K   = c.get<double>("K",   0e0), // [1/m^2].
+               K   = c.get<double>("K", 0e0)/sqr(MtoMM), // [1/m^2].
                Kx  = K + 1e0/sqr(rho),
                Ky  = -K;
 
@@ -224,7 +224,7 @@ struct ElementSBend : public Base
         // Vertical plane.
         Get2by2Matrix<Base>(L, Ky, (unsigned)state_t::PS_Y, this->transfer);
         // Longitudinal plane.
-        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
+//        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
     }
     virtual ~ElementSBend() {}
 
@@ -241,7 +241,7 @@ struct ElementQuad : public Base
         :base_t(c)
     {
         double L    = c.get<double>("L")*MtoMM,
-               K    = c.get<double>("K", 0e0);
+               K    = c.get<double>("K", 0e0)/MtoMM;
 
         // Horizontal plane.
         Get2by2Matrix<Base>(L,  K, (unsigned)state_t::PS_X, this->transfer);

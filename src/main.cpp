@@ -105,6 +105,7 @@ public:
                         S,
                         Accel;
 
+    void clear(void);
     void set(const double, const std::string &, const double,
              const double, const double, const double);
     void show(std::ostream& strm, const int) const;
@@ -192,6 +193,13 @@ void CavDataType::show(std::ostream& strm) const
 {
     for (unsigned int k = 0; k < this->s.size(); k++)
         this->show(strm, k);
+}
+
+
+void CavTLMLineType::clear(void)
+{
+    this->s.clear(); this->Elem.clear(); this->E0.clear();
+    this->T.clear(); this->S.clear(); this->Accel.clear();
 }
 
 
@@ -798,6 +806,8 @@ void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
         exit(1);
     }
 
+    CavTLMLineTab[cavi-1].clear();
+
     s = CavData[cavi-1].s[0];
     while (std::getline(inf, line) && !inf.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
@@ -1134,6 +1144,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 std::cerr << "*** GenCavMat: undef. multipole type " << Elem << "\n";
                 exit(1);
             }
+            std::cout << Elem << "\n";
+            PrtMat(Mprob);
         }
     }
 
@@ -1189,7 +1201,7 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     IonK[0] = (IonK_s[0]+IonK_s[1])/2e0;
     IonK[1] = (IonK_s[1]+IonK_s[2])/2e0;
 
-    if (true) {
+    if (false) {
         printf("\n GetCavMat:\n");
         printf("IonK  : %15.10f %15.10f %15.10f\n", IonK_s[0], IonK_s[1], IonK_s[2]);
         printf("IonK  : %15.10f %15.10f\n", IonK[0], IonK[1]);
@@ -1265,15 +1277,18 @@ void InitRFCav(const Config &conf, const int CavCnt,
 //    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
 //    TransVector[ii_state](5, Ek[ii_state]-tlmPara.Ek_tab.get(lattcnt+1)[1]);
 
-//    double aveX2i = ThetaMatrix[state].getElem(0, 0);
-//    double aveY2i = ThetaMatrix[state].getElem(2, 2);
-//    double IonFys = CavTLMLineTab[cavi-1].S[n-1]/180e0*M_PI;
-//    double E0TL = accIonW/cos(IonFys)/tlmPara.IonChargeStates[state];
-//    ThetaMatrix[state] = ThetaMatrix[state].conjugateTrans(CaviMatrix);
-//    ThetaMatrix[state] = calRFcaviEmitGrowth(
-//                ThetaMatrix[state], tlmPara.IonChargeStates[state], E0TL,
-//                avebeta, avegamma, beta, gamma, caviLambda, IonFys, aveX2i,
-//                TransVector[state].getElem(0), aveY2i, TransVector[state].getElem(2));
+//    if (emitGrowthFlag) {
+//        double aveX2i = ThetaMatrix[state].getElem(0, 0);
+//        double aveY2i = ThetaMatrix[state].getElem(2, 2);
+//        double IonFys = CavTLMLineTab[cavi-1].S[n-1]/180e0*M_PI;
+//        double E0TL = accIonW/cos(IonFys)/tlmPara.IonChargeStates[state];
+//        ThetaMatrix[state] = ThetaMatrix[state].conjugateTrans(CaviMatrix);
+//        ThetaMatrix[state] = calRFcaviEmitGrowth(
+//                    ThetaMatrix[state], tlmPara.IonChargeStates[state], E0TL,
+//                    avebeta, avegamma, beta, gamma, caviLambda, IonFys, aveX2i,
+//                    TransVector[state].getElem(0), aveY2i, TransVector[state].getElem(2));
+//    } else {
+//    }
 }
 
 
