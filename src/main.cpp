@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <stdio.h>
 #include <math.h>
+#include <ctime>
 
 #include <vector>
 
@@ -1339,7 +1340,8 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
 }
 
 
-void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter)
+void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter,
+                 const value_mat S)
 {
     // Evaluate transport matrices for given beam initial conditions.
     typedef MatrixState state_t;
@@ -1352,6 +1354,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     Machine::p_elements_t::iterator it;
     MomentElementBase               *ElemPtr;
 //    LinearElementBase<MatrixState>  *ElemPtr;
+    MatrixState                     *StatePtr;
     value_mat                       M;
 
     Config                   D;
@@ -1369,7 +1372,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 
 //    TransVector[state] = get(k).centerVector;
 //    ThetaMatrix[state] = get(k).thetaMatrix;
-//    Fy_absState      = get(k).centerVector.getElem(4);
+//    Fy_absState        = get(k).centerVector.getElem(4);
 
     std::cout << "\n" << "InitLattice:" << "\n";
     std::cout << std::fixed << std::setprecision(5)
@@ -1381,6 +1384,10 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     it = sim.p_elements.begin();
     // Skip over state.
     it++;
+    // Initialize state.
+    StatePtr = dynamic_cast<MatrixState*>(state.get());
+    StatePtr->state = S;
+
     CavCnt = 0;
     for (; it != sim.p_elements.end(); ++it) {
         ElementVoid*  elem   = *it;
@@ -1388,7 +1395,6 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
         Config        newconf(conf);
         std::string   t_name = elem->type_name(); // C string -> C++ string.
 
-//        ElemPtr = dynamic_cast<LinearElementBase<MatrixState> *>(elem);
         ElemPtr = dynamic_cast<MomentElementBase *>(elem);
         assert(ElemPtr != NULL);
 
@@ -1436,7 +1442,6 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 
             fRF = conf.get<double>("f");
             phiRF = conf.get<double>("phi");
-            MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
             aveX2i = StatePtr->state(0, 0);
             aveY2i = StatePtr->state(2, 2);
             ionFys = phiRF/180e0*M_PI;
@@ -1457,13 +1462,12 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     }
 
     std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
-    MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
     std::cout << "\n";
     PrtMat(StatePtr->state);
 }
 
 
-//void PropagateState(const Machine &sim, value_mat &S)
+//void PropagateState(const Machine &sim, const value_mat &S)
 void PropagateState(const Machine &sim)
 {
     Machine::p_elements_t::const_iterator it;
@@ -1565,6 +1569,7 @@ int main(int argc, char *argv[])
         int                 k;
         std::vector<double> ChgState;
         std::vector<double> BaryCenter[2];
+        clock_t             tStamp[2];
 
         FILE *in = stdin;
         if(argc > 1) {
@@ -1621,6 +1626,12 @@ int main(int argc, char *argv[])
             throw std::invalid_argument("Initial state size too big");
         std::copy(S1vec.begin(), S1vec.end(), S1.data().begin());
 
+        const std::vector<double>& S2vec = conf->get<std::vector<double> >("S2");
+
+        value_mat S2(PS_Dim, PS_Dim);
+        if (S2vec.size() > S2.data().size())
+            throw std::invalid_argument("Initial state size too big");
+        std::copy(S2vec.begin(), S2vec.end(), S2.data().begin());
 
         std::cout << "\n" << "Ion charge states:\n";
         for (k = 0; k < 2; k++)
@@ -1631,11 +1642,26 @@ int main(int argc, char *argv[])
         PrtVec(BaryCenter[1]);
         std::cout << "\nBeam envelope:\n";
         PrtMat(S1);
+        PrtMat(S1);
+
+        tStamp[0] = clock();
 
         InitLong(sim);
 
-        InitLattice(sim, ChgState[0], BaryCenter[0]);
-//        InitLattice(sim, ChgState[1], BaryCenter[1]);
+        tStamp[1] = clock();
+
+        std::cout << std::fixed << std::setprecision(5)
+                  << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << "sec" << "\n";
+
+        tStamp[0] = clock();
+
+        InitLattice(sim, ChgState[0], BaryCenter[0], S1);
+        InitLattice(sim, ChgState[1], BaryCenter[1], S2);
+
+        tStamp[1] = clock();
+
+        std::cout << std::fixed << std::setprecision(5)
+                  << "\nInitLattice: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << "sec" << "\n";
 
         //    PrtLat(sim);
 
