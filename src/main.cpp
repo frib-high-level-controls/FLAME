@@ -1283,12 +1283,11 @@ void InitRFCav(const Config &conf, const int CavCnt,
 void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double ionEs, double &E0TL,
                          const double aveBeta, const double aveGama,
                          const double betaf, const double gamaf, const double fRF, const double ionFys,
-                         const double aveX2i, const double cenX, const double aveY2i, const double cenY)
+                         const double aveX2i, const double cenX, const double aveY2i, const double cenY, value_mat &matOut)
 {
     int       k;
     double    ionLamda, DeltaPhi, kpX, fDeltaPhi, f2DeltaPhi, gPhisDeltaPhi, deltaAveXp2f, XpIncreaseFactor;
     double    kpY, deltaAveYp2f, YpIncreaseFactor, kpZ, ionK, aveZ2i, deltaAveZp2, longiTransFactor, ZpIncreaseFactor;
-    value_mat matOut;
 
     matOut = boost::numeric::ublas::identity_matrix<double>(6);
 
@@ -1301,19 +1300,19 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
     // Implement from Trace3D emittance growth routine
     DeltaPhi = sqrt(matIn(4, 4));
     // ionLamda in m, kpX in 1/mm
-    kpX              = -M_PI*fabs(ionZ)*E0TL/ionEs/aveBeta/aveBeta/aveGama/aveGama/betaf/gamaf/ionLamda;
-    fDeltaPhi        = 15e0/DeltaPhi/DeltaPhi*(3/DeltaPhi/DeltaPhi*(sin(DeltaPhi)/DeltaPhi-cos(DeltaPhi))-(sin(DeltaPhi)/DeltaPhi));
-    f2DeltaPhi       = 15e0/(2e0*DeltaPhi)/(2e0*DeltaPhi)*(3/(2e0*DeltaPhi)/(2e0*DeltaPhi)
+    kpX              = -M_PI*fabs(ionZ)*E0TL/ionEs/sqr(aveBeta*aveGama)/betaf/gamaf/ionLamda;
+    fDeltaPhi        = 15e0/sqr(DeltaPhi)*(3e0/sqr(DeltaPhi)*(sin(DeltaPhi)/DeltaPhi-cos(DeltaPhi))-(sin(DeltaPhi)/DeltaPhi));
+    f2DeltaPhi       = 15e0/sqr(2e0*DeltaPhi)*(3e0/sqr(2e0*DeltaPhi)
                        *(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)-cos(2e0*DeltaPhi))-(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)));
-    gPhisDeltaPhi    = 0.5e0*(1+(sin(ionFys)*sin(ionFys)-cos(ionFys)*cos(ionFys))*f2DeltaPhi);
-    deltaAveXp2f     = kpX*kpX*(gPhisDeltaPhi-sin(ionFys)*sin(ionFys)*fDeltaPhi*fDeltaPhi)*(aveX2i+cenX*cenX);
+    gPhisDeltaPhi    = 0.5e0*(1+(sqr(sin(ionFys))-sqr(cos(ionFys)))*f2DeltaPhi);
+    deltaAveXp2f     = kpX*kpX*(gPhisDeltaPhi-sqr(sin(ionFys)*fDeltaPhi))*(aveX2i+cenX*cenX);
     XpIncreaseFactor = 1e0;
 
     if (deltaAveXp2f+matIn(1, 1) > 0e0) XpIncreaseFactor = sqrt((deltaAveXp2f+matIn(1, 1))/matIn(1, 1));
 
      // ionLamda in m
-    kpY = -M_PI*fabs(ionZ)*E0TL/ionEs/aveBeta/aveBeta/aveGama/aveGama/betaf/gamaf/ionLamda;
-    deltaAveYp2f = kpY*kpY*(gPhisDeltaPhi-sin(ionFys)*sin(ionFys)*fDeltaPhi*fDeltaPhi)*(aveY2i+cenY*cenY);
+    kpY = -M_PI*fabs(ionZ)*E0TL/ionEs/sqr(aveBeta*aveGama)/betaf/gamaf/ionLamda;
+    deltaAveYp2f = sqr(kpY)*(gPhisDeltaPhi-sqr(sin(ionFys)*fDeltaPhi))*(aveY2i+sqr(cenY));
     YpIncreaseFactor = 1.0;
     if (deltaAveYp2f+matIn(3, 3)>0) {
         YpIncreaseFactor = sqrt((deltaAveYp2f+matIn(3, 3))/matIn(3, 3));
@@ -1323,11 +1322,11 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
      //unit: 1/mm
     ionK = 2e0*M_PI/(aveBeta*ionLamda);
     aveZ2i = DeltaPhi*DeltaPhi/ionK/ionK;
-    deltaAveZp2 = kpZ*kpZ*DeltaPhi*DeltaPhi*aveZ2i*(cos(ionFys)*cos(ionFys)/8+DeltaPhi*sin(ionFys)/576);
+    deltaAveZp2 = sqr(kpZ*DeltaPhi)*aveZ2i*(cos(ionFys)*cos(ionFys)/8e0+DeltaPhi*sin(ionFys)/576e0);
     longiTransFactor = 1e0/(aveGama-1e0)/ionEs;
     ZpIncreaseFactor = 1e0;
     if (deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor > 0e0)
-        ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor)/(matIn(5, 5)*longiTransFactor*longiTransFactor));
+        ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor))/(matIn(5, 5)*sqr(longiTransFactor)));
 
     for (k = 0; k < 6; k++) {
         matOut(1, k) *= XpIncreaseFactor;
@@ -1337,13 +1336,10 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
         matOut(5, k) *= ZpIncreaseFactor;
         matOut(k, 5) *= ZpIncreaseFactor;
     }
-
-    std::cout << "\n";
-    PrtMat(matOut);
 }
 
 
-void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter, const double ChgState)
+void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter)
 {
     // Evaluate transport matrices for given beam initial conditions.
     typedef MatrixState state_t;
@@ -1444,13 +1440,14 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             aveX2i = StatePtr->state(0, 0);
             aveY2i = StatePtr->state(2, 2);
             ionFys = phiRF/180e0*M_PI;
-            E0TL   = accIonW/cos(ionFys)/ChgState;
+            E0TL   = accIonW/cos(ionFys)/IonZ;
 
             elem->advance(*state);
 
-            calRFcaviEmitGrowth(StatePtr->state, ChgState, IonEs,
+            calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
                                 E0TL, avebeta, avegamma, beta, gamma, fRF, ionFys,
-                                aveX2i, 0e0, aveY2i, 0e0);
+                                aveX2i, 0e0, aveY2i, 0e0, M);
+            StatePtr->state = M;
         }
 
         if (t_name != "rfcavity") elem->advance(*state);
@@ -1459,6 +1456,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 //        PrtMat(ElemPtr->transfer);
     }
 
+    std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
     MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
     std::cout << "\n";
     PrtMat(StatePtr->state);
@@ -1636,7 +1634,7 @@ int main(int argc, char *argv[])
 
         InitLong(sim);
 
-        InitLattice(sim, ChgState[0], BaryCenter[0], ChgState[0]);
+        InitLattice(sim, ChgState[0], BaryCenter[0]);
 //        InitLattice(sim, ChgState[1], BaryCenter[1]);
 
         //    PrtLat(sim);
