@@ -213,7 +213,7 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'quadrupole', 'L':2.0e-3, 'K':1.1},
+        {'name':'elem1', 'type':'quadrupole', 'L':2.0e-3, 'B2':1.1e-6},
       ]
     })
 
@@ -246,7 +246,7 @@ class testBasic(unittest.TestCase):
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T},
-        {'name':'elem1', 'type':'quadrupole', 'L':2.0e-3, 'K':-1.1},
+        {'name':'elem1', 'type':'quadrupole', 'L':2.0e-3, 'B2':-1.1e-6},
       ]
     })
 
