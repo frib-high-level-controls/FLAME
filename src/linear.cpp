@@ -213,7 +213,7 @@ struct ElementSBend : public Base
         :base_t(c)
     {
         double L   = c.get<double>("L")*MtoMM,
-               phi = c.get<double>("phi"),          // [rad].
+               phi = c.get<double>("phi"),               // [rad].
                rho = L/phi,
                K   = c.get<double>("K", 0e0)/sqr(MtoMM), // [1/m^2].
                Kx  = K + 1e0/sqr(rho),
@@ -234,14 +234,15 @@ struct ElementSBend : public Base
 template<typename Base>
 struct ElementQuad : public Base
 {
-    // Transport matrix for a Quadrupole (Cartesian coordinates).
+    // Transport matrix for a Quadrupole; K = B2/Brho.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L    = c.get<double>("L")*MtoMM,
-               K    = c.get<double>("K", 0e0)/MtoMM;
+        double L = c.get<double>("L")*MtoMM,
+               B2 = c.get<double>("B2"),
+               K = c.get<double>("K", 0e0)/sqr(MtoMM);
 
         // Horizontal plane.
         Get2by2Matrix<Base>(L,  K, (unsigned)state_t::PS_X, this->transfer);

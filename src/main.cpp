@@ -1418,6 +1418,21 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             Fy_absState += SampleionK*L;
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "quadrupole") {
+            Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
+            // Scale B field.
+            K = conf.get<double>("B2")/Brho;
+
+            size_t elem_index = ElemPtr->index;
+            Config newconf(sim[elem_index]->conf());
+            newconf.set<double>("K", K);
+            sim.reconfigure(elem_index, newconf);
+            // Re-initialize after re-allocation.
+            elem = *it;
+            ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+
+            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+
+            Fy_absState += SampleionK*L;
         } else if (t_name == "solenoid") {
             Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
             // Scale B field.
