@@ -1666,9 +1666,7 @@ int main(int argc, char *argv[])
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
-                  << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << "sec" << "\n";
-
-        tStamp[0] = clock();
+                  << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
         InitLattice(sim, ChgState[0], BaryCenter[0], S1);
         InitLattice(sim, ChgState[1], BaryCenter[1], S2);
@@ -1676,7 +1674,7 @@ int main(int argc, char *argv[])
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
-                  << "\nInitLattice: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << "sec" << "\n";
+                  << "\nInitLattice: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
         //    PrtLat(sim);
 

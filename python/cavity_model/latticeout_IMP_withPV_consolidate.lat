@@ -5,7 +5,7 @@ sim_type = "MomentMatrix";
 
 # Global parameters.
 
-AMU = 931.49432e6; # Atomic mass unit [eV/c^2].
+AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
 
 IonZ  = 33.0/238.0;    # Charge state for U_238.
 IonEs = AMU;           # Nucleon mass [eV/u].
@@ -13,20 +13,19 @@ IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
 IonW  = IonEs + IonEk; # Total energy [eV/u].
 
 # Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]
 
-ionChargeStates = [33.0/238.0, 34.0/238.0];
+IonChargeStates = [33.0/238.0, 34.0/238.0];
 
 #chargeAmount    = [10111.0, 10531.0];
 
-# Define phase-space coordinates.
-# Units are: [mm, rad, mm, rad, rad, MeV/u]
+BaryCenter1 = [0.0, 0.0,  0.0, 0.0, 0.0, 0.0];
+BaryCenter2 = [0.0, 0.0,  0.0, 0.0, 0.0, 0.0];
 
-BaryCenter = [-0.0007886, 1.08371e-05, 0.01337343, 6.678534e-06, -0.0001847729, 0.000309995];
-
-#BaryCenter = [0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886, 0.0020601];
+# BaryCenter1 = [-0.0007886,  1.08371e-05,  0.01337343,   6.678534e-06,  -0.0001847729, 0.000309995];
+# BaryCenter2 = [0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886,    0.0020601];
 
 # Define beam envelope parameters.
-# Units are: [mm, rad, mm, rad, rad, MeV/u]
 
 S1 = [
   2.76309450173216,     -0.000428247336601120,  0.0158178569170548,    2.15594190999033e-05,  0.000186380506020608, -2.99394486972954e-05,
@@ -46,15 +45,17 @@ S2 = [
  -1.21652649506989e-05, -8.66937527683823e-09, -2.45363150807461e-06, -7.65104963052334e-09,  1.16863446546579e-05,  1.74197553089731e-06
 ];
 
+S: source, initial = S1;
+
 # Default.
-S: source, initial = [
- 1.0,  0,   0,   0,   0,   0,
-  0,  1.0,  0,   0,   0,   0,
-  0,   0,  1.0,  0,   0,   0,
-  0,   0,   0,  1.0,  0,   0,
-  0,   0,   0,   0,  1.0,  0,
-  0,   0,   0,   0,   0,  1.0
-];
+# S: source, initial = [
+#  1.0,  0,   0,   0,   0,   0,
+#   0,  1.0,  0,   0,   0,   0,
+#   0,   0,  1.0,  0,   0,   0,
+#   0,   0,   0,  1.0,  0,   0,
+#   0,   0,   0,   0,  1.0,  0,
+#   0,   0,   0,   0,   0,  1.0
+# ];
 
 drift_1: drift, L = 0.072000, aper = 0.020000;
 drift_2: drift, L = 0.135064, aper = 0.020000;
@@ -754,9 +755,9 @@ ls1_bts_dch_d1937_136: marker;
 ls1_bts_dcv_d1937_137: marker;
 drift_380: drift, L = 0.100000, aper = 0.025000;
 drift_381: drift, L = 0.250000, aper = 0.025000;
-ls1_bts_qh_d1942: quadrupole, L = 0.250000, B2 = -25.916600, aper = 0.025000;
+ls1_bts_qh_d1942: quadrupole, L = 0.250000, K = 0.0, B2 = -25.916600, aper = 0.025000;
 drift_382: drift, L = 0.500000, aper = 0.025000;
-ls1_bts_qv_d1950: quadrupole, L = 0.250000, B2 = 23.314900, aper = 0.025000;
+ls1_bts_qv_d1950: quadrupole, L = 0.250000, K = 0.0, B2 = 23.314900, aper = 0.025000;
 drift_383: drift, L = 1.198000, aper = 0.025000;
 drift_384: drift, L = 0.100000, aper = 0.025000;
 ls1_bts_dch_d1964_138: marker;
@@ -767,9 +768,9 @@ drift_387: drift, L = 0.068500, aper = 0.023750;
 ls1_bts_bpm_d1966_140: marker;
 drift_388: drift, L = 0.068500, aper = 0.023750;
 drift_389: drift, L = 0.044000, aper = 0.023750;
-ls1_bts_qh_d1969: quadrupole, L = 0.250000, B2 = -21.584100, aper = 0.025000;
+ls1_bts_qh_d1969: quadrupole, L = 0.250000, K = 0.0, B2 = -21.584100, aper = 0.025000;
 drift_390: drift, L = 0.500000, aper = 0.025000;
-ls1_bts_qv_d1976: quadrupole, L = 0.250000, B2 = 22.427500, aper = 0.025000;
+ls1_bts_qv_d1976: quadrupole, L = 0.250000, K = 0.0, B2 = 22.427500, aper = 0.025000;
 drift_391: drift, L = 0.120000, aper = 0.025000;
 drift_392: drift, L = 0.116000, aper = 0.020000;
 ls1_bts_bpm_d1980_141: marker;
@@ -797,9 +798,9 @@ ls1_bts_dch_d1997_142: marker;
 ls1_bts_dcv_d1997_143: marker;
 drift_413: drift, L = 0.100000, aper = 0.025000;
 drift_414: drift, L = 0.250000, aper = 0.025000;
-ls1_bts_qh_d2002: quadrupole, L = 0.250000, B2 = -18.215700, aper = 0.025000;
+ls1_bts_qh_d2002: quadrupole, L = 0.250000, K = 0.0, B2 = -18.215700, aper = 0.025000;
 drift_415: drift, L = 0.886212, aper = 0.025000;
-ls1_bts_qv_d2013: quadrupole, L = 0.250000, B2 = 18.215700, aper = 0.025000;
+ls1_bts_qv_d2013: quadrupole, L = 0.250000, K = 0.0, B2 = 18.215700, aper = 0.025000;
 drift_416: drift, L = 0.870000, aper = 0.025000;
 drift_417: drift, L = 0.100000, aper = 0.025000;
 ls1_bts_dch_d2024_144: marker;
@@ -810,9 +811,9 @@ drift_420: drift, L = 0.068500, aper = 0.023750;
 ls1_bts_bpm_d2027_146: marker;
 drift_421: drift, L = 0.068500, aper = 0.023750;
 drift_422: drift, L = 0.044000, aper = 0.023750;
-ls1_bts_qh_d2029: quadrupole, L = 0.250000, B2 = -18.215700, aper = 0.025000;
+ls1_bts_qh_d2029: quadrupole, L = 0.250000, K = 0.0, B2 = -18.215700, aper = 0.025000;
 drift_423: drift, L = 1.086212, aper = 0.025000;
-ls1_bts_qv_d2042: quadrupole, L = 0.250000, B2 = 18.215700, aper = 0.025000;
+ls1_bts_qv_d2042: quadrupole, L = 0.250000, K = 0.0, B2 = 18.215700, aper = 0.025000;
 drift_424: drift, L = 0.460000, aper = 0.025000;
 drift_425: drift, L = 0.116000, aper = 0.020000;
 ls1_bts_bpm_d2049_147: marker;
@@ -827,9 +828,9 @@ ls1_bts_dch_d2061_149: marker;
 ls1_bts_dcv_d2061_150: marker;
 drift_432: drift, L = 0.100000, aper = 0.025000;
 drift_433: drift, L = 0.250000, aper = 0.025000;
-ls1_bts_qv_d2066: quadrupole, L = 0.250000, B2 = -15.431900, aper = 0.025000;
+ls1_bts_qv_d2066: quadrupole, L = 0.250000, K = 0.0, B2 = -15.431900, aper = 0.025000;
 drift_434: drift, L = 0.500000, aper = 0.025000;
-ls1_bts_qh_d2073: quadrupole, L = 0.250000, B2 = 14.898500, aper = 0.025000;
+ls1_bts_qh_d2073: quadrupole, L = 0.250000, K = 0.0, B2 = 14.898500, aper = 0.025000;
 drift_435: drift, L = 0.700000, aper = 0.025000;
 drift_436: drift, L = 0.057404, aper = 0.020000;
 drift_437: drift, L = 0.189577, aper = 0.020000;
@@ -856,9 +857,9 @@ drift_451: drift, L = 0.068500, aper = 0.023750;
 ls1_bts_bpm_d2116_153: marker;
 drift_452: drift, L = 0.068500, aper = 0.023750;
 drift_453: drift, L = 0.044000, aper = 0.023750;
-ls1_bts_qv_d2118: quadrupole, L = 0.250000, B2 = -14.664900, aper = 0.025000;
+ls1_bts_qv_d2118: quadrupole, L = 0.250000, K = 0.0, B2 = -14.664900, aper = 0.025000;
 drift_454: drift, L = 0.500000, aper = 0.025000;
-ls1_bts_qh_d2126: quadrupole, L = 0.250000, B2 = 14.888700, aper = 0.025000;
+ls1_bts_qh_d2126: quadrupole, L = 0.250000, K = 0.0, B2 = 14.888700, aper = 0.025000;
 drift_455: drift, L = 0.415406, aper = 0.025000;
 drift_456: drift, L = 0.116000, aper = 0.020000;
 ls1_bts_bpm_d2132_154: marker;
@@ -923,12 +924,12 @@ fs1_css_dch_d2189_156: marker;
 fs1_css_dcv_d2189_157: marker;
 drift_489: drift, L = 0.100000, aper = 0.025000;
 drift_490: drift, L = 0.250000, aper = 0.025000;
-fs1_css_qh_d2194: quadrupole, L = 0.250000, B2 = 3.459800, aper = 0.025000;
+fs1_css_qh_d2194: quadrupole, L = 0.250000, K = 0.0, B2 = 3.459800, aper = 0.025000;
 drift_491: drift, L = 0.047500, aper = 0.025000;
 drift_492: drift, L = 0.373000, aper = 0.025000;
 fs1_css_pm_d2200_158: marker;
 drift_493: drift, L = 0.117350, aper = 0.025000;
-fs1_css_qv_d2202: quadrupole, L = 0.250000, B2 = -12.283500, aper = 0.025000;
+fs1_css_qv_d2202: quadrupole, L = 0.250000, K = 0.0, B2 = -12.283500, aper = 0.025000;
 drift_494: drift, L = 0.135518, aper = 0.025000;
 fs1_css_port_d2206_495: drift, L = 0.278666, aper = 0.025000;
 drift_496: drift, L = 0.000000, aper = 0.025000;
@@ -942,9 +943,9 @@ drift_501: drift, L = 0.068500, aper = 0.023750;
 fs1_css_bpm_d2212_161: marker;
 drift_502: drift, L = 0.068500, aper = 0.023750;
 drift_503: drift, L = 0.044000, aper = 0.023750;
-fs1_css_qh_d2215: quadrupole, L = 0.250000, B2 = 24.648300, aper = 0.025000;
+fs1_css_qh_d2215: quadrupole, L = 0.250000, K = 0.0, B2 = 24.648300, aper = 0.025000;
 drift_504: drift, L = 0.250000, aper = 0.025000;
-fs1_css_qv_d2220: quadrupole, L = 0.250000, B2 = -21.034100, aper = 0.025000;
+fs1_css_qv_d2220: quadrupole, L = 0.250000, K = 0.0, B2 = -21.034100, aper = 0.025000;
 drift_505: drift, L = 0.120000, aper = 0.025000;
 drift_506: drift, L = 0.075000, aper = 0.031500;
 drift_507: drift, L = 0.116000, aper = 0.020000;
@@ -969,14 +970,14 @@ fs1_css_port_d2249_519: drift, L = 0.000000, aper = 0.020000;
 drift_520: drift, L = 0.099000, aper = 0.020000;
 drift_521: drift, L = 0.075000, aper = 0.031500;
 drift_522: drift, L = 0.120000, aper = 0.031500;
-fs1_css_qv_d2254: quadrupole, L = 0.250000, B2 = -6.884700, aper = 0.025000;
+fs1_css_qv_d2254: quadrupole, L = 0.250000, K = 0.0, B2 = -6.884700, aper = 0.025000;
 drift_523: drift, L = 0.100000, aper = 0.025000;
 drift_524: drift, L = 0.100000, aper = 0.025000;
 fs1_css_dch_d2257_167: marker;
 fs1_css_dcv_d2257_168: marker;
 drift_525: drift, L = 0.100000, aper = 0.025000;
 drift_526: drift, L = 0.100000, aper = 0.025000;
-fs1_css_qh_d2260: quadrupole, L = 0.250000, B2 = 8.499800, aper = 0.025000;
+fs1_css_qh_d2260: quadrupole, L = 0.250000, K = 0.0, B2 = 8.499800, aper = 0.025000;
 drift_527: drift, L = 0.098000, aper = 0.025000;
 drift_528: drift, L = 0.074000, aper = 0.025000;
 drift_529: drift, L = 0.100000, aper = 0.025000;
@@ -985,7 +986,7 @@ drift_531: drift, L = 0.000000, aper = 0.025000;
 drift_532: drift, L = 0.100000, aper = 0.025000;
 drift_533: drift, L = 0.050000, aper = 0.025000;
 drift_534: drift, L = 0.098000, aper = 0.025000;
-fs1_css_qv_d2272: quadrupole, L = 0.250000, B2 = -4.884400, aper = 0.025000;
+fs1_css_qv_d2272: quadrupole, L = 0.250000, K = 0.0, B2 = -4.884400, aper = 0.025000;
 drift_535: drift, L = 0.087850, aper = 0.025000;
 drift_536: drift, L = 0.100000, aper = 0.025000;
 fs1_css_dch_d2275_169: marker;
@@ -996,7 +997,7 @@ drift_539: drift, L = 0.068500, aper = 0.023750;
 fs1_css_bpm_d2278_171: marker;
 drift_540: drift, L = 0.068500, aper = 0.023750;
 drift_541: drift, L = 0.044000, aper = 0.023750;
-fs1_css_qh_d2280: quadrupole, L = 0.250000, B2 = 1.684800, aper = 0.025000;
+fs1_css_qh_d2280: quadrupole, L = 0.250000, K = 0.0, B2 = 1.684800, aper = 0.025000;
 drift_542: drift, L = 0.280000, aper = 0.025000;
 fs1_css_port_d2286_543: drift, L = 0.430000, aper = 0.025000;
 drift_544: drift, L = 0.100000, aper = 0.025000;
@@ -1066,13 +1067,13 @@ fs1_css_dch_d2351_174: marker;
 fs1_css_dcv_d2351_175: marker;
 drift_581: drift, L = 0.100000, aper = 0.025000;
 drift_582: drift, L = 0.250000, aper = 0.025000;
-fs1_css_qh_d2356: quadrupole, L = 0.250000, B2 = 8.302200, aper = 0.025000;
+fs1_css_qh_d2356: quadrupole, L = 0.250000, K = 0.0, B2 = 8.302200, aper = 0.025000;
 drift_583: drift, L = 0.047000, aper = 0.025000;
 drift_584: drift, L = 0.090000, aper = 0.025000;
 drift_585: drift, L = 0.100000, aper = 0.025000;
 drift_586: drift, L = 0.040000, aper = 0.025000;
 drift_587: drift, L = 0.098000, aper = 0.025000;
-fs1_css_qh_d2362: quadrupole, L = 0.250000, B2 = 1.185800, aper = 0.025000;
+fs1_css_qh_d2362: quadrupole, L = 0.250000, K = 0.0, B2 = 1.185800, aper = 0.025000;
 drift_588: drift, L = 0.300000, aper = 0.025000;
 drift_589: drift, L = 0.100000, aper = 0.025000;
 fs1_css_dch_d2367_176: marker;
@@ -1083,9 +1084,9 @@ drift_592: drift, L = 0.068500, aper = 0.023750;
 fs1_css_bpm_d2370_178: marker;
 drift_593: drift, L = 0.068500, aper = 0.023750;
 drift_594: drift, L = 0.044000, aper = 0.023750;
-fs1_css_qv_d2372: quadrupole, L = 0.250000, B2 = -11.128100, aper = 0.025000;
+fs1_css_qv_d2372: quadrupole, L = 0.250000, K = 0.0, B2 = -11.128100, aper = 0.025000;
 drift_595: drift, L = 0.250000, aper = 0.025000;
-fs1_css_qh_d2377: quadrupole, L = 0.250000, B2 = 11.699200, aper = 0.025000;
+fs1_css_qh_d2377: quadrupole, L = 0.250000, K = 0.0, B2 = 11.699200, aper = 0.025000;
 drift_596: drift, L = 0.145000, aper = 0.025000;
 drift_597: drift, L = 0.100000, aper = 0.025000;
 fs1_css_dch_d2381_179: marker;
@@ -1122,7 +1123,7 @@ fs1_bbs_dch_d2412_184: marker;
 fs1_bbs_dcv_d2412_185: marker;
 drift_613: drift, L = 0.100000, aper = 0.070000;
 drift_614: drift, L = 0.150000, aper = 0.070000;
-fs1_bbs_qh_d2416: quadrupole, L = 0.250000, B2 = 8.972500, aper = 0.070000;
+fs1_bbs_qh_d2416: quadrupole, L = 0.250000, K = 0.0, B2 = 8.972500, aper = 0.070000;
 drift_615: drift, L = 0.140000, aper = 0.070000;
 drift_616: drift, L = 0.150000, aper = 0.070000;
 drift_617: drift, L = 0.137931, aper = 0.070000;
@@ -1130,7 +1131,7 @@ drift_618: drift, L = 0.042069, aper = 0.066800;
 fs1_bbs_bpm_d2422_186: marker;
 drift_619: drift, L = 0.042069, aper = 0.066800;
 drift_620: drift, L = 0.087931, aper = 0.066800;
-fs1_bbs_qv_d2424: quadrupole, L = 0.250000, B2 = -4.076800, aper = 0.070000;
+fs1_bbs_qv_d2424: quadrupole, L = 0.250000, K = 0.0, B2 = -4.076800, aper = 0.070000;
 drift_621: drift, L = 0.403223, aper = 0.070000;
 fs1_bbs_dh_d2435_51: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.190875, aper = 0.070000;
 fs1_bbs_dh_d2435_52: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190875, aper = 0.070000;
@@ -1159,7 +1160,7 @@ fs1_bbs_dh_d2453_68: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 
 fs1_bbs_dh_d2453_69: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190875, aper = 0.070000;
 fs1_bbs_dh_d2453_70: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.190875, aper = 0.070000;
 drift_627: drift, L = 0.403223, aper = 0.070000;
-fs1_bbs_qv_d2463: quadrupole, L = 0.250000, B2 = -4.076800, aper = 0.070000;
+fs1_bbs_qv_d2463: quadrupole, L = 0.250000, K = 0.0, B2 = -4.076800, aper = 0.070000;
 drift_628: drift, L = 0.087931, aper = 0.070000;
 drift_629: drift, L = 0.042069, aper = 0.066800;
 fs1_bbs_bpm_d2466_188: marker;
@@ -1167,7 +1168,7 @@ drift_630: drift, L = 0.042069, aper = 0.066800;
 drift_631: drift, L = 0.137931, aper = 0.066800;
 drift_632: drift, L = 0.150000, aper = 0.070000;
 drift_633: drift, L = 0.140000, aper = 0.070000;
-fs1_bbs_qh_d2472: quadrupole, L = 0.250000, B2 = 8.972500, aper = 0.070000;
+fs1_bbs_qh_d2472: quadrupole, L = 0.250000, K = 0.0, B2 = 8.972500, aper = 0.070000;
 drift_634: drift, L = 0.150000, aper = 0.070000;
 drift_635: drift, L = 0.100000, aper = 0.070000;
 fs1_bbs_dch_d2476_189: marker;
@@ -1204,9 +1205,9 @@ fs1_bms_dch_d2507_195: marker;
 fs1_bms_dcv_d2507_196: marker;
 drift_650: drift, L = 0.100000, aper = 0.025000;
 drift_651: drift, L = 0.145000, aper = 0.025000;
-fs1_bms_qv_d2511: quadrupole, L = 0.250000, B2 = -5.372900, aper = 0.025000;
+fs1_bms_qv_d2511: quadrupole, L = 0.250000, K = 0.0, B2 = -5.372900, aper = 0.025000;
 drift_652: drift, L = 0.200000, aper = 0.025000;
-fs1_bms_qh_d2515: quadrupole, L = 0.250000, B2 = 7.163900, aper = 0.025000;
+fs1_bms_qh_d2515: quadrupole, L = 0.250000, K = 0.0, B2 = 7.163900, aper = 0.025000;
 drift_653: drift, L = 1.625000, aper = 0.025000;
 drift_654: drift, L = 0.100000, aper = 0.025000;
 fs1_bms_dch_d2534_197: marker;
@@ -1217,11 +1218,11 @@ drift_657: drift, L = 0.068500, aper = 0.023750;
 fs1_bms_bpm_d2536_199: marker;
 drift_658: drift, L = 0.068500, aper = 0.023750;
 drift_659: drift, L = 0.044000, aper = 0.023750;
-fs1_bms_qv_d2539: quadrupole, L = 0.250000, B2 = -4.120600, aper = 0.025000;
+fs1_bms_qv_d2539: quadrupole, L = 0.250000, K = 0.0, B2 = -4.120600, aper = 0.025000;
 drift_660: drift, L = 1.200000, aper = 0.025000;
 fs1_bms_port_d2552_661: drift, L = 0.000000, aper = 0.025000;
 drift_662: drift, L = 1.000000, aper = 0.025000;
-fs1_bms_qh_d2563: quadrupole, L = 0.250000, B2 = 2.482000, aper = 0.025000;
+fs1_bms_qh_d2563: quadrupole, L = 0.250000, K = 0.0, B2 = 2.482000, aper = 0.025000;
 drift_663: drift, L = 1.948405, aper = 0.025000;
 drift_664: drift, L = 0.100000, aper = 0.025000;
 fs1_bms_dch_d2585_200: marker;
@@ -1232,9 +1233,9 @@ drift_667: drift, L = 0.068500, aper = 0.023750;
 fs1_bms_bpm_d2587_202: marker;
 drift_668: drift, L = 0.068500, aper = 0.023750;
 drift_669: drift, L = 0.044000, aper = 0.023750;
-fs1_bms_qv_d2590: quadrupole, L = 0.250000, B2 = -7.031500, aper = 0.025000;
+fs1_bms_qv_d2590: quadrupole, L = 0.250000, K = 0.0, B2 = -7.031500, aper = 0.025000;
 drift_670: drift, L = 0.500000, aper = 0.025000;
-fs1_bms_qh_d2597: quadrupole, L = 0.250000, B2 = 5.064400, aper = 0.025000;
+fs1_bms_qh_d2597: quadrupole, L = 0.250000, K = 0.0, B2 = 5.064400, aper = 0.025000;
 drift_671: drift, L = 0.060800, aper = 0.025000;
 drift_672: drift, L = 0.067196, aper = 0.020000;
 drift_673: drift, L = 0.116000, aper = 0.020000;
@@ -1277,9 +1278,9 @@ fs1_bms_dch_d2640_205: marker;
 fs1_bms_dcv_d2640_206: marker;
 drift_702: drift, L = 0.100000, aper = 0.025000;
 drift_703: drift, L = 0.250000, aper = 0.025000;
-fs1_bms_qh_d2645: quadrupole, L = 0.250000, B2 = 3.581900, aper = 0.025000;
+fs1_bms_qh_d2645: quadrupole, L = 0.250000, K = 0.0, B2 = 3.581900, aper = 0.025000;
 drift_704: drift, L = 0.622405, aper = 0.025000;
-fs1_bms_qv_d2654: quadrupole, L = 0.250000, B2 = -5.372900, aper = 0.025000;
+fs1_bms_qv_d2654: quadrupole, L = 0.250000, K = 0.0, B2 = -5.372900, aper = 0.025000;
 drift_705: drift, L = 0.550000, aper = 0.025000;
 drift_706: drift, L = 0.100000, aper = 0.025000;
 fs1_bms_dch_d2662_207: marker;
@@ -1290,12 +1291,12 @@ drift_709: drift, L = 0.068500, aper = 0.023750;
 fs1_bms_bpm_d2664_209: marker;
 drift_710: drift, L = 0.068500, aper = 0.023750;
 drift_711: drift, L = 0.044000, aper = 0.023750;
-fs1_bms_qh_d2666: quadrupole, L = 0.250000, B2 = 5.310800, aper = 0.025000;
+fs1_bms_qh_d2666: quadrupole, L = 0.250000, K = 0.0, B2 = 5.310800, aper = 0.025000;
 drift_712: drift, L = 0.525000, aper = 0.025000;
 fs1_bms_port_d2673_713: drift, L = 0.000000, aper = 0.025000;
 drift_714: drift, L = 0.200000, aper = 0.025000;
 drift_715: drift, L = 0.325000, aper = 0.025000;
-fs1_bms_qh_d2679: quadrupole, L = 0.250000, B2 = -6.973700, aper = 0.025000;
+fs1_bms_qh_d2679: quadrupole, L = 0.250000, K = 0.0, B2 = -6.973700, aper = 0.025000;
 drift_716: drift, L = 0.349500, aper = 0.025000;
 drift_717: drift, L = 0.000000, aper = 0.025000;
 drift_718: drift, L = 0.349500, aper = 0.025000;
@@ -1308,9 +1309,9 @@ drift_722: drift, L = 0.068500, aper = 0.023750;
 fs1_bms_bpm_d2691_212: marker;
 drift_723: drift, L = 0.068500, aper = 0.023750;
 drift_724: drift, L = 0.044000, aper = 0.023750;
-fs1_bms_qv_d2693: quadrupole, L = 0.250000, B2 = 10.243000, aper = 0.025000;
+fs1_bms_qv_d2693: quadrupole, L = 0.250000, K = 0.0, B2 = 10.243000, aper = 0.025000;
 drift_725: drift, L = 0.250000, aper = 0.025000;
-fs1_bms_qh_d2698: quadrupole, L = 0.250000, B2 = -11.559000, aper = 0.025000;
+fs1_bms_qh_d2698: quadrupole, L = 0.250000, K = 0.0, B2 = -11.559000, aper = 0.025000;
 drift_726: drift, L = 0.120000, aper = 0.025000;
 drift_727: drift, L = 0.116000, aper = 0.020000;
 fs1_bms_bpm_d2702_213: marker;
@@ -1592,6 +1593,13 @@ FS1_BMS2: LINE = (
   fs1_bms_pm_d2703_214, drift_729, fs1_bms_port_d2704_730, drift_731
 );
 
+LS1: LINE = (
+  S,
+  LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
+  LS1_WB03, LS1_CB04, LS1_WB04, LS1_CB05, LS1_WB05, LS1_CB06, LS1_WB06, LS1_CB07, LS1_WB07, LS1_CB08, LS1_WB08,
+  LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02
+);
+
 cell: LINE = (
   S,
   LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
@@ -1600,4 +1608,4 @@ cell: LINE = (
   FS1_STRL, FS1_CSS2, FS1_CH03, FS1_CSS3, FS1_BBS, FS1_BMS1, FS1_CH04, FS1_BMS2
 );
 
-USE: cell;
+USE: LS1;

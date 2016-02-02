@@ -13,13 +13,11 @@ IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
 IonW  = IonEs + IonEk; # Total energy [MeV/u].
 
 # Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]
 
 IonChargeStates = [33.0/238.0, 34.0/238.0];
 
 #chargeAmount    = [10111.0, 10531.0];
-
-# Define phase-space coordinates.
-# Units are: [mm, rad, mm, rad, rad, MeV/u]
 
 BaryCenter1 = [0.0, 0.0,  0.0, 0.0, 0.0, 0.0];
 BaryCenter2 = [0.0, 0.0,  0.0, 0.0, 0.0, 0.0];
