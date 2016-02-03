@@ -212,10 +212,10 @@ struct ElementSBend : public Base
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L"),
-               phi = c.get<double>("phi"), // [rad].
+        double L   = c.get<double>("L")*MtoMM,
+               phi = c.get<double>("phi"),               // [rad].
                rho = L/phi,
-               K   = c.get<double>("K",   0e0), // [1/m^2].
+               K   = c.get<double>("K", 0e0)/sqr(MtoMM), // [1/m^2].
                Kx  = K + 1e0/sqr(rho),
                Ky  = -K;
 
@@ -224,7 +224,7 @@ struct ElementSBend : public Base
         // Vertical plane.
         Get2by2Matrix<Base>(L, Ky, (unsigned)state_t::PS_Y, this->transfer);
         // Longitudinal plane.
-        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
+//        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
     }
     virtual ~ElementSBend() {}
 
@@ -234,14 +234,15 @@ struct ElementSBend : public Base
 template<typename Base>
 struct ElementQuad : public Base
 {
-    // Transport matrix for a Quadrupole (Cartesian coordinates).
+    // Transport matrix for a Quadrupole; K = B2/Brho.
     typedef Base base_t;
     typedef typename base_t::state_t state_t;
     ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L    = c.get<double>("L"),
-               K    = c.get<double>("K", 0e0);
+        double L = c.get<double>("L")*MtoMM,
+               B2 = c.get<double>("B2"),
+               K = c.get<double>("K", 0e0)/sqr(MtoMM);
 
         // Horizontal plane.
         Get2by2Matrix<Base>(L,  K, (unsigned)state_t::PS_X, this->transfer);
@@ -361,7 +362,7 @@ struct ElementEDipole : public Base
     ElementEDipole(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L");
+        double L = c.get<double>("L")*MtoMM;
 
     }
     virtual ~ElementEDipole() {}
