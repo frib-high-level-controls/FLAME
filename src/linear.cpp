@@ -241,7 +241,7 @@ struct ElementQuad : public Base
         :base_t(c)
     {
         double L = c.get<double>("L")*MtoMM,
-               B2 = c.get<double>("B2"),
+               //B2 = c.get<double>("B2"),
                K = c.get<double>("K", 0e0)/sqr(MtoMM);
 
         // Horizontal plane.
@@ -267,7 +267,7 @@ struct ElementSolenoid : public Base
         :base_t(c)
     {
         double L = c.get<double>("L")*MtoMM, // Convert from [m] to [mm].
-               B = c.get<double>("B"),
+               //B = c.get<double>("B"),
                K = c.get<double>("K")/MtoMM, // Convert from [m] to [mm].
                C = ::cos(K*L),
                S = ::sin(K*L);
@@ -362,7 +362,7 @@ struct ElementEDipole : public Base
     ElementEDipole(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*MtoMM;
+        //double L = c.get<double>("L")*MtoMM;
 
     }
     virtual ~ElementEDipole() {}

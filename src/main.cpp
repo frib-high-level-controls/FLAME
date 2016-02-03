@@ -156,7 +156,6 @@ void LongTabType::show(std::ostream& strm, const int k) const
 void CavDataType::RdData(const std::string FileName)
 {
     std::string       line;
-    int               k;
     double            s, Elong;
     std::stringstream str;
     std::fstream      inf;
@@ -177,7 +176,7 @@ void CavDataType::RdData(const std::string FileName)
 
     if (false) {
         std::cout << "\n";
-        for (k = 0; k < this->s.size(); k++)
+        for (size_t k = 0; k < this->s.size(); k++)
             this->show(std::cout, k);
     }
 }
@@ -230,9 +229,7 @@ void CavTLMLineType::show(std::ostream& strm) const
 
 void PrtVec(const std::vector<double> &a)
 {
-    int k;
-
-    for (k = 0; k < a.size(); k++)
+    for (size_t k = 0; k < a.size(); k++)
         std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << a[k];
     std::cout << "\n";
@@ -241,10 +238,8 @@ void PrtVec(const std::vector<double> &a)
 
 void PrtMat(const value_mat &M)
 {
-    int j, k;
-
-    for (j = 0; j < M.size1(); j++) {
-        for (k = 0; k < M.size2(); k++)
+    for (size_t j = 0; j < M.size1(); j++) {
+        for (size_t k = 0; k < M.size2(); k++)
             std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << M(j, k);
         std::cout << "\n";
@@ -1228,7 +1223,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
 {
     std::string CavType, CavTLMLine;
     int         cavi, cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, fRF, CaviIonK, SampleIonK, EfieldScl;
+    double      Rm, IonFy_i, Ek_i, fRF, CaviIonK, EfieldScl;
     double      IonW_o, IonFy_o;
 
     CavType = conf.get<std::string>("cavtype");
@@ -1257,7 +1252,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     avegamma   = gamma;
     fRF        = conf.get<double>("f");
     CaviIonK   = 2e0*M_PI*fRF/(beta*C0*MtoMM);
-    SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
+    //double SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
 
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
@@ -1507,7 +1502,7 @@ void PropagateState(const Machine &sim)
 //        sim.propagate(state.get(), elem->index, 1);
         elem->advance(*state);
 
-        MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+//        MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
 //        std::cout << "\n" << *state;
 //        std::cout << "\n";
 //        PrtMat(StatePtr->state);
