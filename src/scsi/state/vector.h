@@ -20,6 +20,8 @@ struct VectorState : public StateBase
     VectorState(const Config& c);
     virtual ~VectorState();
 
+    virtual void assign(const StateBase& other);
+
     typedef boost::numeric::ublas::vector<double,
                     boost::numeric::ublas::bounded_array<double, maxsize>
     > value_t;

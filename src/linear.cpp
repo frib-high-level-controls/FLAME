@@ -35,6 +35,15 @@ MatrixState::MatrixState(const Config& c)
 
 MatrixState::~MatrixState() {}
 
+void MatrixState::assign(const StateBase& other)
+{
+    const MatrixState *O = dynamic_cast<const MatrixState*>(&other);
+    if(!O)
+        throw std::invalid_argument("Can't assign State: incompatible types");
+    state = O->state;
+    StateBase::assign(other);
+}
+
 void MatrixState::show(std::ostream& strm) const
 {
     strm<<"State: "<<state<<"\n";
@@ -67,6 +76,15 @@ VectorState::VectorState(const Config& c)
 }
 
 VectorState::~VectorState() {}
+
+void VectorState::assign(const StateBase& other)
+{
+    const VectorState *O = dynamic_cast<const VectorState*>(&other);
+    if(!O)
+        throw std::invalid_argument("Can't assign State: incompatible types");
+    state = O->state;
+    StateBase::assign(other);
+}
 
 void VectorState::show(std::ostream& strm) const
 {
@@ -143,11 +161,7 @@ struct ElementSource : public Base
     {
         state_t& ST = static_cast<state_t&>(s);
         // Replace state with our initial values
-        ST.state = this->istate.state;
-        ST.IonZ  = this->istate.IonZ;
-        ST.IonEs = this->istate.IonEs;
-        ST.IonEk = this->istate.IonEk;
-        ST.IonW  = this->istate.IonW;
+        ST.assign(istate);
     }
 
     virtual void show(std::ostream& strm) const

@@ -34,6 +34,8 @@ struct StateBase : public boost::noncopyable
     size_t next_elem;
     double IonZ, IonEs, IonEk, IonW;
 
+    virtual void assign(const StateBase& other) =0;
+
     virtual void show(std::ostream&) const {}
 
     struct ArrayInfo {

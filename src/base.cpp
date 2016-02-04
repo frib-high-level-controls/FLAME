@@ -24,6 +24,14 @@ StateBase::StateBase(const Config& c)
     ,pyptr(0)
 {}
 
+void StateBase::assign(const StateBase& other)
+{
+    IonZ  = other.IonZ;
+    IonEs = other.IonEs;
+    IonEk = other.IonEk;
+    IonW  = other.IonW;
+}
+
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)

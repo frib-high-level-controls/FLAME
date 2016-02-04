@@ -20,6 +20,8 @@ struct MatrixState : public StateBase
     MatrixState(const Config& c);
     virtual ~MatrixState();
 
+    void assign(const StateBase& other);
+
     typedef boost::numeric::ublas::matrix<double,
                     boost::numeric::ublas::row_major,
                     boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
