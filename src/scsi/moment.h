@@ -8,14 +8,44 @@
 #include <boost/numeric/ublas/io.hpp>
 
 #include "base.h"
-#include "state/matrix.h"
+
+/** @brief Simulation state which include only a matrix
+ */
+struct MomentState : public StateBase
+{
+    enum {maxsize=6};
+    enum param_t {
+        PS_X, PS_PX, PS_Y, PS_PY, PS_S, PS_PS
+    };
+
+    MomentState(const Config& c);
+    virtual ~MomentState();
+
+    typedef boost::numeric::ublas::vector<double,
+                    boost::numeric::ublas::bounded_array<double, maxsize>
+    > vector_t;
+
+    typedef boost::numeric::ublas::matrix<double,
+                    boost::numeric::ublas::row_major,
+                    boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
+    > matrix_t;
+
+    void assign(const StateBase& other);
+
+    virtual void show(std::ostream& strm) const;
+
+    vector_t moment0;
+    matrix_t state; // TODO: better name
+
+    virtual bool getArray(unsigned idx, ArrayInfo& Info);
+};
 
 /** @brief An Element which propagates the statistical moments of a bunch
  *
  */
 struct MomentElementBase : public ElementVoid
 {
-    typedef MatrixState state_t;
+    typedef MomentState state_t;
 
     MomentElementBase(const Config& c);
     virtual ~MomentElementBase();
@@ -35,6 +65,12 @@ struct MomentElementBase : public ElementVoid
         transfer = O->transfer;
         ElementVoid::assign(other);
     }
+
+private:
+    // scratch space to avoid temp. allocation in advance()
+    // An Element can't be shared between multiple threads
+    //TODO: non-const advance()
+    mutable state_t::matrix_t scratch;
 };
 
 #endif // SCSI_MOMENT_H

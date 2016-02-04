@@ -408,7 +408,7 @@ void registerLinear()
 {
     Machine::registerState<VectorState>("Vector");
     Machine::registerState<MatrixState>("TransferMatrix");
-    Machine::registerState<MatrixState>("MomentMatrix");
+    Machine::registerState<MomentState>("MomentMatrix");
 
     Machine::registerElement<ElementSource<LinearElementBase<VectorState>   > >("Vector",         "source");
     Machine::registerElement<ElementSource<LinearElementBase<MatrixState>   > >("TransferMatrix", "source");

@@ -16,10 +16,13 @@ class testBasic(unittest.TestCase):
       [1, 0, 1, 0, 1, 0],
       [0, 1, 0, 1, 0, 1],
     ])
+    I = self.expect0 = numpy.asfarray(
+      [1, 1, 0, 0, 0, 0]
+    )
     self.M = Machine({
       'sim_type':'MomentMatrix',
       'elements':[
-        {'name':'elem0', 'type':'source', 'initial':T},
+        {'name':'elem0', 'type':'source', 'initial':T, 'moment0':I},
         {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
       ],
     })
@@ -31,4 +34,6 @@ class testBasic(unittest.TestCase):
 
     self.M.propagate(S)
 
+    print S.moment0, self.expect0
+    assert_aequal(S.moment0, self.expect0)
     assert_aequal(S.state, self.expect)
