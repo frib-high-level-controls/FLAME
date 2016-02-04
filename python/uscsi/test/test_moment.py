@@ -34,6 +34,5 @@ class testBasic(unittest.TestCase):
 
     self.M.propagate(S)
 
-    print S.moment0, self.expect0
     assert_aequal(S.moment0, self.expect0)
     assert_aequal(S.state, self.expect)
