@@ -17,6 +17,8 @@
 #include <scsi/state/vector.h>
 #include <scsi/state/matrix.h>
 
+typedef MomentElementBase element_t;
+typedef MomentElementBase::state_t state_t;
 
 extern int glps_debug;
 
@@ -250,7 +252,7 @@ void PrtMat(const value_mat &M)
 void PrtLat(const Machine &sim)
 {
     Machine::p_elements_t::const_iterator it;
-    MomentElementBase                     *ElemPtr;
+    element_t                     *ElemPtr;
     Config                                D;
     std::auto_ptr<StateBase>              state(sim.allocState(D));
     ElementVoid                           *elem;
@@ -267,7 +269,7 @@ void PrtLat(const Machine &sim)
 
         std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
 
-        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+        ElemPtr = dynamic_cast<element_t *>(elem);
         assert(ElemPtr != NULL);
         PrtMat(ElemPtr->transfer);
     }
@@ -1339,7 +1341,6 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
                  const value_mat S)
 {
     // Evaluate transport matrices for given beam initial conditions.
-    typedef MatrixState state_t;
 
     std::stringstream               strm;
     int                             CavCnt;
@@ -1347,9 +1348,8 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     double                          SampleionK, R56, Brho, K, EkState, Fy_absState;
     double                          fRF, phiRF, accIonW, aveX2i, aveY2i, ionFys, E0TL;
     Machine::p_elements_t::iterator it;
-    MomentElementBase               *ElemPtr;
-//    LinearElementBase<MatrixState>  *ElemPtr;
-    MatrixState                     *StatePtr;
+    element_t               *ElemPtr;
+    state_t                     *StatePtr;
     value_mat                       M;
 
     Config                   D;
@@ -1380,7 +1380,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     // Skip over state.
     it++;
     // Initialize state.
-    StatePtr = dynamic_cast<MatrixState*>(state.get());
+    StatePtr = dynamic_cast<state_t*>(state.get());
     StatePtr->state = S;
 
     CavCnt = 0;
@@ -1390,7 +1390,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
         Config        newconf(conf);
         std::string   t_name = elem->type_name(); // C string -> C++ string.
 
-        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+        ElemPtr = dynamic_cast<element_t *>(elem);
         assert(ElemPtr != NULL);
 
         if (t_name != "marker") {
@@ -1423,7 +1423,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             sim.reconfigure(elem_index, newconf);
             // Re-initialize after re-allocation.
             elem = *it;
-            ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+            ElemPtr = dynamic_cast<element_t *>(elem);
 
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
 
@@ -1439,7 +1439,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
             sim.reconfigure(elem_index, newconf);
             // Re-initialize after re-allocation.
             elem = *it;
-            ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+            ElemPtr = dynamic_cast<element_t *>(elem);
 
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
 
@@ -1481,7 +1481,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 void PropagateState(const Machine &sim)
 {
     Machine::p_elements_t::const_iterator it;
-    MomentElementBase                     *ElemPtr;
+    element_t                     *ElemPtr;
     Config                                D;
     std::auto_ptr<StateBase>              state(sim.allocState(D));
     ElementVoid                           *elem;
@@ -1495,20 +1495,20 @@ void PropagateState(const Machine &sim)
         elem = *it;
 
         std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
-        ElemPtr = dynamic_cast<MomentElementBase *>(elem);
+        ElemPtr = dynamic_cast<element_t *>(elem);
         assert(ElemPtr != NULL);
         PrtMat(ElemPtr->transfer);
 
 //        sim.propagate(state.get(), elem->index, 1);
         elem->advance(*state);
 
-//        MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+//        state_t* StatePtr = dynamic_cast<state_t*>(state.get());
 //        std::cout << "\n" << *state;
 //        std::cout << "\n";
 //        PrtMat(StatePtr->state);
     }
 
-    MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+    state_t* StatePtr = dynamic_cast<state_t*>(state.get());
     std::cout << "\n";
     PrtMat(StatePtr->state);
 
@@ -1519,7 +1519,6 @@ void PropagateState(const Machine &sim)
 void BaryCenterUnitFix(std::vector<double> &BaryCenter)
 {
     // Change units from [mm, rad, mm, rad, rad, MeV/u] to [m, rad, m, rad, rad, eV/u].
-    typedef MatrixState state_t;
 
     BaryCenter[state_t::PS_X]  /= MtoMM;
     BaryCenter[state_t::PS_Y]  /= MtoMM;
@@ -1539,7 +1538,7 @@ void StateUnitFix(Machine &sim)
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
-    MatrixState* StatePtr = dynamic_cast<MatrixState*>(state.get());
+    state_t* StatePtr = dynamic_cast<state_t*>(state.get());
 
     std::cout << "\n";
     PrtMat(StatePtr->state);
