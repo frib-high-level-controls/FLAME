@@ -56,6 +56,8 @@ extern int glps_debug;
 //                   2 include quadrupole terms.
 const int  MpoleLevel = 0;
 
+const bool EmitGrowth = false;
+
 // Charge stripper parameters.
 const int    Stripper_n                 = 5;            // Number of charge states.
 const double Stripper_IonZ              = 78e0/238e0,
@@ -71,6 +73,16 @@ const double Stripper_IonZ              = 78e0/238e0,
 
 typedef boost::numeric::ublas::vector<double> value_vec;
 typedef boost::numeric::ublas::matrix<double> value_mat;
+
+enum {maxsize=6};
+
+typedef boost::numeric::ublas::vector<double,
+                boost::numeric::ublas::bounded_array<double, maxsize>
+> vector_t;
+typedef boost::numeric::ublas::matrix<double,
+                boost::numeric::ublas::row_major,
+                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
+> matrix_t;
 
 
 class LongTabType {
@@ -230,6 +242,15 @@ void CavTLMLineType::show(std::ostream& strm) const
 
 
 void PrtVec(const std::vector<double> &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+void PrtVec(const vector_t &a)
 {
     for (size_t k = 0; k < a.size(); k++)
         std::cout << std::scientific << std::setprecision(10)
@@ -945,7 +966,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     using boost::numeric::ublas::prod;
 
-    Idmat = boost::numeric::ublas::identity_matrix<double>(6);
+    Idmat = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
 
     inf.open((HomeDir+CavTLMLine).c_str(), std::ifstream::in);
     if (!inf.is_open()) {
@@ -1283,11 +1304,12 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
                          const double betaf, const double gamaf, const double fRF, const double ionFys,
                          const double aveX2i, const double cenX, const double aveY2i, const double cenY, value_mat &matOut)
 {
+    // Evaluate emittance growth.
     int       k;
     double    ionLamda, DeltaPhi, kpX, fDeltaPhi, f2DeltaPhi, gPhisDeltaPhi, deltaAveXp2f, XpIncreaseFactor;
     double    kpY, deltaAveYp2f, YpIncreaseFactor, kpZ, ionK, aveZ2i, deltaAveZp2, longiTransFactor, ZpIncreaseFactor;
 
-    matOut = boost::numeric::ublas::identity_matrix<double>(6);
+    matOut = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
 
     matOut = matIn;
 
@@ -1295,7 +1317,6 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
 
     // for rebuncher, because no acceleration, E0TL would be wrong when cos(ionFys) is devided.
     if (cos(ionFys) > -0.0001 && cos(ionFys) < 0.0001) E0TL = 0e0;
-    // Implement from Trace3D emittance growth routine
     DeltaPhi = sqrt(matIn(4, 4));
     // ionLamda in m, kpX in 1/mm
     kpX              = -M_PI*fabs(ionZ)*E0TL/ionEs/sqr(aveBeta*aveGama)/betaf/gamaf/ionLamda;
@@ -1326,34 +1347,34 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
     if (deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor > 0e0)
         ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor))/(matIn(5, 5)*sqr(longiTransFactor)));
 
-    for (k = 0; k < 6; k++) {
-        matOut(1, k) *= XpIncreaseFactor;
-        matOut(k, 1) *= XpIncreaseFactor;
-        matOut(3, k) *= YpIncreaseFactor;
-        matOut(k, 3) *= YpIncreaseFactor;
-        matOut(5, k) *= ZpIncreaseFactor;
-        matOut(k, 5) *= ZpIncreaseFactor;
+    for (k = 0; k < PS_Dim; k++) {
+        // Avoid loss of significant digits.
+        matOut(1, k) += matOut(1, k)*(XpIncreaseFactor-1e0);
+        matOut(k, 1) += matOut(k, 1)*(XpIncreaseFactor-1e0);
+        matOut(3, k) += matOut(3, k)*(YpIncreaseFactor-1e0);
+        matOut(k, 3) += matOut(k, 3)*(YpIncreaseFactor-1e0);
+        matOut(5, k) += matOut(5, k)*(ZpIncreaseFactor-1e0);
+        matOut(k, 5) += matOut(k, 5)*(ZpIncreaseFactor-1e0);
     }
 }
 
 
-void InitLattice(Machine &sim, const double IonZ, const std::vector<double> BaryCenter,
-                 const value_mat S)
+void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const value_mat &Mom2)
 {
     // Evaluate transport matrices for given beam initial conditions.
 
     std::stringstream               strm;
-    int                             CavCnt;
+    int                             CavCnt, n;
     double                          IonW, IonEs, IonEk, s, L, beta, gamma, avebeta, avegamma;
     double                          SampleionK, R56, Brho, K, EkState, Fy_absState;
     double                          fRF, phiRF, accIonW, aveX2i, aveY2i, ionFys, E0TL;
     Machine::p_elements_t::iterator it;
-    element_t               *ElemPtr;
-    state_t                     *StatePtr;
+    element_t                       *ElemPtr;
+    state_t                         *StatePtr;
     value_mat                       M;
 
-    Config                   D;
-    std::auto_ptr<StateBase> state(sim.allocState(D));
+    Config                          D;
+    std::auto_ptr<StateBase>        state(sim.allocState(D));
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
@@ -1362,8 +1383,8 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     IonW  = state->IonW/MeVtoeV;
 
     // Define initial conditions.
-    Fy_absState = BaryCenter[state_t::PS_S];
-    EkState     = IonEk + BaryCenter[state_t::PS_PS];
+    Fy_absState = Mom1[state_t::PS_S];
+    EkState     = IonEk + Mom1[state_t::PS_PS];
 
 //    TransVector[state] = get(k).centerVector;
 //    ThetaMatrix[state] = get(k).thetaMatrix;
@@ -1381,9 +1402,16 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
     it++;
     // Initialize state.
     StatePtr = dynamic_cast<state_t*>(state.get());
-    StatePtr->state = S;
+    StatePtr->moment0 = Mom1;
+    StatePtr->state   = Mom2;
+
+    std::cout << "\n";
+    PrtVec(StatePtr->moment0);
+//    std::cout << "\n";
+//    PrtMat(StatePtr->state);
 
     CavCnt = 0;
+    n = 1;
     for (; it != sim.p_elements.end(); ++it) {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
@@ -1407,20 +1435,27 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 
         if (t_name == "marker") {
         } else if (t_name == "drift") {
+            n++;
             Fy_absState += SampleionK*L;
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "sbend") {
+            n++;
             Fy_absState += SampleionK*L;
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
         } else if (t_name == "quadrupole") {
+            n++;
             Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
             // Scale B field.
             K = conf.get<double>("B2")/Brho;
 
             size_t elem_index = ElemPtr->index;
             Config newconf(sim[elem_index]->conf());
+            printf("\nK = %13.5e\n", K);
             newconf.set<double>("K", K);
+            printf("K = %13.5e\n", conf.get<double>("K"));
             sim.reconfigure(elem_index, newconf);
+            printf("K = %13.5e\n", conf.get<double>("K"));
+            exit(0);
             // Re-initialize after re-allocation.
             elem = *it;
             ElemPtr = dynamic_cast<element_t *>(elem);
@@ -1429,6 +1464,7 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 
             Fy_absState += SampleionK*L;
         } else if (t_name == "solenoid") {
+            n++;
             Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
             // Scale B field.
             K = conf.get<double>("B")/(2e0*Brho);
@@ -1443,15 +1479,25 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
 
+//            printf("\nsolenoid: \n");
+//            printf("\n");
+//            PrtMat(ElemPtr->transfer);
+//            double ibrho = 1e0/Brho;
+//            double B = conf.get<double>("B");
+//            K = conf.get<double>("K");
+//            double Etot = EkState+IonEs;
+//            value_mat T = ElemPtr->transfer;
+
             Fy_absState += SampleionK*L;
         } else if (t_name == "rfcavity") {
+            n++;
             CavCnt++;
             InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
                       beta, gamma, avebeta, avegamma, M);
             ElemPtr->transfer = M;
 
-            fRF = conf.get<double>("f");
-            phiRF = conf.get<double>("phi");
+            fRF    = conf.get<double>("f");
+            phiRF  = conf.get<double>("phi");
             aveX2i = StatePtr->state(0, 0);
             aveY2i = StatePtr->state(2, 2);
             ionFys = phiRF/180e0*M_PI;
@@ -1459,19 +1505,31 @@ void InitLattice(Machine &sim, const double IonZ, const std::vector<double> Bary
 
             elem->advance(*state);
 
-            calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
-                                E0TL, avebeta, avegamma, beta, gamma, fRF, ionFys,
-                                aveX2i, 0e0, aveY2i, 0e0, M);
-            StatePtr->state = M;
+            StatePtr->moment0[state_t::PS_S]  = Fy_absState - LongTab.FyAbs[n-1];
+            StatePtr->moment0[state_t::PS_PS] = EkState - LongTab.Ek[n-1];
+
+            if (EmitGrowth) {
+               calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
+                                    E0TL, avebeta, avegamma, beta, gamma, fRF, ionFys,
+                                    aveX2i, StatePtr->moment0[state_t::PS_X],
+                                    aveY2i, StatePtr->moment0[state_t::PS_Y], M);
+                StatePtr->state = M;
+            }
         }
 
         if (t_name != "rfcavity") elem->advance(*state);
 
 //        std::cout << "\n" << t_name << "\n";
+//        PrtVec(StatePtr->moment0);
+//        std::cout << "\n";
 //        PrtMat(ElemPtr->transfer);
+//        std::cout << "\n";
+//        PrtMat(StatePtr->state);
     }
 
     std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
+    std::cout << "\n";
+    PrtVec(StatePtr->moment0);
     std::cout << "\n";
     PrtMat(StatePtr->state);
 }
@@ -1577,7 +1635,6 @@ int main(int argc, char *argv[])
  try {
         int                 k;
         std::vector<double> ChgState;
-        std::vector<double> BaryCenter[2];
         clock_t             tStamp[2];
 
         FILE *in = stdin;
@@ -1623,9 +1680,20 @@ int main(int argc, char *argv[])
         //    StateUnitFix(sim);
 
         // Charge states.
-        ChgState      = conf->get<std::vector<double> >("IonChargeStates");
-        BaryCenter[0] = conf->get<std::vector<double> >("BaryCenter1");
-        BaryCenter[1] = conf->get<std::vector<double> >("BaryCenter2");
+        ChgState = conf->get<std::vector<double> >("IonChargeStates");
+
+        //    value_vec B1 = conf->get<value_vec>("B1");
+        const std::vector<double>& B1vec = conf->get<std::vector<double> >("BaryCenter1");
+        value_vec B1(PS_Dim);
+        if (B1vec.size() > B1.data().size())
+            throw std::invalid_argument("Initial state size too big");
+        std::copy(B1vec.begin(), B1vec.end(), B1.data().begin());
+
+        const std::vector<double>& B2vec = conf->get<std::vector<double> >("BaryCenter2");
+        value_vec B2(PS_Dim);
+        if (B2vec.size() > B2.data().size())
+            throw std::invalid_argument("Initial state size too big");
+        std::copy(B2vec.begin(), B2vec.end(), B2.data().begin());
 
         //    value_mat S1 = conf->get<value_mat>("S1");
         const std::vector<double>& S1vec = conf->get<std::vector<double> >("S1");
@@ -1647,11 +1715,12 @@ int main(int argc, char *argv[])
             std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
         std::cout << "\n";
         std::cout << "\nBarycenter:\n";
-        PrtVec(BaryCenter[0]);
-        PrtVec(BaryCenter[1]);
+        PrtVec(B1);
+        PrtVec(B2);
         std::cout << "\nBeam envelope:\n";
         PrtMat(S1);
-        PrtMat(S1);
+        std::cout << "\n";
+        PrtMat(S2);
 
         tStamp[0] = clock();
 
@@ -1662,8 +1731,8 @@ int main(int argc, char *argv[])
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
-        InitLattice(sim, ChgState[0], BaryCenter[0], S1);
-        InitLattice(sim, ChgState[1], BaryCenter[1], S2);
+        InitLattice(sim, ChgState[0], B1, S1);
+        InitLattice(sim, ChgState[1], B2, S2);
 
         tStamp[1] = clock();
 
