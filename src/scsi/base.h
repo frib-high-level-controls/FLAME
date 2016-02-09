@@ -96,7 +96,7 @@ struct ElementVoid : public boost::noncopyable
     //! Assumes other has the same type
     virtual void assign(const ElementVoid* other ) =0;
 private:
-    const Config p_conf;
+    Config p_conf;
 };
 
 //std::ostream& operator<<(std::ostream& strm, const ElementVoid& s)
