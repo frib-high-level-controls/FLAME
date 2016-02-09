@@ -9,21 +9,22 @@ from .. import Machine
 class testBasic(unittest.TestCase):
   def setUp(self):
     T = self.expect = numpy.asfarray([
-      [1, 0, 1, 0, 1, 0],
-      [0, 1, 0, 1, 0, 1],
-      [1, 0, 1, 0, 1, 0],
-      [0, 1, 0, 1, 0, 1],
-      [1, 0, 1, 0, 1, 0],
-      [0, 1, 0, 1, 0, 1],
+      [1, 0, 1, 0, 1, 0, 0],
+      [0, 1, 0, 1, 0, 1, 0],
+      [1, 0, 1, 0, 1, 0, 0],
+      [0, 1, 0, 1, 0, 1, 0],
+      [1, 0, 1, 0, 1, 0, 0],
+      [0, 1, 0, 1, 0, 1, 0],
+      [0, 0, 0, 0, 0, 0, 0]
     ])
     I = self.expect0 = numpy.asfarray(
-      [1, 1, 0, 0, 0, 0]
+      [1, 1, 0, 0, 0, 0, 0]
     )
     self.M = Machine({
       'sim_type':'MomentMatrix',
       'elements':[
         {'name':'elem0', 'type':'source', 'initial':T, 'moment0':I},
-        {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(6)},
+        {'name':'elem1', 'type':'generic', 'transfer':numpy.identity(7)},
       ],
     })
 
