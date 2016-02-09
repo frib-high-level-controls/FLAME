@@ -1706,7 +1706,7 @@ int main(int argc, char *argv[])
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
-        InitLattice(sim, ChgState[0], B1, S1);
+//        InitLattice(sim, ChgState[0], B1, S1);
         InitLattice(sim, ChgState[1], B2, S2);
 
         tStamp[1] = clock();
