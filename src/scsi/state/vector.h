@@ -12,7 +12,7 @@
  */
 struct VectorState : public StateBase
 {
-    enum {maxsize=6};
+    enum {maxsize=7};
     enum param_t {
         PS_X, PS_PX, PS_Y, PS_PY, PS_S, PS_PS
     };

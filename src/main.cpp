@@ -46,15 +46,15 @@ extern int glps_debug;
 // Sampling distance [m].
 # define SampleLambda (C0/SampleFreq*MtoMM)
 
-// Phase space dimension.
-# define PS_Dim       6
+// Phase space dimension; including vector for orbit/1st moment.
+# define PS_Dim       7
 
 // Global constansts and parameters.
 
 // Mpultipole level: 0 only include focusing and defocusing effects,
 //                   1 include dipole terms,
 //                   2 include quadrupole terms.
-const int  MpoleLevel = 0;
+const int  MpoleLevel = 2;
 
 const bool EmitGrowth = false;
 
@@ -74,7 +74,7 @@ const double Stripper_IonZ              = 78e0/238e0,
 typedef boost::numeric::ublas::vector<double> value_vec;
 typedef boost::numeric::ublas::matrix<double> value_mat;
 
-enum {maxsize=6};
+enum {maxsize = 7};
 
 typedef boost::numeric::ublas::vector<double,
                 boost::numeric::ublas::bounded_array<double, maxsize>
@@ -763,8 +763,8 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
         case 1:
             T = PwrSeries(IonK, 1.703336e+00, -1.671357e+02, 1.697657e+04, -9.843253e+05, 3.518178e+07, -8.043084e+08,
                           1.165760e+10, -1.014721e+11, 4.632851e+11, -7.604796e+11);
-            S = PwrSeries(IonK, 1.452657e+01, -3.409550e+03, 3.524921e+05, -2.106663e+07, 8.022856e+08, 3.360597e+11,
-                          -2.019481e+10, -3.565836e+12, 2.189668e+13, -5.930241e+13);
+            S = PwrSeries(IonK, 1.452657e+01, -3.409550e+03, 3.524921e+05, -2.106663e+07, 8.022856e+08,
+                          -2.019481e+10, 3.360597e+11, -3.565836e+12, 2.189668e+13, -5.930241e+13);
             break;
         case 2:
             T = PwrSeries(IonK, 1.003228e+00, -1.783406e+00, 1.765330e+02, -5.326467e+04, 4.242623e+06, -2.139672e+08,
@@ -1141,7 +1141,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                     T    = CavTLMLineTab[cavi-1].T[n-1];
                     S    = CavTLMLineTab[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-                    kfdy =  kfdx;
+                    kfdy = -kfdx;
 
                     Mprob(1, 0) = kfdx;
                     Mprob(3, 2) = kfdy;
@@ -1450,12 +1450,8 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
 
             size_t elem_index = ElemPtr->index;
             Config newconf(sim[elem_index]->conf());
-            printf("\nK = %13.5e\n", K);
             newconf.set<double>("K", K);
-            printf("K = %13.5e\n", conf.get<double>("K"));
             sim.reconfigure(elem_index, newconf);
-            printf("K = %13.5e\n", conf.get<double>("K"));
-            exit(0);
             // Re-initialize after re-allocation.
             elem = *it;
             ElemPtr = dynamic_cast<element_t *>(elem);
