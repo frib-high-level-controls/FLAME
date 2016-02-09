@@ -55,6 +55,15 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
 
     assert_aequal(S.state, [1.002, 1e-3, 0, 0, 0, 0])
 
+    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
+
+    self.M.reconfigure(0, {"L": 5.0e-3})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.state, [1.005, 1e-3, 0, 0, 0, 0])
+
   def test_gc(self):
     "See that State attributes have appropriate lifetime"
 

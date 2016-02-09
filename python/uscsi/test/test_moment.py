@@ -36,3 +36,22 @@ class testBasic(unittest.TestCase):
 
     assert_aequal(S.moment0, self.expect0)
     assert_aequal(S.state, self.expect)
+
+  def test_reconfig(self):
+    self.M.reconfigure(1, {'transfer':numpy.identity(6)*2.0})
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.moment0, self.expect0*2)
+    assert_aequal(S.state, self.expect*4)
+
+    self.M.reconfigure(1, {'transfer':numpy.identity(6)*5.0})
+
+    S = self.M.allocState({})
+
+    self.M.propagate(S)
+
+    assert_aequal(S.moment0, self.expect0*5)
+    assert_aequal(S.state, self.expect*25)
