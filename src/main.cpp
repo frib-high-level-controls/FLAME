@@ -105,9 +105,9 @@ public:
     std::vector<double> s,     // s coordinate [m]
                         Elong; // Longitudinal Electric field [V/m].
 
-    void RdData(const std::string);
-    void show(std::ostream& strm, const int) const;
-    void show(std::ostream& strm) const;
+    void RdData(const std::string&);
+    void show(std::ostream&, const int) const;
+    void show(std::ostream&) const;
 };
 
 
@@ -167,7 +167,7 @@ void LongTabType::show(std::ostream& strm, const int k) const
 }
 
 
-void CavDataType::RdData(const std::string FileName)
+void CavDataType::RdData(const std::string &FileName)
 {
     std::string       line;
     double            s, Elong;
@@ -1292,10 +1292,6 @@ void InitRFCav(const Config &conf, const int CavCnt,
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
     GetCavMat(cavi, cavilabel, Rm, CavTLMLine, IonZ, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
-
-//    TransVector[ii_state] = CaviMatrix.times(TransVector[ii_state]);
-//    TransVector[ii_state](4, Fy_abs[ii_state]-tlmPara.Fy_abs_tab.get(lattcnt+1)[1]);
-//    TransVector[ii_state](5, Ek[ii_state]-tlmPara.Ek_tab.get(lattcnt+1)[1]);
 }
 
 
@@ -1386,10 +1382,6 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     Fy_absState = Mom1[state_t::PS_S];
     EkState     = IonEk + Mom1[state_t::PS_PS];
 
-//    TransVector[state] = get(k).centerVector;
-//    ThetaMatrix[state] = get(k).thetaMatrix;
-//    Fy_absState        = get(k).centerVector.getElem(4);
-
     std::cout << "\n" << "InitLattice:" << "\n";
     std::cout << std::fixed << std::setprecision(5)
               << "  IonZ = " << IonZ
@@ -1474,15 +1466,6 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
             ElemPtr = dynamic_cast<element_t *>(elem);
 
             ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-
-//            printf("\nsolenoid: \n");
-//            printf("\n");
-//            PrtMat(ElemPtr->transfer);
-//            double ibrho = 1e0/Brho;
-//            double B = conf.get<double>("B");
-//            K = conf.get<double>("K");
-//            double Etot = EkState+IonEs;
-//            value_mat T = ElemPtr->transfer;
 
             Fy_absState += SampleionK*L;
         } else if (t_name == "rfcavity") {
@@ -1611,19 +1594,36 @@ void StateUnitFix(Machine &sim)
 }
 
 
-//Machine::propagate_jb(StateBase* S, size_t start, size_t max) const
-//{
-//    const size_t nelem = p_elements.size();
+std::vector<double> GetChgState(Config &conf, const std::string &CSstr)
+{
+    return conf.get<std::vector<double> >(CSstr);
+}
 
-//    for(size_t i=start; S->next_elem<nelem && i<max; i++)
-//    {
-//        ElementVoid* E = p_elements[S->next_elem];
-//        S->next_elem++;
-//        E->advance(*S);
-//        if(p_trace)
-//            (*p_trace) << "After "<< i << " " << *S;
-//    }
-//}
+
+value_vec GetBaryCenter(Config &conf, const std::string &BCstr)
+{
+
+    const std::vector<double>& BCvec = conf.get<std::vector<double> >(BCstr);
+    value_vec BC(PS_Dim);
+    if (BCvec.size() > BC.data().size())
+        throw std::invalid_argument("Initial state size too big");
+    std::copy(BCvec.begin(), BCvec.end(), BC.data().begin());
+
+    return BC;
+}
+
+
+value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
+{
+
+    const std::vector<double>& BEvec = conf.get<std::vector<double> >(BEstr);
+    value_mat BE(PS_Dim, PS_Dim);
+    if (BEvec.size() > BE.data().size())
+        throw std::invalid_argument("Initial state size too big");
+    std::copy(BEvec.begin(), BEvec.end(), BE.data().begin());
+
+    return BE;
+}
 
 
 int main(int argc, char *argv[])
@@ -1631,6 +1631,8 @@ int main(int argc, char *argv[])
  try {
         int                 k;
         std::vector<double> ChgState;
+        value_vec           B1(PS_Dim), B2(PS_Dim);
+        value_mat           S1(PS_Dim, PS_Dim), S2(PS_Dim, PS_Dim);
         clock_t             tStamp[2];
 
         FILE *in = stdin;
@@ -1675,38 +1677,15 @@ int main(int argc, char *argv[])
 
         //    StateUnitFix(sim);
 
-        // Charge states.
-        ChgState = conf->get<std::vector<double> >("IonChargeStates");
+        ChgState = GetChgState(*conf, "IonChargeStates");
 
-        //    value_vec B1 = conf->get<value_vec>("B1");
-        const std::vector<double>& B1vec = conf->get<std::vector<double> >("BaryCenter1");
-        value_vec B1(PS_Dim);
-        if (B1vec.size() > B1.data().size())
-            throw std::invalid_argument("Initial state size too big");
-        std::copy(B1vec.begin(), B1vec.end(), B1.data().begin());
+        B1 = GetBaryCenter(*conf, "BaryCenter1");
+        B2 = GetBaryCenter(*conf, "BaryCenter2");
 
-        const std::vector<double>& B2vec = conf->get<std::vector<double> >("BaryCenter2");
-        value_vec B2(PS_Dim);
-        if (B2vec.size() > B2.data().size())
-            throw std::invalid_argument("Initial state size too big");
-        std::copy(B2vec.begin(), B2vec.end(), B2.data().begin());
+        S1 = GetBeamEnvelope(*conf, "S1");
+        S2 = GetBeamEnvelope(*conf, "S2");
 
-        //    value_mat S1 = conf->get<value_mat>("S1");
-        const std::vector<double>& S1vec = conf->get<std::vector<double> >("S1");
-
-        value_mat S1(PS_Dim, PS_Dim);
-        if (S1vec.size() > S1.data().size())
-            throw std::invalid_argument("Initial state size too big");
-        std::copy(S1vec.begin(), S1vec.end(), S1.data().begin());
-
-        const std::vector<double>& S2vec = conf->get<std::vector<double> >("S2");
-
-        value_mat S2(PS_Dim, PS_Dim);
-        if (S2vec.size() > S2.data().size())
-            throw std::invalid_argument("Initial state size too big");
-        std::copy(S2vec.begin(), S2vec.end(), S2.data().begin());
-
-        std::cout << "\n" << "Ion charge states:\n";
+        std::cout << "\nIon charge states:\n";
         for (k = 0; k < 2; k++)
             std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
         std::cout << "\n";
@@ -1728,7 +1707,7 @@ int main(int argc, char *argv[])
                   << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
         InitLattice(sim, ChgState[0], B1, S1);
-        InitLattice(sim, ChgState[1], B2, S2);
+//        InitLattice(sim, ChgState[1], B2, S2);
 
         tStamp[1] = clock();
 
