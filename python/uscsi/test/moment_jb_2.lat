@@ -7,7 +7,6 @@ sim_type = "MomentMatrix";
 
 AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
 
-IonZ  = 33.0/238.0;    # Charge state for U_238.
 IonEs = AMU;           # Nucleon mass [MeV/u].
 IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
 IonW  = IonEs + IonEk; # Total energy [MeV/u].
@@ -15,7 +14,7 @@ IonW  = IonEs + IonEk; # Total energy [MeV/u].
 # Define Initial Conditions for the Charge States.
 # Units are: [mm, rad, mm, rad, rad, MeV/u]
 
-IonChargeStates = [33.0/238.0, 34.0/238.0];
+IonChargeStates = [33.0/238.0, 34.0/238.0]; # Charge states for U_238.
 
 #chargeAmount    = [10111.0, 10531.0];
 
@@ -66,10 +65,10 @@ drift_3: drift, L = 0.064263, aper = 0.020000;
 ls1_ca01_bpm_d1129_1: marker;
 drift_4: drift, L = 0.055880, aper = 0.020000;
 drift_5: drift, L = 0.076123, aper = 0.020000;
-ls1_ca01_sol1_d1131_1: solenoid, L = 0.100000, B = 5.340000, K = 0.0, aper = 0.020000;
+ls1_ca01_sol1_d1131_1: solenoid, L = 0.100000, B = 5.340000, aper = 0.020000;
 ls1_ca01_dch_d1131_2: marker, L = 0.0;
 ls1_ca01_dcv_d1131_3: marker;
-ls1_ca01_sol1_d1131_2: solenoid, L = 0.100000, B = 5.340000, K = 0.0, aper = 0.020000;
+ls1_ca01_sol1_d1131_2: solenoid, L = 0.100000, B = 5.340000, aper = 0.020000;
 drift_6: drift, L = 0.076123, aper = 0.020000;
 drift_7: drift, L = 0.067270, aper = 0.020000;
 ls1_ca01_cav2_d1135: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6,

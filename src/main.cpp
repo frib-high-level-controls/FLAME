@@ -1359,10 +1359,9 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
 
 void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
                        Machine::p_elements_t::iterator it, int &n, int &CavCnt, double &s,
-                       const double IonZ, const double IonEs, double &EkState, double &Fy_absState,
-                       const bool count)
+                       const double IonZ, const double IonEs, double &EkState, double &Fy_absState)
 {
-    // Scale matrix elements for Charge State and propagate through element.
+    // Scale matrix element for Charge State and propagate through element.
     std::stringstream  strm;
     double             IonW, L, beta, gamma, avebeta, avegamma;
     double             SampleionK, R56, Brho, K;
@@ -1381,7 +1380,7 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
 
     if (t_name != "marker") {
         L = conf.get<double>("L")*MtoMM;
-        if (count) s += L;
+        s += L;
     }
 
     gamma      = (EkState+IonEs)/IonEs;
@@ -1393,15 +1392,15 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
 
     if (t_name == "marker") {
     } else if (t_name == "drift") {
-        if (count) n++;
+        n++;
         Fy_absState += SampleionK*L;
         ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
     } else if (t_name == "sbend") {
-        if (count) n++;
+        n++;
         Fy_absState += SampleionK*L;
         ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
     } else if (t_name == "quadrupole") {
-        if (count) n++;
+        n++;
         Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
         // Scale B field.
         K = conf.get<double>("B2")/Brho;
@@ -1418,7 +1417,7 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
 
         Fy_absState += SampleionK*L;
     } else if (t_name == "solenoid") {
-        if (count) n++;
+        n++;
         Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
         // Scale B field.
         K = conf.get<double>("B")/(2e0*Brho);
@@ -1435,10 +1434,7 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
 
         Fy_absState += SampleionK*L;
     } else if (t_name == "rfcavity") {
-        if (count) {
-            n++;
-            CavCnt++;
-        }
+        n++, CavCnt++;
         InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
                   beta, gamma, avebeta, avegamma, M);
         ElemPtr->transfer = M;
@@ -1514,7 +1510,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
 
     s = 0e0, CavCnt = 0, n = 1;
     for (; it != sim.p_elements.end(); ++it)
-        ScaleandPropagate(sim, *state, StatePtr, it, n, CavCnt, s, IonZ, IonEs, EkState, Fy_absState, true);
+        ScaleandPropagate(sim, *state, StatePtr, it, n, CavCnt, s, IonZ, IonEs, EkState, Fy_absState);
 
     std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
     std::cout << "\n";
@@ -1528,22 +1524,25 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
                  const std::vector<double> IonZ, const value_vec Mom1[], const value_mat Mom2[])
 {
     // Evaluate transport matrices for given beam initial conditions.
-    int                                        CavCnt, n, k;
-    double                                     IonEk[nChgState], IonEs[nChgState], IonW[nChgState], s;
+    int                                        CavCnt[nChgState], n[nChgState], k;
+    double                                     IonEk[nChgState], IonEs[nChgState], IonW[nChgState], s[nChgState];
     double                                     EkState[nChgState], Fy_absState[nChgState];
     Config                                     D;
     std::vector<boost::shared_ptr<StateBase> > state;
     state_t                                    *StatePtr[nChgState];
-    Machine::p_elements_t::iterator            it;
+    Machine::p_elements_t::iterator            it[nChgState];
 
 
-    it = sim[0]->p_elements.begin();
-    // Skip over state.
-    it++;
 
     std::cout << "\nInitLattice:\n";
 
     for (k = 0; k < nChgState; k++) {
+        s[k] = 0e0, CavCnt[k] = 0, n[k] = 1;
+
+        it[k] = sim[k]->p_elements.begin();
+        // Skip over state.
+        it[k]++;
+
         state.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState(D)));
         // Propagate through first element (beam initial conditions).
         sim[k]->propagate(state[k].get(), 0, 1);
@@ -1567,14 +1566,13 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
                   << ", IonW [Mev/u] = " << IonW[k] << "\n";
     }
 
-    s = 0e0, CavCnt = 0, n = 1;
-    for (; it != sim[0]->p_elements.end(); ++it)
+    for (; it[0] != sim[0]->p_elements.end(); ++it[0], it[1]++)
         for (k = 0; k < nChgState; k++)
-            ScaleandPropagate(*sim[k], *state[k], StatePtr[k], it, n, CavCnt, s,
-                              IonZ[k], IonEs[k], EkState[k], Fy_absState[k], k == 0);
+            ScaleandPropagate(*sim[k], *state[k], StatePtr[k], it[k], n[k], CavCnt[k], s[k],
+                              IonZ[k], IonEs[k], EkState[k], Fy_absState[k]);
 
     for (k = 0; k < nChgState; k++) {
-        std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
+        std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s[k]*1e-3 << "\n";
         std::cout << "\n";
         PrtVec(StatePtr[k]->moment0);
         std::cout << "\n";
@@ -1770,7 +1768,6 @@ int main(int argc, char *argv[])
 //            sim.set_trace(NULL);
 
 //        InitLong(sim, ChgState[0]);
-
 //        InitLattice(sim, ChgState[0], BC[0], BE[0]);
 //        InitLattice(sim, ChgState[1], BC[1], BE[1]);
 
