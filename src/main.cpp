@@ -1355,19 +1355,131 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
 }
 
 
+void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
+                       Machine::p_elements_t::iterator it, int &n, int &CavCnt, double &s,
+                       const double IonZ, const double IonEs, double &EkState, double &Fy_absState)
+{
+    // Scale matrix elements for Charge State and propagate through element.
+    std::stringstream  strm;
+    double             IonW, L, beta, gamma, avebeta, avegamma;
+    double             SampleionK, R56, Brho, K;
+    double             accIonW, x0[2], x2[2], ionFys, E0TL;
+    element_t          *ElemPtr;
+    value_mat          M;
+
+
+    ElementVoid*  elem   = *it;
+    const Config& conf   = elem->conf();
+    Config        newconf(conf);
+    std::string   t_name = elem->type_name(); // C string -> C++ string.
+
+    ElemPtr = dynamic_cast<element_t *>(elem);
+    assert(ElemPtr != NULL);
+
+    if (t_name != "marker") {
+        L = conf.get<double>("L")*MtoMM;
+        s += L;
+    }
+
+    gamma      = (EkState+IonEs)/IonEs;
+    beta       = sqrt(1e0-1e0/sqr(gamma));
+    SampleionK = 2e0*M_PI/(beta*SampleLambda);
+
+    // Evaluate momentum compaction.
+    R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
+
+    if (t_name == "marker") {
+    } else if (t_name == "drift") {
+        n++;
+        Fy_absState += SampleionK*L;
+        ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+    } else if (t_name == "sbend") {
+        n++;
+        Fy_absState += SampleionK*L;
+        ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+    } else if (t_name == "quadrupole") {
+        n++;
+        Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
+        // Scale B field.
+        K = conf.get<double>("B2")/Brho;
+
+        size_t elem_index = ElemPtr->index;
+        Config newconf(sim[elem_index]->conf());
+        newconf.set<double>("K", K);
+        sim.reconfigure(elem_index, newconf);
+        // Re-initialize after re-allocation.
+        elem = *it;
+        ElemPtr = dynamic_cast<element_t *>(elem);
+
+        ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+
+        Fy_absState += SampleionK*L;
+    } else if (t_name == "solenoid") {
+        n++;
+        Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
+        // Scale B field.
+        K = conf.get<double>("B")/(2e0*Brho);
+
+        size_t elem_index = ElemPtr->index;
+        Config newconf(sim[elem_index]->conf());
+        newconf.set<double>("K", K);
+        sim.reconfigure(elem_index, newconf);
+        // Re-initialize after re-allocation.
+        elem = *it;
+        ElemPtr = dynamic_cast<element_t *>(elem);
+
+        ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
+
+        Fy_absState += SampleionK*L;
+    } else if (t_name == "rfcavity") {
+        n++;
+        CavCnt++;
+        InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
+                  beta, gamma, avebeta, avegamma, M);
+        ElemPtr->transfer = M;
+
+        // Get state at entrance.
+        x0[0]  = StatePtr->moment0[state_t::PS_X];
+        x0[1]  = StatePtr->moment0[state_t::PS_Y];
+        x2[0]  = StatePtr->state(0, 0);
+        x2[1]  = StatePtr->state(2, 2);
+        ionFys = conf.get<double>("phi")/180e0*M_PI;
+        E0TL   = accIonW/cos(ionFys)/IonZ;
+
+        elem->advance(state);
+
+        StatePtr->moment0[state_t::PS_S]  = Fy_absState - LongTab.FyAbs[n-1];
+        StatePtr->moment0[state_t::PS_PS] = EkState - LongTab.Ek[n-1];
+
+        if (EmitGrowth) {
+           calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
+                                E0TL, avebeta, avegamma, beta, gamma, conf.get<double>("f"), ionFys,
+                                x2[0], x0[0], x2[1], x0[1], M);
+            StatePtr->state = M;
+        }
+    }
+
+    if (t_name != "rfcavity") elem->advance(state);
+
+    if (false) {
+        std::cout << "\n" << t_name << "\n";
+        PrtVec(StatePtr->moment0);
+        std::cout << "\n";
+        PrtMat(ElemPtr->transfer);
+        std::cout << "\n";
+        PrtMat(StatePtr->state);
+    }
+}
+
+
 void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const value_mat &Mom2)
 {
     // Evaluate transport matrices for given beam initial conditions.
-
     std::stringstream               strm;
     int                             CavCnt, n;
-    double                          IonW, IonEs, IonEk, s, L, beta, gamma, avebeta, avegamma;
-    double                          SampleionK, R56, Brho, K, EkState, Fy_absState;
-    double                          fRF, phiRF, accIonW, aveX2i, aveY2i, ionFys, E0TL;
-    Machine::p_elements_t::iterator it;
-    element_t                       *ElemPtr;
+    double                          IonEk, IonEs, IonW, EkState, Fy_absState, s;
     state_t                         *StatePtr;
-    value_mat                       M;
+    Machine::p_elements_t::iterator it;
 
     Config                          D;
     std::auto_ptr<StateBase>        state(sim.allocState(D));
@@ -1382,7 +1494,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     Fy_absState = Mom1[state_t::PS_S];
     EkState     = IonEk + Mom1[state_t::PS_PS];
 
-    std::cout << "\n" << "InitLattice:" << "\n";
+    std::cout << "\nInitLattice:\n";
     std::cout << std::fixed << std::setprecision(5)
               << "  IonZ = " << IonZ
               << "  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
@@ -1399,111 +1511,14 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
 
     std::cout << "\n";
     PrtVec(StatePtr->moment0);
-//    std::cout << "\n";
-//    PrtMat(StatePtr->state);
+    std::cout << "\n";
+    PrtMat(StatePtr->state);
 
     CavCnt = 0;
     n = 1;
     for (; it != sim.p_elements.end(); ++it) {
-        ElementVoid*  elem   = *it;
-        const Config& conf   = elem->conf();
-        Config        newconf(conf);
-        std::string   t_name = elem->type_name(); // C string -> C++ string.
 
-        ElemPtr = dynamic_cast<element_t *>(elem);
-        assert(ElemPtr != NULL);
-
-        if (t_name != "marker") {
-            L = conf.get<double>("L")*MtoMM;
-            s += L;
-        }
-
-        gamma      = (EkState+IonEs)/IonEs;
-        beta       = sqrt(1e0-1e0/sqr(gamma));
-        SampleionK = 2e0*M_PI/(beta*SampleLambda);
-
-        // Evaluate momentum compaction.
-        R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
-
-        if (t_name == "marker") {
-        } else if (t_name == "drift") {
-            n++;
-            Fy_absState += SampleionK*L;
-            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-        } else if (t_name == "sbend") {
-            n++;
-            Fy_absState += SampleionK*L;
-            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-        } else if (t_name == "quadrupole") {
-            n++;
-            Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
-            // Scale B field.
-            K = conf.get<double>("B2")/Brho;
-
-            size_t elem_index = ElemPtr->index;
-            Config newconf(sim[elem_index]->conf());
-            newconf.set<double>("K", K);
-            sim.reconfigure(elem_index, newconf);
-            // Re-initialize after re-allocation.
-            elem = *it;
-            ElemPtr = dynamic_cast<element_t *>(elem);
-
-            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-
-            Fy_absState += SampleionK*L;
-        } else if (t_name == "solenoid") {
-            n++;
-            Brho = beta*(EkState+IonEs)*MeVtoeV/(C0*IonZ);
-            // Scale B field.
-            K = conf.get<double>("B")/(2e0*Brho);
-
-            size_t elem_index = ElemPtr->index;
-            Config newconf(sim[elem_index]->conf());
-            newconf.set<double>("K", K);
-            sim.reconfigure(elem_index, newconf);
-            // Re-initialize after re-allocation.
-            elem = *it;
-            ElemPtr = dynamic_cast<element_t *>(elem);
-
-            ElemPtr->transfer(state_t::PS_S, state_t::PS_PS) = R56;
-
-            Fy_absState += SampleionK*L;
-        } else if (t_name == "rfcavity") {
-            n++;
-            CavCnt++;
-            InitRFCav(conf, CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
-                      beta, gamma, avebeta, avegamma, M);
-            ElemPtr->transfer = M;
-
-            fRF    = conf.get<double>("f");
-            phiRF  = conf.get<double>("phi");
-            aveX2i = StatePtr->state(0, 0);
-            aveY2i = StatePtr->state(2, 2);
-            ionFys = phiRF/180e0*M_PI;
-            E0TL   = accIonW/cos(ionFys)/IonZ;
-
-            elem->advance(*state);
-
-            StatePtr->moment0[state_t::PS_S]  = Fy_absState - LongTab.FyAbs[n-1];
-            StatePtr->moment0[state_t::PS_PS] = EkState - LongTab.Ek[n-1];
-
-            if (EmitGrowth) {
-               calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
-                                    E0TL, avebeta, avegamma, beta, gamma, fRF, ionFys,
-                                    aveX2i, StatePtr->moment0[state_t::PS_X],
-                                    aveY2i, StatePtr->moment0[state_t::PS_Y], M);
-                StatePtr->state = M;
-            }
-        }
-
-        if (t_name != "rfcavity") elem->advance(*state);
-
-//        std::cout << "\n" << t_name << "\n";
-//        PrtVec(StatePtr->moment0);
-//        std::cout << "\n";
-//        PrtMat(ElemPtr->transfer);
-//        std::cout << "\n";
-//        PrtMat(StatePtr->state);
+        ScaleandPropagate(sim, *state, StatePtr, it, n, CavCnt, s, IonZ, IonEs, EkState, Fy_absState);
     }
 
     std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
@@ -1629,17 +1644,20 @@ value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
 int main(int argc, char *argv[])
 {
  try {
-        int                 k;
-        std::vector<double> ChgState;
-        value_vec           B1(PS_Dim), B2(PS_Dim);
-        value_mat           S1(PS_Dim, PS_Dim), S2(PS_Dim, PS_Dim);
-        clock_t             tStamp[2];
+        const int nChgStates = 2;
 
-        FILE *in = stdin;
+        int                   k;
+        std::vector<double>   ChgState;
+        value_vec             BC[nChgStates];
+        value_mat             BE[nChgStates];
+        std::auto_ptr<Config> conf, confs[2];
+        clock_t               tStamp[2];
+        FILE                  *inf;
+
         if(argc > 1) {
             HomeDir = argv[2];
-            in = fopen(argv[1], "r");
-            if (!in) {
+            inf = fopen(argv[1], "r");
+            if (!inf) {
                 fprintf(stderr, "Failed to open %s\n", argv[1]);
                 return 2;
             }
@@ -1647,15 +1665,13 @@ int main(int argc, char *argv[])
 
         glps_debug = 0; // 0 or 1.
 
-        std::auto_ptr<Config> conf;
-
         try {
             GLPSParser P;
-            conf.reset(P.parse(in));
+            conf.reset(P.parse(inf));
             fprintf(stderr, "Parsing succeeds\n");
         } catch(std::exception& e) {
             fprintf(stderr, "Parse error: %s\n", e.what());
-            fclose(in);
+            fclose(inf);
             return 1;
         }
 
@@ -1664,6 +1680,7 @@ int main(int argc, char *argv[])
         registerMoment();
 
         Machine sim(*conf);
+
         if (false)
             sim.set_trace(&std::cout);
         else
@@ -1677,25 +1694,31 @@ int main(int argc, char *argv[])
 
         //    StateUnitFix(sim);
 
+        for (k = 0; k < nChgStates; k++) {
+            BC[k].resize(PS_Dim);
+            BE[k].resize(PS_Dim, PS_Dim);
+        }
+
+        ChgState.resize(2);
         ChgState = GetChgState(*conf, "IonChargeStates");
 
-        B1 = GetBaryCenter(*conf, "BaryCenter1");
-        B2 = GetBaryCenter(*conf, "BaryCenter2");
+        BC[0] = GetBaryCenter(*conf, "BaryCenter1");
+        BC[1] = GetBaryCenter(*conf, "BaryCenter2");
 
-        S1 = GetBeamEnvelope(*conf, "S1");
-        S2 = GetBeamEnvelope(*conf, "S2");
+        BE[0] = GetBeamEnvelope(*conf, "S1");
+        BE[1] = GetBeamEnvelope(*conf, "S2");
 
         std::cout << "\nIon charge states:\n";
-        for (k = 0; k < 2; k++)
+        for (k = 0; k < nChgStates; k++)
             std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
         std::cout << "\n";
         std::cout << "\nBarycenter:\n";
-        PrtVec(B1);
-        PrtVec(B2);
+        PrtVec(BC[0]);
+        PrtVec(BC[1]);
         std::cout << "\nBeam envelope:\n";
-        PrtMat(S1);
+        PrtMat(BE[0]);
         std::cout << "\n";
-        PrtMat(S2);
+        PrtMat(BE[1]);
 
         tStamp[0] = clock();
 
@@ -1706,23 +1729,24 @@ int main(int argc, char *argv[])
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
-//        InitLattice(sim, ChgState[0], B1, S1);
-        InitLattice(sim, ChgState[1], B2, S2);
+        InitLattice(sim, ChgState[0], BC[0], BE[0]);
+//        InitLattice(sim, ChgState[1], BC[1], BE[1]);
 
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLattice: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
-        //    PrtLat(sim);
+        Machine sim1(*conf);
+        sim1.set_trace(NULL);
+        Machine sim2(*conf);
+        sim2.set_trace(NULL);
 
-//        PropagateState(sim, S);
-//        PropagateState(sim);
+        InitLong(sim1);
 
-        //     for n states
-        //       get Chg_n, S_n
-        //       Initialize Lattice(Chg_n, S_n)
-        //       PropagateState(sim, S);
+//        InitLattice1(sim1, ChgState[0], BC[0], BE[0]);
+//        InitLattice1(sim2, ChgState[1], BC[1], BE[1]);
+//        InitLattice1(sim1, ChgState, BC, BE);
 
 
         //        std::cout<<"# Reduced lattice\n";
@@ -1748,13 +1772,13 @@ int main(int argc, char *argv[])
                 std::cout << "\n# Final " << *state << "\n";
             } catch(std::exception& e) {
                 std::cerr << "Simulation error: " << e.what() << "\n";
-                fclose(in);
+                fclose(inf);
                 return 1;
             }
         }
 
         fprintf(stderr, "Done\n");
-        fclose(in);
+        fclose(inf);
         return 0;
     } catch(std::exception& e) {
         std::cerr << "Main exception: " << e.what() << "\n";
