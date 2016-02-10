@@ -1452,7 +1452,7 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
         StatePtr->moment0[state_t::PS_PS] = EkState - LongTab.Ek[n-1];
 
         if (EmitGrowth) {
-           calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
+            calRFcaviEmitGrowth(StatePtr->state, IonZ, IonEs,
                                 E0TL, avebeta, avegamma, beta, gamma, conf.get<double>("f"), ionFys,
                                 x2[0], x0[0], x2[1], x0[1], M);
             StatePtr->state = M;
@@ -1508,11 +1508,6 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     StatePtr = dynamic_cast<state_t*>(state.get());
     StatePtr->moment0 = Mom1;
     StatePtr->state   = Mom2;
-
-    std::cout << "\n";
-    PrtVec(StatePtr->moment0);
-    std::cout << "\n";
-    PrtMat(StatePtr->state);
 
     CavCnt = 0;
     n = 1;
@@ -1646,13 +1641,14 @@ int main(int argc, char *argv[])
  try {
         const int nChgStates = 2;
 
-        int                   k;
-        std::vector<double>   ChgState;
-        value_vec             BC[nChgStates];
-        value_mat             BE[nChgStates];
-        std::auto_ptr<Config> conf, confs[2];
-        clock_t               tStamp[2];
-        FILE                  *inf;
+        int                                      k;
+        std::vector<double>                      ChgState;
+        value_vec                                BC[nChgStates];
+        value_mat                                BE[nChgStates];
+        std::auto_ptr<Config>                    conf;
+        std::vector<boost::shared_ptr<Machine> > sims;
+        clock_t                                  tStamp[2];
+        FILE                                     *inf;
 
         if(argc > 1) {
             HomeDir = argv[2];
@@ -1699,7 +1695,7 @@ int main(int argc, char *argv[])
             BE[k].resize(PS_Dim, PS_Dim);
         }
 
-        ChgState.resize(2);
+        ChgState.resize(nChgStates);
         ChgState = GetChgState(*conf, "IonChargeStates");
 
         BC[0] = GetBaryCenter(*conf, "BaryCenter1");
@@ -1720,34 +1716,33 @@ int main(int argc, char *argv[])
         std::cout << "\n";
         PrtMat(BE[1]);
 
+        InitLong(sim);
+
+//        InitLattice(sim, ChgState[0], BC[0], BE[0]);
+//        InitLattice(sim, ChgState[1], BC[1], BE[1]);
+
+        sims.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
+        sims[0]->set_trace(NULL);
+        sims.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
+        sims[1]->set_trace(NULL);
+
         tStamp[0] = clock();
 
-        InitLong(sim);
+        InitLong(*sims[0]);
 
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
-        InitLattice(sim, ChgState[0], BC[0], BE[0]);
-//        InitLattice(sim, ChgState[1], BC[1], BE[1]);
+        InitLattice(*sims[0], ChgState[0], BC[0], BE[0]);
+        InitLattice(*sims[1], ChgState[1], BC[1], BE[1]);
+//        InitLattice(sim1, ChgState, BC, BE);
 
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLattice: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
-
-        Machine sim1(*conf);
-        sim1.set_trace(NULL);
-        Machine sim2(*conf);
-        sim2.set_trace(NULL);
-
-        InitLong(sim1);
-
-//        InitLattice1(sim1, ChgState[0], BC[0], BE[0]);
-//        InitLattice1(sim2, ChgState[1], BC[1], BE[1]);
-//        InitLattice1(sim1, ChgState, BC, BE);
-
 
         //        std::cout<<"# Reduced lattice\n";
         //        GLPSPrint(std::cout, *conf);
