@@ -144,6 +144,7 @@ LongTabType         LongTab;
 std::vector<double> CavPhases;
 CavTLMLineType      CavTLMLineTab[MaxNCav];
 RFCavType           RFCav[MaxNCav];
+std::stringstream   CavTLMstream[MaxNCav];
 
 std::string HomeDir = "";
 
@@ -812,25 +813,22 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 }
 
 
-void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
+void GetCavMatParams(const int cavi, std::stringstream &inf,
                      const double beta_tab[], const double gamma_tab[], const double IonK[])
 {
     // Evaluate time transit factors and acceleration.
+
     std::string       line, Elem, Name;
     double            s, Length, Aper, E0, T, S, Accel;
     std::stringstream str;
-    std::fstream      inf;
 
-    inf.open((HomeDir+CavTLMLine).c_str(), std::ifstream::in);
-    if (!inf.is_open()) {
-        std::cerr << "*** GetCavMatParams: failed to open " << CavTLMLine << "\n";
-        exit(1);
-    }
+    inf.clear();
+    inf.seekg(0, inf.beg);
 
     CavTLMLineTab[cavi-1].clear();
 
     s = CavData[cavi-1].s[0];
-    while (std::getline(inf, line) && !inf.fail()) {
+    while (getline(inf, line) && !inf.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
         if (line[0] == '%') {
             // Comment.
@@ -941,14 +939,12 @@ void GetCavMatParams(const int cavi, const std::string &CavTLMLine,
         std::cout << "\n";
         CavTLMLineTab[cavi-1].show(std::cout);
     }
-
-    inf.close();
 }
 
 
 void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                const double beta_tab[], const double gamma_tab[], const double Lambda,
-               const double IonZ, const double IonEs, const double IonFys[], const std::string &CavTLMLine,
+               const double IonZ, const double IonEs, const double IonFys[], std::stringstream &inf,
                const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing.
@@ -962,7 +958,6 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
     value_mat         Idmat, Mlon_L1, Mlon_K1, Mlon_L2;
     value_mat         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
     std::stringstream str;
-    std::fstream      inf;
 
     const double IonA = 1e0;
 
@@ -970,11 +965,8 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     Idmat = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
 
-    inf.open((HomeDir+CavTLMLine).c_str(), std::ifstream::in);
-    if (!inf.is_open()) {
-        std::cerr << "*** GenCavMat: failed to open " << CavTLMLine << "\n";
-        exit(1);
-    }
+    inf.clear();
+    inf.seekg(0, inf.beg);
 
     k_s[0] = 2e0*M_PI/(beta_tab[0]*Lambda);
     k_s[1] = 2e0*M_PI/(beta_tab[1]*Lambda);
@@ -1170,7 +1162,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
         }
     }
 
-    inf.close();
+//    inf.close();
 
     M = Mtrans;
 
@@ -1182,7 +1174,6 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
 
 void GetCavMat(const int cavi, const int cavilabel, const double Rm,
-               const std::string &CavTLMLine,
                const double IonZ, const double IonEs, const double EfieldScl, const double IonFyi_s,
                const double IonEk_s, const double fRF, value_mat &M)
 {
@@ -1236,8 +1227,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    GetCavMatParams(cavi, CavTLMLine, beta_s, gamma_s, IonK);
-    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMLine, Rm, M);
+    GetCavMatParams(cavi, CavTLMstream[cavi-1], beta_s, gamma_s, IonK);
+    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream[cavi-1], Rm, M);
 }
 
 
@@ -1246,7 +1237,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
                double &Fy_absState, double &accIonW,
                double &beta, double &gamma, double &avebeta, double &avegamma, value_mat &M)
 {
-    std::string CavType, CavTLMLine;
+    std::string CavType;
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, fRF, CaviIonK, EfieldScl;
     double      IonW_o, IonFy_o;
@@ -1257,13 +1248,11 @@ void InitRFCav(const Config &conf, const int CavCnt,
         cavilabel  = 41;
         multip     = 1;
         Rm         = 17e0;
-        CavTLMLine = "/data/Multipole41/thinlenlon_41.txt";
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
         cavi       = 2;
         cavilabel  = 85;
         multip     = 1;
         Rm         = 17e0;
-        CavTLMLine = "/data/Multipole85/thinlenlon_85.txt";
     } else {
         std::cerr << "*** InitLong: undef. cavity type: " << CavType << "\n";
         exit(1);
@@ -1293,7 +1282,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-    GetCavMat(cavi, cavilabel, Rm, CavTLMLine, IonZ, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
+    GetCavMat(cavi, cavilabel, Rm, IonZ, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
 }
 
 
@@ -1693,6 +1682,18 @@ value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
 }
 
 
+void GetCavTLMstr(void)
+{
+    std::fstream inf1, inf2;
+
+    inf1.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
+    CavTLMstream[0] << inf1.rdbuf();
+
+    inf2.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
+    CavTLMstream[1] << inf2.rdbuf();
+}
+
+
 int main(int argc, char *argv[])
 {
  try {
@@ -1760,6 +1761,8 @@ int main(int argc, char *argv[])
         PrtMat(BE[0]);
         std::cout << "\n";
         PrtMat(BE[1]);
+
+        GetCavTLMstr();
 
 //        Machine sim(*conf);
 //        if (false)
