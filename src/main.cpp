@@ -1462,6 +1462,55 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
 }
 
 
+value_vec GetCenofChg(const int n, const std::vector<double> &NChg, state_t *State[])
+{
+    int       j, k;
+    double    Ntot;
+    value_vec CenofChg(PS_Dim);
+
+    for (k = 0; k < PS_Dim; k++)
+        CenofChg[k] = 0e0;
+
+    Ntot = 0e0;
+    for (j = 0; j < n; j++) {
+        for (k = 0; k < PS_Dim; k++)
+            CenofChg[k] += NChg[j]*State[j]->moment0[k];
+        Ntot += NChg[j];
+    }
+
+    for (k = 0; k < PS_Dim; k++)
+        CenofChg[k] /= Ntot;
+
+    return CenofChg;
+}
+
+
+value_mat GetBeamRMS(const int n, const std::vector<double> &NChg, state_t *State[])
+{
+    int       i, j, k;
+    double    Ntot;
+    value_mat BeamRMS(PS_Dim, PS_Dim);
+
+    for (j = 0; j < PS_Dim; j++)
+        for (k = 0; k < PS_Dim; k++)
+        BeamRMS(j, k) = 0e0;
+
+    Ntot = 0e0;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < PS_Dim; j++)
+            for (k = 0; k < PS_Dim; k++)
+                BeamRMS(j, k) += NChg[i]*State[i]->state(j, k);
+        Ntot += NChg[i];
+    }
+
+    for (j = 0; j < PS_Dim; j++)
+        for (k = 0; k < PS_Dim; k++)
+            BeamRMS(j, k) /= Ntot;
+
+    return BeamRMS;
+}
+
+
 void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const value_mat &Mom2)
 {
     // Evaluate transport matrices for given beam initial conditions.
@@ -1510,18 +1559,33 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
 
 
 void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > sim,
-                 const std::vector<double> IonZ, const value_vec Mom1[], const value_mat Mom2[])
+                 const std::vector<double> IonZ, const std::vector<double> NChg,
+                 const value_vec Mom1[], const value_mat Mom2[])
 {
     // Evaluate transport matrices for given beam initial conditions.
     int                                        CavCnt[nChgState], n[nChgState], k;
     double                                     IonEk[nChgState], IonEs[nChgState], IonW[nChgState], s[nChgState];
     double                                     EkState[nChgState], Fy_absState[nChgState];
+    value_vec                                  CenofChg(PS_Dim);
+    value_mat                                  BeamRms(PS_Dim, PS_Dim);
     Config                                     D;
     std::vector<boost::shared_ptr<StateBase> > state;
     state_t                                    *StatePtr[nChgState];
     Machine::p_elements_t::iterator            it[nChgState];
+    std::fstream                               outf1, outf2;
 
+    const char FileName1[] = "CenofChg.out", FileName2[] = "BeamRMS.out";
 
+    outf1.open(FileName1, std::ofstream::out);
+    if (!outf1.is_open()) {
+        std::cerr << "*** InitLattice: failed to open " << FileName1 << "\n";
+        exit(1);
+    }
+    outf2.open(FileName2, std::ofstream::out);
+    if (!outf2.is_open()) {
+        std::cerr << "*** InitLattice: failed to open " << FileName2 << "\n";
+        exit(1);
+    }
 
     std::cout << "\nInitLattice:\n";
 
@@ -1555,10 +1619,32 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
                   << ", IonW [Mev/u] = " << IonW[k] << "\n";
     }
 
-    for (; it[0] != sim[0]->p_elements.end(); ++it[0], it[1]++)
+    for (; it[0] != sim[0]->p_elements.end(); ++it[0], it[1]++) {
         for (k = 0; k < nChgState; k++)
             ScaleandPropagate(*sim[k], *state[k], StatePtr[k], it[k], n[k], CavCnt[k], s[k],
                               IonZ[k], IonEs[k], EkState[k], Fy_absState[k]);
+
+        CenofChg = GetCenofChg(nChgState, NChg, StatePtr);
+        BeamRms  = GetBeamRMS(nChgState, NChg, StatePtr);
+
+        outf1 << std::scientific << std::setprecision(8)
+             << std::setw(4) << s[0]*1e-3;
+        for (k = 0; k < PS_Dim-1; k++)
+            outf1 << std::scientific << std::setprecision(8)
+                 << std::setw(16) << CenofChg[k];
+        outf1 << "\n";
+
+        outf2 << std::scientific << std::setprecision(8)
+             << std::setw(4) << s[0]*1e-3;
+        for (k = 0; k < PS_Dim-1; k++)
+            outf2 << std::scientific << std::setprecision(8)
+                 << std::setw(16) << BeamRms(k, k);
+        outf2 << "\n";
+
+    }
+
+    outf1.close();
+    outf2.close();
 
     for (k = 0; k < nChgState; k++) {
         std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s[k]*1e-3 << "\n";
@@ -1656,6 +1742,12 @@ std::vector<double> GetChgState(Config &conf, const std::string &CSstr)
 }
 
 
+std::vector<double> GetNChg(Config &conf, const std::string &CAstr)
+{
+    return conf.get<std::vector<double> >(CAstr);
+}
+
+
 value_vec GetBaryCenter(Config &conf, const std::string &BCstr)
 {
 
@@ -1700,7 +1792,7 @@ int main(int argc, char *argv[])
         const int nChgStates = 2;
 
         int                                      k;
-        std::vector<double>                      ChgState;
+        std::vector<double>                      ChgState, NChg;
         value_vec                                BC[nChgStates];
         value_mat                                BE[nChgStates];
         std::auto_ptr<Config>                    conf;
@@ -1744,6 +1836,9 @@ int main(int argc, char *argv[])
         ChgState.resize(nChgStates);
         ChgState = GetChgState(*conf, "IonChargeStates");
 
+        NChg.resize(nChgStates);
+        NChg = GetNChg(*conf, "NCharge");
+
         BC[0] = GetBaryCenter(*conf, "BaryCenter1");
         BC[1] = GetBaryCenter(*conf, "BaryCenter2");
 
@@ -1753,6 +1848,10 @@ int main(int argc, char *argv[])
         std::cout << "\nIon charge states:\n";
         for (k = 0; k < nChgStates; k++)
             std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
+        std::cout << "\n";
+        std::cout << "\nIon charge amount:\n";
+        for (k = 0; k < nChgStates; k++)
+            std::cout << std::fixed << std::setprecision(1) << std::setw(8) << NChg[k];
         std::cout << "\n";
         std::cout << "\nBarycenter:\n";
         PrtVec(BC[0]);
@@ -1790,7 +1889,7 @@ int main(int argc, char *argv[])
 
 //        InitLattice(*sims[0], ChgState[0], BC[0], BE[0]);
 //        InitLattice(*sims[1], ChgState[1], BC[1], BE[1]);
-        InitLattice(2, sims, ChgState, BC, BE);
+        InitLattice(2, sims, ChgState, NChg, BC, BE);
 
         tStamp[1] = clock();
 

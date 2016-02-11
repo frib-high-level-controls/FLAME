@@ -16,8 +16,7 @@ IonW  = IonEs + IonEk; # Total energy [eV/u].
 # Units are: [mm, rad, mm, rad, rad, MeV/u]
 
 IonChargeStates = [33.0/238.0, 34.0/238.0];
-
-#chargeAmount    = [10111.0, 10531.0];
+NCharge         = [10111.0, 10531.0];
 
 #BaryCenter1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
 #BaryCenter2 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
