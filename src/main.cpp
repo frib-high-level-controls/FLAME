@@ -1489,7 +1489,10 @@ value_mat GetBeamRMS(const int n, const std::vector<double> &NChg, state_t *Stat
 {
     int       i, j, k;
     double    Ntot;
+    value_vec CenofChg(PS_Dim);
     value_mat BeamRMS(PS_Dim, PS_Dim);
+
+    CenofChg = GetCenofChg(n, NChg, State);
 
     for (j = 0; j < PS_Dim; j++)
         for (k = 0; k < PS_Dim; k++)
@@ -1499,13 +1502,14 @@ value_mat GetBeamRMS(const int n, const std::vector<double> &NChg, state_t *Stat
     for (i = 0; i < n; i++) {
         for (j = 0; j < PS_Dim; j++)
             for (k = 0; k < PS_Dim; k++)
-                BeamRMS(j, k) += NChg[i]*State[i]->state(j, k);
+                BeamRMS(j, k) += NChg[i]*(State[i]->state(j, k)
+                                          +(State[i]->moment0[j]-CenofChg[j])*(State[i]->moment0[k]-CenofChg[k]));
         Ntot += NChg[i];
     }
 
     for (j = 0; j < PS_Dim; j++)
         for (k = 0; k < PS_Dim; k++)
-            BeamRMS(j, k) /= Ntot;
+            BeamRMS(j, k) = sqrt(BeamRMS(j, k)/Ntot);
 
     return BeamRMS;
 }
