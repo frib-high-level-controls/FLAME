@@ -492,6 +492,9 @@ void InitLong(const Machine &sim, const double IonZ)
     double                                IonGamma, IonBeta, SampleIonK;
     double                                IonW, IonZ1, IonEs, IonEk;
     Machine::p_elements_t::const_iterator it;
+    std::fstream                          outf;
+
+    const char FileName[] = "long_tab.out";
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -512,6 +515,8 @@ void InitLong(const Machine &sim, const double IonZ)
               << "  IonZ = " << IonZ1
               << "  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
               << ", IonW [Mev/u] = " << IonW << "\n";
+
+    outf.open(FileName, std::ofstream::out);
 
     n = 1;
     LongTab.set(0e0, IonEk, 0e0, IonBeta, IonGamma);
@@ -554,12 +559,15 @@ void InitLong(const Machine &sim, const double IonZ)
             PropagateLongStripper(conf, n, IonZ1, IonEs, IonW, SampleIonK, IonBeta);
         }
 
-        if (false) {
-            std::cout << std::setw(10) << std::left << t_name << std::setw(25)
-                      << elem->name << std::internal;
-            LongTab.show(std::cout, n-1);
+        if (!outf.is_open()) {
+            std::cerr << "*** InitLong: failed to open " << FileName << "\n";
+            exit(1);
         }
+        outf << std::setw(15) << std::left << t_name << std::setw(25)
+             << elem->name << std::internal;
+        LongTab.show(outf, n-1);
     }
+    outf.close();
 }
 
 
@@ -1335,13 +1343,12 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
         ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor))/(matIn(5, 5)*sqr(longiTransFactor)));
 
     for (k = 0; k < PS_Dim; k++) {
-        // Avoid loss of significant digits.
-        matOut(1, k) += matOut(1, k)*(XpIncreaseFactor-1e0);
-        matOut(k, 1) += matOut(k, 1)*(XpIncreaseFactor-1e0);
-        matOut(3, k) += matOut(3, k)*(YpIncreaseFactor-1e0);
-        matOut(k, 3) += matOut(k, 3)*(YpIncreaseFactor-1e0);
-        matOut(5, k) += matOut(5, k)*(ZpIncreaseFactor-1e0);
-        matOut(k, 5) += matOut(k, 5)*(ZpIncreaseFactor-1e0);
+        matOut(1, k) *= XpIncreaseFactor;
+        matOut(k, 1) *= XpIncreaseFactor;
+        matOut(3, k) *= YpIncreaseFactor;
+        matOut(k, 3) *= YpIncreaseFactor;
+        matOut(5, k) *= ZpIncreaseFactor;
+        matOut(k, 5) *= ZpIncreaseFactor;
     }
 }
 
@@ -1437,6 +1444,10 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
         E0TL   = accIonW/cos(ionFys)/IonZ;
 
         elem->advance(state);
+
+        // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
+//        x0[0]  = StatePtr->moment0[state_t::PS_X];
+//        x0[1]  = StatePtr->moment0[state_t::PS_Y];
 
         StatePtr->moment0[state_t::PS_S]  = Fy_absState - LongTab.FyAbs[n-1];
         StatePtr->moment0[state_t::PS_PS] = EkState - LongTab.Ek[n-1];
@@ -1631,18 +1642,18 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
         CenofChg = GetCenofChg(nChgState, NChg, StatePtr);
         BeamRms  = GetBeamRMS(nChgState, NChg, StatePtr);
 
-        outf1 << std::scientific << std::setprecision(8)
-             << std::setw(4) << s[0]*1e-3;
+        outf1 << std::scientific << std::setprecision(15)
+             << std::setw(23) << s[0]*1e-3;
         for (k = 0; k < PS_Dim-1; k++)
-            outf1 << std::scientific << std::setprecision(8)
-                 << std::setw(16) << CenofChg[k];
+            outf1 << std::scientific << std::setprecision(15)
+                 << std::setw(23) << CenofChg[k];
         outf1 << "\n";
 
-        outf2 << std::scientific << std::setprecision(8)
-             << std::setw(4) << s[0]*1e-3;
+        outf2 << std::scientific << std::setprecision(15)
+             << std::setw(23) << s[0]*1e-3;
         for (k = 0; k < PS_Dim-1; k++)
-            outf2 << std::scientific << std::setprecision(8)
-                 << std::setw(16) << BeamRms(k, k);
+            outf2 << std::scientific << std::setprecision(15)
+                 << std::setw(23) << BeamRms(k, k);
         outf2 << "\n";
 
     }
@@ -1873,9 +1884,24 @@ int main(int argc, char *argv[])
 //        else
 //            sim.set_trace(NULL);
 
+//        tStamp[0] = clock();
+
 //        InitLong(sim, ChgState[0]);
+
+//        tStamp[1] = clock();
+
+//        std::cout << std::fixed << std::setprecision(5)
+//                  << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
+
 //        InitLattice(sim, ChgState[0], BC[0], BE[0]);
 //        InitLattice(sim, ChgState[1], BC[1], BE[1]);
+
+//        tStamp[1] = clock();
+
+//        std::cout << std::fixed << std::setprecision(5)
+//                  << "\nInitLattice: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
+
+//        exit(0);
 
         sims.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
         sims[0]->set_trace(NULL);
