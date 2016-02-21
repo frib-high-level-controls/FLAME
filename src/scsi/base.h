@@ -186,11 +186,13 @@ private:
         { return new State(c); }
     };
     struct element_builder_t {
+        virtual ~element_builder_t() {}
         virtual ElementVoid* build(const Config& c) =0;
         virtual void rebuild(ElementVoid *o, const Config& c) =0;
     };
     template<typename Element>
     struct element_builder_impl : public element_builder_t {
+        virtual ~element_builder_impl() {}
         ElementVoid* build(const Config& c)
         { return new Element(c); }
         void rebuild(ElementVoid *o, const Config& c)
@@ -237,6 +239,11 @@ public:
     {
         p_registerElement(sname, ename, new element_builder_impl<Element>);
     }
+
+    //! Discard all registered State and Element type information
+    //! Suggested use case is to call just before process exit
+    //! so that valgrind doesn't flag these as leaks
+    static void registeryCleanup();
 
     friend std::ostream& operator<<(std::ostream&, const Machine& m);
 };

@@ -244,6 +244,22 @@ void Machine::p_registerElement(const std::string& sname, const char *ename, ele
     I.elements[ename] = b;
 }
 
+void Machine::registeryCleanup()
+{
+    info_mutex_t::scoped_lock G(info_mutex);
+
+    for(p_state_infos_t::iterator it=p_state_infos.begin(), end=p_state_infos.end();
+        it!=end; ++it)
+    {
+        state_info::elements_t::iterator it2, end2;
+        for(it2=it->second.elements.begin(), end2=it->second.elements.end(); it2!=end2; ++it2)
+        {
+            delete it2->second;
+        }
+    }
+    p_state_infos.clear();
+}
+
 std::ostream& operator<<(std::ostream& strm, const Machine& m)
 {
     strm<<"sim_type: "<<m.p_info.name<<"\n#Elements: "<<m.p_elements.size()<<"\n";
