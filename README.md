@@ -7,7 +7,7 @@ The nosetests test runner is used for 'make test' if present.
 
 ```sh
 apt-get install libboost-dev libboost-system-dev \
-libboost-python-dev python-dev python-nose python-numpy \
+libboost-thread-dev python-dev python-nose python-numpy \
 cmake build-essential bison flex git
 ```
 
