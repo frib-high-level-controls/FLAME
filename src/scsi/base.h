@@ -78,9 +78,6 @@ struct ElementVoid : public boost::noncopyable
 
     virtual const char* type_name() const =0;
 
-    //! Called after all Elements are constructed
-    virtual void peek(const std::vector<ElementVoid*>&) {}
-
     //! Propogate the given State through this Element
     virtual void advance(StateBase& s) const =0;
 

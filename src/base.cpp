@@ -112,11 +112,6 @@ Machine::Machine(const Config& c)
 
     G.unlock();
 
-    for(p_elements_t::iterator it=p_elements.begin(), end=p_elements.end(); it!=end; ++it)
-    {
-        (*it)->peek(result);
-    }
-
     p_elements.swap(result);
 }
 
