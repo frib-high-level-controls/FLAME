@@ -50,7 +50,7 @@ struct MomentElementBase : public ElementVoid
     MomentElementBase(const Config& c);
     virtual ~MomentElementBase();
 
-    virtual void advance(StateBase& s) const;
+    virtual void advance(StateBase& s);
 
     virtual void show(std::ostream& strm) const;
 

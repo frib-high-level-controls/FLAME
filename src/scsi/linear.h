@@ -26,7 +26,7 @@ struct LinearElementBase : public ElementVoid
     {}
     virtual ~LinearElementBase() {}
 
-    virtual void advance(StateBase& s) const
+    virtual void advance(StateBase& s)
     {
         State& ST = static_cast<State&>(s);
         advanceT(ST);

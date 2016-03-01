@@ -80,7 +80,7 @@ void MomentElementBase::show(std::ostream& strm) const
     strm<<"TransferT: "<<trans(transfer)<<"\n";
 }
 
-void MomentElementBase::advance(StateBase& s) const
+void MomentElementBase::advance(StateBase& s)
 {
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;

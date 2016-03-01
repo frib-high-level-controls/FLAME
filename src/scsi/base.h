@@ -82,7 +82,7 @@ struct ElementVoid : public boost::noncopyable
     virtual void peek(const std::vector<ElementVoid*>&) {}
 
     //! Propogate the given State through this Element
-    virtual void advance(StateBase& s) const =0;
+    virtual void advance(StateBase& s) =0;
 
     inline const Config& conf() const {return p_conf;}
 
