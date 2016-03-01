@@ -50,7 +50,7 @@ struct LinearElementBase : public ElementVoid
     }
 
 private:
-    void advanceT(State& s) const
+    void advanceT(State& s)
     {
         using boost::numeric::ublas::prod;
         s.state = prod(transfer, s.state);

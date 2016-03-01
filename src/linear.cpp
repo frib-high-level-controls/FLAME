@@ -157,7 +157,7 @@ struct ElementSource : public Base
         :base_t(c), istate(c)
     {}
 
-    virtual void advance(StateBase& s) const
+    virtual void advance(StateBase& s)
     {
         state_t& ST = static_cast<state_t&>(s);
         // Replace state with our initial values
