@@ -47,6 +47,9 @@ add_library(uscsi_core SHARED
   moment.cpp
   scsi/moment.h
 
+  moment2.cpp
+  scsi/moment2.h
+
   glps_parser.cpp glps_parser.h
   glps_ops.cpp
   glps.par.c glps.par.h
