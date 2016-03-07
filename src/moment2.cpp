@@ -56,6 +56,7 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0,0);
+        Info.type = ArrayInfo::Double;
         Info.ndim = 2;
         Info.dim[0] = state.size1();
         Info.dim[1] = state.size2();
@@ -63,11 +64,12 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
     } else if(idx==1) {
         Info.name = "moment0";
         Info.ptr = &moment0(0);
+        Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = moment0.size();
         return true;
     }
-    return false;
+    return StateBase::getArray(idx-2, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
