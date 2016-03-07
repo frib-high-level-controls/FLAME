@@ -53,12 +53,13 @@ bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0,0);
+        Info.type = ArrayInfo::Double;
         Info.ndim = 2;
         Info.dim[0] = state.size1();
         Info.dim[1] = state.size2();
         return true;
     }
-    return false;
+    return StateBase::getArray(idx-1, Info);
 }
 
 VectorState::VectorState(const Config& c)
@@ -95,11 +96,12 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0);
+        Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = state.size();
         return true;
     }
-    return false;
+    return StateBase::getArray(idx-1, Info);
 }
 
 namespace {

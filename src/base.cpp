@@ -32,6 +32,42 @@ void StateBase::assign(const StateBase& other)
     IonW  = other.IonW;
 }
 
+bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
+{
+    if(idx==0) {
+        Info.name = "next_elem";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Sizet;
+        Info.ptr = &next_elem;
+        return true;
+    } else if(idx==1) {
+        Info.name = "IonZ";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonZ;
+        return true;
+    } else if(idx==2) {
+        Info.name = "IonEs";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonEs;
+        return true;
+    } else if(idx==3) {
+        Info.name = "IonEk";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonEk;
+        return true;
+    } else if(idx==4) {
+        Info.name = "IonW";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonW;
+        return true;
+    }
+    return false;
+}
+
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)

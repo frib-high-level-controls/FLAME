@@ -9,6 +9,14 @@
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
 
+#if SIZE_MAX==NPY_MAX_UINT32
+#define NPY_SIZE_T NPY_UINT32
+#elif SIZE_MAX==NPY_MAX_UINT64
+#define NPY_SIZE_T NPY_UINT64
+#else
+#error logic error with SIZE_MAX
+#endif
+
 #define TRY PyState *state = (PyState*)raw; try
 
 namespace {
@@ -58,18 +66,39 @@ static
 PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
 {
     TRY {
-        PyObject *val = PyDict_GetItem(state->attrs, attr);
-        int i = PyInt_AsLong(val);
+        PyObject *idx = PyDict_GetItem(state->attrs, attr);
+        if(!idx)
+            return NULL;
+        int i = PyInt_AsLong(idx);
+
 
         StateBase::ArrayInfo info;
 
         if(!state->state->getArray(i, info))
             return PyErr_Format(PyExc_AttributeError, "invalid attribute name");
 
+        if(info.ndim==0) { // Scalar
+            switch(info.type) {
+            case StateBase::ArrayInfo::Double:
+                return PyFloat_FromDouble(*(double*)info.ptr);
+            case StateBase::ArrayInfo::Sizet:
+                return PyLong_FromSize_t(*(size_t*)info.ptr);
+            }
+            return PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
+        }
+
+        int pytype;
+        switch(info.type) {
+        case StateBase::ArrayInfo::Double: pytype = NPY_DOUBLE; break;
+        case StateBase::ArrayInfo::Sizet: pytype = NPY_SIZE_T; break;
+        default:
+            return PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
+        }
+
         npy_intp dims[5];
         memcpy(dims, info.dim, sizeof(dims));
 
-        PyRef<> obj(PyArray_SimpleNewFromData(info.ndim, dims, NPY_DOUBLE, info.ptr));
+        PyRef<> obj(PyArray_SimpleNewFromData(info.ndim, dims, pytype, info.ptr));
 
         Py_INCREF(state);
         PyArray_BASE(obj.py()) = (PyObject*)state;
@@ -79,10 +108,57 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
 }
 
 static
-int PyState_setattro(PyObject *, PyObject *, PyObject *)
+int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
 {
-    PyErr_SetString(PyExc_NotImplementedError, "Can't set attributes");
-    return -1;
+    TRY {
+        PyObject *idx = PyDict_GetItem(state->attrs, attr);
+        if(!idx)
+            return -1;
+        int i = PyInt_AsLong(idx);
+
+        StateBase::ArrayInfo info;
+
+        if(!state->state->getArray(i, info)) {
+            PyErr_SetString(PyExc_AttributeError, "invalid attribute name");
+            return -1;
+        }
+
+        if(info.ndim!=0) {
+            PyErr_SetString(PyExc_NotImplementedError, "Can't set array attributes (hint, use state.attr[:] = ...)");
+            return -1;
+        }
+
+        switch(info.type) {
+        case StateBase::ArrayInfo::Double: {
+            double *dest = (double*)info.ptr;
+            if(PyFloat_Check(val))
+                *dest = PyFloat_AsDouble(val);
+            else if(PyLong_Check(val))
+                *dest = PyLong_AsDouble(val);
+            else if(PyInt_Check(val))
+                *dest = PyInt_AsLong(val);
+            else
+                PyErr_Format(PyExc_ValueError, "Can't assign to double field");
+        }
+            break;
+        case StateBase::ArrayInfo::Sizet: {
+            size_t *dest = (size_t*)info.ptr;
+            if(PyFloat_Check(val))
+                *dest = PyFloat_AsDouble(val);
+            else if(PyLong_Check(val))
+                *dest = PyLong_AsUnsignedLongLong(val);
+            else if(PyInt_Check(val))
+                *dest = PyInt_AsLong(val);
+            else
+                PyErr_Format(PyExc_ValueError, "Can't assign to double field");
+        }
+            break;
+        default:
+            PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
+        }
+        return PyErr_Occurred() ? -1 : 0;
+
+    } CATCH3(std::exception, RuntimeError, -1)
 }
 
 static

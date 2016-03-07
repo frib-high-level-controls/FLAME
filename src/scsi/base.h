@@ -39,9 +39,12 @@ struct StateBase : public boost::noncopyable
     virtual void show(std::ostream&) const {}
 
     struct ArrayInfo {
-        ArrayInfo() :name(), ptr(NULL), ndim(0) {}
+        ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
         std::string name;
-        double *ptr;
+        enum Type {
+            Double, Sizet
+        } type;
+        void *ptr;
         int ndim;
         size_t dim[5];
     };
@@ -55,7 +58,7 @@ struct StateBase : public boost::noncopyable
      *
      * @note This method requires that parameter storage be stable for the lifetime of the object
      */
-    virtual bool getArray(unsigned idx, ArrayInfo& Info) {return false;}
+    virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
     //! @private
     //! Mailbox to hold the python interpreter object wrapping us.
