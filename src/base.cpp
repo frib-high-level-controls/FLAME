@@ -176,7 +176,7 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
 }
 
 StateBase*
-Machine::allocState(Config& c) const
+Machine::allocState(const Config &c) const
 {
     return (*p_info.builder)(c);
 }

@@ -128,7 +128,7 @@ struct Machine : public boost::noncopyable
      * @return A pointer to the new state (never NULL).  The caller takes responsibility for deleteing.
      * @throws std::exception sub-classes for various errors, mostly incorrect Config.
      */
-    StateBase* allocState(Config& c) const;
+    StateBase* allocState(const Config& c) const;
 
     void reconfigure(size_t idx, const Config& c);
 
