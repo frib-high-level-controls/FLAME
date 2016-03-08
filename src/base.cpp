@@ -71,6 +71,7 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)
+    ,p_observe(NULL)
     ,p_conf(conf)
 {}
 
@@ -170,6 +171,8 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
         ElementVoid* E = p_elements[S->next_elem];
         S->next_elem++;
         E->advance(*S);
+        if(E->p_observe)
+            E->p_observe->view(E, S);
         if(p_trace)
             (*p_trace) << "After "<< i<< " " << *S;
     }

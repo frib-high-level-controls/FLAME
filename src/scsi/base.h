@@ -20,6 +20,7 @@
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
 
+struct ElementVoid;
 
 /** @brief The abstract base class for all simulation state objects.
  *
@@ -74,6 +75,12 @@ std::ostream& operator<<(std::ostream& strm, const StateBase& s)
     return strm;
 }
 
+struct Observer : public boost::noncopyable
+{
+    virtual ~Observer() {}
+    virtual void view(const ElementVoid*, const StateBase*) =0;
+};
+
 struct ElementVoid : public boost::noncopyable
 {
     ElementVoid(const Config& conf);
@@ -89,6 +96,13 @@ struct ElementVoid : public boost::noncopyable
     const std::string name; //!< Name of this element (unique in its Machine)
     const size_t index; //!< Index of this element (unique in its Machine)
 
+    Observer *observer() const { return p_observe; }
+    /** Add Observer which will inspect the output State of this Element.
+     *  Observer instance musy outlive the Element.
+     * @param o A new Observer or NULL, will replace any existing pointer.
+     */
+    void set_observer(Observer *o) { p_observe = o; }
+
     virtual void show(std::ostream&) const;
 
     //! @internal
@@ -96,7 +110,9 @@ struct ElementVoid : public boost::noncopyable
     //! Assumes other has the same type
     virtual void assign(const ElementVoid* other ) =0;
 private:
+    Observer *p_observe;
     Config p_conf;
+    friend class Machine;
 };
 
 //std::ostream& operator<<(std::ostream& strm, const ElementVoid& s)
