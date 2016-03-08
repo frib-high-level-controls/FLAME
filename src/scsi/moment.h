@@ -38,6 +38,13 @@ struct MomentState : public StateBase
     matrix_t state; // TODO: better name
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
+
+    virtual MomentState* clone() const {
+        return new MomentState(*this, clone_tag());
+    }
+
+protected:
+    MomentState(const MomentState& o, clone_tag);
 };
 
 /** @brief An Element which propagates the statistical moments of a bunch

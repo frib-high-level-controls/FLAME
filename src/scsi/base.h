@@ -61,11 +61,15 @@ struct StateBase : public boost::noncopyable
      */
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
+    virtual StateBase* clone() const =0;
+
     //! @private
     //! Mailbox to hold the python interpreter object wrapping us.
     void *pyptr;
 protected:
     StateBase(const Config& c);
+    struct clone_tag{};
+    StateBase(const StateBase& c, clone_tag);
 };
 
 inline

@@ -35,6 +35,11 @@ MatrixState::MatrixState(const Config& c)
 
 MatrixState::~MatrixState() {}
 
+MatrixState::MatrixState(const MatrixState& o, clone_tag t)
+    :StateBase(o, t)
+    ,state(o.state)
+{}
+
 void MatrixState::assign(const StateBase& other)
 {
     const MatrixState *O = dynamic_cast<const MatrixState*>(&other);
@@ -77,6 +82,11 @@ VectorState::VectorState(const Config& c)
 }
 
 VectorState::~VectorState() {}
+
+VectorState::VectorState(const VectorState& o, clone_tag t)
+    :StateBase(o, t)
+    ,state(o.state)
+{}
 
 void VectorState::assign(const StateBase& other)
 {

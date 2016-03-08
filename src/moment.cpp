@@ -31,6 +31,12 @@ MomentState::MomentState(const Config& c)
 
 MomentState::~MomentState() {}
 
+MomentState::MomentState(const MomentState& o, clone_tag t)
+    :StateBase(o, t)
+    ,moment0(o.moment0)
+    ,state(o.state)
+{}
+
 void MomentState::assign(const StateBase& other)
 {
     const MomentState *O = dynamic_cast<const MomentState*>(&other);

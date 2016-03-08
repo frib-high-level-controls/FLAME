@@ -24,6 +24,15 @@ StateBase::StateBase(const Config& c)
     ,pyptr(0)
 {}
 
+StateBase::StateBase(const StateBase& o, clone_tag)
+    :next_elem(0)
+    ,IonZ(o.IonZ)
+    ,IonEs(o.IonEs)
+    ,IonEk(o.IonEk)
+    ,IonW(o.IonW)
+    ,pyptr(0)
+{}
+
 void StateBase::assign(const StateBase& other)
 {
     IonZ  = other.IonZ;

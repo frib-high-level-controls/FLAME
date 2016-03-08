@@ -31,6 +31,13 @@ struct VectorState : public StateBase
     value_t state;
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
+
+    virtual VectorState* clone() const {
+        return new VectorState(*this, clone_tag());
+    }
+
+protected:
+    VectorState(const VectorState& o, clone_tag);
 };
 
 #endif // SCSI_STATE_VECTOR_H
