@@ -41,6 +41,13 @@ struct Moment2State : public StateBase
     matrix_t state; // TODO: better name
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
+
+    virtual Moment2State* clone() const {
+        return new Moment2State(*this, clone_tag());
+    }
+
+protected:
+    Moment2State(const Moment2State& o, clone_tag);
 };
 
 /** @brief An Element which propagates the statistical moments of a bunch

@@ -35,6 +35,14 @@ Moment2State::Moment2State(const Config& c)
 
 Moment2State::~Moment2State() {}
 
+Moment2State::Moment2State(const Moment2State& o, clone_tag t)
+    :StateBase(o, t)
+    ,energy(o.energy)
+    ,do_recalc_energy(o.do_recalc_energy)
+    ,moment0(o.moment0)
+    ,state(o.state)
+{}
+
 void Moment2State::assign(const StateBase& other)
 {
     const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
