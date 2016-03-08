@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 import unittest
 import numpy
 from numpy import testing as NT
@@ -240,3 +242,63 @@ class TestSource(unittest.TestCase):
         M.propagate(S)
 
         assert_aequal(S.state, T)
+
+class TestOptimze(unittest.TestCase):
+    """Trival example of optimization process
+
+    Adjust a single sector bend to achieve a desired output state
+    """
+    def setUp(self):
+        self.M = Machine(b"""
+        sim_type = "Vector";
+        straight: drift, L = 1.0e-3;
+        bend: sbend, L = 1.0e-1, phi=1.0e-6, K=0;
+        foo: LINE = (straight, bend, straight);
+        """)
+
+
+    _expect_K = 3e-3
+    _expected = numpy.asfarray([1.10198417, 9.99684702e-04, 1.10201583, 1.00031530e-03, 1.00000000, 1.0e-03])
+
+    def test_expected(self):
+        """Test that the expected strength actually results in the expected output state
+        """
+        S = self.M.allocState({})
+        S.state[:] = [1, 1e-3, 1, 1e-3, 1, 1e-3]
+
+        self.M.reconfigure(1, {
+            'L':1.0e-1,
+            'phi':1.0e-6,
+            'K':self._expect_K,
+        })
+
+        self.M.propagate(S)
+
+        assert_aequal(S.state, self._expected, 1.0e8)
+
+    def test_optimize(self):
+        """Optimize
+        """
+        p0 = [0.0]
+
+        def resid(p):
+            # do each iteration with a clean state (todo: reuse?)
+            S = self.M.allocState({})
+            S.state[:] = [1, 1e-3, 1, 1e-3, 1, 1e-3] # reset state to initial
+            self.M.reconfigure(1, {
+                'L':1.0e-1,
+                'phi':1.0e-6,
+                'K':float(p[0]), # set sbend strength
+            })
+            self.M.propagate(S)
+            D = S.state-self._expected # return difference vector
+            print("iterate",p, numpy.square(D).sum())
+            return D
+
+        from scipy.optimize import leastsq
+
+        p1, ier = leastsq(resid, p0)
+        print('final',p1,'expect',self._expect_K)
+
+        self.assertIn(ier, range(1,5)) # ier between 1 and 4 is success
+        self.assertAlmostEqual(p1[0], self._expect_K, 6)
