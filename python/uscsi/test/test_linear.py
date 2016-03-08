@@ -36,9 +36,7 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
     self.assertEqual(S.next_elem, 1)
     assert_aequal(S.state, [1.001, 1e-3, 0, 0, 0, 0])
 
-    print "A",S.next_elem
     S.next_elem = 2
-    print "B",S.next_elem
     self.assertEqual(S.next_elem, 2)
 
   def test_reconfig(self):
