@@ -10,9 +10,16 @@ addons:
     - python-dev
     - python-nose
     - python-numpy
+    - python-scipy
     - cmake
     - bison
     - flex
+    - libatlas-dev
+    - libatlas-base-dev
+    - liblapack-dev
+    - gfortran
+    - libgmp-dev
+    - libmpfr-dev
 language: python
 python:
   - "2.7"
