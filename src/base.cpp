@@ -24,6 +24,15 @@ StateBase::StateBase(const Config& c)
     ,pyptr(0)
 {}
 
+StateBase::StateBase(const StateBase& o, clone_tag)
+    :next_elem(0)
+    ,IonZ(o.IonZ)
+    ,IonEs(o.IonEs)
+    ,IonEk(o.IonEk)
+    ,IonW(o.IonW)
+    ,pyptr(0)
+{}
+
 void StateBase::assign(const StateBase& other)
 {
     IonZ  = other.IonZ;
@@ -32,9 +41,46 @@ void StateBase::assign(const StateBase& other)
     IonW  = other.IonW;
 }
 
+bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
+{
+    if(idx==0) {
+        Info.name = "next_elem";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Sizet;
+        Info.ptr = &next_elem;
+        return true;
+    } else if(idx==1) {
+        Info.name = "IonZ";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonZ;
+        return true;
+    } else if(idx==2) {
+        Info.name = "IonEs";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonEs;
+        return true;
+    } else if(idx==3) {
+        Info.name = "IonEk";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonEk;
+        return true;
+    } else if(idx==4) {
+        Info.name = "IonW";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonW;
+        return true;
+    }
+    return false;
+}
+
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)
+    ,p_observe(NULL)
     ,p_conf(conf)
 {}
 
@@ -112,11 +158,6 @@ Machine::Machine(const Config& c)
 
     G.unlock();
 
-    for(p_elements_t::iterator it=p_elements.begin(), end=p_elements.end(); it!=end; ++it)
-    {
-        (*it)->peek(result);
-    }
-
     p_elements.swap(result);
 }
 
@@ -139,13 +180,15 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
         ElementVoid* E = p_elements[S->next_elem];
         S->next_elem++;
         E->advance(*S);
+        if(E->p_observe)
+            E->p_observe->view(E, S);
         if(p_trace)
             (*p_trace) << "After "<< i<< " " << *S;
     }
 }
 
 StateBase*
-Machine::allocState(Config& c) const
+Machine::allocState(const Config &c) const
 {
     return (*p_info.builder)(c);
 }
@@ -199,6 +242,22 @@ void Machine::p_registerElement(const std::string& sname, const char *ename, ele
         throw std::logic_error(strm.str());
     }
     I.elements[ename] = b;
+}
+
+void Machine::registeryCleanup()
+{
+    info_mutex_t::scoped_lock G(info_mutex);
+
+    for(p_state_infos_t::iterator it=p_state_infos.begin(), end=p_state_infos.end();
+        it!=end; ++it)
+    {
+        state_info::elements_t::iterator it2, end2;
+        for(it2=it->second.elements.begin(), end2=it->second.elements.end(); it2!=end2; ++it2)
+        {
+            delete it2->second;
+        }
+    }
+    p_state_infos.clear();
 }
 
 std::ostream& operator<<(std::ostream& strm, const Machine& m)

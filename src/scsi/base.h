@@ -20,6 +20,7 @@
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
 
+struct ElementVoid;
 
 /** @brief The abstract base class for all simulation state objects.
  *
@@ -39,9 +40,12 @@ struct StateBase : public boost::noncopyable
     virtual void show(std::ostream&) const {}
 
     struct ArrayInfo {
-        ArrayInfo() :name(), ptr(NULL), ndim(0) {}
+        ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
         std::string name;
-        double *ptr;
+        enum Type {
+            Double, Sizet
+        } type;
+        void *ptr;
         int ndim;
         size_t dim[5];
     };
@@ -55,13 +59,17 @@ struct StateBase : public boost::noncopyable
      *
      * @note This method requires that parameter storage be stable for the lifetime of the object
      */
-    virtual bool getArray(unsigned idx, ArrayInfo& Info) {return false;}
+    virtual bool getArray(unsigned idx, ArrayInfo& Info);
+
+    virtual StateBase* clone() const =0;
 
     //! @private
     //! Mailbox to hold the python interpreter object wrapping us.
     void *pyptr;
 protected:
     StateBase(const Config& c);
+    struct clone_tag{};
+    StateBase(const StateBase& c, clone_tag);
 };
 
 inline
@@ -71,15 +79,18 @@ std::ostream& operator<<(std::ostream& strm, const StateBase& s)
     return strm;
 }
 
+struct Observer : public boost::noncopyable
+{
+    virtual ~Observer() {}
+    virtual void view(const ElementVoid*, const StateBase*) =0;
+};
+
 struct ElementVoid : public boost::noncopyable
 {
     ElementVoid(const Config& conf);
     virtual ~ElementVoid();
 
     virtual const char* type_name() const =0;
-
-    //! Called after all Elements are constructed
-    virtual void peek(const std::vector<ElementVoid*>&) {}
 
     //! Propogate the given State through this Element
     virtual void advance(StateBase& s) =0;
@@ -89,6 +100,13 @@ struct ElementVoid : public boost::noncopyable
     const std::string name; //!< Name of this element (unique in its Machine)
     const size_t index; //!< Index of this element (unique in its Machine)
 
+    Observer *observer() const { return p_observe; }
+    /** Add Observer which will inspect the output State of this Element.
+     *  Observer instance musy outlive the Element.
+     * @param o A new Observer or NULL, will replace any existing pointer.
+     */
+    void set_observer(Observer *o) { p_observe = o; }
+
     virtual void show(std::ostream&) const;
 
     //! @internal
@@ -96,7 +114,9 @@ struct ElementVoid : public boost::noncopyable
     //! Assumes other has the same type
     virtual void assign(const ElementVoid* other ) =0;
 private:
+    Observer *p_observe;
     Config p_conf;
+    friend class Machine;
 };
 
 //std::ostream& operator<<(std::ostream& strm, const ElementVoid& s)
@@ -128,7 +148,7 @@ struct Machine : public boost::noncopyable
      * @return A pointer to the new state (never NULL).  The caller takes responsibility for deleteing.
      * @throws std::exception sub-classes for various errors, mostly incorrect Config.
      */
-    StateBase* allocState(Config& c) const;
+    StateBase* allocState(const Config& c) const;
 
     void reconfigure(size_t idx, const Config& c);
 
@@ -166,11 +186,13 @@ private:
         { return new State(c); }
     };
     struct element_builder_t {
+        virtual ~element_builder_t() {}
         virtual ElementVoid* build(const Config& c) =0;
         virtual void rebuild(ElementVoid *o, const Config& c) =0;
     };
     template<typename Element>
     struct element_builder_impl : public element_builder_t {
+        virtual ~element_builder_impl() {}
         ElementVoid* build(const Config& c)
         { return new Element(c); }
         void rebuild(ElementVoid *o, const Config& c)
@@ -217,6 +239,11 @@ public:
     {
         p_registerElement(sname, ename, new element_builder_impl<Element>);
     }
+
+    //! Discard all registered State and Element type information
+    //! Suggested use case is to call just before process exit
+    //! so that valgrind doesn't flag these as leaks
+    static void registeryCleanup();
 
     friend std::ostream& operator<<(std::ostream&, const Machine& m);
 };

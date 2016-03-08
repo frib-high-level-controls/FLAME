@@ -35,6 +35,11 @@ MatrixState::MatrixState(const Config& c)
 
 MatrixState::~MatrixState() {}
 
+MatrixState::MatrixState(const MatrixState& o, clone_tag t)
+    :StateBase(o, t)
+    ,state(o.state)
+{}
+
 void MatrixState::assign(const StateBase& other)
 {
     const MatrixState *O = dynamic_cast<const MatrixState*>(&other);
@@ -53,12 +58,13 @@ bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0,0);
+        Info.type = ArrayInfo::Double;
         Info.ndim = 2;
         Info.dim[0] = state.size1();
         Info.dim[1] = state.size2();
         return true;
     }
-    return false;
+    return StateBase::getArray(idx-1, Info);
 }
 
 VectorState::VectorState(const Config& c)
@@ -76,6 +82,11 @@ VectorState::VectorState(const Config& c)
 }
 
 VectorState::~VectorState() {}
+
+VectorState::VectorState(const VectorState& o, clone_tag t)
+    :StateBase(o, t)
+    ,state(o.state)
+{}
 
 void VectorState::assign(const StateBase& other)
 {
@@ -95,11 +106,12 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
     if(idx==0) {
         Info.name = "state";
         Info.ptr = &state(0);
+        Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = state.size();
         return true;
     }
-    return false;
+    return StateBase::getArray(idx-1, Info);
 }
 
 namespace {

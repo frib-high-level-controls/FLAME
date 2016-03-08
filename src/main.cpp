@@ -1956,9 +1956,11 @@ int main(int argc, char *argv[])
 
         fprintf(stderr, "Done\n");
         fclose(inf);
+        Machine::registeryCleanup();
         return 0;
     } catch(std::exception& e) {
         std::cerr << "Main exception: " << e.what() << "\n";
+        Machine::registeryCleanup();
         return 1;
     }
 }

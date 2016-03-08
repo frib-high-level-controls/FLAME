@@ -32,6 +32,13 @@ struct MatrixState : public StateBase
     value_t state;
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
+
+    virtual MatrixState* clone() const {
+        return new MatrixState(*this, clone_tag());
+    }
+
+protected:
+    MatrixState(const MatrixState& o, clone_tag);
 };
 
 #endif // SCSI_STATE_MATRIX_HPP

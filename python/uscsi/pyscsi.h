@@ -1,3 +1,5 @@
+#include <exception>
+
 #ifndef PYSCSI_H
 #define PYSCSI_H
 #define PY_SSIZE_T_CLEAN
@@ -18,14 +20,17 @@ PyObject* PyGLPSParse(PyObject *, PyObject *args);
 int registerModMachine(PyObject *mod);
 int registerModState(PyObject *mod);
 
-#define CATCH2V(CXX, PYEXC) catch(CXX& e) { PyErr_SetString(PyExc_##PYEXC, e.what()); return; }
-#define CATCH3(CXX, PYEXC, RET) catch(CXX& e) { PyErr_SetString(PyExc_##PYEXC, e.what()); return RET; }
+#define CATCH2V(CXX, PYEXC) catch(CXX& e) { if(!PyErr_Occurred()) PyErr_SetString(PyExc_##PYEXC, e.what()); return; }
+#define CATCH3(CXX, PYEXC, RET) catch(CXX& e) { if(!PyErr_Occurred()) PyErr_SetString(PyExc_##PYEXC, e.what()); return RET; }
 #define CATCH2(CXX, PYEXC) CATCH3(CXX, PYEXC, NULL)
+#define CATCH1(RET) CATCH3(std::exception, RuntimeError, RET)
 #define CATCH() CATCH2(std::exception, RuntimeError)
 
 #if PY_MAJOR_VERSION >= 3
 #define PyInt_Type PyLong_Type
+#define PyInt_Check PyLong_Check
 #define PyInt_FromLong PyLong_FromLong
+#define PyInt_FromSize_t PyLong_FromSize_t
 #define PyInt_AsLong PyLong_AsLong
 #define PyString_Check PyUnicode_Check
 #define PyString_FromString PyUnicode_FromString
@@ -60,6 +65,12 @@ struct PyRef {
             throw std::bad_alloc(); // TODO: probably already a python exception
         Py_CLEAR(_ptr);
         _ptr = p;
+    }
+    struct allow_null {};
+    T* reset(T* p, allow_null) {
+        Py_CLEAR(_ptr);
+        _ptr = p;
+        return p;
     }
     PyObject* releasePy() {
         return (PyObject*)release();
