@@ -230,6 +230,7 @@ StateBase* unwrapstate(PyObject* raw)
 int registerModState(PyObject *mod)
 {
     PyStateType.tp_str = &PyState_str;
+    PyStateType.tp_repr = &PyState_str;
     PyStateType.tp_dealloc = &PyState_free;
 
     PyStateType.tp_weaklistoffset = offsetof(PyState, weak);

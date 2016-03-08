@@ -134,6 +134,33 @@ class TestMatrix(unittest.TestCase):
       [0, 0, 0, 0, 0, 1],
     ])
 
+class TestObserve(unittest.TestCase):
+    def setUp(self):
+        self.M = Machine(b"""
+        sim_type = "Vector";
+        L = 2.0e-3;
+        elem0: drift, L = 2.0e-3;
+        foo: LINE = (elem0*5);
+        """)
+    def test_all(self):
+        S = self.M.allocState({})
+        S.state[:] = [0, 0, 1, 1e-3, 0, 0]
+
+        results = self.M.propagate(S, observe=range(5))
+        self.assertIsNot(results, None)
+
+        self.assertEqual(results[0][0], 0)
+        self.assertEqual(results[1][0], 1)
+        self.assertEqual(results[2][0], 2)
+        self.assertEqual(results[3][0], 3)
+        self.assertEqual(results[4][0], 4)
+
+        assert_aequal(results[0][1].state, [0, 0, 1.002, 1e-3, 0, 0])
+        assert_aequal(results[1][1].state, [0, 0, 1.004, 1e-3, 0, 0])
+        assert_aequal(results[2][1].state, [0, 0, 1.006, 1e-3, 0, 0])
+        assert_aequal(results[3][1].state, [0, 0, 1.008, 1e-3, 0, 0])
+        assert_aequal(results[4][1].state, [0, 0, 1.010, 1e-3, 0, 0])
+
 class TestGlobal(unittest.TestCase):
     def test_parse(self):
         "Test global scope when parsing"
