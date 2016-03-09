@@ -30,6 +30,13 @@ except ImportError:
 
 libdirs = [get_config_var('LIBDIR')]
 
+# prepend introspected numpy directory so that it is checked before
+# system python directory, which may contained a different version
+# when virtualenv is used.  Debian helpfully symlinks the numpy headers
+# as /usr/include/pythonX.Y/numpy :P
+libdirs.reverse()
+incdirs.reverse()
+
 print('set(Python_DEFINITIONS, "%s")'%get_config_var('BASECFLAGS'), file=out)
 
 print('set(Python_VERSION "%s")'%get_config_var('VERSION'), file=out)

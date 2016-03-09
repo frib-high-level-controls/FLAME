@@ -53,16 +53,13 @@ if(PYTHONINTERP_FOUND)
   else()
     include(${CMAKE_CURRENT_BINARY_DIR}/pyconfig.cmake)
     message(STATUS "Python version ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}.${Python_VERSION_PATCH}")
+    message(STATUS " headers ${Python_INCLUDE_DIRS}")
+    message(STATUS " numpy ${Python_NUMPY_FOUND}")
+    #message(STATUS " library ${Python_LIBRARY_DIRS}") # not used
   endif()
 endif()
 
 if(Python_FOUND)
-  find_path(NUMPY_INCLUDE_DIRS numpy/numpyconfig.h
-    PATHS ${Python_INCLUDE_DIRS}
-    NO_DEFAULT_PATH
-  )
-  message(STATUS "Numpy headers ${NUMPY_INCLUDE_DIRS}")
-
   # see if nosetests test runner is available
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -m nose.core -V
