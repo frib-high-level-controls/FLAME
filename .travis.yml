@@ -7,10 +7,7 @@ addons:
     - libboost-dev
     - libboost-system-dev
     - libboost-thread-dev
-    - python-dev
-    - python-nose
-    - python-numpy
-    - python-scipy
+    - python-decorator
     - cmake
     - bison
     - flex
