@@ -60,6 +60,14 @@ class testParse(unittest.TestCase):
         self.assertRaisesRegexp(RuntimeError, ".*invalid.*referenced before definition",
                                 P.parse, "bar: foo; A: line = ( bar, invalid")
 
+        self.assertRaisesRegexp(RuntimeError, "syntax error",
+                                P.parse, "bar:: foo;")
+
+        self.assertRaisesRegexp(RuntimeError, "syntax error",
+                                P.parse, "bar: : foo;")
+
+        self.assertRaisesRegexp(RuntimeError, "syntax error",
+                                P.parse, ":bar : foo;")
     def test_calc_err(self):
         P = GLPSParser()
         self.assertRaisesRegexp(RuntimeError, ".*division results in non-finite value",
@@ -107,17 +115,17 @@ foo: LINE = (x1, x1);
         C = P.parse("""
 hello = 42;
 x1: drift, L=4;
-x2: quad, L=1;
-foo: LINE = (2*x1, x2);
+x:2: quad, L=1;
+f:oo: LINE = (2*x1, x:2);
 """)
 
         self.assertEqual(C, {
             'hello':42.0,
-            'name':'foo',
+            'name':'f:oo',
             'elements':[
                 {'name':'x1', 'type':'drift', 'L':4.0},
                 {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x2', 'type':'quad', 'L':1.0},
+                {'name':'x:2', 'type':'quad', 'L':1.0},
             ],
         })
 

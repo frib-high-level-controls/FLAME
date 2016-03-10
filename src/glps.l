@@ -18,10 +18,11 @@
 
 %%
 
-[A-Za-z][A-Za-z0-9_]* {
+[A-Za-z]([A-Za-z0-9_:]*[A-Za-z0-9_])? {
     yylval->string = glps_string_alloc(yytext, yyleng);
     if(!yylval->string) {
         glps_error(yyscanner, yyextra, "Unable to allocate string '%s'", yytext);
+        yyterminate();
         return EOF;
     } else {
         return KEYWORD;
