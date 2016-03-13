@@ -1358,9 +1358,8 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
                        const double IonZ, const double IonEs, double &EkState, double &Fy_absState)
 {
     // Scale matrix element for Charge State and propagate through element.
-    std::stringstream  strm;
     double             IonW, L, beta, gamma, avebeta, avegamma;
-    double             SampleionK, R56, Brho, K;
+    double             Brho, K;
     double             accIonW, x0[2], x2[2], ionFys, E0TL;
     element_t          *ElemPtr;
     value_mat          M;
@@ -1381,10 +1380,10 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
 
     gamma      = (EkState+IonEs)/IonEs;
     beta       = sqrt(1e0-1e0/sqr(gamma));
-    SampleionK = 2e0*M_PI/(beta*SampleLambda);
+    const double SampleionK = 2e0*M_PI/(beta*SampleLambda);
 
     // Evaluate momentum compaction.
-    R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
+    const double R56 = -2e0*M_PI/(SampleLambda*IonEs*cube(beta*gamma))*L;
 
     if (t_name == "marker") {
     } else if (t_name == "drift") {
