@@ -293,7 +293,7 @@ struct ElementSolenoid : public Base
         :base_t(c)
     {
         double L = c.get<double>("L")*MtoMM,      // Convert from [m] to [mm].
-               B = c.get<double>("B"),
+//               B = c.get<double>("B"),
                K = c.get<double>("K", 0e0)/MtoMM, // Convert from [m] to [mm].
                C = ::cos(K*L),
                S = ::sin(K*L);

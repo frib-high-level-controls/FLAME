@@ -492,9 +492,9 @@ void InitLong(const Machine &sim, const double IonZ)
     double                                IonGamma, IonBeta, SampleIonK;
     double                                IonW, IonZ1, IonEs, IonEk;
     Machine::p_elements_t::const_iterator it;
-    std::fstream                          outf;
+//    std::fstream                          outf;
 
-    const char FileName[] = "long_tab.out";
+//    const char FileName[] = "long_tab.out";
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
@@ -516,7 +516,7 @@ void InitLong(const Machine &sim, const double IonZ)
               << "  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
               << ", IonW [Mev/u] = " << IonW << "\n";
 
-    outf.open(FileName, std::ofstream::out);
+//    outf.open(FileName, std::ofstream::out);
 
     n = 1;
     LongTab.set(0e0, IonEk, 0e0, IonBeta, IonGamma);
@@ -559,15 +559,15 @@ void InitLong(const Machine &sim, const double IonZ)
             PropagateLongStripper(conf, n, IonZ1, IonEs, IonW, SampleIonK, IonBeta);
         }
 
-        if (!outf.is_open()) {
-            std::cerr << "*** InitLong: failed to open " << FileName << "\n";
-            exit(1);
-        }
-        outf << std::setw(15) << std::left << t_name << std::setw(25)
-             << elem->name << std::internal;
-        LongTab.show(outf, n-1);
+//        if (!outf.is_open()) {
+//            std::cerr << "*** InitLong: failed to open " << FileName << "\n";
+//            exit(1);
+//        }
+//        outf << std::setw(15) << std::left << t_name << std::setw(25)
+//             << elem->name << std::internal;
+//        LongTab.show(outf, n-1);
     }
-    outf.close();
+//    outf.close();
 }
 
 
@@ -1376,7 +1376,8 @@ void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
     if (t_name != "marker") {
         L = conf.get<double>("L")*MtoMM;
         s += L;
-    }
+    } else
+        L = -1e9;
 
     gamma      = (EkState+IonEs)/IonEs;
     beta       = sqrt(1e0-1e0/sqr(gamma));
@@ -1586,20 +1587,20 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
     std::vector<boost::shared_ptr<StateBase> > state;
     state_t                                    *StatePtr[nChgState];
     Machine::p_elements_t::iterator            it[nChgState];
-    std::fstream                               outf1, outf2;
+    //std::fstream                               outf1, outf2;
 
-    const char FileName1[] = "CenofChg.out", FileName2[] = "BeamRMS.out";
+//    const char FileName1[] = "CenofChg.out", FileName2[] = "BeamRMS.out";
 
-    outf1.open(FileName1, std::ofstream::out);
-    if (!outf1.is_open()) {
-        std::cerr << "*** InitLattice: failed to open " << FileName1 << "\n";
-        exit(1);
-    }
-    outf2.open(FileName2, std::ofstream::out);
-    if (!outf2.is_open()) {
-        std::cerr << "*** InitLattice: failed to open " << FileName2 << "\n";
-        exit(1);
-    }
+//    outf1.open(FileName1, std::ofstream::out);
+//    if (!outf1.is_open()) {
+//        std::cerr << "*** InitLattice: failed to open " << FileName1 << "\n";
+//        exit(1);
+//    }
+//    outf2.open(FileName2, std::ofstream::out);
+//    if (!outf2.is_open()) {
+//        std::cerr << "*** InitLattice: failed to open " << FileName2 << "\n";
+//        exit(1);
+//    }
 
     std::cout << "\nInitLattice:\n";
 
@@ -1641,24 +1642,24 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
         CenofChg = GetCenofChg(nChgState, NChg, StatePtr);
         BeamRms  = GetBeamRMS(nChgState, NChg, StatePtr);
 
-        outf1 << std::scientific << std::setprecision(15)
-             << std::setw(23) << s[0]*1e-3;
-        for (k = 0; k < PS_Dim-1; k++)
-            outf1 << std::scientific << std::setprecision(15)
-                 << std::setw(23) << CenofChg[k];
-        outf1 << "\n";
+//        outf1 << std::scientific << std::setprecision(15)
+//             << std::setw(23) << s[0]*1e-3;
+//        for (k = 0; k < PS_Dim-1; k++)
+//            outf1 << std::scientific << std::setprecision(15)
+//                 << std::setw(23) << CenofChg[k];
+//        outf1 << "\n";
 
-        outf2 << std::scientific << std::setprecision(15)
-             << std::setw(23) << s[0]*1e-3;
-        for (k = 0; k < PS_Dim-1; k++)
-            outf2 << std::scientific << std::setprecision(15)
-                 << std::setw(23) << BeamRms(k, k);
-        outf2 << "\n";
+//        outf2 << std::scientific << std::setprecision(15)
+//             << std::setw(23) << s[0]*1e-3;
+//        for (k = 0; k < PS_Dim-1; k++)
+//            outf2 << std::scientific << std::setprecision(15)
+//                 << std::setw(23) << BeamRms(k, k);
+//        outf2 << "\n";
 
     }
 
-    outf1.close();
-    outf2.close();
+//    outf1.close();
+//    outf2.close();
 
     for (k = 0; k < nChgState; k++) {
         std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s[k]*1e-3 << "\n";
@@ -1678,9 +1679,9 @@ void PropagateState(const Machine &sim)
     Config                                D;
     std::auto_ptr<StateBase>              state(sim.allocState(D));
     ElementVoid                           *elem;
-    std::fstream                          outf;
+    //std::fstream                          outf;
 
-    outf.open("test_jb.out", std::ofstream::out);
+    //outf.open("test_jb.out", std::ofstream::out);
 
     std::cout << "\n" << "PropagateState:" << "\n";
 
@@ -1705,7 +1706,7 @@ void PropagateState(const Machine &sim)
     std::cout << "\n";
     PrtMat(StatePtr->state);
 
-    outf.close();
+    //outf.close();
 }
 
 
@@ -1812,7 +1813,7 @@ int main(int argc, char *argv[])
         std::auto_ptr<Config>                    conf;
         std::vector<boost::shared_ptr<Machine> > sims;
         clock_t                                  tStamp[2];
-        FILE                                     *inf;
+        FILE                                     *inf = NULL;
 
         if(argc > 1) {
             HomeDir = argv[2];
