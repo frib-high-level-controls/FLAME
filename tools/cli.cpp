@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     // register state and element types
     registerLinear();
     registerMoment();
+    registerMoment2();
 
     try {
         Machine sim(*conf);

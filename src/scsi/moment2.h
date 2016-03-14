@@ -15,7 +15,8 @@ struct Moment2State : public StateBase
 {
     enum {maxsize=7};
     enum param_t {
-        PS_X, PS_PX, PS_Y, PS_PY, PS_S, PS_PS
+        PS_X, PS_PX, PS_Y, PS_PY, PS_S, PS_PS,
+        PS_QQ // ???
     };
 
     Moment2State(const Config& c);
@@ -34,9 +35,15 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    double energy;
+    double pos;      // absolute longitudinal position at end of Element
+    double Ekinetic; // kinetic energy of reference particle
+                     // actual is Ekinetic + moment0[6]
 
-    bool do_recalc_energy;
+    double sync_phase;   // synchotron phase
+
+    double gamma, // (Erest+Ekinetic)/Erest
+           beta;  // sqrt(1-1.0/(gamma*gamma))
+
     vector_t moment0;
     matrix_t state; // TODO: better name
 
@@ -61,18 +68,23 @@ struct Moment2ElementBase : public ElementVoid
     virtual ~Moment2ElementBase();
 
     virtual void advance(StateBase& s);
-    virtual void recalc_energy_gain(state_t& s)=0;
-    virtual void recalc_transfer(state_t& s)=0;
 
     virtual void show(std::ostream& strm) const;
 
     typedef boost::numeric::ublas::matrix<double> value_t;
 
-    bool do_recalc_energy;
-    double energy_gain;
-    bool do_recalc_transfer;
+    double length;
+    double FSampLength; //!< sample (rf) clock wavelength
+    /** Fy += phase_factor/beta
+     * phase_factor := L*2*pi*Fsamp/C
+     */
+    double phase_factor;
+    double Erest; //!< rest energy of particle species
+
+    double last_Kenergy_in, last_Kenergy_out;
+    //! final transfer matrix
     value_t transfer;
-    //value_t transferT;
+    value_t transfer_raw, misalign;
 
     virtual void assign(const ElementVoid *other);
 

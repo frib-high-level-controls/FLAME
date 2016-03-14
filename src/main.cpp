@@ -11,6 +11,7 @@
 
 #include "scsi/config.h"
 
+#include <scsi/constants.h>
 #include <scsi/base.h>
 //#include <scsi/linear.h>
 #include <scsi/moment.h>
@@ -22,25 +23,6 @@ typedef MomentElementBase::state_t state_t;
 
 extern int glps_debug;
 
-// Phase-space units.
-#if false
-    // Use [m, rad, m, rad, rad, eV/u].
-    #define MtoMM   1e0
-    #define MeVtoeV 1e0
-#else
-    // Use [mm, rad, mm, rad, rad, MeV/u].
-    #define MtoMM   1e3
-    #define MeVtoeV 1e6
-#endif
-
-// Global constansts.
-
-// Speed of light [m/s].
-# define C0           2.99792458e8
-// Atomic mass unit [eV/c^2].
-# define AU           (931.49432e6/MeVtoeV)
-// Vacuum permeability.
-# define MU0          4e0*M_PI*1e-7
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6
 // Sampling distance [m].
