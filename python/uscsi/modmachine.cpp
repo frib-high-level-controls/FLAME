@@ -261,9 +261,9 @@ int registerModMachine(PyObject *mod)
     if(PyType_Ready(&PyMachineType))
         return -1;
 
-    Py_INCREF(&PyMachineType);
+    Py_INCREF((PyObject*)&PyMachineType);
     if(PyModule_AddObject(mod, "Machine", (PyObject*)&PyMachineType)) {
-        Py_DECREF(&PyMachineType);
+        Py_DECREF((PyObject*)&PyMachineType);
         return -1;
     }
 
