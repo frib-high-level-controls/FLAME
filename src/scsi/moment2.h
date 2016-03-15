@@ -84,11 +84,11 @@ struct Moment2ElementBase : public ElementVoid
     double last_Kenergy_in, last_Kenergy_out;
     //! final transfer matrix
     value_t transfer;
-    value_t transfer_raw, misalign;
+    value_t transfer_raw, misalign, misalign_inv;
 
     virtual void assign(const ElementVoid *other);
 
-private:
+protected:
     // scratch space to avoid temp. allocation in advance()
     // An Element can't be shared between multiple threads
     //TODO: non-const advance()

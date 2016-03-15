@@ -1,8 +1,32 @@
 
+#include <limits>
+
+#include <boost/numeric/ublas/lu.hpp>
+
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
 
 #include "scsi/h5loader.h"
+
+namespace {
+// http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in)
+{
+    using boost::numeric::ublas::permutation_matrix;
+    using boost::numeric::ublas::lu_factorize;
+    using boost::numeric::ublas::lu_substitute;
+    using boost::numeric::ublas::identity_matrix;
+
+    Moment2ElementBase::value_t scratch(in); // copy
+    permutation_matrix<size_t> pm(scratch.size1());
+    if(lu_factorize(scratch, pm)!=0)
+        throw std::runtime_error("Failed to invert matrix");
+    out.assign(identity_matrix<double>(scratch.size1()));
+    //out = identity_matrix<double>(scratch.size1());
+    lu_substitute(scratch, pm, out);
+}
+
+} // namespace
 
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
@@ -15,7 +39,7 @@ Moment2State::Moment2State(const Config& c)
     try{
         const std::vector<double>& I = c.get<std::vector<double> >("moment0");
         if(I.size()>moment0.size())
-            throw std::invalid_argument("Initial state size too big");
+            throw std::invalid_argument("Initial moment0 size too big");
         std::copy(I.begin(), I.end(), moment0.begin());
     }catch(key_error&){
         // default to zeros
@@ -85,14 +109,46 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 1;
         Info.dim[0] = moment0.size();
         return true;
+    } else if(idx==2) {
+        Info.name = "pos";
+        Info.ptr = &pos;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==3) {
+        Info.name = "Ekinetic";
+        Info.ptr = &Ekinetic;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==4) {
+        Info.name = "sync_phase";
+        Info.ptr = &sync_phase;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==5) {
+        Info.name = "gamma";
+        Info.ptr = &gamma;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==6) {
+        Info.name = "beta";
+        Info.ptr = &beta;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
     }
-    return StateBase::getArray(idx-2, Info);
+    return StateBase::getArray(idx-7, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
+    ,transfer(state_t::maxsize, state_t::maxsize)
     ,transfer_raw(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     ,misalign(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
+    ,misalign_inv(state_t::maxsize, state_t::maxsize)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
     length = c.get<double>("L", 0.0);
@@ -100,8 +156,10 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     phase_factor = length*2*M_PI/FSampLength;
     Erest = c.get<double>("IonEs");
 
+    inverse(misalign_inv, misalign);
+
     // spoil to force recalculation of energy dependent terms
-    last_Kenergy_in = last_Kenergy_out = -1.0;
+    last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
 }
 
 Moment2ElementBase::~Moment2ElementBase() {}
@@ -119,7 +177,7 @@ void Moment2ElementBase::assign(const ElementVoid *other)
     ElementVoid::assign(other);
 
     // spoil to force recalculation of energy dependent terms
-    last_Kenergy_in = last_Kenergy_out = -1.0;
+    last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
 }
 
 void Moment2ElementBase::show(std::ostream& strm) const
@@ -146,7 +204,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
         transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
 
-        transfer = transfer_raw; //TODO misalign*transfer_raw*inverse(misalign)
+        noalias(scratch) = prod(misalign, transfer_raw);
+        noalias(transfer) = prod(scratch, misalign_inv);
 
         last_Kenergy_in = last_Kenergy_out = ST.Ekinetic; // no energy gain
     }
@@ -257,8 +316,8 @@ struct ElementDrift : public Moment2ElementBase
     {
         double L = length*MtoMM; // Convert from [m] to [mm].
 
-        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
     }
     virtual ~ElementDrift() {}
 
@@ -281,11 +340,11 @@ struct ElementSBend : public Moment2ElementBase
                Ky  = -K;
 
         // Horizontal plane.
-        Get2by2Matrix(L, Kx, (unsigned)state_t::PS_X, this->transfer);
+        Get2by2Matrix(L, Kx, (unsigned)state_t::PS_X, this->transfer_raw);
         // Vertical plane.
-        Get2by2Matrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer);
+        Get2by2Matrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer_raw);
         // Longitudinal plane.
-//        this->transfer(state_t::PS_S,  state_t::PS_S) = L;
+//        this->transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
     }
     virtual ~ElementSBend() {}
 
@@ -305,12 +364,12 @@ struct ElementQuad : public Moment2ElementBase
                K = c.get<double>("K", 0e0)/sqr(MtoMM);
 
         // Horizontal plane.
-        Get2by2Matrix(L,  K, (unsigned)state_t::PS_X, this->transfer);
+        Get2by2Matrix(L,  K, (unsigned)state_t::PS_X, this->transfer_raw);
         // Vertical plane.
-        Get2by2Matrix(L, -K, (unsigned)state_t::PS_Y, this->transfer);
+        Get2by2Matrix(L, -K, (unsigned)state_t::PS_Y, this->transfer_raw);
         // Longitudinal plane.
         // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+//        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementQuad() {}
 
@@ -330,43 +389,43 @@ struct ElementSolenoid : public Moment2ElementBase
                C = ::cos(K*L),
                S = ::sin(K*L);
 
-        this->transfer(state_t::PS_X, state_t::PS_X)
-                = this->transfer(state_t::PS_PX, state_t::PS_PX)
-                = this->transfer(state_t::PS_Y, state_t::PS_Y)
-                = this->transfer(state_t::PS_PY, state_t::PS_PY)
+        this->transfer_raw(state_t::PS_X, state_t::PS_X)
+                = this->transfer_raw(state_t::PS_PX, state_t::PS_PX)
+                = this->transfer_raw(state_t::PS_Y, state_t::PS_Y)
+                = this->transfer_raw(state_t::PS_PY, state_t::PS_PY)
                 = sqr(C);
 
         if (K != 0e0)
-            this->transfer(state_t::PS_X, state_t::PS_PX) = S*C/K;
+            this->transfer_raw(state_t::PS_X, state_t::PS_PX) = S*C/K;
         else
-            this->transfer(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer(state_t::PS_X, state_t::PS_Y) = S*C;
+            this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer_raw(state_t::PS_X, state_t::PS_Y) = S*C;
         if (K != 0e0)
-            this->transfer(state_t::PS_X, state_t::PS_PY) = sqr(S)/K;
+            this->transfer_raw(state_t::PS_X, state_t::PS_PY) = sqr(S)/K;
         else
-            this->transfer(state_t::PS_X, state_t::PS_PY) = 0e0;
+            this->transfer_raw(state_t::PS_X, state_t::PS_PY) = 0e0;
 
-        this->transfer(state_t::PS_PX, state_t::PS_X) = -K*S*C;
-        this->transfer(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
-        this->transfer(state_t::PS_PX, state_t::PS_PY) = S*C;
+        this->transfer_raw(state_t::PS_PX, state_t::PS_X) = -K*S*C;
+        this->transfer_raw(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
+        this->transfer_raw(state_t::PS_PX, state_t::PS_PY) = S*C;
 
-        this->transfer(state_t::PS_Y, state_t::PS_X) = -S*C;
+        this->transfer_raw(state_t::PS_Y, state_t::PS_X) = -S*C;
         if (K != 0e0)
-            this->transfer(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
+            this->transfer_raw(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
         else
-            this->transfer(state_t::PS_Y, state_t::PS_PX) = 0e0;
+            this->transfer_raw(state_t::PS_Y, state_t::PS_PX) = 0e0;
         if (K != 0e0)
-            this->transfer(state_t::PS_Y, state_t::PS_PY) = S*C/K;
+            this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = S*C/K;
         else
-            this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+            this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
 
-        this->transfer(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
-        this->transfer(state_t::PS_PY, state_t::PS_PX) = -S*C;
-        this->transfer(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
+        this->transfer_raw(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
+        this->transfer_raw(state_t::PS_PY, state_t::PS_PX) = -S*C;
+        this->transfer_raw(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
 
         // Longitudinal plane.
         // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S) = L;
+//        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
     }
     virtual ~ElementSolenoid() {}
 
@@ -384,12 +443,39 @@ struct ElementRFCavity : public Moment2ElementBase
         std::string cav_type = c.get<std::string>("cavtype");
         double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
-        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
+        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
         // For total path length.
 //        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
     virtual ~ElementRFCavity() {}
+
+    virtual void advance(StateBase& s)
+    {
+        state_t& ST = static_cast<state_t&>(s);
+        using namespace boost::numeric::ublas;
+
+        if(ST.Ekinetic!=last_Kenergy_in) {
+            // need to re-calculate energy dependent terms
+            // for a passive element (no energy change)
+
+            transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+
+            transfer = transfer_raw; //TODO misalign*transfer_raw*inverse(misalign)
+
+            last_Kenergy_in = ST.Ekinetic;
+            last_Kenergy_out = ST.Ekinetic + 1;
+        }
+
+        ST.pos += length;
+        ST.Ekinetic = last_Kenergy_out;
+        ST.sync_phase += phase_factor/ST.beta;
+
+        ST.moment0 = prod(transfer, ST.moment0);
+
+        noalias(scratch) = prod(transfer, ST.state);
+        noalias(ST.state) = prod(scratch, trans(transfer));
+    }
 
     virtual const char* type_name() const {return "rfcavity";}
 };
@@ -433,9 +519,9 @@ struct ElementGeneric : public Moment2ElementBase
         :base_t(c)
     {
         std::vector<double> I = c.get<std::vector<double> >("transfer");
-        if(I.size()>this->transfer.data().size())
+        if(I.size()>this->transfer_raw.data().size())
             throw std::invalid_argument("Initial transfer size too big");
-        std::copy(I.begin(), I.end(), this->transfer.data().begin());
+        std::copy(I.begin(), I.end(), this->transfer_raw.data().begin());
     }
     virtual ~ElementGeneric() {}
 
@@ -448,23 +534,23 @@ void registerMoment2()
 {
     Machine::registerState<Moment2State>("MomentMatrix2");
 
-    Machine::registerElement<ElementSource                 >("MomentMatrix",   "source");
+    Machine::registerElement<ElementSource                 >("MomentMatrix2",   "source");
 
-    Machine::registerElement<ElementMark                   >("MomentMatrix",   "marker");
+    Machine::registerElement<ElementMark                   >("MomentMatrix2",   "marker");
 
-    Machine::registerElement<ElementDrift                  >("MomentMatrix",   "drift");
+    Machine::registerElement<ElementDrift                  >("MomentMatrix2",   "drift");
 
-    Machine::registerElement<ElementSBend                  >("MomentMatrix",   "sbend");
+    Machine::registerElement<ElementSBend                  >("MomentMatrix2",   "sbend");
 
-    Machine::registerElement<ElementQuad                   >("MomentMatrix",   "quadrupole");
+    Machine::registerElement<ElementQuad                   >("MomentMatrix2",   "quadrupole");
 
-    Machine::registerElement<ElementSolenoid               >("MomentMatrix",   "solenoid");
+    Machine::registerElement<ElementSolenoid               >("MomentMatrix2",   "solenoid");
 
-    Machine::registerElement<ElementRFCavity               >("MomentMatrix",   "rfcavity");
+    Machine::registerElement<ElementRFCavity               >("MomentMatrix2",   "rfcavity");
 
-    Machine::registerElement<ElementStripper               >("MomentMatrix",   "stripper");
+    Machine::registerElement<ElementStripper               >("MomentMatrix2",   "stripper");
 
-    Machine::registerElement<ElementEDipole                >("MomentMatrix",   "edipole");
+    Machine::registerElement<ElementEDipole                >("MomentMatrix2",   "edipole");
 
-    Machine::registerElement<ElementGeneric                >("MomentMatrix",   "generic");
+    Machine::registerElement<ElementGeneric                >("MomentMatrix2",   "generic");
 }
