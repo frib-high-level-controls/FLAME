@@ -61,6 +61,7 @@ const char *glps_expr_type_name(glps_expr_type e)
     case glps_expr_vector: return "Vector";
     case glps_expr_string: return "String";
     case glps_expr_var:    return "Variable";
+    case glps_expr_config: return "Config";
     case glps_expr_elem:   return "Element";
     case glps_expr_line:   return "Beamline";
     case glps_expr_invalid:return "Invalid";
@@ -390,6 +391,7 @@ void glps_assign(parse_context *ctxt, string_t *name, expr_t*value)
         case glps_expr_vector:
         case glps_expr_number:
         case glps_expr_string:
+        case glps_expr_config:
         {
             V.expr = *value;
             ok = true;

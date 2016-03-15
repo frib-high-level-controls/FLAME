@@ -18,6 +18,7 @@ typedef enum {
     glps_expr_number, // scalar value
     glps_expr_vector, // vector value
     glps_expr_string, // string value
+    glps_expr_config, // nested Config
     glps_expr_var,    // variable name
     glps_expr_line,   // beamline name
     glps_expr_elem,   // element label
@@ -75,11 +76,14 @@ expr_t *glps_add_op(parse_context *ctxt, string_t *, unsigned N, expr_t **);
 #ifdef __cplusplus
 }
 
+class Config;
+
 typedef boost::variant<
     double, // glps_expr_number
     std::vector<double>, // glps_expr_vector
     std::string, // glps_expr_string,
-    std::vector<std::string> // glps_expr_line
+    std::vector<std::string>, // glps_expr_line
+    boost::shared_ptr<Config> // glps_expr_config
 > expr_value_t;
 
 struct string_t {

@@ -8,6 +8,9 @@ from numpy.testing import assert_equal
 
 from .._internal import (GLPSPrinter as dictshow, _GLPSParse)
 
+import os
+datadir = os.path.dirname(__file__)
+
 class GLPSParser(object):
     def parse(self, s):
         return _GLPSParse(s)
@@ -186,3 +189,29 @@ foo: LINE = (x1, x1);
 
         assert_array_equal(C['hello'], asarray([1,2,3,4]))
         assert_array_equal(C['elements'][0]['extra'], asarray([1,3,5]))
+
+class testNest(unittest.TestCase):
+    def test_parse(self):
+        """The parse() function evaluates to a recursive Config
+        """
+        P = GLPSParser()
+
+        C = P.parse("""
+x1: drift, L=4, nest = parse("%s");
+foo: LINE = (x1);
+"""%os.path.join(datadir,"parse1.lat"))
+        print("actual", C)
+
+        self.assertEqual(C, {
+            'name':'foo',
+            'elements':[
+                {'name':'x1', 'type':'drift', 'L':4.0, 'nest':[{
+                    'name':'baz',
+                    'elements':[
+                        {'name':'foo', 'type':'bar'},
+                        {'name':'foo', 'type':'bar'},
+                    ]
+                    }]
+                },
+            ],
+        })

@@ -220,6 +220,14 @@ void assign_expr_to_Config(Config& conf, const std::string& name, const expr_t& 
     case glps_expr_vector:
         conf.set<std::vector<double> >(name, boost::get<std::vector<double> >(expr.value));
         break;
+    case glps_expr_config: {
+        boost::shared_ptr<Config> pconf(boost::get<boost::shared_ptr<Config> >(expr.value));
+        std::vector<Config> cvect;
+        if(pconf)
+            cvect.push_back(*pconf);
+        conf.set<std::vector<Config> >(name, cvect);
+    }
+        break;
     default:
         throw std::logic_error("Context contained unresolved/illegal variable");
     }

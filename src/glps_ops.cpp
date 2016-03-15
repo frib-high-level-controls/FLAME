@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "glps_parser.h"
+#include "scsi/config.h"
 
 namespace {
 // Numeric operations
@@ -119,6 +120,32 @@ int binary_bl_mult(parse_context* ctxt, expr_value_t *R, const expr_t * const *A
     return 0;
 }
 
+int unary_parse(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
+{
+    assert(A[0]->etype==glps_expr_string);
+    const std::string& name = boost::get<std::string>(A[0]->value);
+
+    GLPSParser P;
+    P.setPrinter(ctxt->printer);
+
+    FILE *fp = fopen(name.c_str(), "r");
+    if(!fp) {
+        std::ostringstream strm;
+        strm<<"Failed to open file '"<<name<<"' for parsing";
+        throw std::runtime_error(strm.str());
+    }
+    boost::shared_ptr<Config> ret;
+    try{
+        ret.reset(P.parse(fp));
+        fclose(fp);
+    }catch(...){
+        fclose(fp);
+        throw;
+    }
+    *R = ret;
+    return 0;
+}
+
 }
 
 parse_context::parse_context()
@@ -146,6 +173,8 @@ parse_context::parse_context()
 
     addop("*", &binary_bl_mult<0,1>, glps_expr_line, 2, glps_expr_number, glps_expr_line);
     addop("*", &binary_bl_mult<1,0>, glps_expr_line, 2, glps_expr_line, glps_expr_number);
+
+    addop("parse", &unary_parse, glps_expr_config, 1, glps_expr_string);
 }
 
 parse_context::~parse_context()

@@ -1,0 +1,3 @@
+# used by test of parse()
+foo : bar;
+baz : LINE = (foo, foo);
