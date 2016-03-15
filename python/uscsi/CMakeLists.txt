@@ -19,6 +19,8 @@ target_link_libraries(_internal
 set_target_properties(_internal
   PROPERTIES
     PREFIX ""
+    INSTALL_RPATH ""
+    NO_SONAME YES
 )
 
 set(PY_SRC
