@@ -186,6 +186,7 @@ public:
     ~GLPSParser();
 
     void setVar(const std::string& name, const Config::value_t& v);
+    void setPrinter(std::ostream*);
 
     Config *parse(FILE *fp);
     Config *parse(const char* s, size_t len);

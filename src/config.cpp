@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include <sstream>
 #include <set>
 
@@ -228,6 +229,9 @@ void assign_expr_to_Config(Config& conf, const std::string& name, const expr_t& 
 struct GLPSParser::Pvt {
     typedef Config::values_t values_t;
     values_t vars;
+    std::ostream *printer;
+
+    Pvt() :printer(&std::cerr) {}
 
     void fill_vars(parse_context& ctxt)
     {
@@ -329,10 +333,17 @@ GLPSParser::setVar(const std::string& name, const Config::value_t& v)
     priv->vars[name] = v;
 }
 
+void
+GLPSParser::setPrinter(std::ostream* strm)
+{
+    priv->printer = strm;
+}
+
 Config*
 GLPSParser::parse(FILE *fp)
 {
     parse_context ctxt;
+    ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(fp);
     return priv->fill_context(ctxt);
@@ -342,6 +353,7 @@ Config*
 GLPSParser::parse(const char* s, size_t len)
 {
     parse_context ctxt;
+    ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(s, len);
     return priv->fill_context(ctxt);
@@ -351,6 +363,7 @@ Config*
 GLPSParser::parse(const std::string& s)
 {
     parse_context ctxt;
+    ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(s);
     return priv->fill_context(ctxt);

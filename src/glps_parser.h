@@ -63,6 +63,7 @@ void glps_assign(parse_context*, string_t *, expr_t*);
 void glps_add_element(parse_context*, string_t *label, string_t *etype, kvlist_t*);
 void glps_add_line(parse_context*, string_t *label, string_t *etype, strlist_t*);
 void glps_command(parse_context*, string_t *kw);
+void glps_call1(parse_context*, string_t*, expr_t*);
 
 kvlist_t* glps_append_kv(parse_context *ctxt, kvlist_t*, kv_t*);
 strlist_t* glps_append_expr(parse_context *ctxt, strlist_t*, expr_t *);
@@ -166,6 +167,7 @@ struct parse_context {
 
     std::string last_error;
     unsigned last_line;
+    std::ostream *printer;
 
     std::vector<char> error_scratch;
 

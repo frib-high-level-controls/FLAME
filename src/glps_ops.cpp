@@ -122,7 +122,7 @@ int binary_bl_mult(parse_context* ctxt, expr_value_t *R, const expr_t * const *A
 }
 
 parse_context::parse_context()
-    :last_line(0), error_scratch(300), scanner(NULL)
+    :last_line(0), printer(NULL), error_scratch(300), scanner(NULL)
 {
     addop("-", &unary_negate, glps_expr_number, 1, glps_expr_number);
 

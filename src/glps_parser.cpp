@@ -473,6 +473,43 @@ void glps_command(parse_context* ctxt, string_t *kw)
     }
 }
 
+void glps_call1(parse_context *ctxt, string_t *func, expr_t *arg)
+{
+    std::auto_ptr<string_t> FN(func);
+    std::auto_ptr<expr_t> ARG(arg);
+
+    if(func->str!="print") {
+        glps_error(ctxt->scanner, ctxt, "Undefined global function '%s'", func->str.c_str());
+    } else if(ctxt->printer) {
+        std::ostream& strm = *ctxt->printer;
+        strm<<"On line "<<glps_get_lineno(ctxt->scanner)<<" : ";
+        switch(arg->etype)
+        {
+        case glps_expr_number: strm<< boost::get<double>(arg->value); break;
+        case glps_expr_string: strm<<"\""<< boost::get<std::string>(arg->value)<<"\""; break;
+        case glps_expr_vector: {
+            std::ostream_iterator<double> it(strm, ", ");
+            const std::vector<double>& vect = boost::get<std::vector<double> >(arg->value);
+            strm<<"[";
+            std::copy(vect.begin(), vect.end(), it);
+            strm<<"]";
+            }
+            break;
+        case glps_expr_line: {
+            std::ostream_iterator<std::string> it(strm, ", ");
+            const std::vector<std::string>& vect = boost::get<std::vector<std::string> >(arg->value);
+            strm<<"(";
+            std::copy(vect.begin(), vect.end(), it);
+            strm<<")";
+            }
+            break;
+        default:
+            strm<<"?? <"<<glps_expr_type_name(arg->etype)<<"> ??";
+        }
+        strm<<"\n";
+    }
+}
+
 namespace {
 void parse_common(YY_BUFFER_STATE (*setup)(yyscan_t, void*),
                   parse_context* ctxt, void *pvt)

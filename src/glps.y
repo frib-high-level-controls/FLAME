@@ -85,6 +85,7 @@ file : %empty
 entry : assignment
       | element
       | line
+      | func
       | command
 
 assignment : KEYWORD '=' expr ';' { glps_assign(ctxt, $1, $3); PCLR($1); }
@@ -92,6 +93,8 @@ assignment : KEYWORD '=' expr ';' { glps_assign(ctxt, $1, $3); PCLR($1); }
 element : KEYWORD ':' KEYWORD properties ';' { glps_add_element(ctxt, $1, $3, $4); PCLR($1); PCLR($3); PCLR($4); }
 
 line : KEYWORD ':' KEYWORD '=' '(' line_list ')' ';' { glps_add_line(ctxt, $1, $3, $6); PCLR($1); PCLR($3); PCLR($6); }
+
+func : KEYWORD '(' expr ')' ';' { glps_call1(ctxt, $1, $3); PCLR($1); PCLR($3); }
 
 command : KEYWORD ';' { glps_command(ctxt, $1); }
 

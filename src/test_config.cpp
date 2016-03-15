@@ -89,3 +89,22 @@ BOOST_AUTO_TEST_CASE(config_scope_mutate)
     BOOST_CHECK_CLOSE(D.get<double>("world"), 102.0, 0.1);
     BOOST_CHECK_CLOSE(D.get<double>("other"), 103.0, 0.1);
 }
+
+static const char config_print_stmt_input[] =
+"X = 14;\n"
+"print(X);\n"
+"Y = \"test\";\n"
+"print(Y);\n"
+"foo : bar, x=\"y\";\n"
+"baz : LINE = (foo);\n";
+
+BOOST_AUTO_TEST_CASE(config_print_stmt)
+{
+    std::ostringstream strm;
+    GLPSParser parse;
+    parse.setPrinter(&strm);
+
+    std::auto_ptr<Config> conf(parse.parse(config_print_stmt_input, sizeof(config_print_stmt_input)-1));
+
+    BOOST_CHECK_EQUAL(strm.str(), "On line 2 : 14\n" "On line 4 : \"test\"\n");
+}
