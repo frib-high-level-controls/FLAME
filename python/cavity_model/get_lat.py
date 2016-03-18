@@ -31,56 +31,57 @@ def get_index(tokens, token):
 
 def marker(line, tokens):
     global beam_line, n_marker, add_ind
-    if float(tokens[2]) != 0:
+    if float(tokens[3]) != 0:
         print '*** marker with non zero length: '
         exit(1)
-    if add_ind: n_marker += 1; tokens[1] += '_%d' % (n_marker)
-    beam_line.append(tokens[1])
-    return '%s: marker;' % (tokens[1])
+    if add_ind: n_marker += 1; tokens[2] += '_%d' % (n_marker)
+    beam_line.append(tokens[2])
+    return '%s: marker;' % (tokens[2])
 
 def drift(line, tokens):
     global beam_line, n_drift
-    if add_ind: n_drift += 1; tokens[1] += '_%d' % (n_drift)
-    beam_line.append(tokens[1])
-    return '%s: drift, L = %s, aper = %s;' % (tokens[1], tokens[2], tokens[3])
+    if add_ind: n_drift += 1; tokens[2] += '_%d' % (n_drift)
+    beam_line.append(tokens[2])
+    return '%s: drift, L = %s, aper = %s;' % (tokens[2], tokens[3], tokens[4])
 
 def sbend(line, tokens):
     global beam_line, n_sbend, add_ind
-    if add_ind: n_sbend += 1; tokens[1] += '_%d' % (n_sbend)
-    beam_line.append(tokens[1])
+    if add_ind: n_sbend += 1; tokens[2] += '_%d' % (n_sbend)
+    beam_line.append(tokens[2])
     str = '%s: sbend, L = %s, phi = %s, phi1 = %s, phi2 = %s, bg = %s, aper = %s;' \
-          % (tokens[1], tokens[2], tokens[4], tokens[7], tokens[8], tokens[5], tokens[3])
+          % (tokens[2], tokens[3], tokens[5], tokens[8], tokens[9], tokens[6], tokens[4])
     return str
 
 def solenoid(line, tokens):
     global beam_line, n_solenoid, add_ind
-    if add_ind: n_solenoid += 1; tokens[1] += '_%d' % (n_solenoid)
-    beam_line.append(tokens[1])
+    if add_ind: n_solenoid += 1; tokens[2] += '_%d' % (n_solenoid)
+    beam_line.append(tokens[2])
     return '%s: solenoid, L = %s, B = %s, aper = %s;' \
-        % (tokens[1], tokens[2], tokens[4], tokens[3])
+        % (tokens[2], tokens[3], tokens[5], tokens[4])
 
 def quadrupole(line, tokens):
     global beam_line
-    beam_line.append(tokens[1])
+    beam_line.append(tokens[2])
     return '%s: quadrupole, L = %s, B2 = %s, aper = %s;' \
-        % (tokens[1], tokens[2], tokens[4], tokens[3])
+        % (tokens[2], tokens[3], tokens[5], tokens[4])
 
 def rfcavity(line, tokens):
     global beam_line
-    beam_line.append(tokens[1])
+    beam_line.append(tokens[2])
     str = '%s: rfcavity, L = %s, f = %se6, phi = %s, scl_fac = %s,' \
           ' aper = %s;' \
-          % (tokens[1], tokens[2], tokens[4], tokens[6], tokens[5], tokens[3])
+          % (tokens[2], tokens[3], tokens[5], tokens[7], tokens[6], tokens[4])
     return str
 
 def e_dipole(line, tokens):
     global beam_line, n_e_dipole
-    # n_e_dipole += 1; tokens[1] += '_%d' % (n_e_dipole)
-    beam_line.append(tokens[1])
+    # n_e_dipole += 1; tokens[2] += '_%d' % (n_e_dipole)
+    beam_line.append(tokens[2])
     return '%s: edipole, L = %s, phi = %s, phi1 = %s, phi2 = %s, E= %s, scl_fac = %s,' \
         ' aper = %s;' \
-        % (tokens[1], tokens[3], tokens[6], tokens[8], tokens[9], tokens[7], tokens[5],
-           tokens[4])
+        % (tokens[2], tokens[4], tokens[7], tokens[9], tokens[10], tokens[8], tokens[6],
+           tokens[5])
+
 
 # TLM -> Tracy-2,3 dictionary.
 tlm2tracy = {
@@ -89,6 +90,7 @@ tlm2tracy = {
     'solenoid' : solenoid,
     'dipole'   : sbend,
     'quadpole' : quadrupole,
+    'combquad' : quadrupole,
     'rfcavity' : rfcavity,
     'ebend'    : e_dipole,
     }
@@ -102,7 +104,7 @@ def parse_definition(line, tokens):
         if not tokens[k].startswith('"'):
             tokens[k] = re.sub('[\s]', '', tokens[k])
     try:
-        str = tlm2tracy[tokens[0]](line, tokens)
+        str = tlm2tracy[tokens[1]](line, tokens)
     except KeyError:
         print '\n*** undefined token!'
         print line
@@ -122,7 +124,7 @@ def parse_line(line, outf):
         # Definition.
         tokens = re.split(r'[ ]', line_lc)
         # Replace ':' with '_' in name.
-        tokens[1] = tokens[1].replace(':', '_', 1)
+        tokens[2] = tokens[2].replace(':', '_', 1)
         outf.write('%s\n' % (parse_definition(line_lc, tokens)))
 
 
