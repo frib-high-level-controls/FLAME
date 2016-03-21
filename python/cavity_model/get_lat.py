@@ -15,7 +15,7 @@ import sys
 #   type           name          length [m]  aper [m]   B [T]
 # solenoid  LS1_CA01:SOL1_D1131   0.100000   0.020000  5.340000 
 #
-#   type           name          length [m]  aper [m]  phi [deg]  beta*gamma    type     phi1 [deg]  phi2 [deg]  b2 [1/m^2]
+#   type           name          length [m]  aper [m]  phi [deg]  beta*gamma    type     phi1 [deg]  phi2 [deg]
 #  dipole     FS1_CSS:DH_D2163    0.060000   0.020000  -1.000000   0.190370  400.000000   0.000000   -5.000000
 #
 #   type           name          length [m]  aper [m]  B2 [T/m]
@@ -23,6 +23,12 @@ import sys
 #
 #   type           name          length [m]  aper [m]     f [MHz]  scl fact   phi [deg]
 # rfcavity  LS1_CA01:CAV1_D1127   0.240000   0.017000  80.500000   0.640000  -35.000000
+#
+#   type           name          length [m]  aper [m]  phi [deg]     beta     cyl(0)/spher(1)  hor(0)/ver(1)  X fringe Y fringe  voltage asym fact
+#  ebend            EB1             1.0        0.02      90.0     0.00506953       1                1           0.0     0.0            0.0
+#
+#   type           name          length [m]  aper [m]  voltage [V]  electrode radius [m]
+#  equad           QE1H            0.1034      0.02     -358.574          0.0746
 
 
 def get_index(tokens, token):
@@ -60,27 +66,37 @@ def solenoid(line, tokens):
         % (tokens[2], tokens[3], tokens[5], tokens[4])
 
 def quadrupole(line, tokens):
-    global beam_line
+    global beam_line, n_quad, add_ind
+    if add_ind: n_quad += 1; tokens[2] += '_%d' % (n_quad)
     beam_line.append(tokens[2])
     return '%s: quadrupole, L = %s, B2 = %s, aper = %s;' \
         % (tokens[2], tokens[3], tokens[5], tokens[4])
 
 def rfcavity(line, tokens):
-    global beam_line
+    global beam_line, n_cavity, add_ind
+    if add_ind: n_cavity += 1; tokens[2] += '_%d' % (n_cavity)
     beam_line.append(tokens[2])
-    str = '%s: rfcavity, L = %s, f = %se6, phi = %s, scl_fac = %s,' \
+    str = '%s: rfcavity, cavtype = \"0.041QWR\", L = %s, f = %se6, phi = %s, scl_fac = %s,' \
           ' aper = %s;' \
           % (tokens[2], tokens[3], tokens[5], tokens[7], tokens[6], tokens[4])
     return str
 
-def e_dipole(line, tokens):
-    global beam_line, n_e_dipole
-    # n_e_dipole += 1; tokens[2] += '_%d' % (n_e_dipole)
+def edipole(line, tokens):
+    global beam_line, n_edipole
+    n_edipole += 1; tokens[2] += '_%d' % (n_edipole)
+    if add_ind: n_edipole += 1; tokens[2] += '_%d' % (n_cavity)
     beam_line.append(tokens[2])
-    return '%s: edipole, L = %s, phi = %s, phi1 = %s, phi2 = %s, E= %s, scl_fac = %s,' \
-        ' aper = %s;' \
-        % (tokens[2], tokens[4], tokens[7], tokens[9], tokens[10], tokens[8], tokens[6],
-           tokens[5])
+    return '%s: edipole, L = %s, phi = %s, x_frng = %s, y_frng = %s, beta = %s, spher = %s, asym_fac = %s, aper = %s;' \
+        % (tokens[2], tokens[3], tokens[5], tokens[8], tokens[9], tokens[6], tokens[7], tokens[10], tokens[4])
+
+
+def equad(line, tokens):
+    global beam_line, n_equad
+    n_equad += 1; tokens[2] += '_%d' % (n_equad)
+    if add_ind: n_equad += 1; tokens[2] += '_%d' % (n_cavity)
+    beam_line.append(tokens[2])
+    return '%s: equad, L = %s, V = %s, radius = %s, aper = %s;' \
+        % (tokens[2], tokens[3], tokens[5], tokens[6], tokens[4])
 
 
 # TLM -> Tracy-2,3 dictionary.
@@ -92,7 +108,8 @@ tlm2tracy = {
     'quadpole' : quadrupole,
     'combquad' : quadrupole,
     'rfcavity' : rfcavity,
-    'ebend'    : e_dipole,
+    'ebend'    : edipole,
+    'equad'    : equad,
     }
 
 
@@ -108,6 +125,7 @@ def parse_definition(line, tokens):
     except KeyError:
         print '\n*** undefined token!'
         print line
+        print tokens
         exit(1)
     return str
 
@@ -122,7 +140,8 @@ def parse_line(line, outf):
         outf.write('{ %s }\n' % (line.strip('!')))
     else:
         # Definition.
-        tokens = re.split(r'[ ]', line_lc)
+#        tokens = re.split(r'[ ]', line_lc)
+        tokens = re.split(r'\s+', line_lc)
         # Replace ':' with '_' in name.
         tokens[2] = tokens[2].replace(':', '_', 1)
         outf.write('%s\n' % (parse_definition(line_lc, tokens)))
@@ -162,7 +181,8 @@ def transl_file(file_name):
 
 home_dir = ''
 
-n_marker = 0; n_drift = 0; n_sbend = 0; n_solenoid = 0; n_e_dipole = 0
+n_marker = 0; n_drift = 0; n_sbend = 0; n_solenoid = 0
+n_quad = 0; n_cavity = 0; n_edipole = 0; n_equad = 0
 
 add_ind = True
 
