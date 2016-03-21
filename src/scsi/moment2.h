@@ -69,6 +69,8 @@ struct Moment2ElementBase : public ElementVoid
 
     virtual void advance(StateBase& s);
 
+    virtual void recompute_matrix(state_t&);
+
     virtual void show(std::ostream& strm) const;
 
     typedef boost::numeric::ublas::matrix<double> value_t;

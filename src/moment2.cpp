@@ -152,7 +152,7 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
     length = c.get<double>("L", 0.0);
-    FSampLength = C0/c.get<double>("Frf")*MtoMM;
+//    FSampLength = C0/c.get<double>("f")*MtoMM;
     phase_factor = length*2*M_PI/FSampLength;
     Erest = c.get<double>("IonEs");
 
@@ -202,7 +202,8 @@ void Moment2ElementBase::advance(StateBase& s)
         // need to re-calculate energy dependent terms
         // for a passive element (no energy change)
 
-        transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+//        transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+        recompute_matrix(ST);
 
         noalias(scratch) = prod(misalign, transfer_raw);
         noalias(transfer) = prod(scratch, misalign_inv);
@@ -218,6 +219,12 @@ void Moment2ElementBase::advance(StateBase& s)
 
     noalias(scratch) = prod(transfer, ST.state);
     noalias(ST.state) = prod(scratch, trans(transfer));
+}
+
+void Moment2ElementBase::recompute_matrix(state_t& ST)
+{
+
+    transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
 }
 
 namespace {
