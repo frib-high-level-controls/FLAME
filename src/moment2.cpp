@@ -152,7 +152,8 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
     length = c.get<double>("L", 0.0);
-//    FSampLength = C0/c.get<double>("f")*MtoMM;
+//    FSampLength = C0/c.get<double>("Frf")*MtoMM;
+    FSampLength = C0/80.5e6*MtoMM;
     phase_factor = length*2*M_PI/FSampLength;
     Erest = c.get<double>("IonEs");
 
