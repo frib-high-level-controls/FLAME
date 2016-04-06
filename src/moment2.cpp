@@ -202,20 +202,19 @@ void Moment2ElementBase::advance(StateBase& s)
 
     if(ST.Ekinetic!=last_Kenergy_in) {
         // need to re-calculate energy dependent terms
-        // for a passive element (no energy change)
 
-//        transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
-        recompute_matrix(ST);
+        recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-        noalias(scratch) = prod(misalign, transfer_raw);
+        noalias(scratch) = prod(misalign, transfer);
         noalias(transfer) = prod(scratch, misalign_inv);
-
-        last_Kenergy_in = last_Kenergy_out = ST.Ekinetic; // no energy gain
     }
 
     ST.pos += length;
     ST.Ekinetic = last_Kenergy_out;
     ST.sync_phase += phase_factor/ST.beta;
+
+    ST.gamma        = (Erest+ST.Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    ST.beta         = sqrt(1e0-1e0/sqr(ST.gamma));
 
     ST.moment0 = prod(transfer, ST.moment0);
 
@@ -225,16 +224,18 @@ void Moment2ElementBase::advance(StateBase& s)
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
 {
-    int k;
+    // by default for no energy gain
 
-    // Scale transport matrix.
-    for (k = 0; k < 2; k++) {
-//        transfer_raw(2*k, 2*k+1) *= ST0.beta*ST0.gamma/(ST1.beta*ST1.gamma);
-//        transfer_raw(2*k+1, 2*k) *= ST0.beta*ST0.gamma/(ST1.beta*ST1.gamma);
+    transfer = transfer_raw;
+
+    for (unsigned k = 0; k < 2; k++) {
+        transfer(2*k, 2*k+1) /= ST.beta*ST.gamma;
+        transfer(2*k+1, 2*k) /= ST.beta*ST.gamma;
     }
 
-//    transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
-    transfer_raw(state_t::PS_S, state_t::PS_PS) *= -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+    transfer(state_t::PS_S, state_t::PS_PS) /= cube(ST.beta*ST.gamma);
+
+    last_Kenergy_in = last_Kenergy_out = ST.Ekinetic; // no energy gain
 }
 
 namespace {
@@ -451,7 +452,18 @@ struct ElementSolenoid : public Moment2ElementBase
 
     virtual const char* type_name() const {return "solenoid";}
 };
-
+/*
+void GetCavBoost(const CavDataType &CavData, const double IonW0,
+                 const double IonFy0, const double IonK0, const double IonZ,
+                 const double IonEs, const double fRF,
+                 const double EfieldScl, double &IonW, double &IonFy)
+;
+void InitRFCav(const Config &conf, const int CavCnt,
+               const double IonZ, const double IonEs, double &IonW, double &EkState,
+               double &Fy_absState, double &accIonW,
+               double &beta, double &gamma, double &avebeta, double &avegamma, value_mat &M)
+;
+*/
 struct ElementRFCavity : public Moment2ElementBase
 {
     // Transport matrix for an RF Cavity.
@@ -470,31 +482,20 @@ struct ElementRFCavity : public Moment2ElementBase
     }
     virtual ~ElementRFCavity() {}
 
-    virtual void advance(StateBase& s)
+    virtual void recompute_matrix(state_t& ST)
     {
-        state_t& ST = static_cast<state_t&>(s);
-        using namespace boost::numeric::ublas;
+        transfer = transfer_raw;
 
-        if(ST.Ekinetic!=last_Kenergy_in) {
-            // need to re-calculate energy dependent terms
-            // for a passive element (no energy change)
+        last_Kenergy_in = ST.Ekinetic;
 
-            transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+        double outE = 0;
+        //GetCavBoost(data, ST.Ekinetic+Erest, ST.sync_phase, ST.Ekinetic, ST.ZZ, ST.Es, FSampLength, 00, outE, ST.sync_phase);
 
-            transfer = transfer_raw; //TODO misalign*transfer_raw*inverse(misalign)
+        //InitRFCav(conf(), index, );
+        // some magic to set 'transfer'
 
-            last_Kenergy_in = ST.Ekinetic;
-            last_Kenergy_out = ST.Ekinetic + 1;
-        }
-
-        ST.pos += length;
-        ST.Ekinetic = last_Kenergy_out;
-        ST.sync_phase += phase_factor/ST.beta;
-
-        ST.moment0 = prod(transfer, ST.moment0);
-
-        noalias(scratch) = prod(transfer, ST.state);
-        noalias(ST.state) = prod(scratch, trans(transfer));
+        double Eout = outE-Erest;
+        last_Kenergy_out = ST.Ekinetic = Eout; // new output energy
     }
 
     virtual const char* type_name() const {return "rfcavity";}
