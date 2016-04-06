@@ -10,6 +10,7 @@
 
 namespace {
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+// by LU-decomposition.
 void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in)
 {
     using boost::numeric::ublas::permutation_matrix;
@@ -30,10 +31,10 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
-    ,pos(c.get<double>("L", 0.0))
-    ,Ekinetic(c.get<double>("IonEk", 0.0))
-    ,sync_phase(c.get<double>("IonFy", 0.0)) // TODO: sync_phase from pos?
-    ,moment0(maxsize, 0.0)
+    ,pos(c.get<double>("L", 0e0))
+    ,Ekinetic(c.get<double>("IonEk", 0e0))
+    ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
+    ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
     try{
@@ -58,9 +59,9 @@ Moment2State::Moment2State(const Config& c)
         throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
 
-    double Erest = c.get<double>("Es", 1.0);
-    gamma = (Ekinetic+Erest)/Erest;
-    beta = sqrt(1+1.0/sqr(gamma));
+    double Erest = c.get<double>("Es", 1e0); // Rest energy.
+    gamma        = (Erest+Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    beta         = sqrt(1e0-1e0/sqr(gamma));
 }
 
 Moment2State::~Moment2State() {}
@@ -151,7 +152,7 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,misalign_inv(state_t::maxsize, state_t::maxsize)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
-    length = c.get<double>("L", 0.0);
+    length = c.get<double>("L", 0e0);
 //    FSampLength = C0/c.get<double>("Frf")*MtoMM;
     FSampLength = C0/80.5e6*MtoMM;
     phase_factor = length*2*M_PI/FSampLength;
@@ -224,8 +225,16 @@ void Moment2ElementBase::advance(StateBase& s)
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
 {
+    int k;
 
-    transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+    // Scale transport matrix.
+    for (k = 0; k < 2; k++) {
+//        transfer_raw(2*k, 2*k+1) *= ST0.beta*ST0.gamma/(ST1.beta*ST1.gamma);
+//        transfer_raw(2*k+1, 2*k) *= ST0.beta*ST0.gamma/(ST1.beta*ST1.gamma);
+    }
+
+//    transfer_raw(state_t::PS_S, state_t::PS_PS) = -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
+    transfer_raw(state_t::PS_S, state_t::PS_PS) *= -2e0*M_PI/(FSampLength*Erest*cube(ST.beta*ST.gamma))*length;
 }
 
 namespace {
@@ -308,7 +317,7 @@ struct ElementMark : public Moment2ElementBase
     typedef Moment2ElementBase base_t;
     typedef typename base_t::state_t state_t;
     ElementMark(const Config& c) :base_t(c){
-        length = phase_factor = 0.0;
+        length = phase_factor = 0e0;
     }
     virtual ~ElementMark() {}
     virtual const char* type_name() const {return "marker";}
@@ -335,6 +344,9 @@ struct ElementDrift : public Moment2ElementBase
 struct ElementSBend : public Moment2ElementBase
 {
     // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
+
+    // *** Add entrance and exit angles.
+
     typedef Moment2ElementBase base_t;
     typedef typename base_t::state_t state_t;
     ElementSBend(const Config& c)
