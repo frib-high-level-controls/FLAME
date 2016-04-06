@@ -1,0 +1,2931 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+# Global parameters.
+
+AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
+
+IonZ  = 33.0/238.0;    # Charge state for U_238.
+IonEs = AMU;           # Nucleon mass [eV/u].
+IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
+IonW  = IonEs + IonEk; # Total energy [eV/u].
+
+# Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]
+
+IonChargeStates = [33.0/238.0, 34.0/238.0];
+NCharge         = [10111.0, 10531.0];
+
+#BaryCenter1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+#BaryCenter2 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+BaryCenter1 = [-0.0007886,   1.08371e-05,  0.01337343,   6.678534e-06,  -0.0001847729, 0.000309995, 1.0];
+BaryCenter2 = [ 0.007312667, 1.476565e-05, 0.003449849, -7.39768469e-06, 0.02297886,   0.0020601,   1.0];
+
+# Define beam envelope parameters.
+
+S1 = [
+  2.76309450173216,     -0.000428247336601120,  0.0158178569170548,    2.15594190999033e-05,  0.000186380506020608, -2.99394486972954e-05, 0.0,
+ -0.000428247336601120,  3.84946606786835e-06, -1.38385440065569e-06, -1.85409877831153e-08,  1.06777952235670e-07,  5.28564015969982e-09, 0.0,
+  0.0158178569170548,   -1.38385440065569e-06,  2.36251225995801,     -0.000669320459982719, -0.000580099938581586,  6.71651534058884e-06, 0.0,
+  2.15594190999033e-05, -1.85409877831153e-08, -0.000669320459982719,  4.89711389179344e-06, -5.01614882231616e-07,  5.57484221804692e-08, 0.0,
+  0.000186380506020608,  1.06777952235670e-07, -0.000580099938581586, -5.01614882231616e-07,  0.000671687184532941, -1.23223341528590e-05, 0.0,
+ -2.99394486972954e-05,  5.28564015969982e-09,  6.71651534058884e-06,  5.57484221804692e-08, -1.23223341528590e-05,  1.99524668993273e-06, 0.0,
+  0.0,                   0.0,                   0.0,                   0.0,                   0.0,                   0.0,                  0.0
+];
+
+S2 = [
+  2.79323844382261,      0.000887286204468529, -0.0207965183919297,   -4.63190902866223e-05,  0.000779644086677272, -1.21652649506989e-05, 0.0,
+  0.000887286204468529,  4.27685827324966e-06,  1.93639661427031e-05, -2.61322448516117e-08,  5.42676597149308e-07, -8.66937527683823e-09, 0.0,
+ -0.0207965183919297,    1.93639661427031e-05,  2.71701903011773,      0.00111147531913367,  -0.00103788236242888,  -2.45363150807461e-06, 0.0,
+ -4.63190902866223e-05, -2.61322448516117e-08,  0.00111147531913367,   4.43238453519665e-06, -1.07153756021073e-06, -7.65104963052334e-09, 0.0,
+  0.000779644086677272,  5.42676597149308e-07, -0.00103788236242888,  -1.07153756021073e-06,  0.00110483747345619,   1.16863446546579e-05, 0.0,
+ -1.21652649506989e-05, -8.66937527683823e-09, -2.45363150807461e-06, -7.65104963052334e-09,  1.16863446546579e-05,  1.74197553089731e-06, 0.0,
+  0.0,                   0.0,                   0.0,                   0.0,                   0.0,                   0.0,                  0.0
+];
+
+S: source, initial = S1;
+
+# Default.
+# S: source, initial = [
+#  1.0,  0,   0,   0,   0,   0,
+#   0,  1.0,  0,   0,   0,   0,
+#   0,   0,  1.0,  0,   0,   0,
+#   0,   0,   0,  1.0,  0,   0,
+#   0,   0,   0,   0,  1.0,  0,
+#   0,   0,   0,   0,   0,  1.0
+# ];
+
+mrk000_1: marker;
+drift_1: drift, L = 0.207065, aper = 0.020000;
+mrk000_2: marker;
+cvy000_1: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 0.640000, aper = 0.017000;
+mrk000_3: marker;
+drift_2: drift, L = 0.196270, aper = 0.020000;
+drift_3: drift, L = 0.000000, aper = 0.020000;
+sol000_1: solenoid, L = 0.050000, B = 5.340000, aper = 0.020000;
+sol000_2: solenoid, L = 0.050000, B = 5.340000, aper = 0.020000;
+sol000_3: solenoid, L = 0.050000, B = 5.340000, aper = 0.020000;
+sol000_4: solenoid, L = 0.050000, B = 5.340000, aper = 0.020000;
+drift_4: drift, L = 0.000000, aper = 0.020000;
+drift_5: drift, L = 0.143400, aper = 0.020000;
+mrk000_4: marker;
+cvy000_2: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 0.700000, aper = 0.017000;
+mrk000_5: marker;
+drift_6: drift, L = 0.539650, aper = 0.020000;
+mrk000_6: marker;
+cvy000_3: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 0.760000, aper = 0.017000;
+mrk000_7: marker;
+drift_7: drift, L = 0.196270, aper = 0.020000;
+drift_8: drift, L = 0.000000, aper = 0.020000;
+sol000_5: solenoid, L = 0.050000, B = 5.900000, aper = 0.020000;
+sol000_6: solenoid, L = 0.050000, B = 5.900000, aper = 0.020000;
+sol000_7: solenoid, L = 0.050000, B = 5.900000, aper = 0.020000;
+sol000_8: solenoid, L = 0.050000, B = 5.900000, aper = 0.020000;
+drift_9: drift, L = 0.000000, aper = 0.020000;
+drift_10: drift, L = 0.143400, aper = 0.020000;
+mrk000_8: marker;
+cvy000_4: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 0.820000, aper = 0.017000;
+mrk000_9: marker;
+drift_11: drift, L = 0.207065, aper = 0.020000;
+drift_12: drift, L = 0.190000, aper = 0.020000;
+drift_13: drift, L = 0.000000, aper = 0.018000;
+drift_14: drift, L = 0.190000, aper = 0.020000;
+drift_15: drift, L = 0.207065, aper = 0.020000;
+mrk000_10: marker;
+cvy000_5: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 0.880000, aper = 0.017000;
+mrk000_11: marker;
+drift_16: drift, L = 0.196270, aper = 0.020000;
+drift_17: drift, L = 0.000000, aper = 0.020000;
+sol000_9: solenoid, L = 0.050000, B = 6.500000, aper = 0.020000;
+sol000_10: solenoid, L = 0.050000, B = 6.500000, aper = 0.020000;
+sol000_11: solenoid, L = 0.050000, B = 6.500000, aper = 0.020000;
+sol000_12: solenoid, L = 0.050000, B = 6.500000, aper = 0.020000;
+drift_18: drift, L = 0.000000, aper = 0.020000;
+drift_19: drift, L = 0.143400, aper = 0.020000;
+mrk000_12: marker;
+cvy000_6: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 0.940000, aper = 0.017000;
+mrk000_13: marker;
+drift_20: drift, L = 0.539650, aper = 0.020000;
+mrk000_14: marker;
+cvy000_7: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_15: marker;
+drift_21: drift, L = 0.196270, aper = 0.020000;
+drift_22: drift, L = 0.000000, aper = 0.020000;
+sol000_13: solenoid, L = 0.050000, B = 6.900000, aper = 0.020000;
+sol000_14: solenoid, L = 0.050000, B = 6.900000, aper = 0.020000;
+sol000_15: solenoid, L = 0.050000, B = 6.900000, aper = 0.020000;
+sol000_16: solenoid, L = 0.050000, B = 6.900000, aper = 0.020000;
+drift_23: drift, L = 0.000000, aper = 0.020000;
+drift_24: drift, L = 0.143400, aper = 0.020000;
+mrk000_16: marker;
+cvy000_8: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_17: marker;
+drift_25: drift, L = 0.207065, aper = 0.020000;
+drift_26: drift, L = 0.190000, aper = 0.020000;
+drift_27: drift, L = 0.000000, aper = 0.018000;
+drift_28: drift, L = 0.190000, aper = 0.020000;
+drift_29: drift, L = 0.207065, aper = 0.020000;
+mrk000_18: marker;
+cvy000_9: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_19: marker;
+drift_30: drift, L = 0.196270, aper = 0.020000;
+drift_31: drift, L = 0.000000, aper = 0.020000;
+sol000_17: solenoid, L = 0.050000, B = 7.200000, aper = 0.020000;
+sol000_18: solenoid, L = 0.050000, B = 7.200000, aper = 0.020000;
+sol000_19: solenoid, L = 0.050000, B = 7.200000, aper = 0.020000;
+sol000_20: solenoid, L = 0.050000, B = 7.200000, aper = 0.020000;
+drift_32: drift, L = 0.000000, aper = 0.020000;
+drift_33: drift, L = 0.143400, aper = 0.020000;
+mrk000_20: marker;
+cvy000_10: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_21: marker;
+drift_34: drift, L = 0.539650, aper = 0.020000;
+mrk000_22: marker;
+cvy000_11: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_23: marker;
+drift_35: drift, L = 0.196270, aper = 0.020000;
+drift_36: drift, L = 0.000000, aper = 0.020000;
+sol000_21: solenoid, L = 0.050000, B = 7.700000, aper = 0.020000;
+sol000_22: solenoid, L = 0.050000, B = 7.700000, aper = 0.020000;
+sol000_23: solenoid, L = 0.050000, B = 7.700000, aper = 0.020000;
+sol000_24: solenoid, L = 0.050000, B = 7.700000, aper = 0.020000;
+drift_37: drift, L = 0.000000, aper = 0.020000;
+drift_38: drift, L = 0.143400, aper = 0.020000;
+mrk000_24: marker;
+cvy000_12: rfcavity, cavtype = "0.041QWR", L = 0.240000, f = 80.500000e6, phi = -45.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_25: marker;
+drift_39: drift, L = 0.207065, aper = 0.020000;
+drift_40: drift, L = 0.190000, aper = 0.020000;
+drift_41: drift, L = 0.000000, aper = 0.018000;
+drift_42: drift, L = 0.190000, aper = 0.020000;
+mrk000_26: marker;
+drift_43: drift, L = 0.247295, aper = 0.020000;
+drift_44: drift, L = 0.000000, aper = 0.020000;
+mrk000_27: marker;
+cvy000_13: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_28: marker;
+drift_45: drift, L = 0.000000, aper = 0.020000;
+drift_46: drift, L = 0.227610, aper = 0.020000;
+drift_47: drift, L = 0.000000, aper = 0.020000;
+sol000_25: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+sol000_26: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+sol000_27: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+sol000_28: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+drift_48: drift, L = 0.000000, aper = 0.020000;
+drift_49: drift, L = 0.174740, aper = 0.020000;
+drift_50: drift, L = 0.000000, aper = 0.020000;
+mrk000_29: marker;
+cvy000_14: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_30: marker;
+drift_51: drift, L = 0.000000, aper = 0.020000;
+drift_52: drift, L = 0.097690, aper = 0.020000;
+drift_53: drift, L = 0.000000, aper = 0.020000;
+mrk000_31: marker;
+cvy000_15: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_32: marker;
+drift_54: drift, L = 0.000000, aper = 0.020000;
+drift_55: drift, L = 0.097690, aper = 0.020000;
+drift_56: drift, L = 0.000000, aper = 0.020000;
+mrk000_33: marker;
+cvy000_16: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_34: marker;
+drift_57: drift, L = 0.000000, aper = 0.020000;
+drift_58: drift, L = 0.227610, aper = 0.020000;
+drift_59: drift, L = 0.000000, aper = 0.020000;
+sol000_29: solenoid, L = 0.125000, B = 5.200000, aper = 0.020000;
+sol000_30: solenoid, L = 0.125000, B = 5.200000, aper = 0.020000;
+sol000_31: solenoid, L = 0.125000, B = 5.200000, aper = 0.020000;
+sol000_32: solenoid, L = 0.125000, B = 5.200000, aper = 0.020000;
+drift_60: drift, L = 0.000000, aper = 0.020000;
+drift_61: drift, L = 0.174740, aper = 0.020000;
+drift_62: drift, L = 0.000000, aper = 0.020000;
+mrk000_35: marker;
+cvy000_17: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_36: marker;
+drift_63: drift, L = 0.000000, aper = 0.020000;
+drift_64: drift, L = 0.097690, aper = 0.020000;
+drift_65: drift, L = 0.000000, aper = 0.020000;
+mrk000_37: marker;
+cvy000_18: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_38: marker;
+drift_66: drift, L = 0.000000, aper = 0.020000;
+drift_67: drift, L = 0.097690, aper = 0.020000;
+drift_68: drift, L = 0.000000, aper = 0.020000;
+mrk000_39: marker;
+cvy000_19: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_40: marker;
+drift_69: drift, L = 0.000000, aper = 0.020000;
+drift_70: drift, L = 0.227610, aper = 0.020000;
+drift_71: drift, L = 0.000000, aper = 0.020000;
+sol000_33: solenoid, L = 0.125000, B = 5.100000, aper = 0.020000;
+sol000_34: solenoid, L = 0.125000, B = 5.100000, aper = 0.020000;
+sol000_35: solenoid, L = 0.125000, B = 5.100000, aper = 0.020000;
+sol000_36: solenoid, L = 0.125000, B = 5.100000, aper = 0.020000;
+drift_72: drift, L = 0.000000, aper = 0.020000;
+drift_73: drift, L = 0.174740, aper = 0.020000;
+drift_74: drift, L = 0.000000, aper = 0.020000;
+mrk000_41: marker;
+cvy000_20: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_42: marker;
+drift_75: drift, L = 0.000000, aper = 0.020000;
+drift_76: drift, L = 0.247295, aper = 0.020000;
+drift_77: drift, L = 0.190000, aper = 0.020000;
+drift_78: drift, L = 0.000000, aper = 0.018000;
+drift_79: drift, L = 0.190000, aper = 0.020000;
+mrk000_43: marker;
+drift_80: drift, L = 0.247295, aper = 0.020000;
+drift_81: drift, L = 0.000000, aper = 0.020000;
+mrk000_44: marker;
+cvy000_21: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_45: marker;
+drift_82: drift, L = 0.000000, aper = 0.020000;
+drift_83: drift, L = 0.227610, aper = 0.020000;
+drift_84: drift, L = 0.000000, aper = 0.020000;
+sol000_37: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+sol000_38: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+sol000_39: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+sol000_40: solenoid, L = 0.125000, B = 5.000000, aper = 0.020000;
+drift_85: drift, L = 0.000000, aper = 0.020000;
+drift_86: drift, L = 0.174740, aper = 0.020000;
+drift_87: drift, L = 0.000000, aper = 0.020000;
+mrk000_46: marker;
+cvy000_22: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_47: marker;
+drift_88: drift, L = 0.000000, aper = 0.020000;
+drift_89: drift, L = 0.097690, aper = 0.020000;
+drift_90: drift, L = 0.000000, aper = 0.020000;
+mrk000_48: marker;
+cvy000_23: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_49: marker;
+drift_91: drift, L = 0.000000, aper = 0.020000;
+drift_92: drift, L = 0.097690, aper = 0.020000;
+drift_93: drift, L = 0.000000, aper = 0.020000;
+mrk000_50: marker;
+cvy000_24: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_51: marker;
+drift_94: drift, L = 0.000000, aper = 0.020000;
+drift_95: drift, L = 0.227610, aper = 0.020000;
+drift_96: drift, L = 0.000000, aper = 0.020000;
+sol000_41: solenoid, L = 0.125000, B = 4.900000, aper = 0.020000;
+sol000_42: solenoid, L = 0.125000, B = 4.900000, aper = 0.020000;
+sol000_43: solenoid, L = 0.125000, B = 4.900000, aper = 0.020000;
+sol000_44: solenoid, L = 0.125000, B = 4.900000, aper = 0.020000;
+drift_97: drift, L = 0.000000, aper = 0.020000;
+drift_98: drift, L = 0.174740, aper = 0.020000;
+drift_99: drift, L = 0.000000, aper = 0.020000;
+mrk000_52: marker;
+cvy000_25: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_53: marker;
+drift_100: drift, L = 0.000000, aper = 0.020000;
+drift_101: drift, L = 0.097690, aper = 0.020000;
+drift_102: drift, L = 0.000000, aper = 0.020000;
+mrk000_54: marker;
+cvy000_26: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_55: marker;
+drift_103: drift, L = 0.000000, aper = 0.020000;
+drift_104: drift, L = 0.097690, aper = 0.020000;
+drift_105: drift, L = 0.000000, aper = 0.020000;
+mrk000_56: marker;
+cvy000_27: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_57: marker;
+drift_106: drift, L = 0.000000, aper = 0.020000;
+drift_107: drift, L = 0.227610, aper = 0.020000;
+drift_108: drift, L = 0.000000, aper = 0.020000;
+sol000_45: solenoid, L = 0.125000, B = 5.510000, aper = 0.020000;
+sol000_46: solenoid, L = 0.125000, B = 5.510000, aper = 0.020000;
+sol000_47: solenoid, L = 0.125000, B = 5.510000, aper = 0.020000;
+sol000_48: solenoid, L = 0.125000, B = 5.510000, aper = 0.020000;
+drift_109: drift, L = 0.000000, aper = 0.020000;
+drift_110: drift, L = 0.174740, aper = 0.020000;
+drift_111: drift, L = 0.000000, aper = 0.020000;
+mrk000_58: marker;
+cvy000_28: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_59: marker;
+drift_112: drift, L = 0.000000, aper = 0.020000;
+drift_113: drift, L = 0.247295, aper = 0.020000;
+drift_114: drift, L = 0.190000, aper = 0.020000;
+drift_115: drift, L = 0.000000, aper = 0.018000;
+drift_116: drift, L = 0.190000, aper = 0.020000;
+drift_117: drift, L = 0.247295, aper = 0.020000;
+drift_118: drift, L = 0.000000, aper = 0.020000;
+mrk000_60: marker;
+cvy000_29: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_61: marker;
+drift_119: drift, L = 0.000000, aper = 0.020000;
+drift_120: drift, L = 0.227610, aper = 0.020000;
+drift_121: drift, L = 0.000000, aper = 0.020000;
+sol000_49: solenoid, L = 0.125000, B = 5.560000, aper = 0.020000;
+sol000_50: solenoid, L = 0.125000, B = 5.560000, aper = 0.020000;
+sol000_51: solenoid, L = 0.125000, B = 5.560000, aper = 0.020000;
+sol000_52: solenoid, L = 0.125000, B = 5.560000, aper = 0.020000;
+drift_122: drift, L = 0.000000, aper = 0.020000;
+drift_123: drift, L = 0.174740, aper = 0.020000;
+drift_124: drift, L = 0.000000, aper = 0.020000;
+mrk000_62: marker;
+cvy000_30: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_63: marker;
+drift_125: drift, L = 0.000000, aper = 0.020000;
+drift_126: drift, L = 0.097690, aper = 0.020000;
+drift_127: drift, L = 0.000000, aper = 0.020000;
+mrk000_64: marker;
+cvy000_31: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_65: marker;
+drift_128: drift, L = 0.000000, aper = 0.020000;
+drift_129: drift, L = 0.097690, aper = 0.020000;
+drift_130: drift, L = 0.000000, aper = 0.020000;
+mrk000_66: marker;
+cvy000_32: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_67: marker;
+drift_131: drift, L = 0.000000, aper = 0.020000;
+drift_132: drift, L = 0.227610, aper = 0.020000;
+drift_133: drift, L = 0.000000, aper = 0.020000;
+sol000_53: solenoid, L = 0.125000, B = 5.300000, aper = 0.020000;
+sol000_54: solenoid, L = 0.125000, B = 5.300000, aper = 0.020000;
+sol000_55: solenoid, L = 0.125000, B = 5.300000, aper = 0.020000;
+sol000_56: solenoid, L = 0.125000, B = 5.300000, aper = 0.020000;
+drift_134: drift, L = 0.000000, aper = 0.020000;
+drift_135: drift, L = 0.174740, aper = 0.020000;
+drift_136: drift, L = 0.000000, aper = 0.020000;
+mrk000_68: marker;
+cvy000_33: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_69: marker;
+drift_137: drift, L = 0.000000, aper = 0.020000;
+drift_138: drift, L = 0.097690, aper = 0.020000;
+drift_139: drift, L = 0.000000, aper = 0.020000;
+mrk000_70: marker;
+cvy000_34: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_71: marker;
+drift_140: drift, L = 0.000000, aper = 0.020000;
+drift_141: drift, L = 0.097690, aper = 0.020000;
+drift_142: drift, L = 0.000000, aper = 0.020000;
+mrk000_72: marker;
+cvy000_35: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_73: marker;
+drift_143: drift, L = 0.000000, aper = 0.020000;
+drift_144: drift, L = 0.227610, aper = 0.020000;
+drift_145: drift, L = 0.000000, aper = 0.020000;
+sol000_57: solenoid, L = 0.125000, B = 6.120000, aper = 0.020000;
+sol000_58: solenoid, L = 0.125000, B = 6.120000, aper = 0.020000;
+sol000_59: solenoid, L = 0.125000, B = 6.120000, aper = 0.020000;
+sol000_60: solenoid, L = 0.125000, B = 6.120000, aper = 0.020000;
+drift_146: drift, L = 0.000000, aper = 0.020000;
+drift_147: drift, L = 0.174740, aper = 0.020000;
+drift_148: drift, L = 0.000000, aper = 0.020000;
+mrk000_74: marker;
+cvy000_36: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_75: marker;
+drift_149: drift, L = 0.000000, aper = 0.020000;
+drift_150: drift, L = 0.247295, aper = 0.020000;
+drift_151: drift, L = 0.190000, aper = 0.020000;
+drift_152: drift, L = 0.000000, aper = 0.018000;
+drift_153: drift, L = 0.190000, aper = 0.020000;
+drift_154: drift, L = 0.247295, aper = 0.020000;
+drift_155: drift, L = 0.000000, aper = 0.020000;
+mrk000_76: marker;
+cvy000_37: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_77: marker;
+drift_156: drift, L = 0.000000, aper = 0.020000;
+drift_157: drift, L = 0.227610, aper = 0.020000;
+drift_158: drift, L = 0.000000, aper = 0.020000;
+sol000_61: solenoid, L = 0.125000, B = 6.150000, aper = 0.020000;
+sol000_62: solenoid, L = 0.125000, B = 6.150000, aper = 0.020000;
+sol000_63: solenoid, L = 0.125000, B = 6.150000, aper = 0.020000;
+sol000_64: solenoid, L = 0.125000, B = 6.150000, aper = 0.020000;
+drift_159: drift, L = 0.000000, aper = 0.020000;
+drift_160: drift, L = 0.174740, aper = 0.020000;
+drift_161: drift, L = 0.000000, aper = 0.020000;
+mrk000_78: marker;
+cvy000_38: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_79: marker;
+drift_162: drift, L = 0.000000, aper = 0.020000;
+drift_163: drift, L = 0.097690, aper = 0.020000;
+drift_164: drift, L = 0.000000, aper = 0.020000;
+mrk000_80: marker;
+cvy000_39: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_81: marker;
+drift_165: drift, L = 0.000000, aper = 0.020000;
+drift_166: drift, L = 0.097690, aper = 0.020000;
+drift_167: drift, L = 0.000000, aper = 0.020000;
+mrk000_82: marker;
+cvy000_40: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_83: marker;
+drift_168: drift, L = 0.000000, aper = 0.020000;
+drift_169: drift, L = 0.227610, aper = 0.020000;
+drift_170: drift, L = 0.000000, aper = 0.020000;
+sol000_65: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_66: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_67: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_68: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+drift_171: drift, L = 0.000000, aper = 0.020000;
+drift_172: drift, L = 0.174740, aper = 0.020000;
+drift_173: drift, L = 0.000000, aper = 0.020000;
+mrk000_84: marker;
+cvy000_41: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_85: marker;
+drift_174: drift, L = 0.000000, aper = 0.020000;
+drift_175: drift, L = 0.097690, aper = 0.020000;
+drift_176: drift, L = 0.000000, aper = 0.020000;
+mrk000_86: marker;
+cvy000_42: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_87: marker;
+drift_177: drift, L = 0.000000, aper = 0.020000;
+drift_178: drift, L = 0.097690, aper = 0.020000;
+drift_179: drift, L = 0.000000, aper = 0.020000;
+mrk000_88: marker;
+cvy000_43: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_89: marker;
+drift_180: drift, L = 0.000000, aper = 0.020000;
+drift_181: drift, L = 0.227610, aper = 0.020000;
+drift_182: drift, L = 0.000000, aper = 0.020000;
+sol000_69: solenoid, L = 0.125000, B = 6.730000, aper = 0.020000;
+sol000_70: solenoid, L = 0.125000, B = 6.730000, aper = 0.020000;
+sol000_71: solenoid, L = 0.125000, B = 6.730000, aper = 0.020000;
+sol000_72: solenoid, L = 0.125000, B = 6.730000, aper = 0.020000;
+drift_183: drift, L = 0.000000, aper = 0.020000;
+drift_184: drift, L = 0.174740, aper = 0.020000;
+drift_185: drift, L = 0.000000, aper = 0.020000;
+mrk000_90: marker;
+cvy000_44: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_91: marker;
+drift_186: drift, L = 0.000000, aper = 0.020000;
+drift_187: drift, L = 0.247295, aper = 0.020000;
+drift_188: drift, L = 0.190000, aper = 0.020000;
+drift_189: drift, L = 0.000000, aper = 0.018000;
+drift_190: drift, L = 0.190000, aper = 0.020000;
+drift_191: drift, L = 0.247295, aper = 0.020000;
+drift_192: drift, L = 0.000000, aper = 0.020000;
+mrk000_92: marker;
+cvy000_45: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_93: marker;
+drift_193: drift, L = 0.000000, aper = 0.020000;
+drift_194: drift, L = 0.227610, aper = 0.020000;
+drift_195: drift, L = 0.000000, aper = 0.020000;
+sol000_73: solenoid, L = 0.125000, B = 6.750000, aper = 0.020000;
+sol000_74: solenoid, L = 0.125000, B = 6.750000, aper = 0.020000;
+sol000_75: solenoid, L = 0.125000, B = 6.750000, aper = 0.020000;
+sol000_76: solenoid, L = 0.125000, B = 6.750000, aper = 0.020000;
+drift_196: drift, L = 0.000000, aper = 0.020000;
+drift_197: drift, L = 0.174740, aper = 0.020000;
+drift_198: drift, L = 0.000000, aper = 0.020000;
+mrk000_94: marker;
+cvy000_46: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_95: marker;
+drift_199: drift, L = 0.000000, aper = 0.020000;
+drift_200: drift, L = 0.097690, aper = 0.020000;
+drift_201: drift, L = 0.000000, aper = 0.020000;
+mrk000_96: marker;
+cvy000_47: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_97: marker;
+drift_202: drift, L = 0.000000, aper = 0.020000;
+drift_203: drift, L = 0.097690, aper = 0.020000;
+drift_204: drift, L = 0.000000, aper = 0.020000;
+mrk000_98: marker;
+cvy000_48: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_99: marker;
+drift_205: drift, L = 0.000000, aper = 0.020000;
+drift_206: drift, L = 0.227610, aper = 0.020000;
+drift_207: drift, L = 0.000000, aper = 0.020000;
+sol000_77: solenoid, L = 0.125000, B = 6.100000, aper = 0.020000;
+sol000_78: solenoid, L = 0.125000, B = 6.100000, aper = 0.020000;
+sol000_79: solenoid, L = 0.125000, B = 6.100000, aper = 0.020000;
+sol000_80: solenoid, L = 0.125000, B = 6.100000, aper = 0.020000;
+drift_208: drift, L = 0.000000, aper = 0.020000;
+drift_209: drift, L = 0.174740, aper = 0.020000;
+drift_210: drift, L = 0.000000, aper = 0.020000;
+mrk000_100: marker;
+cvy000_49: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_101: marker;
+drift_211: drift, L = 0.000000, aper = 0.020000;
+drift_212: drift, L = 0.097690, aper = 0.020000;
+drift_213: drift, L = 0.000000, aper = 0.020000;
+mrk000_102: marker;
+cvy000_50: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_103: marker;
+drift_214: drift, L = 0.000000, aper = 0.020000;
+drift_215: drift, L = 0.097690, aper = 0.020000;
+drift_216: drift, L = 0.000000, aper = 0.020000;
+mrk000_104: marker;
+cvy000_51: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_105: marker;
+drift_217: drift, L = 0.000000, aper = 0.020000;
+drift_218: drift, L = 0.227610, aper = 0.020000;
+drift_219: drift, L = 0.000000, aper = 0.020000;
+sol000_81: solenoid, L = 0.125000, B = 7.330000, aper = 0.020000;
+sol000_82: solenoid, L = 0.125000, B = 7.330000, aper = 0.020000;
+sol000_83: solenoid, L = 0.125000, B = 7.330000, aper = 0.020000;
+sol000_84: solenoid, L = 0.125000, B = 7.330000, aper = 0.020000;
+drift_220: drift, L = 0.000000, aper = 0.020000;
+drift_221: drift, L = 0.174740, aper = 0.020000;
+drift_222: drift, L = 0.000000, aper = 0.020000;
+mrk000_106: marker;
+cvy000_52: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_107: marker;
+drift_223: drift, L = 0.000000, aper = 0.020000;
+drift_224: drift, L = 0.247295, aper = 0.020000;
+drift_225: drift, L = 0.190000, aper = 0.020000;
+drift_226: drift, L = 0.000000, aper = 0.018000;
+drift_227: drift, L = 0.190000, aper = 0.020000;
+drift_228: drift, L = 0.247295, aper = 0.020000;
+drift_229: drift, L = 0.000000, aper = 0.020000;
+mrk000_108: marker;
+cvy000_53: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_109: marker;
+drift_230: drift, L = 0.000000, aper = 0.020000;
+drift_231: drift, L = 0.227610, aper = 0.020000;
+drift_232: drift, L = 0.000000, aper = 0.020000;
+sol000_85: solenoid, L = 0.125000, B = 7.340000, aper = 0.020000;
+sol000_86: solenoid, L = 0.125000, B = 7.340000, aper = 0.020000;
+sol000_87: solenoid, L = 0.125000, B = 7.340000, aper = 0.020000;
+sol000_88: solenoid, L = 0.125000, B = 7.340000, aper = 0.020000;
+drift_233: drift, L = 0.000000, aper = 0.020000;
+drift_234: drift, L = 0.174740, aper = 0.020000;
+drift_235: drift, L = 0.000000, aper = 0.020000;
+mrk000_110: marker;
+cvy000_54: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_111: marker;
+drift_236: drift, L = 0.000000, aper = 0.020000;
+drift_237: drift, L = 0.097690, aper = 0.020000;
+drift_238: drift, L = 0.000000, aper = 0.020000;
+mrk000_112: marker;
+cvy000_55: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_113: marker;
+drift_239: drift, L = 0.000000, aper = 0.020000;
+drift_240: drift, L = 0.097690, aper = 0.020000;
+drift_241: drift, L = 0.000000, aper = 0.020000;
+mrk000_114: marker;
+cvy000_56: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_115: marker;
+drift_242: drift, L = 0.000000, aper = 0.020000;
+drift_243: drift, L = 0.227610, aper = 0.020000;
+drift_244: drift, L = 0.000000, aper = 0.020000;
+sol000_89: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_90: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_91: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_92: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+drift_245: drift, L = 0.000000, aper = 0.020000;
+drift_246: drift, L = 0.174740, aper = 0.020000;
+drift_247: drift, L = 0.000000, aper = 0.020000;
+mrk000_116: marker;
+cvy000_57: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_117: marker;
+drift_248: drift, L = 0.000000, aper = 0.020000;
+drift_249: drift, L = 0.097690, aper = 0.020000;
+drift_250: drift, L = 0.000000, aper = 0.020000;
+mrk000_118: marker;
+cvy000_58: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_119: marker;
+drift_251: drift, L = 0.000000, aper = 0.020000;
+drift_252: drift, L = 0.097690, aper = 0.020000;
+drift_253: drift, L = 0.000000, aper = 0.020000;
+mrk000_120: marker;
+cvy000_59: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_121: marker;
+drift_254: drift, L = 0.000000, aper = 0.020000;
+drift_255: drift, L = 0.227610, aper = 0.020000;
+drift_256: drift, L = 0.000000, aper = 0.020000;
+sol000_93: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+sol000_94: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+sol000_95: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+sol000_96: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+drift_257: drift, L = 0.000000, aper = 0.020000;
+drift_258: drift, L = 0.174740, aper = 0.020000;
+drift_259: drift, L = 0.000000, aper = 0.020000;
+mrk000_122: marker;
+cvy000_60: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_123: marker;
+drift_260: drift, L = 0.000000, aper = 0.020000;
+drift_261: drift, L = 0.247295, aper = 0.020000;
+drift_262: drift, L = 0.190000, aper = 0.020000;
+drift_263: drift, L = 0.000000, aper = 0.018000;
+drift_264: drift, L = 0.190000, aper = 0.020000;
+drift_265: drift, L = 0.247295, aper = 0.020000;
+drift_266: drift, L = 0.000000, aper = 0.020000;
+mrk000_124: marker;
+cvy000_61: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_125: marker;
+drift_267: drift, L = 0.000000, aper = 0.020000;
+drift_268: drift, L = 0.227610, aper = 0.020000;
+drift_269: drift, L = 0.000000, aper = 0.020000;
+sol000_97: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+sol000_98: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+sol000_99: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+sol000_100: solenoid, L = 0.125000, B = 7.500000, aper = 0.020000;
+drift_270: drift, L = 0.000000, aper = 0.020000;
+drift_271: drift, L = 0.174740, aper = 0.020000;
+drift_272: drift, L = 0.000000, aper = 0.020000;
+mrk000_126: marker;
+cvy000_62: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_127: marker;
+drift_273: drift, L = 0.000000, aper = 0.020000;
+drift_274: drift, L = 0.097690, aper = 0.020000;
+drift_275: drift, L = 0.000000, aper = 0.020000;
+mrk000_128: marker;
+cvy000_63: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_129: marker;
+drift_276: drift, L = 0.000000, aper = 0.020000;
+drift_277: drift, L = 0.097690, aper = 0.020000;
+drift_278: drift, L = 0.000000, aper = 0.020000;
+mrk000_130: marker;
+cvy000_64: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_131: marker;
+drift_279: drift, L = 0.000000, aper = 0.020000;
+drift_280: drift, L = 0.227610, aper = 0.020000;
+drift_281: drift, L = 0.000000, aper = 0.020000;
+sol000_101: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_102: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_103: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_104: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+drift_282: drift, L = 0.000000, aper = 0.020000;
+drift_283: drift, L = 0.174740, aper = 0.020000;
+drift_284: drift, L = 0.000000, aper = 0.020000;
+mrk000_132: marker;
+cvy000_65: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_133: marker;
+drift_285: drift, L = 0.000000, aper = 0.020000;
+drift_286: drift, L = 0.097690, aper = 0.020000;
+drift_287: drift, L = 0.000000, aper = 0.020000;
+mrk000_134: marker;
+cvy000_66: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_135: marker;
+drift_288: drift, L = 0.000000, aper = 0.020000;
+drift_289: drift, L = 0.097690, aper = 0.020000;
+drift_290: drift, L = 0.000000, aper = 0.020000;
+mrk000_136: marker;
+cvy000_67: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_137: marker;
+drift_291: drift, L = 0.000000, aper = 0.020000;
+drift_292: drift, L = 0.227610, aper = 0.020000;
+drift_293: drift, L = 0.000000, aper = 0.020000;
+sol000_105: solenoid, L = 0.125000, B = 7.250000, aper = 0.020000;
+sol000_106: solenoid, L = 0.125000, B = 7.250000, aper = 0.020000;
+sol000_107: solenoid, L = 0.125000, B = 7.250000, aper = 0.020000;
+sol000_108: solenoid, L = 0.125000, B = 7.250000, aper = 0.020000;
+drift_294: drift, L = 0.000000, aper = 0.020000;
+drift_295: drift, L = 0.174740, aper = 0.020000;
+drift_296: drift, L = 0.000000, aper = 0.020000;
+mrk000_138: marker;
+cvy000_68: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_139: marker;
+drift_297: drift, L = 0.000000, aper = 0.020000;
+drift_298: drift, L = 0.247295, aper = 0.020000;
+drift_299: drift, L = 0.190000, aper = 0.020000;
+drift_300: drift, L = 0.000000, aper = 0.018000;
+drift_301: drift, L = 0.190000, aper = 0.020000;
+drift_302: drift, L = 0.247295, aper = 0.020000;
+drift_303: drift, L = 0.000000, aper = 0.020000;
+mrk000_140: marker;
+cvy000_69: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_141: marker;
+drift_304: drift, L = 0.000000, aper = 0.020000;
+drift_305: drift, L = 0.227610, aper = 0.020000;
+drift_306: drift, L = 0.000000, aper = 0.020000;
+sol000_109: solenoid, L = 0.125000, B = 7.650000, aper = 0.020000;
+sol000_110: solenoid, L = 0.125000, B = 7.650000, aper = 0.020000;
+sol000_111: solenoid, L = 0.125000, B = 7.650000, aper = 0.020000;
+sol000_112: solenoid, L = 0.125000, B = 7.650000, aper = 0.020000;
+drift_307: drift, L = 0.000000, aper = 0.020000;
+drift_308: drift, L = 0.174740, aper = 0.020000;
+drift_309: drift, L = 0.000000, aper = 0.020000;
+mrk000_142: marker;
+cvy000_70: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_143: marker;
+drift_310: drift, L = 0.000000, aper = 0.020000;
+drift_311: drift, L = 0.097690, aper = 0.020000;
+drift_312: drift, L = 0.000000, aper = 0.020000;
+mrk000_144: marker;
+cvy000_71: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_145: marker;
+drift_313: drift, L = 0.000000, aper = 0.020000;
+drift_314: drift, L = 0.097690, aper = 0.020000;
+drift_315: drift, L = 0.000000, aper = 0.020000;
+mrk000_146: marker;
+cvy000_72: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_147: marker;
+drift_316: drift, L = 0.000000, aper = 0.020000;
+drift_317: drift, L = 0.227610, aper = 0.020000;
+drift_318: drift, L = 0.000000, aper = 0.020000;
+sol000_113: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+sol000_114: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+sol000_115: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+sol000_116: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+drift_319: drift, L = 0.000000, aper = 0.020000;
+drift_320: drift, L = 0.174740, aper = 0.020000;
+drift_321: drift, L = 0.000000, aper = 0.020000;
+mrk000_148: marker;
+cvy000_73: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_149: marker;
+drift_322: drift, L = 0.000000, aper = 0.020000;
+drift_323: drift, L = 0.097690, aper = 0.020000;
+drift_324: drift, L = 0.000000, aper = 0.020000;
+mrk000_150: marker;
+cvy000_74: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_151: marker;
+drift_325: drift, L = 0.000000, aper = 0.020000;
+drift_326: drift, L = 0.097690, aper = 0.020000;
+drift_327: drift, L = 0.000000, aper = 0.020000;
+mrk000_152: marker;
+cvy000_75: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_153: marker;
+drift_328: drift, L = 0.000000, aper = 0.020000;
+drift_329: drift, L = 0.227610, aper = 0.020000;
+drift_330: drift, L = 0.000000, aper = 0.020000;
+sol000_117: solenoid, L = 0.125000, B = 7.800000, aper = 0.020000;
+sol000_118: solenoid, L = 0.125000, B = 7.800000, aper = 0.020000;
+sol000_119: solenoid, L = 0.125000, B = 7.800000, aper = 0.020000;
+sol000_120: solenoid, L = 0.125000, B = 7.800000, aper = 0.020000;
+drift_331: drift, L = 0.000000, aper = 0.020000;
+drift_332: drift, L = 0.174740, aper = 0.020000;
+drift_333: drift, L = 0.000000, aper = 0.020000;
+mrk000_154: marker;
+cvy000_76: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_155: marker;
+drift_334: drift, L = 0.000000, aper = 0.020000;
+drift_335: drift, L = 0.247295, aper = 0.020000;
+drift_336: drift, L = 0.190000, aper = 0.020000;
+drift_337: drift, L = 0.000000, aper = 0.018000;
+drift_338: drift, L = 0.190000, aper = 0.020000;
+drift_339: drift, L = 0.247295, aper = 0.020000;
+drift_340: drift, L = 0.000000, aper = 0.020000;
+mrk000_156: marker;
+cvy000_77: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_157: marker;
+drift_341: drift, L = 0.000000, aper = 0.020000;
+drift_342: drift, L = 0.227610, aper = 0.020000;
+drift_343: drift, L = 0.000000, aper = 0.020000;
+sol000_121: solenoid, L = 0.125000, B = 7.850000, aper = 0.020000;
+sol000_122: solenoid, L = 0.125000, B = 7.850000, aper = 0.020000;
+sol000_123: solenoid, L = 0.125000, B = 7.850000, aper = 0.020000;
+sol000_124: solenoid, L = 0.125000, B = 7.850000, aper = 0.020000;
+drift_344: drift, L = 0.000000, aper = 0.020000;
+drift_345: drift, L = 0.174740, aper = 0.020000;
+drift_346: drift, L = 0.000000, aper = 0.020000;
+mrk000_158: marker;
+cvy000_78: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_159: marker;
+drift_347: drift, L = 0.000000, aper = 0.020000;
+drift_348: drift, L = 0.097690, aper = 0.020000;
+drift_349: drift, L = 0.000000, aper = 0.020000;
+mrk000_160: marker;
+cvy000_79: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_161: marker;
+drift_350: drift, L = 0.000000, aper = 0.020000;
+drift_351: drift, L = 0.097690, aper = 0.020000;
+drift_352: drift, L = 0.000000, aper = 0.020000;
+mrk000_162: marker;
+cvy000_80: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_163: marker;
+drift_353: drift, L = 0.000000, aper = 0.020000;
+drift_354: drift, L = 0.227610, aper = 0.020000;
+drift_355: drift, L = 0.000000, aper = 0.020000;
+sol000_125: solenoid, L = 0.125000, B = 7.050000, aper = 0.020000;
+sol000_126: solenoid, L = 0.125000, B = 7.050000, aper = 0.020000;
+sol000_127: solenoid, L = 0.125000, B = 7.050000, aper = 0.020000;
+sol000_128: solenoid, L = 0.125000, B = 7.050000, aper = 0.020000;
+drift_356: drift, L = 0.000000, aper = 0.020000;
+drift_357: drift, L = 0.174740, aper = 0.020000;
+drift_358: drift, L = 0.000000, aper = 0.020000;
+mrk000_164: marker;
+cvy000_81: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_165: marker;
+drift_359: drift, L = 0.000000, aper = 0.020000;
+drift_360: drift, L = 0.097690, aper = 0.020000;
+drift_361: drift, L = 0.000000, aper = 0.020000;
+mrk000_166: marker;
+cvy000_82: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_167: marker;
+drift_362: drift, L = 0.000000, aper = 0.020000;
+drift_363: drift, L = 0.097690, aper = 0.020000;
+drift_364: drift, L = 0.000000, aper = 0.020000;
+mrk000_168: marker;
+cvy000_83: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_169: marker;
+drift_365: drift, L = 0.000000, aper = 0.020000;
+drift_366: drift, L = 0.227610, aper = 0.020000;
+drift_367: drift, L = 0.000000, aper = 0.020000;
+sol000_129: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_130: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_131: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_132: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+drift_368: drift, L = 0.000000, aper = 0.020000;
+drift_369: drift, L = 0.174740, aper = 0.020000;
+drift_370: drift, L = 0.000000, aper = 0.020000;
+mrk000_170: marker;
+cvy000_84: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_171: marker;
+drift_371: drift, L = 0.000000, aper = 0.020000;
+drift_372: drift, L = 0.247295, aper = 0.020000;
+drift_373: drift, L = 0.190000, aper = 0.020000;
+drift_374: drift, L = 0.000000, aper = 0.018000;
+drift_375: drift, L = 0.190000, aper = 0.020000;
+mrk000_172: marker;
+drift_376: drift, L = 0.247295, aper = 0.020000;
+drift_377: drift, L = 0.000000, aper = 0.020000;
+mrk000_173: marker;
+cvy000_85: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_174: marker;
+drift_378: drift, L = 0.000000, aper = 0.020000;
+drift_379: drift, L = 0.227610, aper = 0.020000;
+drift_380: drift, L = 0.000000, aper = 0.020000;
+sol000_133: solenoid, L = 0.125000, B = 7.750000, aper = 0.020000;
+sol000_134: solenoid, L = 0.125000, B = 7.750000, aper = 0.020000;
+sol000_135: solenoid, L = 0.125000, B = 7.750000, aper = 0.020000;
+sol000_136: solenoid, L = 0.125000, B = 7.750000, aper = 0.020000;
+drift_381: drift, L = 0.000000, aper = 0.020000;
+drift_382: drift, L = 0.174740, aper = 0.020000;
+drift_383: drift, L = 0.000000, aper = 0.020000;
+mrk000_175: marker;
+cvy000_86: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_176: marker;
+drift_384: drift, L = 0.000000, aper = 0.020000;
+drift_385: drift, L = 0.097690, aper = 0.020000;
+drift_386: drift, L = 0.000000, aper = 0.020000;
+mrk000_177: marker;
+cvy000_87: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_178: marker;
+drift_387: drift, L = 0.000000, aper = 0.020000;
+drift_388: drift, L = 0.097690, aper = 0.020000;
+drift_389: drift, L = 0.000000, aper = 0.020000;
+mrk000_179: marker;
+cvy000_88: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_180: marker;
+drift_390: drift, L = 0.000000, aper = 0.020000;
+drift_391: drift, L = 0.227610, aper = 0.020000;
+drift_392: drift, L = 0.000000, aper = 0.020000;
+sol000_137: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+sol000_138: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+sol000_139: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+sol000_140: solenoid, L = 0.125000, B = 7.000000, aper = 0.020000;
+drift_393: drift, L = 0.000000, aper = 0.020000;
+drift_394: drift, L = 0.174740, aper = 0.020000;
+drift_395: drift, L = 0.000000, aper = 0.020000;
+mrk000_181: marker;
+cvy000_89: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_182: marker;
+drift_396: drift, L = 0.000000, aper = 0.020000;
+drift_397: drift, L = 0.097690, aper = 0.020000;
+drift_398: drift, L = 0.000000, aper = 0.020000;
+mrk000_183: marker;
+cvy000_90: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_184: marker;
+drift_399: drift, L = 0.000000, aper = 0.020000;
+drift_400: drift, L = 0.097690, aper = 0.020000;
+drift_401: drift, L = 0.000000, aper = 0.020000;
+mrk000_185: marker;
+cvy000_91: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_186: marker;
+drift_402: drift, L = 0.000000, aper = 0.020000;
+drift_403: drift, L = 0.227610, aper = 0.020000;
+drift_404: drift, L = 0.000000, aper = 0.020000;
+sol000_141: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_142: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_143: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_144: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+drift_405: drift, L = 0.000000, aper = 0.020000;
+drift_406: drift, L = 0.174740, aper = 0.020000;
+drift_407: drift, L = 0.000000, aper = 0.020000;
+mrk000_187: marker;
+cvy000_92: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_188: marker;
+drift_408: drift, L = 0.000000, aper = 0.020000;
+drift_409: drift, L = 0.247295, aper = 0.020000;
+drift_410: drift, L = 0.190000, aper = 0.020000;
+drift_411: drift, L = 0.000000, aper = 0.018000;
+drift_412: drift, L = 0.190000, aper = 0.020000;
+mrk000_189: marker;
+drift_413: drift, L = 0.247295, aper = 0.020000;
+drift_414: drift, L = 0.000000, aper = 0.020000;
+mrk000_190: marker;
+cvy000_93: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_191: marker;
+drift_415: drift, L = 0.000000, aper = 0.020000;
+drift_416: drift, L = 0.227610, aper = 0.020000;
+drift_417: drift, L = 0.000000, aper = 0.020000;
+sol000_145: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_146: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_147: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_148: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+drift_418: drift, L = 0.000000, aper = 0.020000;
+drift_419: drift, L = 0.174740, aper = 0.020000;
+drift_420: drift, L = 0.000000, aper = 0.020000;
+mrk000_192: marker;
+cvy000_94: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_193: marker;
+drift_421: drift, L = 0.000000, aper = 0.020000;
+drift_422: drift, L = 0.097690, aper = 0.020000;
+drift_423: drift, L = 0.000000, aper = 0.020000;
+mrk000_194: marker;
+cvy000_95: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_195: marker;
+drift_424: drift, L = 0.000000, aper = 0.020000;
+drift_425: drift, L = 0.097690, aper = 0.020000;
+drift_426: drift, L = 0.000000, aper = 0.020000;
+mrk000_196: marker;
+cvy000_96: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_197: marker;
+drift_427: drift, L = 0.000000, aper = 0.020000;
+drift_428: drift, L = 0.227610, aper = 0.020000;
+drift_429: drift, L = 0.000000, aper = 0.020000;
+sol000_149: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_150: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_151: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_152: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+drift_430: drift, L = 0.000000, aper = 0.020000;
+drift_431: drift, L = 0.174740, aper = 0.020000;
+drift_432: drift, L = 0.000000, aper = 0.020000;
+mrk000_198: marker;
+cvy000_97: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_199: marker;
+drift_433: drift, L = 0.000000, aper = 0.020000;
+drift_434: drift, L = 0.097690, aper = 0.020000;
+drift_435: drift, L = 0.000000, aper = 0.020000;
+mrk000_200: marker;
+cvy000_98: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_201: marker;
+drift_436: drift, L = 0.000000, aper = 0.020000;
+drift_437: drift, L = 0.097690, aper = 0.020000;
+drift_438: drift, L = 0.000000, aper = 0.020000;
+mrk000_202: marker;
+cvy000_99: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -21.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_203: marker;
+drift_439: drift, L = 0.000000, aper = 0.020000;
+drift_440: drift, L = 0.227610, aper = 0.020000;
+drift_441: drift, L = 0.000000, aper = 0.020000;
+sol000_153: solenoid, L = 0.125000, B = 8.200000, aper = 0.020000;
+sol000_154: solenoid, L = 0.125000, B = 8.200000, aper = 0.020000;
+sol000_155: solenoid, L = 0.125000, B = 8.200000, aper = 0.020000;
+sol000_156: solenoid, L = 0.125000, B = 8.200000, aper = 0.020000;
+drift_442: drift, L = 0.000000, aper = 0.020000;
+drift_443: drift, L = 0.174740, aper = 0.020000;
+drift_444: drift, L = 0.000000, aper = 0.020000;
+mrk000_204: marker;
+cvy000_100: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+mrk000_205: marker;
+drift_445: drift, L = 0.000000, aper = 0.020000;
+drift_446: drift, L = 0.247295, aper = 0.020000;
+drift_447: drift, L = 0.190000, aper = 0.020000;
+drift_448: drift, L = 0.000000, aper = 0.018000;
+drift_449: drift, L = 0.190000, aper = 0.020000;
+mrk000_206: marker;
+drift_450: drift, L = 1.050000, aper = 0.025000;
+drift_451: drift, L = 0.200000, aper = 0.025000;
+drift_452: drift, L = 0.250000, aper = 0.025000;
+qua000_1: quadrupole, L = 0.250000, B2 = -25.916600, aper = 0.025000;
+drift_453: drift, L = 0.500000, aper = 0.025000;
+qua000_2: quadrupole, L = 0.250000, B2 = 23.314900, aper = 0.025000;
+drift_454: drift, L = 1.198000, aper = 0.025000;
+drift_455: drift, L = 0.200000, aper = 0.025000;
+drift_456: drift, L = 0.069000, aper = 0.025000;
+drift_457: drift, L = 0.137000, aper = 0.025000;
+drift_458: drift, L = 0.044000, aper = 0.025000;
+qua000_3: quadrupole, L = 0.250000, B2 = -21.584100, aper = 0.025000;
+drift_459: drift, L = 0.500000, aper = 0.025000;
+qua000_4: quadrupole, L = 0.250000, B2 = 22.427500, aper = 0.025000;
+drift_460: drift, L = 0.120000, aper = 0.025000;
+drift_461: drift, L = 0.190000, aper = 0.020000;
+drift_462: drift, L = 0.000000, aper = 0.018000;
+drift_463: drift, L = 0.190000, aper = 0.020000;
+mrk000_207: marker;
+drift_464: drift, L = 0.259717, aper = 0.020000;
+cvy000_101: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.275000, aper = 0.020000;
+drift_465: drift, L = 0.123161, aper = 0.020000;
+cvy000_102: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.275000, aper = 0.020000;
+drift_466: drift, L = 0.259717, aper = 0.020000;
+drift_467: drift, L = 0.350000, aper = 0.025000;
+drift_468: drift, L = 0.200000, aper = 0.025000;
+drift_469: drift, L = 0.250000, aper = 0.025000;
+qua000_5: quadrupole, L = 0.250000, B2 = -16.015700, aper = 0.025000;
+drift_470: drift, L = 1.086200, aper = 0.025000;
+qua000_6: quadrupole, L = 0.250000, B2 = 16.015700, aper = 0.025000;
+drift_471: drift, L = 1.150000, aper = 0.025000;
+drift_472: drift, L = 0.200000, aper = 0.025000;
+drift_473: drift, L = 0.069000, aper = 0.025000;
+drift_474: drift, L = 0.137000, aper = 0.025000;
+drift_475: drift, L = 0.044000, aper = 0.025000;
+qua000_7: quadrupole, L = 0.250000, B2 = -16.015700, aper = 0.025000;
+drift_476: drift, L = 1.086200, aper = 0.025000;
+qua000_8: quadrupole, L = 0.250000, B2 = 16.015700, aper = 0.025000;
+drift_477: drift, L = 0.420000, aper = 0.025000;
+drift_478: drift, L = 0.380000, aper = 0.025000;
+mrk000_208: marker;
+drift_479: drift, L = 0.779100, aper = 0.025000;
+drift_480: drift, L = 0.200000, aper = 0.025000;
+drift_481: drift, L = 0.250000, aper = 0.025000;
+qua000_9: quadrupole, L = 0.250000, B2 = -14.631900, aper = 0.025000;
+drift_482: drift, L = 0.500000, aper = 0.025000;
+qua000_10: quadrupole, L = 0.250000, B2 = 13.298500, aper = 0.025000;
+drift_483: drift, L = 5.017000, aper = 0.025000;
+drift_484: drift, L = 0.200000, aper = 0.025000;
+drift_485: drift, L = 0.069000, aper = 0.025000;
+drift_486: drift, L = 0.137000, aper = 0.025000;
+drift_487: drift, L = 0.044000, aper = 0.025000;
+qua000_11: quadrupole, L = 0.250000, B2 = -14.664900, aper = 0.025000;
+drift_488: drift, L = 0.500000, aper = 0.025000;
+qua000_12: quadrupole, L = 0.250000, B2 = 16.088700, aper = 0.025000;
+drift_489: drift, L = 0.415400, aper = 0.025000;
+drift_490: drift, L = 0.190000, aper = 0.020000;
+drift_491: drift, L = 0.000000, aper = 0.018000;
+drift_492: drift, L = 0.190000, aper = 0.020000;
+mrk000_209: marker;
+drift_493: drift, L = 0.259717, aper = 0.020000;
+cvy000_103: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.440000, aper = 0.020000;
+drift_494: drift, L = 0.123161, aper = 0.020000;
+cvy000_104: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.440000, aper = 0.020000;
+drift_495: drift, L = 0.259717, aper = 0.020000;
+drift_496: drift, L = 0.232800, aper = 0.020000;
+mrk000_210: marker;
+dipo00_1: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.190488, aper = 0.020000;
+mrk000_211: marker;
+dipo00_2: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_212: marker;
+dipo00_3: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_213: marker;
+dipo00_4: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_214: marker;
+dipo00_5: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.190488, aper = 0.020000;
+mrk000_215: marker;
+drift_497: drift, L = 0.250000, aper = 0.020000;
+mrk000_216: marker;
+dipo00_6: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_217: marker;
+dipo00_7: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_218: marker;
+dipo00_8: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_219: marker;
+dipo00_9: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_220: marker;
+dipo00_10: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_221: marker;
+drift_498: drift, L = 0.250000, aper = 0.020000;
+mrk000_222: marker;
+dipo00_11: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.190488, aper = 0.020000;
+mrk000_223: marker;
+dipo00_12: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_224: marker;
+dipo00_13: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_225: marker;
+dipo00_14: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_226: marker;
+dipo00_15: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.190488, aper = 0.020000;
+mrk000_227: marker;
+drift_499: drift, L = 0.250000, aper = 0.020000;
+mrk000_228: marker;
+dipo00_16: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_229: marker;
+dipo00_17: sbend, L = 0.060000, phi = -1.000000, phi1 = -0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_230: marker;
+dipo00_18: sbend, L = 0.060000, phi = -1.000000, phi1 = -0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_231: marker;
+dipo00_19: sbend, L = 0.060000, phi = -1.000000, phi1 = -0.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_232: marker;
+dipo00_20: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.190488, aper = 0.020000;
+mrk000_233: marker;
+drift_500: drift, L = 0.350000, aper = 0.025000;
+mrk000_234: marker;
+drift_501: drift, L = 0.450000, aper = 0.025000;
+drift_502: drift, L = 0.200000, aper = 0.025000;
+drift_503: drift, L = 0.250000, aper = 0.025000;
+qua000_13: quadrupole, L = 0.250000, B2 = 3.459800, aper = 0.025000;
+drift_504: drift, L = 0.157850, aper = 0.025000;
+drift_505: drift, L = 0.380000, aper = 0.025000;
+qua000_14: quadrupole, L = 0.250000, B2 = -12.283500, aper = 0.025000;
+drift_506: drift, L = 0.550000, aper = 0.025000;
+drift_507: drift, L = 0.200000, aper = 0.025000;
+drift_508: drift, L = 0.069000, aper = 0.025000;
+drift_509: drift, L = 0.137000, aper = 0.025000;
+drift_510: drift, L = 0.044000, aper = 0.025000;
+qua000_15: quadrupole, L = 0.250000, B2 = 25.248300, aper = 0.025000;
+drift_511: drift, L = 0.250000, aper = 0.025000;
+qua000_16: quadrupole, L = 0.250000, B2 = -22.334100, aper = 0.025000;
+drift_512: drift, L = 0.120000, aper = 0.025000;
+drift_513: drift, L = 0.380000, aper = 0.025000;
+drift_514: drift, L = 1.000000, aper = 0.020000;
+mrk000_235: marker;
+mrk000_236: marker;
+drift_515: drift, L = 0.000000, aper = 0.010000;
+mrk000_237: marker;
+drift_516: drift, L = 1.000000, aper = 0.020000;
+drift_517: drift, L = 0.380000, aper = 0.025000;
+drift_518: drift, L = 0.120000, aper = 0.025000;
+qua000_17: quadrupole, L = 0.250000, B2 = -6.884700, aper = 0.025000;
+drift_519: drift, L = 0.100000, aper = 0.025000;
+drift_520: drift, L = 0.200000, aper = 0.025000;
+drift_521: drift, L = 0.100000, aper = 0.025000;
+qua000_18: quadrupole, L = 0.250000, B2 = 8.699800, aper = 0.025000;
+drift_522: drift, L = 0.470000, aper = 0.025000;
+drift_523: drift, L = 0.380000, aper = 0.025000;
+qua000_19: quadrupole, L = 0.250000, B2 = -5.584400, aper = 0.025000;
+drift_524: drift, L = 0.087850, aper = 0.025000;
+drift_525: drift, L = 0.200000, aper = 0.025000;
+drift_526: drift, L = 0.069000, aper = 0.025000;
+drift_527: drift, L = 0.137000, aper = 0.025000;
+drift_528: drift, L = 0.044000, aper = 0.025000;
+qua000_20: quadrupole, L = 0.250000, B2 = 2.204800, aper = 0.025000;
+drift_529: drift, L = 0.650000, aper = 0.025000;
+drift_530: drift, L = 0.350000, aper = 0.025000;
+mrk000_238: marker;
+mrk000_239: marker;
+dipo00_21: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.188909, aper = 0.020000;
+mrk000_240: marker;
+dipo00_22: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_241: marker;
+dipo00_23: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_242: marker;
+dipo00_24: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_243: marker;
+dipo00_25: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.188909, aper = 0.020000;
+mrk000_244: marker;
+drift_531: drift, L = 0.250000, aper = 0.020000;
+mrk000_245: marker;
+dipo00_26: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_246: marker;
+dipo00_27: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_247: marker;
+dipo00_28: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_248: marker;
+dipo00_29: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_249: marker;
+dipo00_30: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_250: marker;
+drift_532: drift, L = 0.250000, aper = 0.020000;
+mrk000_251: marker;
+dipo00_31: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.188909, aper = 0.020000;
+mrk000_252: marker;
+dipo00_32: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_253: marker;
+dipo00_33: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_254: marker;
+dipo00_34: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_255: marker;
+dipo00_35: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.188909, aper = 0.020000;
+mrk000_256: marker;
+drift_533: drift, L = 0.250000, aper = 0.020000;
+mrk000_257: marker;
+dipo00_36: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_258: marker;
+dipo00_37: sbend, L = 0.060000, phi = -1.000000, phi1 = -0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_259: marker;
+dipo00_38: sbend, L = 0.060000, phi = -1.000000, phi1 = -0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_260: marker;
+dipo00_39: sbend, L = 0.060000, phi = -1.000000, phi1 = -0.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_261: marker;
+dipo00_40: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.188909, aper = 0.020000;
+mrk000_262: marker;
+drift_534: drift, L = 0.015530, aper = 0.020000;
+drift_535: drift, L = 0.190000, aper = 0.020000;
+drift_536: drift, L = 0.000000, aper = 0.018000;
+drift_537: drift, L = 0.190000, aper = 0.020000;
+drift_538: drift, L = 0.136790, aper = 0.020000;
+mrk000_263: marker;
+drift_539: drift, L = 0.246981, aper = 0.020000;
+cvy000_105: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.380000, aper = 0.017000;
+drift_540: drift, L = 0.097688, aper = 0.020000;
+cvy000_106: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.380000, aper = 0.017000;
+drift_541: drift, L = 0.097688, aper = 0.020000;
+cvy000_107: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.380000, aper = 0.017000;
+drift_542: drift, L = 0.246981, aper = 0.020000;
+drift_543: drift, L = 0.255052, aper = 0.020000;
+drift_544: drift, L = 0.246981, aper = 0.020000;
+cvy000_108: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.000010, aper = 0.017000;
+drift_545: drift, L = 0.246981, aper = 0.020000;
+mrk000_264: marker;
+drift_546: drift, L = 0.284032, aper = 0.020000;
+drift_547: drift, L = 0.200000, aper = 0.025000;
+drift_548: drift, L = 0.250000, aper = 0.025000;
+qua000_21: quadrupole, L = 0.250000, B2 = 7.102200, aper = 0.025000;
+drift_549: drift, L = 0.070000, aper = 0.025000;
+drift_550: drift, L = 0.380000, aper = 0.025000;
+qua000_22: quadrupole, L = 0.250000, B2 = 1.185800, aper = 0.025000;
+drift_551: drift, L = 0.300000, aper = 0.025000;
+drift_552: drift, L = 0.200000, aper = 0.025000;
+drift_553: drift, L = 0.069000, aper = 0.025000;
+drift_554: drift, L = 0.137000, aper = 0.025000;
+drift_555: drift, L = 0.044000, aper = 0.025000;
+qua000_23: quadrupole, L = 0.250000, B2 = -10.928100, aper = 0.025000;
+drift_556: drift, L = 0.250000, aper = 0.025000;
+qua000_24: quadrupole, L = 0.250000, B2 = 11.599200, aper = 0.025000;
+drift_557: drift, L = 0.145000, aper = 0.025000;
+drift_558: drift, L = 0.200000, aper = 0.025000;
+drift_559: drift, L = 0.092655, aper = 0.025000;
+drift_560: drift, L = 0.380000, aper = 0.025000;
+drift_561: drift, L = 0.142240, aper = 0.025000;
+mrk000_265: marker;
+mrk000_266: marker;
+dipo00_41: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_267: marker;
+dipo00_42: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_268: marker;
+dipo00_43: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_269: marker;
+dipo00_44: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_270: marker;
+dipo00_45: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_271: marker;
+dipo00_46: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_272: marker;
+dipo00_47: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_273: marker;
+dipo00_48: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_274: marker;
+dipo00_49: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_275: marker;
+dipo00_50: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_276: marker;
+drift_562: drift, L = 0.630000, aper = 0.070000;
+mrk000_277: marker;
+drift_563: drift, L = 0.930000, aper = 0.070000;
+cmq000_25: quadrupole, L = 0.250000, B2 = 8.972500, aper = 0.070000;
+drift_564: drift, L = 0.140000, aper = 0.070000;
+cmq000_26: quadrupole, L = 0.150000, B2 = 0.000000, aper = 0.070000;
+drift_565: drift, L = 0.085000, aper = 0.070000;
+drift_566: drift, L = 0.053000, aper = 0.070000;
+drift_567: drift, L = 0.084000, aper = 0.070000;
+drift_568: drift, L = 0.088000, aper = 0.070000;
+cmq000_27: quadrupole, L = 0.250000, B2 = -4.076800, aper = 0.070000;
+drift_569: drift, L = 0.403223, aper = 0.070000;
+mrk000_278: marker;
+dipo00_51: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_279: marker;
+dipo00_52: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_280: marker;
+dipo00_53: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_281: marker;
+dipo00_54: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_282: marker;
+dipo00_55: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_283: marker;
+dipo00_56: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_284: marker;
+dipo00_57: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_285: marker;
+dipo00_58: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_286: marker;
+dipo00_59: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_287: marker;
+dipo00_60: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_288: marker;
+drift_570: drift, L = 0.385000, aper = 0.070000;
+mrk000_289: marker;
+drift_571: drift, L = 0.385000, aper = 0.070000;
+mrk000_290: marker;
+dipo00_61: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_291: marker;
+dipo00_62: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_292: marker;
+dipo00_63: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_293: marker;
+dipo00_64: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_294: marker;
+dipo00_65: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_295: marker;
+dipo00_66: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_296: marker;
+dipo00_67: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_297: marker;
+dipo00_68: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_298: marker;
+dipo00_69: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_299: marker;
+dipo00_70: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_300: marker;
+drift_572: drift, L = 0.403223, aper = 0.070000;
+cmq000_28: quadrupole, L = 0.250000, B2 = -4.076800, aper = 0.070000;
+drift_573: drift, L = 0.088000, aper = 0.070000;
+drift_574: drift, L = 0.084000, aper = 0.070000;
+drift_575: drift, L = 0.053000, aper = 0.070000;
+drift_576: drift, L = 0.085000, aper = 0.070000;
+cmq000_29: quadrupole, L = 0.150000, B2 = 0.000000, aper = 0.070000;
+drift_577: drift, L = 0.140000, aper = 0.070000;
+cmq000_30: quadrupole, L = 0.250000, B2 = 8.972500, aper = 0.070000;
+drift_578: drift, L = 0.930000, aper = 0.070000;
+drift_579: drift, L = 0.630000, aper = 0.070000;
+mrk000_301: marker;
+dipo00_71: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_302: marker;
+dipo00_72: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_303: marker;
+dipo00_73: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_304: marker;
+dipo00_74: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_305: marker;
+dipo00_75: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_306: marker;
+dipo00_76: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_307: marker;
+dipo00_77: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_308: marker;
+dipo00_78: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_309: marker;
+dipo00_79: sbend, L = 0.104065, phi = 4.500000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188915, aper = 0.020000;
+mrk000_310: marker;
+dipo00_80: sbend, L = 0.104065, phi = 4.500000, phi1 = 7.000000, phi2 = 7.000000, bg = 0.188915, aper = 0.020000;
+mrk000_311: marker;
+drift_580: drift, L = 0.142240, aper = 0.025000;
+mrk000_312: marker;
+drift_581: drift, L = 0.380000, aper = 0.025000;
+drift_582: drift, L = 0.092760, aper = 0.025000;
+drift_583: drift, L = 0.200000, aper = 0.025000;
+drift_584: drift, L = 0.145000, aper = 0.025000;
+qua000_31: quadrupole, L = 0.250000, B2 = -5.372900, aper = 0.025000;
+drift_585: drift, L = 0.200000, aper = 0.025000;
+qua000_32: quadrupole, L = 0.250000, B2 = 7.163900, aper = 0.025000;
+drift_586: drift, L = 0.380000, aper = 0.025000;
+drift_587: drift, L = 1.320000, aper = 0.025000;
+drift_588: drift, L = 0.200000, aper = 0.025000;
+drift_589: drift, L = 0.069000, aper = 0.025000;
+drift_590: drift, L = 0.137000, aper = 0.025000;
+drift_591: drift, L = 0.044000, aper = 0.025000;
+qua000_33: quadrupole, L = 0.250000, B2 = -4.120600, aper = 0.025000;
+drift_592: drift, L = 1.200000, aper = 0.025000;
+drift_593: drift, L = 1.000000, aper = 0.025000;
+qua000_34: quadrupole, L = 0.250000, B2 = 2.482000, aper = 0.025000;
+drift_594: drift, L = 2.296000, aper = 0.025000;
+drift_595: drift, L = 0.200000, aper = 0.025000;
+drift_596: drift, L = 0.069000, aper = 0.025000;
+drift_597: drift, L = 0.137000, aper = 0.025000;
+drift_598: drift, L = 0.044000, aper = 0.025000;
+qua000_35: quadrupole, L = 0.250000, B2 = -6.831500, aper = 0.025000;
+drift_599: drift, L = 0.500000, aper = 0.025000;
+qua000_36: quadrupole, L = 0.250000, B2 = 5.264400, aper = 0.025000;
+drift_600: drift, L = 0.060800, aper = 0.025000;
+drift_601: drift, L = 0.190000, aper = 0.020000;
+drift_602: drift, L = 0.000000, aper = 0.018000;
+drift_603: drift, L = 0.190000, aper = 0.020000;
+drift_604: drift, L = 0.136800, aper = 0.020000;
+mrk000_313: marker;
+drift_605: drift, L = 0.246981, aper = 0.020000;
+cvy000_109: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360000, aper = 0.017000;
+drift_606: drift, L = 0.097688, aper = 0.020000;
+cvy000_110: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360000, aper = 0.017000;
+drift_607: drift, L = 0.097688, aper = 0.020000;
+cvy000_111: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360000, aper = 0.017000;
+drift_608: drift, L = 0.246981, aper = 0.020000;
+mrk000_314: marker;
+drift_609: drift, L = 0.255052, aper = 0.020000;
+drift_610: drift, L = 0.246981, aper = 0.020000;
+cvy000_112: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.000010, aper = 0.017000;
+drift_611: drift, L = 0.246981, aper = 0.020000;
+mrk000_315: marker;
+drift_612: drift, L = 0.177500, aper = 0.025000;
+drift_613: drift, L = 0.200000, aper = 0.025000;
+drift_614: drift, L = 0.250000, aper = 0.025000;
+qua000_37: quadrupole, L = 0.250000, B2 = 3.581900, aper = 0.025000;
+drift_615: drift, L = 1.000000, aper = 0.025000;
+qua000_38: quadrupole, L = 0.250000, B2 = -5.372900, aper = 0.025000;
+drift_616: drift, L = 0.550000, aper = 0.025000;
+drift_617: drift, L = 0.200000, aper = 0.025000;
+drift_618: drift, L = 0.069000, aper = 0.025000;
+drift_619: drift, L = 0.137000, aper = 0.025000;
+drift_620: drift, L = 0.044000, aper = 0.025000;
+qua000_39: quadrupole, L = 0.250000, B2 = 5.310800, aper = 0.025000;
+drift_621: drift, L = 0.370000, aper = 0.025000;
+drift_622: drift, L = 0.380000, aper = 0.025000;
+drift_623: drift, L = 0.300000, aper = 0.025000;
+qua000_40: quadrupole, L = 0.250000, B2 = -6.973700, aper = 0.025000;
+drift_624: drift, L = 0.319000, aper = 0.025000;
+drift_625: drift, L = 0.380000, aper = 0.025000;
+drift_626: drift, L = 0.200000, aper = 0.025000;
+drift_627: drift, L = 0.069000, aper = 0.025000;
+drift_628: drift, L = 0.137000, aper = 0.025000;
+drift_629: drift, L = 0.044000, aper = 0.025000;
+qua000_41: quadrupole, L = 0.250000, B2 = 10.243000, aper = 0.025000;
+drift_630: drift, L = 0.250000, aper = 0.025000;
+qua000_42: quadrupole, L = 0.250000, B2 = -11.359000, aper = 0.025000;
+drift_631: drift, L = 0.120000, aper = 0.025000;
+drift_632: drift, L = 0.380000, aper = 0.025000;
+mrk000_316: marker;
+drift_633: drift, L = 0.280350, aper = 0.020000;
+cvy000_113: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_634: drift, L = 0.085000, aper = 0.020000;
+cvy000_114: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_635: drift, L = 0.085000, aper = 0.020000;
+cvy000_115: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_636: drift, L = 0.100000, aper = 0.020000;
+drift_637: drift, L = 0.100000, aper = 0.020000;
+sol000_157: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+sol000_158: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+sol000_159: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+sol000_160: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+drift_638: drift, L = 0.100000, aper = 0.020000;
+drift_639: drift, L = 0.100000, aper = 0.020000;
+cvy000_116: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_640: drift, L = 0.085000, aper = 0.020000;
+cvy000_117: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -90.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_641: drift, L = 0.085000, aper = 0.020000;
+cvy000_118: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_642: drift, L = 0.280350, aper = 0.020000;
+drift_643: drift, L = 0.190000, aper = 0.020000;
+drift_644: drift, L = 0.000000, aper = 0.018000;
+drift_645: drift, L = 0.190000, aper = 0.020000;
+drift_646: drift, L = 0.280350, aper = 0.020000;
+cvy000_119: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_647: drift, L = 0.085000, aper = 0.020000;
+cvy000_120: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_648: drift, L = 0.085000, aper = 0.020000;
+cvy000_121: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_649: drift, L = 0.100000, aper = 0.020000;
+drift_650: drift, L = 0.100000, aper = 0.020000;
+sol000_161: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_162: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_163: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_164: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+drift_651: drift, L = 0.100000, aper = 0.020000;
+drift_652: drift, L = 0.100000, aper = 0.020000;
+cvy000_122: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_653: drift, L = 0.085000, aper = 0.020000;
+cvy000_123: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_654: drift, L = 0.085000, aper = 0.020000;
+cvy000_124: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_655: drift, L = 0.280350, aper = 0.020000;
+drift_656: drift, L = 0.190000, aper = 0.020000;
+drift_657: drift, L = 0.000000, aper = 0.018000;
+drift_658: drift, L = 0.190000, aper = 0.020000;
+drift_659: drift, L = 0.280350, aper = 0.020000;
+cvy000_125: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_660: drift, L = 0.085000, aper = 0.020000;
+cvy000_126: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_661: drift, L = 0.085000, aper = 0.020000;
+cvy000_127: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_662: drift, L = 0.100000, aper = 0.020000;
+drift_663: drift, L = 0.100000, aper = 0.020000;
+sol000_165: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+sol000_166: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+sol000_167: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+sol000_168: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+drift_664: drift, L = 0.100000, aper = 0.020000;
+drift_665: drift, L = 0.100000, aper = 0.020000;
+cvy000_128: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_666: drift, L = 0.085000, aper = 0.020000;
+cvy000_129: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_667: drift, L = 0.085000, aper = 0.020000;
+cvy000_130: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_668: drift, L = 0.280350, aper = 0.020000;
+drift_669: drift, L = 0.190000, aper = 0.020000;
+drift_670: drift, L = 0.000000, aper = 0.018000;
+drift_671: drift, L = 0.190000, aper = 0.020000;
+drift_672: drift, L = 0.280350, aper = 0.020000;
+cvy000_131: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_673: drift, L = 0.085000, aper = 0.020000;
+cvy000_132: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_674: drift, L = 0.085000, aper = 0.020000;
+cvy000_133: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_675: drift, L = 0.100000, aper = 0.020000;
+drift_676: drift, L = 0.100000, aper = 0.020000;
+sol000_169: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_170: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_171: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_172: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+drift_677: drift, L = 0.100000, aper = 0.020000;
+drift_678: drift, L = 0.100000, aper = 0.020000;
+cvy000_134: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_679: drift, L = 0.085000, aper = 0.020000;
+cvy000_135: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_680: drift, L = 0.085000, aper = 0.020000;
+cvy000_136: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_681: drift, L = 0.280350, aper = 0.020000;
+drift_682: drift, L = 0.190000, aper = 0.020000;
+drift_683: drift, L = 0.000000, aper = 0.018000;
+drift_684: drift, L = 0.190000, aper = 0.020000;
+drift_685: drift, L = 0.280350, aper = 0.020000;
+cvy000_137: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_686: drift, L = 0.085000, aper = 0.020000;
+cvy000_138: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_687: drift, L = 0.085000, aper = 0.020000;
+cvy000_139: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_688: drift, L = 0.100000, aper = 0.020000;
+drift_689: drift, L = 0.100000, aper = 0.020000;
+sol000_173: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+sol000_174: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+sol000_175: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+sol000_176: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+drift_690: drift, L = 0.100000, aper = 0.020000;
+drift_691: drift, L = 0.100000, aper = 0.020000;
+cvy000_140: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_692: drift, L = 0.085000, aper = 0.020000;
+cvy000_141: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_693: drift, L = 0.085000, aper = 0.020000;
+cvy000_142: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_694: drift, L = 0.280350, aper = 0.020000;
+drift_695: drift, L = 0.190000, aper = 0.020000;
+drift_696: drift, L = 0.000000, aper = 0.018000;
+drift_697: drift, L = 0.190000, aper = 0.020000;
+drift_698: drift, L = 0.280350, aper = 0.020000;
+cvy000_143: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_699: drift, L = 0.085000, aper = 0.020000;
+cvy000_144: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_700: drift, L = 0.085000, aper = 0.020000;
+cvy000_145: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_701: drift, L = 0.100000, aper = 0.020000;
+drift_702: drift, L = 0.100000, aper = 0.020000;
+sol000_177: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+sol000_178: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+sol000_179: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+sol000_180: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+drift_703: drift, L = 0.100000, aper = 0.020000;
+drift_704: drift, L = 0.100000, aper = 0.020000;
+cvy000_146: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_705: drift, L = 0.085000, aper = 0.020000;
+cvy000_147: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_706: drift, L = 0.085000, aper = 0.020000;
+cvy000_148: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_707: drift, L = 0.280350, aper = 0.020000;
+drift_708: drift, L = 0.190000, aper = 0.020000;
+drift_709: drift, L = 0.000000, aper = 0.018000;
+drift_710: drift, L = 0.190000, aper = 0.020000;
+drift_711: drift, L = 0.280350, aper = 0.020000;
+cvy000_149: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_712: drift, L = 0.085000, aper = 0.020000;
+cvy000_150: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_713: drift, L = 0.085000, aper = 0.020000;
+cvy000_151: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_714: drift, L = 0.100000, aper = 0.020000;
+drift_715: drift, L = 0.100000, aper = 0.020000;
+sol000_181: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+sol000_182: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+sol000_183: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+sol000_184: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+drift_716: drift, L = 0.100000, aper = 0.020000;
+drift_717: drift, L = 0.100000, aper = 0.020000;
+cvy000_152: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_718: drift, L = 0.085000, aper = 0.020000;
+cvy000_153: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_719: drift, L = 0.085000, aper = 0.020000;
+cvy000_154: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_720: drift, L = 0.280350, aper = 0.020000;
+drift_721: drift, L = 0.190000, aper = 0.020000;
+drift_722: drift, L = 0.000000, aper = 0.018000;
+drift_723: drift, L = 0.190000, aper = 0.020000;
+drift_724: drift, L = 0.280350, aper = 0.020000;
+cvy000_155: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_725: drift, L = 0.085000, aper = 0.020000;
+cvy000_156: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_726: drift, L = 0.085000, aper = 0.020000;
+cvy000_157: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_727: drift, L = 0.100000, aper = 0.020000;
+drift_728: drift, L = 0.100000, aper = 0.020000;
+sol000_185: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+sol000_186: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+sol000_187: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+sol000_188: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+drift_729: drift, L = 0.100000, aper = 0.020000;
+drift_730: drift, L = 0.100000, aper = 0.020000;
+cvy000_158: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_731: drift, L = 0.085000, aper = 0.020000;
+cvy000_159: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_732: drift, L = 0.085000, aper = 0.020000;
+cvy000_160: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_733: drift, L = 0.280350, aper = 0.020000;
+drift_734: drift, L = 0.190000, aper = 0.020000;
+drift_735: drift, L = 0.000000, aper = 0.018000;
+drift_736: drift, L = 0.190000, aper = 0.020000;
+drift_737: drift, L = 0.280350, aper = 0.020000;
+cvy000_161: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_738: drift, L = 0.085000, aper = 0.020000;
+cvy000_162: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_739: drift, L = 0.085000, aper = 0.020000;
+cvy000_163: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_740: drift, L = 0.100000, aper = 0.020000;
+drift_741: drift, L = 0.100000, aper = 0.020000;
+sol000_189: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+sol000_190: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+sol000_191: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+sol000_192: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+drift_742: drift, L = 0.100000, aper = 0.020000;
+drift_743: drift, L = 0.100000, aper = 0.020000;
+cvy000_164: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_744: drift, L = 0.085000, aper = 0.020000;
+cvy000_165: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_745: drift, L = 0.085000, aper = 0.020000;
+cvy000_166: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_746: drift, L = 0.280350, aper = 0.020000;
+drift_747: drift, L = 0.190000, aper = 0.020000;
+drift_748: drift, L = 0.000000, aper = 0.018000;
+drift_749: drift, L = 0.190000, aper = 0.020000;
+drift_750: drift, L = 0.280350, aper = 0.020000;
+cvy000_167: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_751: drift, L = 0.085000, aper = 0.020000;
+cvy000_168: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_752: drift, L = 0.085000, aper = 0.020000;
+cvy000_169: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_753: drift, L = 0.100000, aper = 0.020000;
+drift_754: drift, L = 0.100000, aper = 0.020000;
+sol000_193: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+sol000_194: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+sol000_195: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+sol000_196: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+drift_755: drift, L = 0.100000, aper = 0.020000;
+drift_756: drift, L = 0.100000, aper = 0.020000;
+cvy000_170: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_757: drift, L = 0.085000, aper = 0.020000;
+cvy000_171: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_758: drift, L = 0.085000, aper = 0.020000;
+cvy000_172: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_759: drift, L = 0.280350, aper = 0.020000;
+drift_760: drift, L = 0.190000, aper = 0.020000;
+drift_761: drift, L = 0.000000, aper = 0.018000;
+drift_762: drift, L = 0.190000, aper = 0.020000;
+drift_763: drift, L = 0.280350, aper = 0.020000;
+cvy000_173: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_764: drift, L = 0.085000, aper = 0.020000;
+cvy000_174: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_765: drift, L = 0.085000, aper = 0.020000;
+cvy000_175: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_766: drift, L = 0.100000, aper = 0.020000;
+drift_767: drift, L = 0.100000, aper = 0.020000;
+sol000_197: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+sol000_198: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+sol000_199: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+sol000_200: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+drift_768: drift, L = 0.100000, aper = 0.020000;
+drift_769: drift, L = 0.100000, aper = 0.020000;
+cvy000_176: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_770: drift, L = 0.085000, aper = 0.020000;
+cvy000_177: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_771: drift, L = 0.085000, aper = 0.020000;
+cvy000_178: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_772: drift, L = 0.280350, aper = 0.020000;
+drift_773: drift, L = 0.190000, aper = 0.020000;
+drift_774: drift, L = 0.000000, aper = 0.018000;
+drift_775: drift, L = 0.190000, aper = 0.020000;
+drift_776: drift, L = 0.280350, aper = 0.020000;
+cvy000_179: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_777: drift, L = 0.085000, aper = 0.020000;
+cvy000_180: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_778: drift, L = 0.085000, aper = 0.020000;
+cvy000_181: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_779: drift, L = 0.100000, aper = 0.020000;
+drift_780: drift, L = 0.100000, aper = 0.020000;
+sol000_201: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_202: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_203: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_204: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+drift_781: drift, L = 0.100000, aper = 0.020000;
+drift_782: drift, L = 0.100000, aper = 0.020000;
+cvy000_182: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_783: drift, L = 0.085000, aper = 0.020000;
+cvy000_183: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_784: drift, L = 0.085000, aper = 0.020000;
+cvy000_184: rfcavity, cavtype = "0.041QWR", L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_785: drift, L = 0.280350, aper = 0.020000;
+drift_786: drift, L = 0.190000, aper = 0.020000;
+drift_787: drift, L = 0.000000, aper = 0.018000;
+drift_788: drift, L = 0.190000, aper = 0.020000;
+drift_789: drift, L = 0.256550, aper = 0.020000;
+cvy000_185: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_790: drift, L = 0.075000, aper = 0.020000;
+cvy000_186: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_791: drift, L = 0.075000, aper = 0.020000;
+cvy000_187: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_792: drift, L = 0.075000, aper = 0.020000;
+cvy000_188: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_793: drift, L = 0.080000, aper = 0.020000;
+drift_794: drift, L = 0.100000, aper = 0.020000;
+sol000_205: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+sol000_206: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+sol000_207: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+sol000_208: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+drift_795: drift, L = 0.100000, aper = 0.020000;
+drift_796: drift, L = 0.080000, aper = 0.020000;
+cvy000_189: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_797: drift, L = 0.075000, aper = 0.020000;
+cvy000_190: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_798: drift, L = 0.075000, aper = 0.020000;
+cvy000_191: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_799: drift, L = 0.075000, aper = 0.020000;
+cvy000_192: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_800: drift, L = 0.256550, aper = 0.020000;
+drift_801: drift, L = 0.190000, aper = 0.020000;
+drift_802: drift, L = 0.000000, aper = 0.018000;
+drift_803: drift, L = 0.190000, aper = 0.020000;
+drift_804: drift, L = 0.256550, aper = 0.020000;
+cvy000_193: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_805: drift, L = 0.075000, aper = 0.020000;
+cvy000_194: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_806: drift, L = 0.075000, aper = 0.020000;
+cvy000_195: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_807: drift, L = 0.075000, aper = 0.020000;
+cvy000_196: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_808: drift, L = 0.080000, aper = 0.020000;
+drift_809: drift, L = 0.100000, aper = 0.020000;
+sol000_209: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+sol000_210: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+sol000_211: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+sol000_212: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+drift_810: drift, L = 0.100000, aper = 0.020000;
+drift_811: drift, L = 0.080000, aper = 0.020000;
+cvy000_197: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_812: drift, L = 0.075000, aper = 0.020000;
+cvy000_198: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_813: drift, L = 0.075000, aper = 0.020000;
+cvy000_199: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_814: drift, L = 0.075000, aper = 0.020000;
+cvy000_200: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_815: drift, L = 0.256550, aper = 0.020000;
+drift_816: drift, L = 0.190000, aper = 0.020000;
+drift_817: drift, L = 0.000000, aper = 0.018000;
+drift_818: drift, L = 0.190000, aper = 0.020000;
+drift_819: drift, L = 0.256550, aper = 0.020000;
+cvy000_201: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_820: drift, L = 0.075000, aper = 0.020000;
+cvy000_202: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_821: drift, L = 0.075000, aper = 0.020000;
+cvy000_203: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_822: drift, L = 0.075000, aper = 0.020000;
+cvy000_204: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_823: drift, L = 0.080000, aper = 0.020000;
+drift_824: drift, L = 0.100000, aper = 0.020000;
+sol000_213: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+sol000_214: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+sol000_215: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+sol000_216: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+drift_825: drift, L = 0.100000, aper = 0.020000;
+drift_826: drift, L = 0.080000, aper = 0.020000;
+cvy000_205: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_827: drift, L = 0.075000, aper = 0.020000;
+cvy000_206: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_828: drift, L = 0.075000, aper = 0.020000;
+cvy000_207: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_829: drift, L = 0.075000, aper = 0.020000;
+cvy000_208: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_830: drift, L = 0.256550, aper = 0.020000;
+drift_831: drift, L = 0.190000, aper = 0.020000;
+drift_832: drift, L = 0.000000, aper = 0.018000;
+drift_833: drift, L = 0.190000, aper = 0.020000;
+drift_834: drift, L = 0.256550, aper = 0.020000;
+cvy000_209: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_835: drift, L = 0.075000, aper = 0.020000;
+cvy000_210: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_836: drift, L = 0.075000, aper = 0.020000;
+cvy000_211: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_837: drift, L = 0.075000, aper = 0.020000;
+cvy000_212: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_838: drift, L = 0.080000, aper = 0.020000;
+drift_839: drift, L = 0.100000, aper = 0.020000;
+sol000_217: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_218: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_219: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_220: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+drift_840: drift, L = 0.100000, aper = 0.020000;
+drift_841: drift, L = 0.080000, aper = 0.020000;
+cvy000_213: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_842: drift, L = 0.075000, aper = 0.020000;
+cvy000_214: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_843: drift, L = 0.075000, aper = 0.020000;
+cvy000_215: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_844: drift, L = 0.075000, aper = 0.020000;
+cvy000_216: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_845: drift, L = 0.256550, aper = 0.020000;
+drift_846: drift, L = 0.190000, aper = 0.020000;
+drift_847: drift, L = 0.000000, aper = 0.018000;
+drift_848: drift, L = 0.190000, aper = 0.020000;
+drift_849: drift, L = 0.256550, aper = 0.020000;
+cvy000_217: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_850: drift, L = 0.075000, aper = 0.020000;
+cvy000_218: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_851: drift, L = 0.075000, aper = 0.020000;
+cvy000_219: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_852: drift, L = 0.075000, aper = 0.020000;
+cvy000_220: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_853: drift, L = 0.080000, aper = 0.020000;
+drift_854: drift, L = 0.100000, aper = 0.020000;
+sol000_221: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_222: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_223: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_224: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+drift_855: drift, L = 0.100000, aper = 0.020000;
+drift_856: drift, L = 0.080000, aper = 0.020000;
+cvy000_221: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_857: drift, L = 0.075000, aper = 0.020000;
+cvy000_222: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_858: drift, L = 0.075000, aper = 0.020000;
+cvy000_223: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_859: drift, L = 0.075000, aper = 0.020000;
+cvy000_224: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_860: drift, L = 0.256550, aper = 0.020000;
+drift_861: drift, L = 0.190000, aper = 0.020000;
+drift_862: drift, L = 0.000000, aper = 0.018000;
+drift_863: drift, L = 0.190000, aper = 0.020000;
+drift_864: drift, L = 0.256550, aper = 0.020000;
+cvy000_225: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_865: drift, L = 0.075000, aper = 0.020000;
+cvy000_226: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_866: drift, L = 0.075000, aper = 0.020000;
+cvy000_227: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_867: drift, L = 0.075000, aper = 0.020000;
+cvy000_228: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_868: drift, L = 0.080000, aper = 0.020000;
+drift_869: drift, L = 0.100000, aper = 0.020000;
+sol000_225: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_226: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_227: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_228: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+drift_870: drift, L = 0.100000, aper = 0.020000;
+drift_871: drift, L = 0.080000, aper = 0.020000;
+cvy000_229: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_872: drift, L = 0.075000, aper = 0.020000;
+cvy000_230: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_873: drift, L = 0.075000, aper = 0.020000;
+cvy000_231: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_874: drift, L = 0.075000, aper = 0.020000;
+cvy000_232: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_875: drift, L = 0.256550, aper = 0.020000;
+drift_876: drift, L = 0.190000, aper = 0.020000;
+drift_877: drift, L = 0.000000, aper = 0.018000;
+drift_878: drift, L = 0.190000, aper = 0.020000;
+drift_879: drift, L = 0.256550, aper = 0.020000;
+cvy000_233: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_880: drift, L = 0.075000, aper = 0.020000;
+cvy000_234: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_881: drift, L = 0.075000, aper = 0.020000;
+cvy000_235: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_882: drift, L = 0.075000, aper = 0.020000;
+cvy000_236: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_883: drift, L = 0.080000, aper = 0.020000;
+drift_884: drift, L = 0.100000, aper = 0.020000;
+sol000_229: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_230: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_231: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_232: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+drift_885: drift, L = 0.100000, aper = 0.020000;
+drift_886: drift, L = 0.080000, aper = 0.020000;
+cvy000_237: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_887: drift, L = 0.075000, aper = 0.020000;
+cvy000_238: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_888: drift, L = 0.075000, aper = 0.020000;
+cvy000_239: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_889: drift, L = 0.075000, aper = 0.020000;
+cvy000_240: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_890: drift, L = 0.256550, aper = 0.020000;
+drift_891: drift, L = 0.190000, aper = 0.020000;
+drift_892: drift, L = 0.000000, aper = 0.018000;
+drift_893: drift, L = 0.190000, aper = 0.020000;
+drift_894: drift, L = 0.256550, aper = 0.020000;
+cvy000_241: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_895: drift, L = 0.075000, aper = 0.020000;
+cvy000_242: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_896: drift, L = 0.075000, aper = 0.020000;
+cvy000_243: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_897: drift, L = 0.075000, aper = 0.020000;
+cvy000_244: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_898: drift, L = 0.080000, aper = 0.020000;
+drift_899: drift, L = 0.100000, aper = 0.020000;
+sol000_233: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_234: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_235: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_236: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+drift_900: drift, L = 0.100000, aper = 0.020000;
+drift_901: drift, L = 0.080000, aper = 0.020000;
+cvy000_245: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_902: drift, L = 0.075000, aper = 0.020000;
+cvy000_246: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_903: drift, L = 0.075000, aper = 0.020000;
+cvy000_247: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_904: drift, L = 0.075000, aper = 0.020000;
+cvy000_248: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_905: drift, L = 0.256550, aper = 0.020000;
+drift_906: drift, L = 0.190000, aper = 0.020000;
+drift_907: drift, L = 0.000000, aper = 0.018000;
+drift_908: drift, L = 0.190000, aper = 0.020000;
+drift_909: drift, L = 0.256550, aper = 0.020000;
+cvy000_249: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_910: drift, L = 0.075000, aper = 0.020000;
+cvy000_250: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_911: drift, L = 0.075000, aper = 0.020000;
+cvy000_251: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_912: drift, L = 0.075000, aper = 0.020000;
+cvy000_252: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_913: drift, L = 0.080000, aper = 0.020000;
+drift_914: drift, L = 0.100000, aper = 0.020000;
+sol000_237: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_238: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_239: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_240: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+drift_915: drift, L = 0.100000, aper = 0.020000;
+drift_916: drift, L = 0.080000, aper = 0.020000;
+cvy000_253: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_917: drift, L = 0.075000, aper = 0.020000;
+cvy000_254: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_918: drift, L = 0.075000, aper = 0.020000;
+cvy000_255: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_919: drift, L = 0.075000, aper = 0.020000;
+cvy000_256: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_920: drift, L = 0.256550, aper = 0.020000;
+drift_921: drift, L = 0.190000, aper = 0.020000;
+drift_922: drift, L = 0.000000, aper = 0.018000;
+drift_923: drift, L = 0.190000, aper = 0.020000;
+drift_924: drift, L = 0.256550, aper = 0.020000;
+cvy000_257: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_925: drift, L = 0.075000, aper = 0.020000;
+cvy000_258: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_926: drift, L = 0.075000, aper = 0.020000;
+cvy000_259: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_927: drift, L = 0.075000, aper = 0.020000;
+cvy000_260: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_928: drift, L = 0.080000, aper = 0.020000;
+drift_929: drift, L = 0.100000, aper = 0.020000;
+sol000_241: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+sol000_242: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+sol000_243: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+sol000_244: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+drift_930: drift, L = 0.100000, aper = 0.020000;
+drift_931: drift, L = 0.080000, aper = 0.020000;
+cvy000_261: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_932: drift, L = 0.075000, aper = 0.020000;
+cvy000_262: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_933: drift, L = 0.075000, aper = 0.020000;
+cvy000_263: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_934: drift, L = 0.075000, aper = 0.020000;
+cvy000_264: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_935: drift, L = 0.256550, aper = 0.020000;
+drift_936: drift, L = 0.190000, aper = 0.020000;
+drift_937: drift, L = 0.000000, aper = 0.018000;
+drift_938: drift, L = 0.190000, aper = 0.020000;
+drift_939: drift, L = 0.256550, aper = 0.020000;
+cvy000_265: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_940: drift, L = 0.075000, aper = 0.020000;
+cvy000_266: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_941: drift, L = 0.075000, aper = 0.020000;
+cvy000_267: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_942: drift, L = 0.075000, aper = 0.020000;
+cvy000_268: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_943: drift, L = 0.080000, aper = 0.020000;
+drift_944: drift, L = 0.100000, aper = 0.020000;
+sol000_245: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+sol000_246: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+sol000_247: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+sol000_248: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+drift_945: drift, L = 0.100000, aper = 0.020000;
+drift_946: drift, L = 0.080000, aper = 0.020000;
+cvy000_269: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_947: drift, L = 0.075000, aper = 0.020000;
+cvy000_270: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_948: drift, L = 0.075000, aper = 0.020000;
+cvy000_271: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_949: drift, L = 0.075000, aper = 0.020000;
+cvy000_272: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_950: drift, L = 0.256550, aper = 0.020000;
+drift_951: drift, L = 0.190000, aper = 0.020000;
+drift_952: drift, L = 0.000000, aper = 0.018000;
+drift_953: drift, L = 0.190000, aper = 0.020000;
+drift_954: drift, L = 0.256550, aper = 0.020000;
+cvy000_273: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_955: drift, L = 0.075000, aper = 0.020000;
+cvy000_274: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_956: drift, L = 0.075000, aper = 0.020000;
+cvy000_275: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_957: drift, L = 0.075000, aper = 0.020000;
+cvy000_276: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_958: drift, L = 0.080000, aper = 0.020000;
+drift_959: drift, L = 0.100000, aper = 0.020000;
+sol000_249: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_250: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_251: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_252: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+drift_960: drift, L = 0.100000, aper = 0.020000;
+drift_961: drift, L = 0.080000, aper = 0.020000;
+cvy000_277: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_962: drift, L = 0.075000, aper = 0.020000;
+cvy000_278: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_963: drift, L = 0.075000, aper = 0.020000;
+cvy000_279: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_964: drift, L = 0.075000, aper = 0.020000;
+cvy000_280: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_965: drift, L = 0.256550, aper = 0.020000;
+drift_966: drift, L = 0.190000, aper = 0.020000;
+drift_967: drift, L = 0.000000, aper = 0.018000;
+drift_968: drift, L = 0.190000, aper = 0.020000;
+drift_969: drift, L = 0.600000, aper = 0.025000;
+qua000_43: quadrupole, L = 0.250000, B2 = 9.765200, aper = 0.025000;
+drift_970: drift, L = 0.400000, aper = 0.025000;
+qua000_44: quadrupole, L = 0.250000, B2 = -14.014600, aper = 0.025000;
+drift_971: drift, L = 0.750000, aper = 0.025000;
+qua000_45: quadrupole, L = 0.250000, B2 = -3.816000, aper = 0.025000;
+drift_972: drift, L = 0.250000, aper = 0.025000;
+qua000_46: quadrupole, L = 0.250000, B2 = 10.668400, aper = 0.025000;
+drift_973: drift, L = 1.060000, aper = 0.025000;
+mrk000_317: marker;
+mrk000_318: marker;
+dipo00_81: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_319: marker;
+dipo00_82: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_320: marker;
+dipo00_83: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_321: marker;
+dipo00_84: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_322: marker;
+dipo00_85: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_323: marker;
+dipo00_86: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_324: marker;
+dipo00_87: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_325: marker;
+dipo00_88: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_326: marker;
+dipo00_89: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_327: marker;
+dipo00_90: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_328: marker;
+dipo00_91: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_329: marker;
+dipo00_92: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_330: marker;
+dipo00_93: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_331: marker;
+dipo00_94: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_332: marker;
+dipo00_95: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_333: marker;
+dipo00_96: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_334: marker;
+dipo00_97: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_335: marker;
+dipo00_98: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_336: marker;
+dipo00_99: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_337: marker;
+dipo00_100: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_338: marker;
+drift_974: drift, L = 0.380000, aper = 0.050000;
+drift_975: drift, L = 0.020000, aper = 0.050000;
+cmq000_47: quadrupole, L = 0.330000, B2 = 21.340000, aper = 0.050000;
+drift_976: drift, L = 0.070000, aper = 0.050000;
+drift_977: drift, L = 0.050000, aper = 0.050000;
+cmq000_48: quadrupole, L = 0.100000, B2 = 0.000000, aper = 0.050000;
+drift_978: drift, L = 0.080000, aper = 0.050000;
+drift_979: drift, L = 0.020000, aper = 0.050000;
+drift_980: drift, L = 0.050000, aper = 0.050000;
+cmq000_49: quadrupole, L = 0.400000, B2 = -19.330000, aper = 0.050000;
+drift_981: drift, L = 0.050000, aper = 0.050000;
+drift_982: drift, L = 0.080000, aper = 0.050000;
+cmq000_50: quadrupole, L = 0.100000, B2 = 0.000000, aper = 0.050000;
+drift_983: drift, L = 0.300000, aper = 0.050000;
+drift_984: drift, L = 0.020000, aper = 0.050000;
+drift_985: drift, L = 0.070000, aper = 0.050000;
+cmq000_51: quadrupole, L = 0.330000, B2 = 19.740000, aper = 0.050000;
+drift_986: drift, L = 0.727930, aper = 0.050000;
+mrk000_339: marker;
+dipo00_101: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_340: marker;
+dipo00_102: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_341: marker;
+dipo00_103: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_342: marker;
+dipo00_104: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_343: marker;
+dipo00_105: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_344: marker;
+dipo00_106: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_345: marker;
+dipo00_107: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_346: marker;
+dipo00_108: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_347: marker;
+dipo00_109: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_348: marker;
+dipo00_110: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_349: marker;
+dipo00_111: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_350: marker;
+dipo00_112: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_351: marker;
+dipo00_113: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_352: marker;
+dipo00_114: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_353: marker;
+dipo00_115: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_354: marker;
+dipo00_116: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_355: marker;
+dipo00_117: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_356: marker;
+dipo00_118: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_357: marker;
+dipo00_119: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_358: marker;
+dipo00_120: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_359: marker;
+drift_987: drift, L = 0.700000, aper = 0.035000;
+drift_988: drift, L = 0.700000, aper = 0.035000;
+mrk000_360: marker;
+dipo00_121: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_361: marker;
+dipo00_122: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_362: marker;
+dipo00_123: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_363: marker;
+dipo00_124: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_364: marker;
+dipo00_125: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_365: marker;
+dipo00_126: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_366: marker;
+dipo00_127: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_367: marker;
+dipo00_128: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_368: marker;
+dipo00_129: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_369: marker;
+dipo00_130: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_370: marker;
+dipo00_131: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_371: marker;
+dipo00_132: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_372: marker;
+dipo00_133: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_373: marker;
+dipo00_134: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_374: marker;
+dipo00_135: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_375: marker;
+dipo00_136: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_376: marker;
+dipo00_137: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_377: marker;
+dipo00_138: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_378: marker;
+dipo00_139: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_379: marker;
+dipo00_140: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_380: marker;
+drift_989: drift, L = 0.727930, aper = 0.050000;
+cmq000_52: quadrupole, L = 0.330000, B2 = 19.740000, aper = 0.050000;
+drift_990: drift, L = 0.070000, aper = 0.050000;
+drift_991: drift, L = 0.020000, aper = 0.050000;
+drift_992: drift, L = 0.300000, aper = 0.050000;
+cmq000_53: quadrupole, L = 0.100000, B2 = 0.000000, aper = 0.050000;
+drift_993: drift, L = 0.080000, aper = 0.050000;
+drift_994: drift, L = 0.050000, aper = 0.050000;
+cmq000_54: quadrupole, L = 0.400000, B2 = -19.330000, aper = 0.050000;
+drift_995: drift, L = 0.050000, aper = 0.050000;
+drift_996: drift, L = 0.020000, aper = 0.050000;
+drift_997: drift, L = 0.080000, aper = 0.050000;
+cmq000_55: quadrupole, L = 0.100000, B2 = 0.000000, aper = 0.050000;
+drift_998: drift, L = 0.050000, aper = 0.050000;
+drift_999: drift, L = 0.070000, aper = 0.050000;
+cmq000_56: quadrupole, L = 0.330000, B2 = 21.340000, aper = 0.050000;
+drift_1000: drift, L = 0.020000, aper = 0.050000;
+drift_1001: drift, L = 0.380000, aper = 0.050000;
+mrk000_381: marker;
+dipo00_141: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_382: marker;
+dipo00_142: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_383: marker;
+dipo00_143: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_384: marker;
+dipo00_144: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_385: marker;
+dipo00_145: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_386: marker;
+dipo00_146: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_387: marker;
+dipo00_147: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_388: marker;
+dipo00_148: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_389: marker;
+dipo00_149: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_390: marker;
+dipo00_150: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_391: marker;
+dipo00_151: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_392: marker;
+dipo00_152: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_393: marker;
+dipo00_153: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_394: marker;
+dipo00_154: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_395: marker;
+dipo00_155: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_396: marker;
+dipo00_156: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_397: marker;
+dipo00_157: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_398: marker;
+dipo00_158: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_399: marker;
+dipo00_159: sbend, L = 0.116875, phi = 2.250000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.590384, aper = 0.020000;
+mrk000_400: marker;
+dipo00_160: sbend, L = 0.116875, phi = 2.250000, phi1 = 12.500000, phi2 = 12.500000, bg = 0.590384, aper = 0.020000;
+mrk000_401: marker;
+drift_1002: drift, L = 1.060000, aper = 0.025000;
+qua000_57: quadrupole, L = 0.250000, B2 = 10.668400, aper = 0.025000;
+drift_1003: drift, L = 0.250000, aper = 0.025000;
+qua000_58: quadrupole, L = 0.250000, B2 = -3.816000, aper = 0.025000;
+drift_1004: drift, L = 0.750000, aper = 0.025000;
+qua000_59: quadrupole, L = 0.250000, B2 = -14.014600, aper = 0.025000;
+drift_1005: drift, L = 0.400000, aper = 0.025000;
+qua000_60: quadrupole, L = 0.250000, B2 = 9.765200, aper = 0.025000;
+drift_1006: drift, L = 0.841104, aper = 0.025000;
+mrk000_402: marker;
+drift_1007: drift, L = 0.245723, aper = 0.020000;
+cvy000_281: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.600000, aper = 0.020000;
+drift_1008: drift, L = 0.095173, aper = 0.020000;
+cvy000_282: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.600000, aper = 0.020000;
+drift_1009: drift, L = 0.095173, aper = 0.020000;
+cvy000_283: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.600000, aper = 0.020000;
+drift_1010: drift, L = 0.095173, aper = 0.020000;
+cvy000_284: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -90.000000, scl_fac = 0.600000, aper = 0.020000;
+drift_1011: drift, L = 0.245723, aper = 0.020000;
+mrk000_403: marker;
+drift_1012: drift, L = 0.740104, aper = 0.025000;
+qua000_61: quadrupole, L = 0.250000, B2 = 18.247500, aper = 0.025000;
+drift_1013: drift, L = 0.500000, aper = 0.025000;
+qua000_62: quadrupole, L = 0.250000, B2 = -17.240600, aper = 0.025000;
+drift_1014: drift, L = 5.771827, aper = 0.025000;
+qua000_63: quadrupole, L = 0.250000, B2 = 14.295900, aper = 0.025000;
+drift_1015: drift, L = 0.750000, aper = 0.025000;
+qua000_64: quadrupole, L = 0.250000, B2 = -14.595100, aper = 0.025000;
+drift_1016: drift, L = 3.250000, aper = 0.025000;
+mrk000_404: marker;
+drift_1017: drift, L = 0.256600, aper = 0.020000;
+cvy000_285: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1018: drift, L = 0.075000, aper = 0.020000;
+cvy000_286: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1019: drift, L = 0.075000, aper = 0.020000;
+cvy000_287: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1020: drift, L = 0.075000, aper = 0.020000;
+cvy000_288: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1021: drift, L = 0.080000, aper = 0.020000;
+drift_1022: drift, L = 0.100000, aper = 0.020000;
+sol000_253: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+sol000_254: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+sol000_255: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+sol000_256: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+drift_1023: drift, L = 0.100000, aper = 0.020000;
+drift_1024: drift, L = 0.080000, aper = 0.020000;
+cvy000_289: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1025: drift, L = 0.075000, aper = 0.020000;
+cvy000_290: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1026: drift, L = 0.075000, aper = 0.020000;
+cvy000_291: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1027: drift, L = 0.075000, aper = 0.020000;
+cvy000_292: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1028: drift, L = 0.256600, aper = 0.020000;
+drift_1029: drift, L = 0.190000, aper = 0.020000;
+drift_1030: drift, L = 0.000000, aper = 0.018000;
+drift_1031: drift, L = 0.190000, aper = 0.020000;
+drift_1032: drift, L = 0.256600, aper = 0.020000;
+cvy000_293: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1033: drift, L = 0.075000, aper = 0.020000;
+cvy000_294: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1034: drift, L = 0.075000, aper = 0.020000;
+cvy000_295: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1035: drift, L = 0.075000, aper = 0.020000;
+cvy000_296: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1036: drift, L = 0.080000, aper = 0.020000;
+drift_1037: drift, L = 0.100000, aper = 0.020000;
+sol000_257: solenoid, L = 0.125000, B = 8.900000, aper = 0.020000;
+sol000_258: solenoid, L = 0.125000, B = 8.900000, aper = 0.020000;
+sol000_259: solenoid, L = 0.125000, B = 8.900000, aper = 0.020000;
+sol000_260: solenoid, L = 0.125000, B = 8.900000, aper = 0.020000;
+drift_1038: drift, L = 0.100000, aper = 0.020000;
+drift_1039: drift, L = 0.080000, aper = 0.020000;
+cvy000_297: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1040: drift, L = 0.075000, aper = 0.020000;
+cvy000_298: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1041: drift, L = 0.075000, aper = 0.020000;
+cvy000_299: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1042: drift, L = 0.075000, aper = 0.020000;
+cvy000_300: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1043: drift, L = 0.256600, aper = 0.020000;
+drift_1044: drift, L = 0.190000, aper = 0.020000;
+drift_1045: drift, L = 0.000000, aper = 0.018000;
+drift_1046: drift, L = 0.190000, aper = 0.020000;
+drift_1047: drift, L = 0.256600, aper = 0.020000;
+cvy000_301: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1048: drift, L = 0.075000, aper = 0.020000;
+cvy000_302: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1049: drift, L = 0.075000, aper = 0.020000;
+cvy000_303: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1050: drift, L = 0.075000, aper = 0.020000;
+cvy000_304: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1051: drift, L = 0.080000, aper = 0.020000;
+drift_1052: drift, L = 0.100000, aper = 0.020000;
+sol000_261: solenoid, L = 0.125000, B = -8.900000, aper = 0.020000;
+sol000_262: solenoid, L = 0.125000, B = -8.900000, aper = 0.020000;
+sol000_263: solenoid, L = 0.125000, B = -8.900000, aper = 0.020000;
+sol000_264: solenoid, L = 0.125000, B = -8.900000, aper = 0.020000;
+drift_1053: drift, L = 0.100000, aper = 0.020000;
+drift_1054: drift, L = 0.080000, aper = 0.020000;
+cvy000_305: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1055: drift, L = 0.075000, aper = 0.020000;
+cvy000_306: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1056: drift, L = 0.075000, aper = 0.020000;
+cvy000_307: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1057: drift, L = 0.075000, aper = 0.020000;
+cvy000_308: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1058: drift, L = 0.256600, aper = 0.020000;
+drift_1059: drift, L = 0.190000, aper = 0.020000;
+drift_1060: drift, L = 0.000000, aper = 0.018000;
+drift_1061: drift, L = 0.190000, aper = 0.020000;
+drift_1062: drift, L = 0.256600, aper = 0.020000;
+cvy000_309: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1063: drift, L = 0.075000, aper = 0.020000;
+cvy000_310: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1064: drift, L = 0.075000, aper = 0.020000;
+cvy000_311: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1065: drift, L = 0.075000, aper = 0.020000;
+cvy000_312: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1066: drift, L = 0.080000, aper = 0.020000;
+drift_1067: drift, L = 0.100000, aper = 0.020000;
+sol000_265: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_266: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_267: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+sol000_268: solenoid, L = 0.125000, B = 8.000000, aper = 0.020000;
+drift_1068: drift, L = 0.100000, aper = 0.020000;
+drift_1069: drift, L = 0.080000, aper = 0.020000;
+cvy000_313: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1070: drift, L = 0.075000, aper = 0.020000;
+cvy000_314: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1071: drift, L = 0.075000, aper = 0.020000;
+cvy000_315: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1072: drift, L = 0.075000, aper = 0.020000;
+cvy000_316: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1073: drift, L = 0.256600, aper = 0.020000;
+drift_1074: drift, L = 0.190000, aper = 0.020000;
+drift_1075: drift, L = 0.000000, aper = 0.018000;
+drift_1076: drift, L = 0.190000, aper = 0.020000;
+drift_1077: drift, L = 0.256600, aper = 0.020000;
+cvy000_317: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1078: drift, L = 0.075000, aper = 0.020000;
+cvy000_318: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1079: drift, L = 0.075000, aper = 0.020000;
+cvy000_319: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1080: drift, L = 0.075000, aper = 0.020000;
+cvy000_320: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1081: drift, L = 0.080000, aper = 0.020000;
+drift_1082: drift, L = 0.100000, aper = 0.020000;
+sol000_269: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+sol000_270: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+sol000_271: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+sol000_272: solenoid, L = 0.125000, B = -8.000000, aper = 0.020000;
+drift_1083: drift, L = 0.100000, aper = 0.020000;
+drift_1084: drift, L = 0.080000, aper = 0.020000;
+cvy000_321: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1085: drift, L = 0.075000, aper = 0.020000;
+cvy000_322: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1086: drift, L = 0.075000, aper = 0.020000;
+cvy000_323: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1087: drift, L = 0.075000, aper = 0.020000;
+cvy000_324: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1088: drift, L = 0.256600, aper = 0.020000;
+drift_1089: drift, L = 0.190000, aper = 0.020000;
+drift_1090: drift, L = 0.000000, aper = 0.018000;
+drift_1091: drift, L = 0.190000, aper = 0.020000;
+drift_1092: drift, L = 0.256600, aper = 0.020000;
+cvy000_325: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1093: drift, L = 0.075000, aper = 0.020000;
+cvy000_326: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1094: drift, L = 0.075000, aper = 0.020000;
+cvy000_327: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1095: drift, L = 0.075000, aper = 0.020000;
+cvy000_328: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1096: drift, L = 0.080000, aper = 0.020000;
+drift_1097: drift, L = 0.100000, aper = 0.020000;
+sol000_273: solenoid, L = 0.125000, B = 8.500000, aper = 0.020000;
+sol000_274: solenoid, L = 0.125000, B = 8.500000, aper = 0.020000;
+sol000_275: solenoid, L = 0.125000, B = 8.500000, aper = 0.020000;
+sol000_276: solenoid, L = 0.125000, B = 8.500000, aper = 0.020000;
+drift_1098: drift, L = 0.100000, aper = 0.020000;
+drift_1099: drift, L = 0.080000, aper = 0.020000;
+cvy000_329: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1100: drift, L = 0.075000, aper = 0.020000;
+cvy000_330: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1101: drift, L = 0.075000, aper = 0.020000;
+cvy000_331: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1102: drift, L = 0.075000, aper = 0.020000;
+cvy000_332: rfcavity, cavtype = "0.041QWR", L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_1103: drift, L = 0.256600, aper = 0.020000;
+drift_1104: drift, L = 0.190000, aper = 0.020000;
+drift_1105: drift, L = 0.000000, aper = 0.018000;
+drift_1106: drift, L = 0.190000, aper = 0.020000;
+mrk000_405: marker;
+drift_1107: drift, L = 1.023000, aper = 0.025000;
+qua000_65: quadrupole, L = 0.250000, B2 = -19.862100, aper = 0.025000;
+drift_1108: drift, L = 0.250000, aper = 0.025000;
+qua000_66: quadrupole, L = 0.250000, B2 = 21.942500, aper = 0.025000;
+drift_1109: drift, L = 3.430000, aper = 0.025000;
+qua000_67: quadrupole, L = 0.250000, B2 = -16.574300, aper = 0.025000;
+drift_1110: drift, L = 0.250000, aper = 0.025000;
+qua000_68: quadrupole, L = 0.250000, B2 = 6.346100, aper = 0.025000;
+drift_1111: drift, L = 0.250000, aper = 0.025000;
+mrk000_406: marker;
+drift_1112: drift, L = 1.852000, aper = 0.025000;
+qua000_69: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1113: drift, L = 2.000000, aper = 0.025000;
+qua000_70: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1114: drift, L = 1.852000, aper = 0.025000;
+drift_1115: drift, L = 1.852000, aper = 0.025000;
+qua000_71: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1116: drift, L = 2.000000, aper = 0.025000;
+qua000_72: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1117: drift, L = 1.852000, aper = 0.025000;
+drift_1118: drift, L = 1.852000, aper = 0.025000;
+qua000_73: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1119: drift, L = 2.000000, aper = 0.025000;
+qua000_74: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1120: drift, L = 1.852000, aper = 0.025000;
+drift_1121: drift, L = 1.852000, aper = 0.025000;
+qua000_75: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1122: drift, L = 2.000000, aper = 0.025000;
+qua000_76: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1123: drift, L = 1.852000, aper = 0.025000;
+drift_1124: drift, L = 1.852000, aper = 0.025000;
+qua000_77: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1125: drift, L = 2.000000, aper = 0.025000;
+qua000_78: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1126: drift, L = 1.852000, aper = 0.025000;
+drift_1127: drift, L = 1.852000, aper = 0.025000;
+qua000_79: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1128: drift, L = 2.000000, aper = 0.025000;
+qua000_80: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1129: drift, L = 1.852000, aper = 0.025000;
+drift_1130: drift, L = 1.852000, aper = 0.025000;
+qua000_81: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1131: drift, L = 2.000000, aper = 0.025000;
+qua000_82: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1132: drift, L = 1.852000, aper = 0.025000;
+drift_1133: drift, L = 1.852000, aper = 0.025000;
+qua000_83: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1134: drift, L = 2.000000, aper = 0.025000;
+qua000_84: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1135: drift, L = 1.852000, aper = 0.025000;
+drift_1136: drift, L = 1.852000, aper = 0.025000;
+qua000_85: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1137: drift, L = 2.000000, aper = 0.025000;
+qua000_86: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1138: drift, L = 1.852000, aper = 0.025000;
+drift_1139: drift, L = 1.852000, aper = 0.025000;
+qua000_87: quadrupole, L = 0.250000, B2 = 12.905800, aper = 0.025000;
+drift_1140: drift, L = 2.000000, aper = 0.025000;
+qua000_88: quadrupole, L = 0.250000, B2 = -12.905800, aper = 0.025000;
+drift_1141: drift, L = 1.852000, aper = 0.025000;
+mrk000_407: marker;
+drift_1142: drift, L = 0.773000, aper = 0.025000;
+qua000_89: quadrupole, L = 0.250000, B2 = 20.928200, aper = 0.025000;
+drift_1143: drift, L = 1.250000, aper = 0.025000;
+qua000_90: quadrupole, L = 0.250000, B2 = -19.518000, aper = 0.025000;
+drift_1144: drift, L = 2.180000, aper = 0.025000;
+qua000_91: quadrupole, L = 0.250000, B2 = 28.009100, aper = 0.025000;
+drift_1145: drift, L = 0.500000, aper = 0.025000;
+qua000_92: quadrupole, L = 0.250000, B2 = -26.161600, aper = 0.025000;
+drift_1146: drift, L = 0.500000, aper = 0.025000;
+drift_1147: drift, L = 0.398800, aper = 0.025000;
+mrk000_408: marker;
+drift_1148: drift, L = 2.000000, aper = 0.025000;
+qua000_93: quadrupole, L = 0.250000, B2 = 8.583900, aper = 0.025000;
+drift_1149: drift, L = 0.500000, aper = 0.025000;
+qua000_94: quadrupole, L = 0.250000, B2 = -9.244200, aper = 0.025000;
+drift_1150: drift, L = 2.000000, aper = 0.025000;
+qua000_95: quadrupole, L = 0.250000, B2 = -8.123200, aper = 0.025000;
+drift_1151: drift, L = 0.500000, aper = 0.025000;
+qua000_96: quadrupole, L = 0.250000, B2 = 11.422400, aper = 0.025000;
+drift_1152: drift, L = 4.058000, aper = 0.025000;
+qua000_97: quadrupole, L = 0.250000, B2 = -17.646100, aper = 0.025000;
+drift_1153: drift, L = 0.500000, aper = 0.025000;
+qua000_98: quadrupole, L = 0.250000, B2 = 20.841600, aper = 0.025000;
+drift_1154: drift, L = 0.900000, aper = 0.025000;
+mrk000_409: marker;
+dipo00_161: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_410: marker;
+dipo00_162: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_411: marker;
+dipo00_163: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_412: marker;
+dipo00_164: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_413: marker;
+dipo00_165: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_414: marker;
+dipo00_166: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_415: marker;
+dipo00_167: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_416: marker;
+dipo00_168: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_417: marker;
+dipo00_169: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_418: marker;
+dipo00_170: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_419: marker;
+drift_1155: drift, L = 2.100000, aper = 0.050000;
+drift_1156: drift, L = 0.200000, aper = 0.050000;
+cmq000_99: quadrupole, L = 0.400000, B2 = 15.024400, aper = 0.050000;
+drift_1157: drift, L = 0.400000, aper = 0.050000;
+drift_1158: drift, L = 0.200000, aper = 0.050000;
+cmq000_100: quadrupole, L = 0.400000, B2 = -8.890700, aper = 0.050000;
+drift_1159: drift, L = 0.950000, aper = 0.050000;
+mrk000_420: marker;
+dipo00_171: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_421: marker;
+dipo00_172: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_422: marker;
+dipo00_173: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_423: marker;
+dipo00_174: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_424: marker;
+dipo00_175: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_425: marker;
+dipo00_176: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_426: marker;
+dipo00_177: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_427: marker;
+dipo00_178: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_428: marker;
+dipo00_179: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_429: marker;
+dipo00_180: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_430: marker;
+drift_1160: drift, L = 0.550000, aper = 0.050000;
+drift_1161: drift, L = 0.550000, aper = 0.050000;
+mrk000_431: marker;
+dipo00_181: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_432: marker;
+dipo00_182: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_433: marker;
+dipo00_183: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_434: marker;
+dipo00_184: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_435: marker;
+dipo00_185: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_436: marker;
+dipo00_186: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_437: marker;
+dipo00_187: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_438: marker;
+dipo00_188: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_439: marker;
+dipo00_189: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_440: marker;
+dipo00_190: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_441: marker;
+drift_1162: drift, L = 0.950000, aper = 0.050000;
+cmq000_101: quadrupole, L = 0.400000, B2 = -8.890700, aper = 0.050000;
+drift_1163: drift, L = 0.200000, aper = 0.050000;
+drift_1164: drift, L = 0.400000, aper = 0.050000;
+cmq000_102: quadrupole, L = 0.400000, B2 = 15.024400, aper = 0.050000;
+drift_1165: drift, L = 0.200000, aper = 0.050000;
+drift_1166: drift, L = 2.100000, aper = 0.050000;
+mrk000_442: marker;
+dipo00_191: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_443: marker;
+dipo00_192: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_444: marker;
+dipo00_193: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_445: marker;
+dipo00_194: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_446: marker;
+dipo00_195: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_447: marker;
+dipo00_196: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_448: marker;
+dipo00_197: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_449: marker;
+dipo00_198: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_450: marker;
+dipo00_199: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_451: marker;
+dipo00_200: sbend, L = 0.165000, phi = 1.750000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.696464, aper = 0.020000;
+mrk000_452: marker;
+drift_1167: drift, L = 0.500000, aper = 0.025000;
+mrk000_453: marker;
+drift_1168: drift, L = 0.400000, aper = 0.025000;
+qua000_103: quadrupole, L = 0.250000, B2 = 14.227600, aper = 0.025000;
+drift_1169: drift, L = 0.500000, aper = 0.025000;
+qua000_104: quadrupole, L = 0.250000, B2 = -9.939600, aper = 0.025000;
+drift_1170: drift, L = 1.728000, aper = 0.025000;
+qua000_105: quadrupole, L = 0.250000, B2 = 7.349500, aper = 0.025000;
+drift_1171: drift, L = 0.500000, aper = 0.025000;
+qua000_106: quadrupole, L = 0.250000, B2 = -7.840200, aper = 0.025000;
+drift_1172: drift, L = 0.500000, aper = 0.025000;
+drift_1173: drift, L = 1.750000, aper = 0.025000;
+qua000_107: quadrupole, L = 0.260000, B2 = 22.479300, aper = 0.030000;
+drift_1174: drift, L = 0.240000, aper = 0.030000;
+qua000_108: quadrupole, L = 0.400000, B2 = -25.342300, aper = 0.030000;
+drift_1175: drift, L = 0.240000, aper = 0.030000;
+qua000_109: quadrupole, L = 0.260000, B2 = 22.479300, aper = 0.030000;
+drift_1176: drift, L = 1.750000, aper = 0.020000;
+drift_1177: drift, L = 0.000010, aper = 0.015000;
+mrk000_454: marker;
+
+cell: LINE = (
+  mrk000_1, drift_1, mrk000_2, cvy000_1, mrk000_3, drift_2, drift_3, sol000_1, 
+  sol000_2, sol000_3, sol000_4, drift_4, drift_5, mrk000_4, cvy000_2, mrk000_5, 
+  drift_6, mrk000_6, cvy000_3, mrk000_7, drift_7, drift_8, sol000_5, sol000_6, 
+  sol000_7, sol000_8, drift_9, drift_10, mrk000_8, cvy000_4, mrk000_9, drift_11, 
+  drift_12, drift_13, drift_14, drift_15, mrk000_10, cvy000_5, mrk000_11, drift_16, 
+  drift_17, sol000_9, sol000_10, sol000_11, sol000_12, drift_18, drift_19, mrk000_12, 
+  cvy000_6, mrk000_13, drift_20, mrk000_14, cvy000_7, mrk000_15, drift_21, drift_22, 
+  sol000_13, sol000_14, sol000_15, sol000_16, drift_23, drift_24, mrk000_16, cvy000_8, 
+  mrk000_17, drift_25, drift_26, drift_27, drift_28, drift_29, mrk000_18, cvy000_9, 
+  mrk000_19, drift_30, drift_31, sol000_17, sol000_18, sol000_19, sol000_20, drift_32, 
+  drift_33, mrk000_20, cvy000_10, mrk000_21, drift_34, mrk000_22, cvy000_11, mrk000_23, 
+  drift_35, drift_36, sol000_21, sol000_22, sol000_23, sol000_24, drift_37, drift_38, 
+  mrk000_24, cvy000_12, mrk000_25, drift_39, drift_40, drift_41, drift_42, mrk000_26, 
+  drift_43, drift_44, mrk000_27, cvy000_13, mrk000_28, drift_45, drift_46, drift_47, 
+  sol000_25, sol000_26, sol000_27, sol000_28, drift_48, drift_49, drift_50, mrk000_29, 
+  cvy000_14, mrk000_30, drift_51, drift_52, drift_53, mrk000_31, cvy000_15, mrk000_32, 
+  drift_54, drift_55, drift_56, mrk000_33, cvy000_16, mrk000_34, drift_57, drift_58, 
+  drift_59, sol000_29, sol000_30, sol000_31, sol000_32, drift_60, drift_61, drift_62, 
+  mrk000_35, cvy000_17, mrk000_36, drift_63, drift_64, drift_65, mrk000_37, cvy000_18, 
+  mrk000_38, drift_66, drift_67, drift_68, mrk000_39, cvy000_19, mrk000_40, drift_69, 
+  drift_70, drift_71, sol000_33, sol000_34, sol000_35, sol000_36, drift_72, drift_73, 
+  drift_74, mrk000_41, cvy000_20, mrk000_42, drift_75, drift_76, drift_77, drift_78, 
+  drift_79, mrk000_43, drift_80, drift_81, mrk000_44, cvy000_21, mrk000_45, drift_82, 
+  drift_83, drift_84, sol000_37, sol000_38, sol000_39, sol000_40, drift_85, drift_86, 
+  drift_87, mrk000_46, cvy000_22, mrk000_47, drift_88, drift_89, drift_90, mrk000_48, 
+  cvy000_23, mrk000_49, drift_91, drift_92, drift_93, mrk000_50, cvy000_24, mrk000_51, 
+  drift_94, drift_95, drift_96, sol000_41, sol000_42, sol000_43, sol000_44, drift_97, 
+  drift_98, drift_99, mrk000_52, cvy000_25, mrk000_53, drift_100, drift_101, drift_102, 
+  mrk000_54, cvy000_26, mrk000_55, drift_103, drift_104, drift_105, mrk000_56, cvy000_27, 
+  mrk000_57, drift_106, drift_107, drift_108, sol000_45, sol000_46, sol000_47, sol000_48, 
+  drift_109, drift_110, drift_111, mrk000_58, cvy000_28, mrk000_59, drift_112, drift_113, 
+  drift_114, drift_115, drift_116, drift_117, drift_118, mrk000_60, cvy000_29, mrk000_61, 
+  drift_119, drift_120, drift_121, sol000_49, sol000_50, sol000_51, sol000_52, drift_122, 
+  drift_123, drift_124, mrk000_62, cvy000_30, mrk000_63, drift_125, drift_126, drift_127, 
+  mrk000_64, cvy000_31, mrk000_65, drift_128, drift_129, drift_130, mrk000_66, cvy000_32, 
+  mrk000_67, drift_131, drift_132, drift_133, sol000_53, sol000_54, sol000_55, sol000_56, 
+  drift_134, drift_135, drift_136, mrk000_68, cvy000_33, mrk000_69, drift_137, drift_138, 
+  drift_139, mrk000_70, cvy000_34, mrk000_71, drift_140, drift_141, drift_142, mrk000_72, 
+  cvy000_35, mrk000_73, drift_143, drift_144, drift_145, sol000_57, sol000_58, sol000_59, 
+  sol000_60, drift_146, drift_147, drift_148, mrk000_74, cvy000_36, mrk000_75, drift_149, 
+  drift_150, drift_151, drift_152, drift_153, drift_154, drift_155, mrk000_76, cvy000_37, 
+  mrk000_77, drift_156, drift_157, drift_158, sol000_61, sol000_62, sol000_63, sol000_64, 
+  drift_159, drift_160, drift_161, mrk000_78, cvy000_38, mrk000_79, drift_162, drift_163, 
+  drift_164, mrk000_80, cvy000_39, mrk000_81, drift_165, drift_166, drift_167, mrk000_82, 
+  cvy000_40, mrk000_83, drift_168, drift_169, drift_170, sol000_65, sol000_66, sol000_67, 
+  sol000_68, drift_171, drift_172, drift_173, mrk000_84, cvy000_41, mrk000_85, drift_174, 
+  drift_175, drift_176, mrk000_86, cvy000_42, mrk000_87, drift_177, drift_178, drift_179, 
+  mrk000_88, cvy000_43, mrk000_89, drift_180, drift_181, drift_182, sol000_69, sol000_70, 
+  sol000_71, sol000_72, drift_183, drift_184, drift_185, mrk000_90, cvy000_44, mrk000_91, 
+  drift_186, drift_187, drift_188, drift_189, drift_190, drift_191, drift_192, mrk000_92, 
+  cvy000_45, mrk000_93, drift_193, drift_194, drift_195, sol000_73, sol000_74, sol000_75, 
+  sol000_76, drift_196, drift_197, drift_198, mrk000_94, cvy000_46, mrk000_95, drift_199, 
+  drift_200, drift_201, mrk000_96, cvy000_47, mrk000_97, drift_202, drift_203, drift_204, 
+  mrk000_98, cvy000_48, mrk000_99, drift_205, drift_206, drift_207, sol000_77, sol000_78, 
+  sol000_79, sol000_80, drift_208, drift_209, drift_210, mrk000_100, cvy000_49, mrk000_101, 
+  drift_211, drift_212, drift_213, mrk000_102, cvy000_50, mrk000_103, drift_214, drift_215, 
+  drift_216, mrk000_104, cvy000_51, mrk000_105, drift_217, drift_218, drift_219, sol000_81, 
+  sol000_82, sol000_83, sol000_84, drift_220, drift_221, drift_222, mrk000_106, cvy000_52, 
+  mrk000_107, drift_223, drift_224, drift_225, drift_226, drift_227, drift_228, drift_229, 
+  mrk000_108, cvy000_53, mrk000_109, drift_230, drift_231, drift_232, sol000_85, sol000_86, 
+  sol000_87, sol000_88, drift_233, drift_234, drift_235, mrk000_110, cvy000_54, mrk000_111, 
+  drift_236, drift_237, drift_238, mrk000_112, cvy000_55, mrk000_113, drift_239, drift_240, 
+  drift_241, mrk000_114, cvy000_56, mrk000_115, drift_242, drift_243, drift_244, sol000_89, 
+  sol000_90, sol000_91, sol000_92, drift_245, drift_246, drift_247, mrk000_116, cvy000_57, 
+  mrk000_117, drift_248, drift_249, drift_250, mrk000_118, cvy000_58, mrk000_119, drift_251, 
+  drift_252, drift_253, mrk000_120, cvy000_59, mrk000_121, drift_254, drift_255, drift_256, 
+  sol000_93, sol000_94, sol000_95, sol000_96, drift_257, drift_258, drift_259, mrk000_122, 
+  cvy000_60, mrk000_123, drift_260, drift_261, drift_262, drift_263, drift_264, drift_265, 
+  drift_266, mrk000_124, cvy000_61, mrk000_125, drift_267, drift_268, drift_269, sol000_97, 
+  sol000_98, sol000_99, sol000_100, drift_270, drift_271, drift_272, mrk000_126, cvy000_62, 
+  mrk000_127, drift_273, drift_274, drift_275, mrk000_128, cvy000_63, mrk000_129, drift_276, 
+  drift_277, drift_278, mrk000_130, cvy000_64, mrk000_131, drift_279, drift_280, drift_281, 
+  sol000_101, sol000_102, sol000_103, sol000_104, drift_282, drift_283, drift_284, mrk000_132, 
+  cvy000_65, mrk000_133, drift_285, drift_286, drift_287, mrk000_134, cvy000_66, mrk000_135, 
+  drift_288, drift_289, drift_290, mrk000_136, cvy000_67, mrk000_137, drift_291, drift_292, 
+  drift_293, sol000_105, sol000_106, sol000_107, sol000_108, drift_294, drift_295, drift_296, 
+  mrk000_138, cvy000_68, mrk000_139, drift_297, drift_298, drift_299, drift_300, drift_301, 
+  drift_302, drift_303, mrk000_140, cvy000_69, mrk000_141, drift_304, drift_305, drift_306, 
+  sol000_109, sol000_110, sol000_111, sol000_112, drift_307, drift_308, drift_309, mrk000_142, 
+  cvy000_70, mrk000_143, drift_310, drift_311, drift_312, mrk000_144, cvy000_71, mrk000_145, 
+  drift_313, drift_314, drift_315, mrk000_146, cvy000_72, mrk000_147, drift_316, drift_317, 
+  drift_318, sol000_113, sol000_114, sol000_115, sol000_116, drift_319, drift_320, drift_321, 
+  mrk000_148, cvy000_73, mrk000_149, drift_322, drift_323, drift_324, mrk000_150, cvy000_74, 
+  mrk000_151, drift_325, drift_326, drift_327, mrk000_152, cvy000_75, mrk000_153, drift_328, 
+  drift_329, drift_330, sol000_117, sol000_118, sol000_119, sol000_120, drift_331, drift_332, 
+  drift_333, mrk000_154, cvy000_76, mrk000_155, drift_334, drift_335, drift_336, drift_337, 
+  drift_338, drift_339, drift_340, mrk000_156, cvy000_77, mrk000_157, drift_341, drift_342, 
+  drift_343, sol000_121, sol000_122, sol000_123, sol000_124, drift_344, drift_345, drift_346, 
+  mrk000_158, cvy000_78, mrk000_159, drift_347, drift_348, drift_349, mrk000_160, cvy000_79, 
+  mrk000_161, drift_350, drift_351, drift_352, mrk000_162, cvy000_80, mrk000_163, drift_353, 
+  drift_354, drift_355, sol000_125, sol000_126, sol000_127, sol000_128, drift_356, drift_357, 
+  drift_358, mrk000_164, cvy000_81, mrk000_165, drift_359, drift_360, drift_361, mrk000_166, 
+  cvy000_82, mrk000_167, drift_362, drift_363, drift_364, mrk000_168, cvy000_83, mrk000_169, 
+  drift_365, drift_366, drift_367, sol000_129, sol000_130, sol000_131, sol000_132, drift_368, 
+  drift_369, drift_370, mrk000_170, cvy000_84, mrk000_171, drift_371, drift_372, drift_373, 
+  drift_374, drift_375, mrk000_172, drift_376, drift_377, mrk000_173, cvy000_85, mrk000_174, 
+  drift_378, drift_379, drift_380, sol000_133, sol000_134, sol000_135, sol000_136, drift_381, 
+  drift_382, drift_383, mrk000_175, cvy000_86, mrk000_176, drift_384, drift_385, drift_386, 
+  mrk000_177, cvy000_87, mrk000_178, drift_387, drift_388, drift_389, mrk000_179, cvy000_88, 
+  mrk000_180, drift_390, drift_391, drift_392, sol000_137, sol000_138, sol000_139, sol000_140, 
+  drift_393, drift_394, drift_395, mrk000_181, cvy000_89, mrk000_182, drift_396, drift_397, 
+  drift_398, mrk000_183, cvy000_90, mrk000_184, drift_399, drift_400, drift_401, mrk000_185, 
+  cvy000_91, mrk000_186, drift_402, drift_403, drift_404, sol000_141, sol000_142, sol000_143, 
+  sol000_144, drift_405, drift_406, drift_407, mrk000_187, cvy000_92, mrk000_188, drift_408, 
+  drift_409, drift_410, drift_411, drift_412, mrk000_189, drift_413, drift_414, mrk000_190, 
+  cvy000_93, mrk000_191, drift_415, drift_416, drift_417, sol000_145, sol000_146, sol000_147, 
+  sol000_148, drift_418, drift_419, drift_420, mrk000_192, cvy000_94, mrk000_193, drift_421, 
+  drift_422, drift_423, mrk000_194, cvy000_95, mrk000_195, drift_424, drift_425, drift_426, 
+  mrk000_196, cvy000_96, mrk000_197, drift_427, drift_428, drift_429, sol000_149, sol000_150, 
+  sol000_151, sol000_152, drift_430, drift_431, drift_432, mrk000_198, cvy000_97, mrk000_199, 
+  drift_433, drift_434, drift_435, mrk000_200, cvy000_98, mrk000_201, drift_436, drift_437, 
+  drift_438, mrk000_202, cvy000_99, mrk000_203, drift_439, drift_440, drift_441, sol000_153, 
+  sol000_154, sol000_155, sol000_156, drift_442, drift_443, drift_444, mrk000_204, cvy000_100, 
+  mrk000_205, drift_445, drift_446, drift_447, drift_448, drift_449, mrk000_206, drift_450, 
+  drift_451, drift_452, qua000_1, drift_453, qua000_2, drift_454, drift_455, drift_456, 
+  drift_457, drift_458, qua000_3, drift_459, qua000_4, drift_460, drift_461, drift_462, 
+  drift_463, mrk000_207, drift_464, cvy000_101, drift_465, cvy000_102, drift_466, drift_467, 
+  drift_468, drift_469, qua000_5, drift_470, qua000_6, drift_471, drift_472, drift_473, 
+  drift_474, drift_475, qua000_7, drift_476, qua000_8, drift_477, drift_478, mrk000_208, 
+  drift_479, drift_480, drift_481, qua000_9, drift_482, qua000_10, drift_483, drift_484, 
+  drift_485, drift_486, drift_487, qua000_11, drift_488, qua000_12, drift_489, drift_490, 
+  drift_491, drift_492, mrk000_209, drift_493, cvy000_103, drift_494, cvy000_104, drift_495, 
+  drift_496, mrk000_210, dipo00_1, mrk000_211, dipo00_2, mrk000_212, dipo00_3, mrk000_213, 
+  dipo00_4, mrk000_214, dipo00_5, mrk000_215, drift_497, mrk000_216, dipo00_6, mrk000_217, 
+  dipo00_7, mrk000_218, dipo00_8, mrk000_219, dipo00_9, mrk000_220, dipo00_10, mrk000_221, 
+  drift_498, mrk000_222, dipo00_11, mrk000_223, dipo00_12, mrk000_224, dipo00_13, mrk000_225, 
+  dipo00_14, mrk000_226, dipo00_15, mrk000_227, drift_499, mrk000_228, dipo00_16, mrk000_229, 
+  dipo00_17, mrk000_230, dipo00_18, mrk000_231, dipo00_19, mrk000_232, dipo00_20, mrk000_233, 
+  drift_500, mrk000_234, drift_501, drift_502, drift_503, qua000_13, drift_504, drift_505, 
+  qua000_14, drift_506, drift_507, drift_508, drift_509, drift_510, qua000_15, drift_511, 
+  qua000_16, drift_512, drift_513, drift_514, mrk000_235, mrk000_236, drift_515, mrk000_237, 
+  drift_516, drift_517, drift_518, qua000_17, drift_519, drift_520, drift_521, qua000_18, 
+  drift_522, drift_523, qua000_19, drift_524, drift_525, drift_526, drift_527, drift_528, 
+  qua000_20, drift_529, drift_530, mrk000_238, mrk000_239, dipo00_21, mrk000_240, dipo00_22, 
+  mrk000_241, dipo00_23, mrk000_242, dipo00_24, mrk000_243, dipo00_25, mrk000_244, drift_531, 
+  mrk000_245, dipo00_26, mrk000_246, dipo00_27, mrk000_247, dipo00_28, mrk000_248, dipo00_29, 
+  mrk000_249, dipo00_30, mrk000_250, drift_532, mrk000_251, dipo00_31, mrk000_252, dipo00_32, 
+  mrk000_253, dipo00_33, mrk000_254, dipo00_34, mrk000_255, dipo00_35, mrk000_256, drift_533, 
+  mrk000_257, dipo00_36, mrk000_258, dipo00_37, mrk000_259, dipo00_38, mrk000_260, dipo00_39, 
+  mrk000_261, dipo00_40, mrk000_262, drift_534, drift_535, drift_536, drift_537, drift_538, 
+  mrk000_263, drift_539, cvy000_105, drift_540, cvy000_106, drift_541, cvy000_107, drift_542, 
+  drift_543, drift_544, cvy000_108, drift_545, mrk000_264, drift_546, drift_547, drift_548, 
+  qua000_21, drift_549, drift_550, qua000_22, drift_551, drift_552, drift_553, drift_554, 
+  drift_555, qua000_23, drift_556, qua000_24, drift_557, drift_558, drift_559, drift_560, 
+  drift_561, mrk000_265, mrk000_266, dipo00_41, mrk000_267, dipo00_42, mrk000_268, dipo00_43, 
+  mrk000_269, dipo00_44, mrk000_270, dipo00_45, mrk000_271, dipo00_46, mrk000_272, dipo00_47, 
+  mrk000_273, dipo00_48, mrk000_274, dipo00_49, mrk000_275, dipo00_50, mrk000_276, drift_562, 
+  mrk000_277, drift_563, cmq000_25, drift_564, cmq000_26, drift_565, drift_566, drift_567, 
+  drift_568, cmq000_27, drift_569, mrk000_278, dipo00_51, mrk000_279, dipo00_52, mrk000_280, 
+  dipo00_53, mrk000_281, dipo00_54, mrk000_282, dipo00_55, mrk000_283, dipo00_56, mrk000_284, 
+  dipo00_57, mrk000_285, dipo00_58, mrk000_286, dipo00_59, mrk000_287, dipo00_60, mrk000_288, 
+  drift_570, mrk000_289, drift_571, mrk000_290, dipo00_61, mrk000_291, dipo00_62, mrk000_292, 
+  dipo00_63, mrk000_293, dipo00_64, mrk000_294, dipo00_65, mrk000_295, dipo00_66, mrk000_296, 
+  dipo00_67, mrk000_297, dipo00_68, mrk000_298, dipo00_69, mrk000_299, dipo00_70, mrk000_300, 
+  drift_572, cmq000_28, drift_573, drift_574, drift_575, drift_576, cmq000_29, drift_577, 
+  cmq000_30, drift_578, drift_579, mrk000_301, dipo00_71, mrk000_302, dipo00_72, mrk000_303, 
+  dipo00_73, mrk000_304, dipo00_74, mrk000_305, dipo00_75, mrk000_306, dipo00_76, mrk000_307, 
+  dipo00_77, mrk000_308, dipo00_78, mrk000_309, dipo00_79, mrk000_310, dipo00_80, mrk000_311, 
+  drift_580, mrk000_312, drift_581, drift_582, drift_583, drift_584, qua000_31, drift_585, 
+  qua000_32, drift_586, drift_587, drift_588, drift_589, drift_590, drift_591, qua000_33, 
+  drift_592, drift_593, qua000_34, drift_594, drift_595, drift_596, drift_597, drift_598, 
+  qua000_35, drift_599, qua000_36, drift_600, drift_601, drift_602, drift_603, drift_604, 
+  mrk000_313, drift_605, cvy000_109, drift_606, cvy000_110, drift_607, cvy000_111, drift_608, 
+  mrk000_314, drift_609, drift_610, cvy000_112, drift_611, mrk000_315, drift_612, drift_613, 
+  drift_614, qua000_37, drift_615, qua000_38, drift_616, drift_617, drift_618, drift_619, 
+  drift_620, qua000_39, drift_621, drift_622, drift_623, qua000_40, drift_624, drift_625, 
+  drift_626, drift_627, drift_628, drift_629, qua000_41, drift_630, qua000_42, drift_631, 
+  drift_632, mrk000_316, drift_633, cvy000_113, drift_634, cvy000_114, drift_635, cvy000_115, 
+  drift_636, drift_637, sol000_157, sol000_158, sol000_159, sol000_160, drift_638, drift_639, 
+  cvy000_116, drift_640, cvy000_117, drift_641, cvy000_118, drift_642, drift_643, drift_644, 
+  drift_645, drift_646, cvy000_119, drift_647, cvy000_120, drift_648, cvy000_121, drift_649, 
+  drift_650, sol000_161, sol000_162, sol000_163, sol000_164, drift_651, drift_652, cvy000_122, 
+  drift_653, cvy000_123, drift_654, cvy000_124, drift_655, drift_656, drift_657, drift_658, 
+  drift_659, cvy000_125, drift_660, cvy000_126, drift_661, cvy000_127, drift_662, drift_663, 
+  sol000_165, sol000_166, sol000_167, sol000_168, drift_664, drift_665, cvy000_128, drift_666, 
+  cvy000_129, drift_667, cvy000_130, drift_668, drift_669, drift_670, drift_671, drift_672, 
+  cvy000_131, drift_673, cvy000_132, drift_674, cvy000_133, drift_675, drift_676, sol000_169, 
+  sol000_170, sol000_171, sol000_172, drift_677, drift_678, cvy000_134, drift_679, cvy000_135, 
+  drift_680, cvy000_136, drift_681, drift_682, drift_683, drift_684, drift_685, cvy000_137, 
+  drift_686, cvy000_138, drift_687, cvy000_139, drift_688, drift_689, sol000_173, sol000_174, 
+  sol000_175, sol000_176, drift_690, drift_691, cvy000_140, drift_692, cvy000_141, drift_693, 
+  cvy000_142, drift_694, drift_695, drift_696, drift_697, drift_698, cvy000_143, drift_699, 
+  cvy000_144, drift_700, cvy000_145, drift_701, drift_702, sol000_177, sol000_178, sol000_179, 
+  sol000_180, drift_703, drift_704, cvy000_146, drift_705, cvy000_147, drift_706, cvy000_148, 
+  drift_707, drift_708, drift_709, drift_710, drift_711, cvy000_149, drift_712, cvy000_150, 
+  drift_713, cvy000_151, drift_714, drift_715, sol000_181, sol000_182, sol000_183, sol000_184, 
+  drift_716, drift_717, cvy000_152, drift_718, cvy000_153, drift_719, cvy000_154, drift_720, 
+  drift_721, drift_722, drift_723, drift_724, cvy000_155, drift_725, cvy000_156, drift_726, 
+  cvy000_157, drift_727, drift_728, sol000_185, sol000_186, sol000_187, sol000_188, drift_729, 
+  drift_730, cvy000_158, drift_731, cvy000_159, drift_732, cvy000_160, drift_733, drift_734, 
+  drift_735, drift_736, drift_737, cvy000_161, drift_738, cvy000_162, drift_739, cvy000_163, 
+  drift_740, drift_741, sol000_189, sol000_190, sol000_191, sol000_192, drift_742, drift_743, 
+  cvy000_164, drift_744, cvy000_165, drift_745, cvy000_166, drift_746, drift_747, drift_748, 
+  drift_749, drift_750, cvy000_167, drift_751, cvy000_168, drift_752, cvy000_169, drift_753, 
+  drift_754, sol000_193, sol000_194, sol000_195, sol000_196, drift_755, drift_756, cvy000_170, 
+  drift_757, cvy000_171, drift_758, cvy000_172, drift_759, drift_760, drift_761, drift_762, 
+  drift_763, cvy000_173, drift_764, cvy000_174, drift_765, cvy000_175, drift_766, drift_767, 
+  sol000_197, sol000_198, sol000_199, sol000_200, drift_768, drift_769, cvy000_176, drift_770, 
+  cvy000_177, drift_771, cvy000_178, drift_772, drift_773, drift_774, drift_775, drift_776, 
+  cvy000_179, drift_777, cvy000_180, drift_778, cvy000_181, drift_779, drift_780, sol000_201, 
+  sol000_202, sol000_203, sol000_204, drift_781, drift_782, cvy000_182, drift_783, cvy000_183, 
+  drift_784, cvy000_184, drift_785, drift_786, drift_787, drift_788, drift_789, cvy000_185, 
+  drift_790, cvy000_186, drift_791, cvy000_187, drift_792, cvy000_188, drift_793, drift_794, 
+  sol000_205, sol000_206, sol000_207, sol000_208, drift_795, drift_796, cvy000_189, drift_797, 
+  cvy000_190, drift_798, cvy000_191, drift_799, cvy000_192, drift_800, drift_801, drift_802, 
+  drift_803, drift_804, cvy000_193, drift_805, cvy000_194, drift_806, cvy000_195, drift_807, 
+  cvy000_196, drift_808, drift_809, sol000_209, sol000_210, sol000_211, sol000_212, drift_810, 
+  drift_811, cvy000_197, drift_812, cvy000_198, drift_813, cvy000_199, drift_814, cvy000_200, 
+  drift_815, drift_816, drift_817, drift_818, drift_819, cvy000_201, drift_820, cvy000_202, 
+  drift_821, cvy000_203, drift_822, cvy000_204, drift_823, drift_824, sol000_213, sol000_214, 
+  sol000_215, sol000_216, drift_825, drift_826, cvy000_205, drift_827, cvy000_206, drift_828, 
+  cvy000_207, drift_829, cvy000_208, drift_830, drift_831, drift_832, drift_833, drift_834, 
+  cvy000_209, drift_835, cvy000_210, drift_836, cvy000_211, drift_837, cvy000_212, drift_838, 
+  drift_839, sol000_217, sol000_218, sol000_219, sol000_220, drift_840, drift_841, cvy000_213, 
+  drift_842, cvy000_214, drift_843, cvy000_215, drift_844, cvy000_216, drift_845, drift_846, 
+  drift_847, drift_848, drift_849, cvy000_217, drift_850, cvy000_218, drift_851, cvy000_219, 
+  drift_852, cvy000_220, drift_853, drift_854, sol000_221, sol000_222, sol000_223, sol000_224, 
+  drift_855, drift_856, cvy000_221, drift_857, cvy000_222, drift_858, cvy000_223, drift_859, 
+  cvy000_224, drift_860, drift_861, drift_862, drift_863, drift_864, cvy000_225, drift_865, 
+  cvy000_226, drift_866, cvy000_227, drift_867, cvy000_228, drift_868, drift_869, sol000_225, 
+  sol000_226, sol000_227, sol000_228, drift_870, drift_871, cvy000_229, drift_872, cvy000_230, 
+  drift_873, cvy000_231, drift_874, cvy000_232, drift_875, drift_876, drift_877, drift_878, 
+  drift_879, cvy000_233, drift_880, cvy000_234, drift_881, cvy000_235, drift_882, cvy000_236, 
+  drift_883, drift_884, sol000_229, sol000_230, sol000_231, sol000_232, drift_885, drift_886, 
+  cvy000_237, drift_887, cvy000_238, drift_888, cvy000_239, drift_889, cvy000_240, drift_890, 
+  drift_891, drift_892, drift_893, drift_894, cvy000_241, drift_895, cvy000_242, drift_896, 
+  cvy000_243, drift_897, cvy000_244, drift_898, drift_899, sol000_233, sol000_234, sol000_235, 
+  sol000_236, drift_900, drift_901, cvy000_245, drift_902, cvy000_246, drift_903, cvy000_247, 
+  drift_904, cvy000_248, drift_905, drift_906, drift_907, drift_908, drift_909, cvy000_249, 
+  drift_910, cvy000_250, drift_911, cvy000_251, drift_912, cvy000_252, drift_913, drift_914, 
+  sol000_237, sol000_238, sol000_239, sol000_240, drift_915, drift_916, cvy000_253, drift_917, 
+  cvy000_254, drift_918, cvy000_255, drift_919, cvy000_256, drift_920, drift_921, drift_922, 
+  drift_923, drift_924, cvy000_257, drift_925, cvy000_258, drift_926, cvy000_259, drift_927, 
+  cvy000_260, drift_928, drift_929, sol000_241, sol000_242, sol000_243, sol000_244, drift_930, 
+  drift_931, cvy000_261, drift_932, cvy000_262, drift_933, cvy000_263, drift_934, cvy000_264, 
+  drift_935, drift_936, drift_937, drift_938, drift_939, cvy000_265, drift_940, cvy000_266, 
+  drift_941, cvy000_267, drift_942, cvy000_268, drift_943, drift_944, sol000_245, sol000_246, 
+  sol000_247, sol000_248, drift_945, drift_946, cvy000_269, drift_947, cvy000_270, drift_948, 
+  cvy000_271, drift_949, cvy000_272, drift_950, drift_951, drift_952, drift_953, drift_954, 
+  cvy000_273, drift_955, cvy000_274, drift_956, cvy000_275, drift_957, cvy000_276, drift_958, 
+  drift_959, sol000_249, sol000_250, sol000_251, sol000_252, drift_960, drift_961, cvy000_277, 
+  drift_962, cvy000_278, drift_963, cvy000_279, drift_964, cvy000_280, drift_965, drift_966, 
+  drift_967, drift_968, drift_969, qua000_43, drift_970, qua000_44, drift_971, qua000_45, 
+  drift_972, qua000_46, drift_973, mrk000_317, mrk000_318, dipo00_81, mrk000_319, dipo00_82, 
+  mrk000_320, dipo00_83, mrk000_321, dipo00_84, mrk000_322, dipo00_85, mrk000_323, dipo00_86, 
+  mrk000_324, dipo00_87, mrk000_325, dipo00_88, mrk000_326, dipo00_89, mrk000_327, dipo00_90, 
+  mrk000_328, dipo00_91, mrk000_329, dipo00_92, mrk000_330, dipo00_93, mrk000_331, dipo00_94, 
+  mrk000_332, dipo00_95, mrk000_333, dipo00_96, mrk000_334, dipo00_97, mrk000_335, dipo00_98, 
+  mrk000_336, dipo00_99, mrk000_337, dipo00_100, mrk000_338, drift_974, drift_975, cmq000_47, 
+  drift_976, drift_977, cmq000_48, drift_978, drift_979, drift_980, cmq000_49, drift_981, 
+  drift_982, cmq000_50, drift_983, drift_984, drift_985, cmq000_51, drift_986, mrk000_339, 
+  dipo00_101, mrk000_340, dipo00_102, mrk000_341, dipo00_103, mrk000_342, dipo00_104, mrk000_343, 
+  dipo00_105, mrk000_344, dipo00_106, mrk000_345, dipo00_107, mrk000_346, dipo00_108, mrk000_347, 
+  dipo00_109, mrk000_348, dipo00_110, mrk000_349, dipo00_111, mrk000_350, dipo00_112, mrk000_351, 
+  dipo00_113, mrk000_352, dipo00_114, mrk000_353, dipo00_115, mrk000_354, dipo00_116, mrk000_355, 
+  dipo00_117, mrk000_356, dipo00_118, mrk000_357, dipo00_119, mrk000_358, dipo00_120, mrk000_359, 
+  drift_987, drift_988, mrk000_360, dipo00_121, mrk000_361, dipo00_122, mrk000_362, dipo00_123, 
+  mrk000_363, dipo00_124, mrk000_364, dipo00_125, mrk000_365, dipo00_126, mrk000_366, dipo00_127, 
+  mrk000_367, dipo00_128, mrk000_368, dipo00_129, mrk000_369, dipo00_130, mrk000_370, dipo00_131, 
+  mrk000_371, dipo00_132, mrk000_372, dipo00_133, mrk000_373, dipo00_134, mrk000_374, dipo00_135, 
+  mrk000_375, dipo00_136, mrk000_376, dipo00_137, mrk000_377, dipo00_138, mrk000_378, dipo00_139, 
+  mrk000_379, dipo00_140, mrk000_380, drift_989, cmq000_52, drift_990, drift_991, drift_992, 
+  cmq000_53, drift_993, drift_994, cmq000_54, drift_995, drift_996, drift_997, cmq000_55, 
+  drift_998, drift_999, cmq000_56, drift_1000, drift_1001, mrk000_381, dipo00_141, mrk000_382, 
+  dipo00_142, mrk000_383, dipo00_143, mrk000_384, dipo00_144, mrk000_385, dipo00_145, mrk000_386, 
+  dipo00_146, mrk000_387, dipo00_147, mrk000_388, dipo00_148, mrk000_389, dipo00_149, mrk000_390, 
+  dipo00_150, mrk000_391, dipo00_151, mrk000_392, dipo00_152, mrk000_393, dipo00_153, mrk000_394, 
+  dipo00_154, mrk000_395, dipo00_155, mrk000_396, dipo00_156, mrk000_397, dipo00_157, mrk000_398, 
+  dipo00_158, mrk000_399, dipo00_159, mrk000_400, dipo00_160, mrk000_401, drift_1002, qua000_57, 
+  drift_1003, qua000_58, drift_1004, qua000_59, drift_1005, qua000_60, drift_1006, mrk000_402, 
+  drift_1007, cvy000_281, drift_1008, cvy000_282, drift_1009, cvy000_283, drift_1010, cvy000_284, 
+  drift_1011, mrk000_403, drift_1012, qua000_61, drift_1013, qua000_62, drift_1014, qua000_63, 
+  drift_1015, qua000_64, drift_1016, mrk000_404, drift_1017, cvy000_285, drift_1018, cvy000_286, 
+  drift_1019, cvy000_287, drift_1020, cvy000_288, drift_1021, drift_1022, sol000_253, sol000_254, 
+  sol000_255, sol000_256, drift_1023, drift_1024, cvy000_289, drift_1025, cvy000_290, drift_1026, 
+  cvy000_291, drift_1027, cvy000_292, drift_1028, drift_1029, drift_1030, drift_1031, drift_1032, 
+  cvy000_293, drift_1033, cvy000_294, drift_1034, cvy000_295, drift_1035, cvy000_296, drift_1036, 
+  drift_1037, sol000_257, sol000_258, sol000_259, sol000_260, drift_1038, drift_1039, cvy000_297, 
+  drift_1040, cvy000_298, drift_1041, cvy000_299, drift_1042, cvy000_300, drift_1043, drift_1044, 
+  drift_1045, drift_1046, drift_1047, cvy000_301, drift_1048, cvy000_302, drift_1049, cvy000_303, 
+  drift_1050, cvy000_304, drift_1051, drift_1052, sol000_261, sol000_262, sol000_263, sol000_264, 
+  drift_1053, drift_1054, cvy000_305, drift_1055, cvy000_306, drift_1056, cvy000_307, drift_1057, 
+  cvy000_308, drift_1058, drift_1059, drift_1060, drift_1061, drift_1062, cvy000_309, drift_1063, 
+  cvy000_310, drift_1064, cvy000_311, drift_1065, cvy000_312, drift_1066, drift_1067, sol000_265, 
+  sol000_266, sol000_267, sol000_268, drift_1068, drift_1069, cvy000_313, drift_1070, cvy000_314, 
+  drift_1071, cvy000_315, drift_1072, cvy000_316, drift_1073, drift_1074, drift_1075, drift_1076, 
+  drift_1077, cvy000_317, drift_1078, cvy000_318, drift_1079, cvy000_319, drift_1080, cvy000_320, 
+  drift_1081, drift_1082, sol000_269, sol000_270, sol000_271, sol000_272, drift_1083, drift_1084, 
+  cvy000_321, drift_1085, cvy000_322, drift_1086, cvy000_323, drift_1087, cvy000_324, drift_1088, 
+  drift_1089, drift_1090, drift_1091, drift_1092, cvy000_325, drift_1093, cvy000_326, drift_1094, 
+  cvy000_327, drift_1095, cvy000_328, drift_1096, drift_1097, sol000_273, sol000_274, sol000_275, 
+  sol000_276, drift_1098, drift_1099, cvy000_329, drift_1100, cvy000_330, drift_1101, cvy000_331, 
+  drift_1102, cvy000_332, drift_1103, drift_1104, drift_1105, drift_1106, mrk000_405, drift_1107, 
+  qua000_65, drift_1108, qua000_66, drift_1109, qua000_67, drift_1110, qua000_68, drift_1111, 
+  mrk000_406, drift_1112, qua000_69, drift_1113, qua000_70, drift_1114, drift_1115, qua000_71, 
+  drift_1116, qua000_72, drift_1117, drift_1118, qua000_73, drift_1119, qua000_74, drift_1120, 
+  drift_1121, qua000_75, drift_1122, qua000_76, drift_1123, drift_1124, qua000_77, drift_1125, 
+  qua000_78, drift_1126, drift_1127, qua000_79, drift_1128, qua000_80, drift_1129, drift_1130, 
+  qua000_81, drift_1131, qua000_82, drift_1132, drift_1133, qua000_83, drift_1134, qua000_84, 
+  drift_1135, drift_1136, qua000_85, drift_1137, qua000_86, drift_1138, drift_1139, qua000_87, 
+  drift_1140, qua000_88, drift_1141, mrk000_407, drift_1142, qua000_89, drift_1143, qua000_90, 
+  drift_1144, qua000_91, drift_1145, qua000_92, drift_1146, drift_1147, mrk000_408, drift_1148, 
+  qua000_93, drift_1149, qua000_94, drift_1150, qua000_95, drift_1151, qua000_96, drift_1152, 
+  qua000_97, drift_1153, qua000_98, drift_1154, mrk000_409, dipo00_161, mrk000_410, dipo00_162, 
+  mrk000_411, dipo00_163, mrk000_412, dipo00_164, mrk000_413, dipo00_165, mrk000_414, dipo00_166, 
+  mrk000_415, dipo00_167, mrk000_416, dipo00_168, mrk000_417, dipo00_169, mrk000_418, dipo00_170, 
+  mrk000_419, drift_1155, drift_1156, cmq000_99, drift_1157, drift_1158, cmq000_100, drift_1159, 
+  mrk000_420, dipo00_171, mrk000_421, dipo00_172, mrk000_422, dipo00_173, mrk000_423, dipo00_174, 
+  mrk000_424, dipo00_175, mrk000_425, dipo00_176, mrk000_426, dipo00_177, mrk000_427, dipo00_178, 
+  mrk000_428, dipo00_179, mrk000_429, dipo00_180, mrk000_430, drift_1160, drift_1161, mrk000_431, 
+  dipo00_181, mrk000_432, dipo00_182, mrk000_433, dipo00_183, mrk000_434, dipo00_184, mrk000_435, 
+  dipo00_185, mrk000_436, dipo00_186, mrk000_437, dipo00_187, mrk000_438, dipo00_188, mrk000_439, 
+  dipo00_189, mrk000_440, dipo00_190, mrk000_441, drift_1162, cmq000_101, drift_1163, drift_1164, 
+  cmq000_102, drift_1165, drift_1166, mrk000_442, dipo00_191, mrk000_443, dipo00_192, mrk000_444, 
+  dipo00_193, mrk000_445, dipo00_194, mrk000_446, dipo00_195, mrk000_447, dipo00_196, mrk000_448, 
+  dipo00_197, mrk000_449, dipo00_198, mrk000_450, dipo00_199, mrk000_451, dipo00_200, mrk000_452, 
+  drift_1167, mrk000_453, drift_1168, qua000_103, drift_1169, qua000_104, drift_1170, qua000_105, 
+  drift_1171, qua000_106, drift_1172, drift_1173, qua000_107, drift_1174, qua000_108, drift_1175, 
+  qua000_109, drift_1176, drift_1177, mrk000_454
+);
+
+USE: cell;
