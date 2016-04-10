@@ -2,6 +2,7 @@
 #define SCSI_MOMENT_H
 
 #include <ostream>
+#include <iomanip>
 #include <math.h>
 
 #include <boost/numeric/ublas/matrix.hpp>
@@ -35,14 +36,18 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    double pos;      // absolute longitudinal position at end of Element
-    double Ekinetic; // kinetic energy of reference particle
-                     // actual is Ekinetic + moment0[6]
+    double pos;       // absolute longitudinal position at end of Element
+    double Ekinetic0; // initial kinetic energy of reference particle
+    double Ekinetic;  // kinetic energy of reference particle
+                      // actual is Ekinetic + moment0[6]
+
 
     double sync_phase;   // synchotron phase
 
     double gamma, // (Erest+Ekinetic)/Erest
-           beta;  // sqrt(1-1.0/(gamma*gamma))
+           beta,  // sqrt(1e0-1e0/(gamma*gamma))
+           bg0,
+           bg1;
 
     vector_t moment0;
     matrix_t state; // TODO: better name

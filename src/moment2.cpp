@@ -32,7 +32,7 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
     ,pos(c.get<double>("L", 0e0))
-    ,Ekinetic(c.get<double>("IonEk", 0e0))
+    ,Ekinetic0(c.get<double>("IonEk", 0e0))
     ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
     ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
@@ -59,9 +59,20 @@ Moment2State::Moment2State(const Config& c)
         throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
 
-    double Erest = c.get<double>("Es", 1e0); // Rest energy.
-    gamma        = (Erest+Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    double Erest = c.get<double>("IonEs", 0e0); // Rest energy.
+    Ekinetic     = Ekinetic0;
+    gamma        = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
     beta         = sqrt(1e0-1e0/sqr(gamma));
+    bg0          = beta*gamma;
+
+    gamma        = (Erest+Ekinetic)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    beta         = sqrt(1e0-1e0/sqr(gamma));
+    bg1          = beta*gamma;
+
+    std::cout << std::scientific << std::setprecision(5)
+              << "\nMoment2State(const Config& c): \n"
+              << "  Erest = " << Erest << ", Ekinetic0 = " << Ekinetic0 << ", Ekinetic = " << Ekinetic << "\n"
+              << "  bg0 = " << bg0 << ", bg1 = " << bg1 << "\n";
 }
 
 Moment2State::~Moment2State() {}
@@ -69,6 +80,7 @@ Moment2State::~Moment2State() {}
 Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     :StateBase(o, t)
     ,pos(o.pos)
+    ,Ekinetic0(o.Ekinetic0)
     ,Ekinetic(o.Ekinetic)
     ,moment0(o.moment0)
     ,state(o.state)
@@ -80,13 +92,21 @@ void Moment2State::assign(const StateBase& other)
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
     pos = O->pos;
+    Ekinetic0 = O->Ekinetic0;
     Ekinetic = O->Ekinetic;
     sync_phase = O->sync_phase;
     gamma = O->gamma;
     beta = O->beta;
+    bg0 = O->bg0;
+    bg1 = O->bg1;
     moment0 = O->moment0;
     state = O->state;
     StateBase::assign(other);
+
+    std::cout << std::scientific << std::setprecision(5)
+              << "\nassign(const StateBase& other):\n"
+              << "  Ekinetic0 = " << O->Ekinetic0 << ", Ekinetic = " << O->Ekinetic << "\n"
+              << "  bg0 = " << O->bg0 << ", bg1 = " << O->bg1 << "\n";
 }
 
 void Moment2State::show(std::ostream& strm) const
@@ -117,31 +137,49 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==3) {
+        Info.name = "Ekinetic0";
+        Info.ptr = &Ekinetic0;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==4) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==4) {
+    } else if(idx==5) {
         Info.name = "sync_phase";
         Info.ptr = &sync_phase;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==6) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==7) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
+    } else if(idx==8) {
+        Info.name = "bg0";
+        Info.ptr = &bg0;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==9) {
+        Info.name = "bg1";
+        Info.ptr = &bg1;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
     }
-    return StateBase::getArray(idx-7, Info);
+    return StateBase::getArray(idx-10, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -162,6 +200,8 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
 
     // spoil to force recalculation of energy dependent terms
     last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
+
+    std::cout << "\nMoment2ElementBase(const Config& c):\n";
 }
 
 Moment2ElementBase::~Moment2ElementBase() {}
@@ -180,6 +220,8 @@ void Moment2ElementBase::assign(const ElementVoid *other)
 
     // spoil to force recalculation of energy dependent terms
     last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
+
+    std::cout << "\nassign(const ElementVoid *other):\n";
 }
 
 void Moment2ElementBase::show(std::ostream& strm) const
@@ -213,8 +255,15 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.Ekinetic = last_Kenergy_out;
     ST.sync_phase += phase_factor/ST.beta;
 
-    ST.gamma        = (Erest+ST.Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    ST.beta         = sqrt(1e0-1e0/sqr(ST.gamma));
+    ST.gamma = (Erest+ST.Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    ST.beta  = sqrt(1e0-1e0/sqr(ST.gamma));
+    ST.bg1   = ST.beta*ST.gamma;
+
+    std::cout << std::scientific << std::setprecision(5)
+              << "\nadvance:\n"
+              << "length = " << length << "\n"
+              << "  ST.Erest = " << Erest << ", ST.Ekinetic0 = " << ST.Ekinetic0 << ", ST.Ekinetic = " << ST.Ekinetic << "\n"
+              << "  ST.bg0 = " << ST.bg0 << ", ST.bg1 = " << ST.bg1 << "\n";
 
     ST.moment0 = prod(transfer, ST.moment0);
 
@@ -224,16 +273,24 @@ void Moment2ElementBase::advance(StateBase& s)
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
 {
-    // by default for no energy gain
+    // Default, for passive elements.
+
+    std::cout << std::scientific << std::setprecision(5)
+              << "\nrecompute_matrix\n"
+              << "  ST.Erest = " << Erest << ", ST.Ekinetic0 = " << ST.Ekinetic0 << ", ST.Ekinetic = " << ST.Ekinetic << "\n"
+              << "  ST.bg0 = " << ST.bg0 << ", ST.bg1 = " << ST.bg1 << "\n";
 
     transfer = transfer_raw;
 
-    for (unsigned k = 0; k < 2; k++) {
-        transfer(2*k, 2*k+1) /= ST.beta*ST.gamma;
-        transfer(2*k+1, 2*k) /= ST.beta*ST.gamma;
+    if(ST.Ekinetic!=ST.Ekinetic0) {
+        // Scale matrix elements.
+        for (unsigned k = 0; k < 2; k++) {
+            transfer(2*k, 2*k+1) *= ST.bg0/ST.bg1;
+            transfer(2*k+1, 2*k) *= ST.bg0/ST.bg1;
+        }
     }
 
-    transfer(state_t::PS_S, state_t::PS_PS) /= cube(ST.beta*ST.gamma);
+    transfer(state_t::PS_S, state_t::PS_PS) *= cube(ST.bg0/ST.bg1);
 
     last_Kenergy_in = last_Kenergy_out = ST.Ekinetic; // no energy gain
 }

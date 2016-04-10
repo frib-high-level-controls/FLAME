@@ -187,10 +187,13 @@ void propagate(std::auto_ptr<Config> conf)
                   << ", IonW [Mev/u] = " << IonW << "\n";
     }
 
-    for (k = 0; k < nChgStates; k++) {
+    //    for (k = 0; k < nChgStates; k++) {
+    for (k = 0; k < 1; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
 
-        sims[k]->propagate(state.get());
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+
+        sims[k]->propagate(state.get(), 0, 1);
 
         it = sims[k]->p_elements.begin();
         // Skip over state.
@@ -200,13 +203,18 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->state   = BE[k];
 
         ElementVoid* elem = *it;
-        for (; it != sims[k]->p_elements.end(); ++it)
-            elem->advance(*state);
+        int n = 0;
+        for (; it != sims[k]->p_elements.end(); ++it) {
+            n++;
+//            elem->advance(*state);
+            sims[k]->propagate(state.get(), elem->index+n-1, 1);
+        }
 
         std::cout << "\n";
         PrtVec(StatePtr[k]->moment0);
         std::cout << "\n";
         PrtMat(StatePtr[k]->state);
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
     }
 }
 
