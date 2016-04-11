@@ -203,11 +203,10 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->state   = BE[k];
 
         ElementVoid* elem = *it;
-        int n = 0;
         for (; it != sims[k]->p_elements.end(); ++it) {
-            n++;
 //            elem->advance(*state);
-            sims[k]->propagate(state.get(), elem->index+n-1, 1);
+//            sims[k]->propagate(state.get(), elem->index+n-1, 1);
+            (*it)->advance(*state);
         }
 
         std::cout << "\n";
