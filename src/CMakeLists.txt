@@ -55,7 +55,8 @@ add_library(uscsi_core SHARED
   h5loader.cpp scsi/h5loader.h
 )
 target_link_libraries(uscsi_core
-  ${Boost_LIBRARIES}
+  ${Boost_THREAD_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
   ${HDF5_LIBRARIES}
 )
 
@@ -83,10 +84,11 @@ target_link_libraries(test_parse
 add_executable(test_config
   test_config.cpp
 )
-
 add_test(config test_config)
 target_link_libraries(test_config
   uscsi_core
+  ${Boost_PRG_EXEC_MONITOR_LIBRARY}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 
 add_executable(h5_loader
