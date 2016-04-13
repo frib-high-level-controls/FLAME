@@ -10,6 +10,104 @@
 
 #include "scsi/h5loader.h"
 
+void CavDataType::RdData(const std::string &FileName)
+{
+    std::string       line;
+    double            s, Elong;
+    std::stringstream str;
+    std::fstream      inf;
+
+    inf.open(FileName.c_str(), std::ifstream::in);
+    if (!inf.is_open()) {
+        std::cerr << "*** RdData: failed to open " << FileName << "\n";
+        exit(1);
+    }
+    while (getline(inf, line) && !inf.fail()) {
+        str.str(line);
+        str >> s >> Elong;
+        this->s.push_back(s), this->Elong.push_back(Elong);
+        // Convert from [mm] to [m].
+//        this->s[this->s.size()-1] /= MtoMM;
+    }
+    inf.close();
+
+    if (false) {
+        std::cout << "\n";
+        for (size_t k = 0; k < this->s.size(); k++)
+            this->show(std::cout, k);
+    }
+}
+
+
+void CavDataType::show(std::ostream& strm, const int k) const
+{
+    strm << std::scientific << std::setprecision(5)
+         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k] << "\n";
+}
+
+
+void CavDataType::show(std::ostream& strm) const
+{
+    for (unsigned int k = 0; k < this->s.size(); k++)
+        this->show(strm, k);
+}
+
+
+class CavTLMLineType {
+public:
+    std::vector<double> s;         // Longitudinal position [m].
+    std::vector<std::string> Elem;
+    std::vector<double> E0,
+                        T,
+                        S,
+                        Accel;
+
+    void clear(void);
+    void set(const double, const std::string &, const double,
+             const double, const double, const double);
+    void show(std::ostream& strm, const int) const;
+    void show(std::ostream& strm) const;
+};
+
+
+void CavTLMLineType::clear(void)
+{
+    this->s.clear(); this->Elem.clear(); this->E0.clear();
+    this->T.clear(); this->S.clear(); this->Accel.clear();
+}
+
+
+void CavTLMLineType::set(const double s, const std::string &Elem, const double E0,
+                         const double T, const double S, const double Accel)
+{
+    this->s.push_back(s); this->Elem.push_back(Elem); this->E0.push_back(E0);
+    this->T.push_back(T); this->S.push_back(S); this->Accel.push_back(Accel);
+}
+
+
+void CavTLMLineType::show(std::ostream& strm, const int k) const
+{
+    strm << std::fixed << std::setprecision(5)
+         << std::setw(9) << this->s[k] << std::setw(10) << this->Elem[k]
+         << std::setw(9) << this->T[k] << std::setw(9) << this->S[k]
+         << std::setw(9) << this->Accel[k] << "\n";
+}
+
+
+void CavTLMLineType::show(std::ostream& strm) const
+{
+    for (unsigned int k = 0; k < this->s.size(); k++)
+        this->show(strm, k);
+}
+
+
+const int MaxNCav    = 5;
+
+CavDataType         CavData[MaxNCav];
+std::stringstream   CavTLMstream[MaxNCav];
+CavTLMLineType      CavTLMLineTab[MaxNCav];
+
+
 namespace {
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
 // by LU-decomposition.
@@ -62,6 +160,7 @@ Moment2State::Moment2State(const Config& c)
 
     double Erest     = c.get<double>("IonEs", 0e0), // Rest energy.
            Ekinetic0 = c.get<double>("IonEk", 0e0);
+           IonZ      = c.get<double>("IonZ", 0e0);
 
     gamma            = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
     beta             = sqrt(1e0-1e0/sqr(gamma));
@@ -74,7 +173,8 @@ Moment2State::Moment2State(const Config& c)
 
     std::cout << std::scientific << std::setprecision(5)
               << "\nMoment2State(const Config& c): \n"
-              << "  Erest = " << Erest << ", Ekinetic0 = " << Ekinetic0 << ", Ekinetic = " << Ekinetic << "\n"
+              << "  Erest = " << Erest << "  IonZ = " << IonZ
+              << ", Ekinetic0 = " << Ekinetic0  << ", Ekinetic = " << Ekinetic << "\n"
               << "  bg0 = " << bg0 << ", bg1 = " << bg1 << "\n";
 }
 
@@ -554,78 +654,6 @@ void LongTabType::show(std::ostream& strm, const int k) const
 }
 
 
-class CavDataType {
-// Cavity on-axis longitudinal electric field vs. s.
-public:
-    std::vector<double> s,     // s coordinate [m]
-                        Elong; // Longitudinal Electric field [V/m].
-
-    void RdData(const std::string&);
-    void show(std::ostream&, const int) const;
-    void show(std::ostream&) const;
-};
-
-
-void CavDataType::RdData(const std::string &FileName)
-{
-    std::string       line;
-    double            s, Elong;
-    std::stringstream str;
-    std::fstream      inf;
-
-    inf.open(FileName.c_str(), std::ifstream::in);
-    if (!inf.is_open()) {
-        std::cerr << "*** RdData: failed to open " << FileName << "\n";
-        exit(1);
-    }
-    while (getline(inf, line) && !inf.fail()) {
-        str.str(line);
-        str >> s >> Elong;
-        this->s.push_back(s), this->Elong.push_back(Elong);
-        // Convert from [mm] to [m].
-//        this->s[this->s.size()-1] /= MtoMM;
-    }
-    inf.close();
-
-    if (false) {
-        std::cout << "\n";
-        for (size_t k = 0; k < this->s.size(); k++)
-            this->show(std::cout, k);
-    }
-}
-
-
-void CavDataType::show(std::ostream& strm, const int k) const
-{
-    strm << std::scientific << std::setprecision(5)
-         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k] << "\n";
-}
-
-
-void CavDataType::show(std::ostream& strm) const
-{
-    for (unsigned int k = 0; k < this->s.size(); k++)
-        this->show(strm, k);
-}
-
-
-class CavTLMLineType {
-public:
-    std::vector<double> s;         // Longitudinal position [m].
-    std::vector<std::string> Elem;
-    std::vector<double> E0,
-                        T,
-                        S,
-                        Accel;
-
-    void clear(void);
-    void set(const double, const std::string &, const double,
-             const double, const double, const double);
-    void show(std::ostream& strm, const int) const;
-    void show(std::ostream& strm) const;
-};
-
-
 // Global constants and variables.
 
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
@@ -641,13 +669,8 @@ public:
 //                   2 include quadrupole terms.
 const int MpoleLevel = 2;
 
-const int MaxNCav    = 5;
-
-CavDataType         CavData[MaxNCav];
 LongTabType         LongTab;
 std::vector<double> CavPhases;
-CavTLMLineType      CavTLMLineTab[MaxNCav];
-std::stringstream   CavTLMstream[MaxNCav];
 
 
 void GetCavBoost(const CavDataType &CavData, const double IonW0,
