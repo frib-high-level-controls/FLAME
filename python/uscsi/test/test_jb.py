@@ -288,7 +288,7 @@ class testBasic(unittest.TestCase):
     P = GLPSParser()
 
     with open(os.path.join(datadir, 'moment_jb.lat'), 'rb') as inf:
-        self.M = Machine(inf.read())
+        self.M = Machine(inf)
 
         S = self.M.allocState({})
 

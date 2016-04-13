@@ -37,10 +37,30 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
         if(PyDict_Check(conf)) {
             C.reset(dict2conf(conf));
 
-        } else if(!PyObject_GetBuffer(conf, &buf, PyBUF_SIMPLE)) {
-            GLPSParser parser;
-            C.reset(parser.parse_byte((const char*)buf.buf, buf.len, path));
+        } else if(PyObject_HasAttrString(conf, "read")) {
+            PyRef<> pybytes(PyObject_CallMethod(conf, "read", ""));
+            if(PyObject_GetBuffer(pybytes.py(), &buf, PyBUF_SIMPLE)) {
+                PyErr_SetString(PyExc_TypeError, "read() must return a buffer");
+                return -1;
+            }
+            try {
+                GLPSParser parser;
+                C.reset(parser.parse_byte((const char*)buf.buf, buf.len, path));
+            }catch(...){
+                PyBuffer_Release(&buf);
+                throw;
+            }
+            PyBuffer_Release(&buf);
 
+
+        } else if(!PyObject_GetBuffer(conf, &buf, PyBUF_SIMPLE)) {
+            try {
+                GLPSParser parser;
+                C.reset(parser.parse_byte((const char*)buf.buf, buf.len, path));
+            }catch(...){
+                PyBuffer_Release(&buf);
+                throw;
+            }
             PyBuffer_Release(&buf);
         } else {
             throw std::invalid_argument("'config' must be dict or byte buffer");
