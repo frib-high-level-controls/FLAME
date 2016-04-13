@@ -128,20 +128,7 @@ int unary_parse(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
     GLPSParser P;
     P.setPrinter(ctxt->printer);
 
-    FILE *fp = fopen(name.c_str(), "r");
-    if(!fp) {
-        std::ostringstream strm;
-        strm<<"Failed to open file '"<<name<<"' for parsing";
-        throw std::runtime_error(strm.str());
-    }
-    boost::shared_ptr<Config> ret;
-    try{
-        ret.reset(P.parse(fp));
-        fclose(fp);
-    }catch(...){
-        fclose(fp);
-        throw;
-    }
+    boost::shared_ptr<Config> ret(P.parse_file(name.c_str()));
     *R = ret;
     return 0;
 }

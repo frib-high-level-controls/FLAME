@@ -237,26 +237,18 @@ int main(int argc, char *argv[])
 {
     try {
         std::auto_ptr<Config> conf;
-        FILE                  *inf = NULL;
 
-        if(argc > 1) {
+        if(argc>2)
             HomeDir = argv[2];
-            inf = fopen(argv[1], "r");
-            if (!inf) {
-                fprintf(stderr, "Failed to open %s\n", argv[1]);
-                return 2;
-            }
-        }
 
         glps_debug = 0; // 0 or 1.
 
         try {
             GLPSParser P;
-            conf.reset(P.parse(inf));
+            conf.reset(P.parse_file(argc>1 ? argv[1] : NULL));
             fprintf(stderr, "Parsing succeeds\n");
         } catch(std::exception& e) {
             fprintf(stderr, "Parse error: %s\n", e.what());
-            fclose(inf);
             return 1;
         }
 
