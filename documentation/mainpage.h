@@ -4,9 +4,13 @@
 
 A discrete accelerator simulation engine
 
+@tableofcontents
+
 @subpage abstract
 
 @subpage latparse
+
+@subpage glpsexprs
 
 @subpage typesparams
 
@@ -449,6 +453,8 @@ var4 = 1+var1;
 var5 = cos(var4);
 @endverbatim
 
+The full list of valid expressions is given on the @subpage glpsexprs page.
+
 @section latgram Grammar definition
 
 @verbatim
@@ -501,6 +507,54 @@ file :
      | entry file
 
 @endverbatim
+*/
+
+// =====================================================================================
+
+/**
+@page glpsexprs Expressions
+
+@see parse_context::parse_context
+
+@section exprops Operators
+
+@htmlonly
+<table class="param">
+<thead><tr><th>Op.</th><th>Desc.</th></tr></thead>
+<tbody>
+<tr><td>NUM := - NUM</td><td>Floating point negation</td></tr>
+<tr><td>NUM := NUM + NUM</td><td>Floating point addition</td></tr>
+<tr><td>NUM := NUM - NUM</td><td>Floating point subtraction</td></tr>
+<tr><td>NUM := NUM * NUM</td><td>Floating point multiplication</td></tr>
+<tr><td>NUM := NUM / NUM</td><td>Floating point division.  Divide by zero will trigger a parser error.</td></tr>
+</tbody>
+</table>
+@endhtmlonly
+
+@htmlonly
+<table class="param">
+<thead><tr><th>Op.</th><th>Desc.</th></tr></thead>
+<tbody>
+<tr><td>NUM := sin(NUM)</td><td>Floating point trig. functions</td></tr>
+<tr><td>NUM := cos(NUM)</td><td></td></tr>
+<tr><td>NUM := tan(NUM)</td><td></td></tr>
+<tr><td>NUM := asin(NUM) or arcsin(NUM)</td><td></td></tr>
+<tr><td>NUM := acos(NUM) or arccos(NUM)</td><td></td></tr>
+<tr><td>NUM := atan(NUM) or arctan(NUM)</td><td></td></tr>
+</tbody>
+</table>
+@endhtmlonly
+
+@htmlonly
+<table class="param">
+<thead><tr><th>Op.</th><th>Desc.</th></tr></thead>
+<tbody>
+<tr><td>STR = file(STR)</td><td>Normalize file path.  Accepts a possibly relative path, returns the canonical path (no '.' or '..')</td></tr>
+<tr><td>STR = h5file(STR)</td><td>Normalize h5file path.  same as file() while also ignoring any trailing "/group/name".</td></tr>
+</tbody>
+</table>
+@endhtmlonly
+
 */
 
 // =====================================================================================
