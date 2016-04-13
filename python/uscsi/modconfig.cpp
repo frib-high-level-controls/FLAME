@@ -186,7 +186,7 @@ PyObject* PyGLPSParse(PyObject *, PyObject *args, PyObject *kws)
         const char *buf, *path = NULL;
         Py_ssize_t blen;
         const char *pnames[] = {"data", "path", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "s#|s", (char**)pnames, &buf, &blen, &path))
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "s#|z", (char**)pnames, &buf, &blen, &path))
             return NULL;
 
         GLPSParser parser;

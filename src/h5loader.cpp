@@ -51,7 +51,7 @@ void H5Loader::open(const char *spec)
 void H5Loader::open(const std::string& spec)
 {
     close();
-    /* The provided spec main contain both file path and group(s)
+    /* The provided spec may contain both file path and group(s)
      * seperated by '/' which is ambigious as the file path
      * may contain '/' as well...
      * so do as h5ls does and strip off from the right hand side until

@@ -176,6 +176,7 @@ struct parse_context {
     //! Used to expand relative paths
     boost::filesystem::path cwd;
 
+    //! Initialize context, including populating operations table
     parse_context(const char *path=NULL);
     ~parse_context();
 
