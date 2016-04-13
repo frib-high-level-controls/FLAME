@@ -1,0 +1,12 @@
+table.param {
+    border-collapse: collapse;
+}
+table.param >thead {
+    background-color: #EDEDED;
+}
+table.param >thead >tr >th {
+    padding-right: 6px;
+}
+table.param >tbody >tr:nth-child(even) {
+    background-color: #f5f5f5;
+}

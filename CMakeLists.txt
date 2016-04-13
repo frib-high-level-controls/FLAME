@@ -84,6 +84,7 @@ find_package(Doxygen)
 enable_testing()
 
 add_subdirectory(src)
+add_subdirectory(examples)
 
 if(USE_PYTHON AND Python_NUMPY_FOUND)
   message(STATUS "Building python support")
@@ -107,6 +108,13 @@ if(DOXYGEN_FOUND)
     COMMAND ${DOXYGEN_EXECUTABLE} Doxyfile
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documentation
   )
+  if(UNIX)
+    add_custom_target(doc-commit
+      DEPENDS doc
+      COMMAND find . -type f -print0 | xargs -0 ${CMAKE_CURRENT_SOURCE_DIR}/documentation/commit-gh.sh ${CMAKE_CURRENT_SOURCE_DIR}/.git
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documentation/html
+    )
+  endif()
   message(STATUS "Will generate documentation")
 else()
   message(STATUS "Skipping documentation generation (missing doxygen)")
