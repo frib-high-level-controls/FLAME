@@ -9,7 +9,7 @@
 /** @brief Helper to read 2d matricies
  *
  @code
- H5Loader L("file.h5:/group");
+ H5Loader L("file.h5/group");
  H5Loader::matrix M(L.load("dataset"));
  @endcode
  */
