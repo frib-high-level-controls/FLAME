@@ -131,8 +131,10 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
-    ,pos(c.get<double>("L", 0e0))
+//    ,pos(c.get<double>("L", 0e0))
+    ,pos(0e0)
     ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
+    ,FyAbs(0e0)
     ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
@@ -198,6 +200,7 @@ void Moment2State::assign(const StateBase& other)
     IonZ = O->IonZ;
     Ekinetic = O->Ekinetic;
     sync_phase = O->sync_phase;
+    FyAbs = O->FyAbs;
     gamma = O->gamma;
     beta = O->beta;
     bg0 = O->bg0;
@@ -246,43 +249,49 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==4) {
+        Info.name = "FyAbs";
+        Info.ptr = &FyAbs;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==5) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==6) {
         Info.name = "sync_phase";
         Info.ptr = &sync_phase;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==7) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==7) {
+    } else if(idx==8) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==9) {
         Info.name = "bg0";
         Info.ptr = &bg0;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==10) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-10, Info);
+    return StateBase::getArray(idx-11, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -1480,12 +1489,12 @@ double GetCavPhase(const int cavi, const double IonEk, const double IonFys,
 
 
 void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, const double IonEs, double &IonW,
-                        double &SampleIonK, double &IonBeta)
+                        double &FyAbs, double &SampleIonK, double &IonBeta, double &IonGamma)
 {
     std::string CavType;
     int         cavi;
     double      fRF, multip, caviIonK, IonFys, EfieldScl, caviFy, IonFy_i, IonFy_o;
-    double      IonW_o, IonGamma;
+    double      IonW_o;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -1503,9 +1512,9 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
     IonFys    = conf.get<double>("phi")*M_PI/180e0; // Synchrotron phase [rad].
     EfieldScl = conf.get<double>("scl_fac");       // Electric field scale factor.
 
-    caviFy = GetCavPhase(cavi, IonW-IonEs, IonFys, LongTab.FyAbs[n-2], multip);
+    caviFy = GetCavPhase(cavi, IonW-IonEs, IonFys, FyAbs, multip);
 
-    IonFy_i = multip*LongTab.FyAbs[n-2] + caviFy;
+    IonFy_i = multip*FyAbs + caviFy;
     CavPhases.push_back(caviFy);
 
     if (false)
@@ -1517,13 +1526,15 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
     // kinetic energy, absolute phase, beta, and gamma.
     GetCavBoost(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
                 IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
+
     IonW       = IonW_o;
     IonGamma   = IonW/IonEs;
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
     SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
+    FyAbs     += (IonFy_o-IonFy_i)/multip;
 
-    LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), IonW-IonEs,
-            LongTab.FyAbs[n-2]+(IonFy_o-IonFy_i)/multip, IonBeta, IonGamma);
+//    LongTab.set(LongTab.s[n-2]+conf.get<double>("L"), IonW-IonEs,
+//            LongTab.FyAbs[n-2]+(IonFy_o-IonFy_i)/multip, IonBeta, IonGamma);
 }
 
 //----------------------------------------------------------------
@@ -1568,7 +1579,11 @@ struct ElementRFCavity : public Moment2ElementBase
 
         int n = 1;
 
-        PropagateLongRFCav(conf(), n, IonZ1, IonEs, IonW, SampleIonK, IonBeta);
+        PropagateLongRFCav(conf(), n, IonZ1, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
+
+        ST.pos     += conf().get<double>("L");
+        ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
+        ST.bg1      = IonBeta*IonGamma;
 
         //-------------------------------------------------------------
 
