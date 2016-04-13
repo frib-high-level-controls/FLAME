@@ -10,22 +10,14 @@
 
 int main(int argc, char *argv[])
 {
-    FILE *in = stdin;
-    if(argc>1) {
-        in = fopen(argv[1], "r");
-        if(!in) {
-            fprintf(stderr, "Failed to open %s\n", argv[1]);
-            return 2;
-        }
-    }
-
+try {
     std::auto_ptr<Config> conf;
+
     try {
         GLPSParser P;
-        conf.reset(P.parse(in));
+        conf.reset(P.parse_file(argc>=2 ? argv[1] : NULL));
     }catch(std::exception& e){
         std::cerr<<"Parse error: "<<e.what()<<"\n";
-        fclose(in);
         return 1;
     }
 
@@ -50,11 +42,12 @@ int main(int argc, char *argv[])
         std::cout << "\n# Final " << *state << "\n";
     }catch(std::exception& e){
         std::cerr<<"Simulation error: "<<e.what()<<"\n";
-        fclose(in);
         return 1;
     }
 
-    fclose(in);
-
     return 0;
+}catch(std::exception& e){
+    std::cerr<<"Error: "<<e.what()<<"\n";
+    return 1;
+}
 }

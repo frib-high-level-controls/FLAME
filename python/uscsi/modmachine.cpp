@@ -24,8 +24,9 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
         PyObject *conf = NULL;
-        const char *pnames[] = {"config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|", (char**)pnames, &conf))
+        const char *path = NULL;
+        const char *pnames[] = {"config", "path", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|s", (char**)pnames, &conf, &path))
             return -1;
 
         assert(!machine->weak);
@@ -38,7 +39,7 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
 
         } else if(!PyObject_GetBuffer(conf, &buf, PyBUF_SIMPLE)) {
             GLPSParser parser;
-            C.reset(parser.parse((const char*)buf.buf, buf.len));
+            C.reset(parser.parse_byte((const char*)buf.buf, buf.len, path));
 
             PyBuffer_Release(&buf);
         } else {

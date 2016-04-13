@@ -57,6 +57,7 @@ add_library(uscsi_core SHARED
 target_link_libraries(uscsi_core
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
   ${HDF5_LIBRARIES}
 )
 

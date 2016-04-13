@@ -231,25 +231,36 @@ public:
     void setVar(const std::string& name, const Config::value_t& v);
     //! @brief Set output for lexer/parser error messages
 
+    /** @brief Open and parse a file
+     *
+     * @arg fname File name to open.  If NULL or '-' then parse stdin
+     *
+     * If stdin is parsed then it is not closed.
+     */
+    Config *parse_file(const char *fname);
     /** @brief Parse from open FILE
      *
+     * @arg fp an open file descriptor
+     * @args path The directory containing the open file
      * @post fp is not closed.
      * @returns New Config or NULL
      */
-    Config *parse(FILE *fp);
+    Config *parse_file(FILE *fp, const char *path=NULL);
     /** @brief Parse from byte buffer
      *
      * @arg s Byte array
      * @arg len Length of byte array (in bytes)
+     * @args path A directory to use as CWD when parsing
      * @returns New Config or NULL
      */
-    Config *parse(const char* s, size_t len);
+    Config *parse_byte(const char* s, size_t len, const char *path=NULL);
     /** @brief Parse from std::string
      *
      * @arg s String
+     * @args path A directory to use as CWD when parsing
      * @returns New Config or NULL
      */
-    Config *parse(const std::string& s);
+    Config *parse_byte(const std::string& s, const char *path=NULL);
 };
 
 void GLPSPrint(std::ostream& strm, const Config&);

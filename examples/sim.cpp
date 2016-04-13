@@ -16,17 +16,11 @@ int main(int argc, char *argv[])
         //! [Register sim_types]
 
         //! [Parse lattice file]
-        FILE *fp = fopen(argv[1], "r");
-
         std::auto_ptr<Config> conf;
-        try{
+        {
             GLPSParser parser;
-            conf.reset(parser.parse(fp));
-        }catch(...){
-            fclose(fp);
-            throw;
+            conf.reset(parser.parse_file(argv[1]));
         }
-        fclose(fp);
         //! [Parse lattice file]
 
         //! [Construct Machine]

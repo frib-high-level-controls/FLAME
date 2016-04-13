@@ -1813,28 +1813,19 @@ int main(int argc, char *argv[])
         std::auto_ptr<Config>                    conf;
         std::vector<boost::shared_ptr<Machine> > sims;
         clock_t                                  tStamp[2];
-        FILE                                     *inf;
 
-        if(argc > 1) {
+        if(argc>2)
             HomeDir = argv[2];
-            inf = fopen(argv[1], "r");
-            if (!inf) {
-                fprintf(stderr, "Failed to open %s\n", argv[1]);
-                return 2;
-            }
-        }
-
-        glps_debug = 0; // 0 or 1.
 
         try {
             GLPSParser P;
-            conf.reset(P.parse(inf));
-            fprintf(stderr, "Parsing succeeds\n");
-        } catch(std::exception& e) {
-            fprintf(stderr, "Parse error: %s\n", e.what());
-            fclose(inf);
+            conf.reset(P.parse_file(argc>=2 ? argv[1] : NULL));
+        }catch(std::exception& e){
+            std::cerr<<"Parse error: "<<e.what()<<"\n";
             return 1;
         }
+
+        glps_debug = 0; // 0 or 1.
 
         // Register state and element types.
         registerLinear();
@@ -1949,13 +1940,11 @@ int main(int argc, char *argv[])
                 std::cout << "\n# Final " << *state << "\n";
             } catch(std::exception& e) {
                 std::cerr << "Simulation error: " << e.what() << "\n";
-                fclose(inf);
                 return 1;
             }
         }
 
         fprintf(stderr, "Done\n");
-        fclose(inf);
         Machine::registeryCleanup();
         return 0;
     } catch(std::exception& e) {
