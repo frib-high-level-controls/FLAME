@@ -122,13 +122,14 @@ int binary_bl_mult(parse_context* ctxt, expr_value_t *R, const expr_t * const *A
 
 int unary_parse(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
 {
+    using namespace boost::filesystem;
     assert(A[0]->etype==glps_expr_string);
-    const std::string& name = boost::get<std::string>(A[0]->value);
+    path name(canonical(boost::get<std::string>(A[0]->value), ctxt->cwd));
 
     GLPSParser P;
     P.setPrinter(ctxt->printer);
 
-    boost::shared_ptr<Config> ret(P.parse_file(name.c_str()));
+    boost::shared_ptr<Config> ret(P.parse_file(name.native().c_str()));
     *R = ret;
     return 0;
 }
