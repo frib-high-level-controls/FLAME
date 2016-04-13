@@ -2,18 +2,17 @@ from __future__ import print_function
 
 import unittest
 
+import os
+datadir = os.path.dirname(__file__)
+
 from numpy import asarray
 from numpy.testing import assert_array_almost_equal as assert_array_equal
 from numpy.testing import assert_equal
 
 from .._internal import (GLPSPrinter as dictshow, _GLPSParse)
-
+from .. import GLPSParser
 import os
 datadir = os.path.dirname(__file__)
-
-class GLPSParser(object):
-    def parse(self, s):
-        return _GLPSParse(s)
 
 
 class testParse(unittest.TestCase):
@@ -189,6 +188,16 @@ foo: LINE = (x1, x1);
 
         assert_array_equal(C['hello'], asarray([1,2,3,4]))
         assert_array_equal(C['elements'][0]['extra'], asarray([1,3,5]))
+
+class testHDF5(unittest.TestCase):
+    def test_good(self):
+        P = GLPSParser()
+
+        with open(os.path.join(datadir, "test_h5.lat"), "rb") as F:
+            C = P.parse(F.read(), path=datadir)
+
+        self.assertEqual(C['plainname'], os.path.join(datadir, "test.h5"))
+        self.assertEqual(C['h5name'], os.path.join(datadir, "test.h5/foo/baz"))
 
 class testNest(unittest.TestCase):
     def test_parse(self):

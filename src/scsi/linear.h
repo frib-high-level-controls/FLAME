@@ -12,9 +12,9 @@
 
 /** @brief An Element based on a simple Transfer matrix
  *
- * x' = M * x
+ * @f$ state = transfer * state @f$
+ * @tparam one of VectorState or MatrixState
  */
-
 template<typename State>
 struct LinearElementBase : public ElementVoid
 {
@@ -40,7 +40,7 @@ struct LinearElementBase : public ElementVoid
 
     typedef boost::numeric::ublas::matrix<double> value_t;
 
-    value_t transfer;
+    value_t transfer; //!< The transfer matrix
 
     virtual void assign(const ElementVoid *other)
     {

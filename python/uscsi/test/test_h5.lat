@@ -1,0 +1,4 @@
+plainname = file("./test.h5");
+h5name = h5file("./test.h5/foo/baz");
+D: drift;
+junk : LINE = (D);

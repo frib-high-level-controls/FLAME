@@ -348,9 +348,36 @@ GLPSParser::setPrinter(std::ostream* strm)
 }
 
 Config*
-GLPSParser::parse(FILE *fp)
+GLPSParser::parse_file(const char *fname)
 {
-    parse_context ctxt;
+    boost::filesystem::path fpath(fname);
+    fpath = boost::filesystem::canonical(fpath).parent_path();
+
+    FILE *fp;
+    bool closeme = fname!=NULL && strcmp(fname,"-")!=0;
+    if(closeme)
+        fp = fopen(fname, "r");
+    else
+        fp = stdin;
+    if(!fp) {
+        std::ostringstream strm;
+        strm<<"Failed to open file for parsing '"<<fname<<"'";
+        throw std::runtime_error(strm.str());
+    }
+    try{
+        Config *ret = parse_file(fp, fpath.native().c_str());
+        if(closeme) fclose(fp);
+        return ret;
+    }catch(...){
+        if(closeme) fclose(fp);
+        throw;
+    }
+}
+
+Config*
+GLPSParser::parse_file(FILE *fp, const char *path)
+{
+    parse_context ctxt(path);
     ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(fp);
@@ -358,9 +385,9 @@ GLPSParser::parse(FILE *fp)
 }
 
 Config*
-GLPSParser::parse(const char* s, size_t len)
+GLPSParser::parse_byte(const char* s, size_t len, const char *path)
 {
-    parse_context ctxt;
+    parse_context ctxt(path);
     ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(s, len);
@@ -368,9 +395,9 @@ GLPSParser::parse(const char* s, size_t len)
 }
 
 Config*
-GLPSParser::parse(const std::string& s)
+GLPSParser::parse_byte(const std::string& s, const char *path)
 {
-    parse_context ctxt;
+    parse_context ctxt(path);
     ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(s);

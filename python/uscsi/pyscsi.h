@@ -15,7 +15,7 @@ PyObject* wrapstate(StateBase*); // takes ownership of argument from caller
 StateBase* unwrapstate(PyObject*); // ownership of returned pointer remains with argument
 
 PyObject* PyGLPSPrint(PyObject *, PyObject *args);
-PyObject* PyGLPSParse(PyObject *, PyObject *args);
+PyObject* PyGLPSParse(PyObject *, PyObject *args, PyObject *kws);
 
 int registerModMachine(PyObject *mod);
 int registerModState(PyObject *mod);

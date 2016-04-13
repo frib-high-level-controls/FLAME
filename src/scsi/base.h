@@ -150,6 +150,12 @@ struct Machine : public boost::noncopyable
      */
     StateBase* allocState(const Config& c) const;
 
+    //! Allocate new State with empty Config
+    inline StateBase* allocState() const {
+        Config defaults;
+        return allocState(defaults);
+    }
+
     void reconfigure(size_t idx, const Config& c);
 
     inline const std::string& simtype() const {return p_simtype;}

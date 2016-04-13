@@ -36,6 +36,8 @@ set(PY_SRC
   test/latticeout_IMP_withPV_consolidate.lat
   test/latticeout_IMP_withPV_consolidate2.lat
   test/latticeout_IMP_All.lat
+  test/test_h5.lat
+  test/test.h5
 )
 
 # Copy .py files to the binary dir in order to run unit-tests

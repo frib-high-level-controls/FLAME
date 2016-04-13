@@ -10,6 +10,8 @@
 #include <set>
 
 #include <boost/variant.hpp>
+#define BOOST_FILESYSTEM_DYN_LINK
+#include <boost/filesystem.hpp>
 #include <boost/shared_ptr.hpp>
 extern "C" {
 #endif
@@ -175,7 +177,13 @@ struct parse_context {
 
     std::vector<char> error_scratch;
 
-    parse_context();
+    //! Directory containing the file being parsed, or process CWD
+    //! when parsing a string.
+    //! Used to expand relative paths
+    boost::filesystem::path cwd;
+
+    //! Initialize context, including populating operations table
+    parse_context(const char *path=NULL);
     ~parse_context();
 
     void parse(FILE *fp);

@@ -34,8 +34,8 @@ struct MomentState : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    vector_t moment0;
-    matrix_t state; // TODO: better name
+    vector_t moment0; //!< the state vector (0th moment)
+    matrix_t state; //!< The state matrix (1st moment)
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
@@ -63,8 +63,7 @@ struct MomentElementBase : public ElementVoid
 
     typedef boost::numeric::ublas::matrix<double> value_t;
 
-    value_t transfer;
-    //value_t transferT;
+    value_t transfer; //!< The transfer matrix
 
     virtual void assign(const ElementVoid *other)
     {

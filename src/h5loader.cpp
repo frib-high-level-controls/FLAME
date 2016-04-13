@@ -51,28 +51,39 @@ void H5Loader::open(const char *spec)
 void H5Loader::open(const std::string& spec)
 {
     close();
-    size_t sep = spec.find_first_of(':');
-    if(sep==0)
-        throw std::runtime_error("Spec. missing file name");
+    /* The provided spec may contain both file path and group(s)
+     * seperated by '/' which is ambigious as the file path
+     * may contain '/' as well...
+     * so do as h5ls does and strip off from the right hand side until
+     * and try to open while '/' remain.
+     */
+    size_t sep = spec.npos;
 
-    std::string fname(spec.substr(0,sep));
-    std::string path("/");
+    while(true) {
+        sep = spec.find_last_of('/', sep-1);
 
-    if(sep!=spec.npos) {
-        path = spec.substr(sep+1);
+        std::string fname(spec.substr(0, sep));
+
+        try {
+            pvt->file.openFile(fname, H5F_ACC_RDONLY);
+        } catch(H5::FileIException& e) {
+            if(sep==spec.npos) {
+                // no more '/' so this is failure
+                throw std::runtime_error("Unable to open file");
+            }
+            continue; // keep trying
+        } CATCH()
+
+        std::string group(spec.substr(sep+1));
+
+        try {
+            pvt->group = pvt->file.openGroup(group);
+        } catch(H5::FileIException& e) {
+            throw std::runtime_error("Unable to open group");
+        } CATCH()
+
+        return;
     }
-
-    try {
-        pvt->file.openFile(fname, H5F_ACC_RDONLY);
-    } catch(H5::FileIException& e) {
-        throw std::runtime_error("Unable to open file");
-    } CATCH()
-
-    try {
-        pvt->group = pvt->file.openGroup(path);
-    } catch(H5::FileIException& e) {
-        throw std::runtime_error("Unable to open group");
-    } CATCH()
 }
 
 void H5Loader::close()

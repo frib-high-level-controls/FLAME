@@ -180,16 +180,17 @@ PyObject* PyGLPSPrint(PyObject *, PyObject *args)
 #error the following assumes ssize_t is used
 #endif
 
-PyObject* PyGLPSParse(PyObject *, PyObject *args)
+PyObject* PyGLPSParse(PyObject *, PyObject *args, PyObject *kws)
 {
     try{
-        const char *buf;
+        const char *buf, *path = NULL;
         Py_ssize_t blen;
-        if(!PyArg_ParseTuple(args, "s#", &buf, &blen))
+        const char *pnames[] = {"data", "path", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "s#|z", (char**)pnames, &buf, &blen, &path))
             return NULL;
 
         GLPSParser parser;
-        std::auto_ptr<Config> conf(parser.parse(buf, blen));
+        std::auto_ptr<Config> conf(parser.parse_byte(buf, blen, path));
         return conf2dict(conf.get());
 
     }CATCH()

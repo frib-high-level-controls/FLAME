@@ -11,7 +11,7 @@
 namespace {
 static
 PyMethodDef modmethods[] = {
-    {"_GLPSParse", (PyCFunction)&PyGLPSParse, METH_VARARGS,
+    {"_GLPSParse", (PyCFunction)&PyGLPSParse, METH_VARARGS|METH_KEYWORDS,
      "Parse a GLPS lattice file to AST form"},
     {"GLPSPrinter", (PyCFunction)&PyGLPSPrint, METH_VARARGS,
      "Print a GLPS AST to string"},
