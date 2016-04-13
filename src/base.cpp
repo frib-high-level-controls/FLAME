@@ -101,6 +101,7 @@ void ElementVoid::assign(const ElementVoid *other)
 Machine::Machine(const Config& c)
     :p_elements()
     ,p_trace(NULL)
+    ,p_conf(c)
     ,p_info()
 {
     std::string type(c.get<std::string>("sim_type"));
@@ -120,6 +121,7 @@ Machine::Machine(const Config& c)
     elements_t Es(c.get<elements_t>("elements"));
 
     p_elements_t result;
+    p_lookup_t result_l;
     result.reserve(Es.size());
 
     size_t idx=0;
@@ -154,11 +156,13 @@ Machine::Machine(const Config& c)
         *const_cast<size_t*>(&E->index) = idx++; // ugly
 
         result.push_back(E);
+        result_l.insert(std::make_pair(LookupKey(E->name, E->index), E));
     }
 
     G.unlock();
 
     p_elements.swap(result);
+    p_lookup.swap(result_l);
 }
 
 Machine::~Machine()
