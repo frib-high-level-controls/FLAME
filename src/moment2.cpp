@@ -1564,11 +1564,9 @@ struct ElementRFCavity : public Moment2ElementBase
 
         last_Kenergy_in = ST.Ekinetic;
 
-        double outE = 0;
-
         //-------------------------------------------------------------
 
-        double IonZ1 = ST.IonZ;
+        double IonZ  = ST.IonZ;
         double IonEs = ST.IonEs/MeVtoeV;
         double IonW  = ST.IonW/MeVtoeV;
         double IonEk = ST.IonEk/MeVtoeV;
@@ -1579,25 +1577,28 @@ struct ElementRFCavity : public Moment2ElementBase
 
         int n = 1;
 
-        PropagateLongRFCav(conf(), n, IonZ1, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
+        PropagateLongRFCav(conf(), n, IonZ, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
 
         ST.pos     += conf().get<double>("L");
         ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
+        ST.gamma    = IonGamma;
+        ST.beta     = IonBeta;
         ST.bg1      = IonBeta*IonGamma;
 
         //-------------------------------------------------------------
 
-        //GetCavBoost(data, ST.Ekinetic+Erest, ST.sync_phase, ST.Ekinetic, ST.ZZ, ST.Es, FSampLength, 00, outE, ST.sync_phase);
+        last_Kenergy_out = ST.Ekinetic;
 
-        double Eout = outE-Erest;
-        last_Kenergy_out = ST.Ekinetic = Eout; // new output energy
+        int CavCnt = 1;
 
-//        ST.gamma = (Erest+ST.Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
-//        ST.beta  = sqrt(1e0-1e0/sqr(ST.gamma));
-//        ST.bg1   = ST.beta*ST.gamma;
+        // Define initial conditions.
+        double Fy_absState = ST.moment0[state_t::PS_S],
+               EkState     = IonEk + ST.moment0[state_t::PS_PS];
 
-        //InitRFCav(conf(), index, );
-        // some magic to set 'transfer'
+        double accIonW, beta, gamma, avebeta, avegamma;
+
+        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
+                  beta, gamma, avebeta, avegamma, transfer);
     }
 
     virtual const char* type_name() const {return "rfcavity";}
