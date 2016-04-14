@@ -101,11 +101,60 @@ void CavTLMLineType::show(std::ostream& strm) const
 }
 
 
+// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
+# define SampleFreq   80.5e6
+// Sampling distance [m].
+# define SampleLambda (C0/SampleFreq*MtoMM)
+
 const int MaxNCav    = 5;
 
 CavDataType         CavData[MaxNCav];
 std::stringstream   CavTLMstream[MaxNCav];
 CavTLMLineType      CavTLMLineTab[MaxNCav];
+
+
+void PrtVec(const std::vector<double> &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+typedef boost::numeric::ublas::vector<double> value_vec;
+typedef boost::numeric::ublas::matrix<double> value_mat;
+
+enum {maxsize = 7};
+
+typedef boost::numeric::ublas::vector<double,
+                boost::numeric::ublas::bounded_array<double, maxsize>
+> vector_t;
+
+typedef boost::numeric::ublas::matrix<double,
+                boost::numeric::ublas::row_major,
+                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
+> matrix_t;
+
+
+void PrtVec(const vector_t &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+void PrtMat(const value_mat &M)
+{
+    for (size_t j = 0; j < M.size1(); j++) {
+        for (size_t k = 0; k < M.size2(); k++)
+            std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << M(j, k);
+        std::cout << "\n";
+    }
+}
 
 
 namespace {
@@ -135,6 +184,8 @@ Moment2State::Moment2State(const Config& c)
     ,pos(0e0)
     ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
     ,FyAbs(0e0)
+    ,Fy_absState(0e0)
+    ,EkState(0e0)
     ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
@@ -164,14 +215,18 @@ Moment2State::Moment2State(const Config& c)
            Ekinetic0 = c.get<double>("IonEk", 0e0);
            IonZ      = c.get<double>("IonZ", 0e0);
 
-    gamma            = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    beta             = sqrt(1e0-1e0/sqr(gamma));
-    bg0              = beta*gamma;
+    gamma       = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    beta        = sqrt(1e0-1e0/sqr(gamma));
+    bg0         = beta*gamma;
 
-    Ekinetic         = Ekinetic0;
-    gamma            = (Erest+Ekinetic)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    beta             = sqrt(1e0-1e0/sqr(gamma));
-    bg1              = beta*gamma;
+    Ekinetic    = Ekinetic0;
+
+    // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    //    gamma       = (Erest+Ekinetic)/Erest;
+    gamma       = (Erest+EkState)/Erest;
+    bg1         = beta*gamma;
+
+    SampleIonK  = 2e0*M_PI/(beta*SampleLambda);
 
     std::cout << std::scientific << std::setprecision(5)
               << "\nMoment2State(const Config& c): \n"
@@ -187,6 +242,7 @@ Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     ,pos(o.pos)
     ,IonZ(o.IonZ)
     ,Ekinetic(o.Ekinetic)
+    ,SampleIonK(o.SampleIonK)
     ,moment0(o.moment0)
     ,state(o.state)
 {}
@@ -196,17 +252,20 @@ void Moment2State::assign(const StateBase& other)
     const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
-    pos = O->pos;
-    IonZ = O->IonZ;
-    Ekinetic = O->Ekinetic;
-    sync_phase = O->sync_phase;
-    FyAbs = O->FyAbs;
-    gamma = O->gamma;
-    beta = O->beta;
-    bg0 = O->bg0;
-    bg1 = O->bg1;
-    moment0 = O->moment0;
-    state = O->state;
+    pos         = O->pos;
+    IonZ        = O->IonZ;
+    Ekinetic    = O->Ekinetic;
+    SampleIonK  = O->SampleIonK;
+    sync_phase  = O->sync_phase;
+    FyAbs       = O->FyAbs;
+    Fy_absState = O->Fy_absState;
+    EkState     = O->EkState;
+    gamma       = O->gamma;
+    beta        = O->beta;
+    bg0         = O->bg0;
+    bg1         = O->bg1;
+    moment0     = O->moment0;
+    state       = O->state;
     StateBase::assign(other);
 
     std::cout << std::scientific << std::setprecision(5)
@@ -255,43 +314,61 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==5) {
+        Info.name = "Fy_absState";
+        Info.ptr = &Fy_absState;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==6) {
+        Info.name = "EkState";
+        Info.ptr = &EkState;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==7) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==8) {
+        Info.name = "SampleIonK";
+        Info.ptr = &SampleIonK;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==9) {
         Info.name = "sync_phase";
         Info.ptr = &sync_phase;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==7) {
+    } else if(idx==10) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==11) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==12) {
         Info.name = "bg0";
         Info.ptr = &bg0;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==13) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-11, Info);
+    return StateBase::getArray(idx-14, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -303,9 +380,7 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
     length = c.get<double>("L", 0e0);
-//    FSampLength = C0/c.get<double>("Frf")*MtoMM;
-    FSampLength = C0/80.5e6*MtoMM;
-    phase_factor = length*2*M_PI/FSampLength;
+    phase_factor = length*2e0*M_PI/SampleLambda;
     Erest = c.get<double>("IonEs");
 
     inverse(misalign_inv, misalign);
@@ -365,6 +440,9 @@ void Moment2ElementBase::advance(StateBase& s)
     }
 
     ST.pos += length;
+
+    ST.FyAbs += ST.SampleIonK*conf().get<double>("L")*MtoMM;
+
     ST.Ekinetic = last_Kenergy_out;
     ST.sync_phase += phase_factor/ST.beta;
 
@@ -665,11 +743,6 @@ void LongTabType::show(std::ostream& strm, const int k) const
 
 // Global constants and variables.
 
-// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
-# define SampleFreq   80.5e6
-// Sampling distance [m].
-# define SampleLambda (C0/SampleFreq*MtoMM)
-
 // Phase space dimension; including vector for orbit/1st moment.
 # define PS_Dim        7
 
@@ -695,6 +768,7 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
            IonLambda, IonK, IonFylast, IonGamma, IonBeta;
 
     IonLambda = C0/fRF*MtoMM;
+
 
     IonFy = IonFy0;
     IonK  = IonK0;
@@ -1579,7 +1653,7 @@ struct ElementRFCavity : public Moment2ElementBase
 
         PropagateLongRFCav(conf(), n, IonZ, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
 
-        ST.pos     += conf().get<double>("L");
+//        ST.pos     += conf().get<double>("L");
         ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
         ST.gamma    = IonGamma;
         ST.beta     = IonBeta;
@@ -1592,13 +1666,17 @@ struct ElementRFCavity : public Moment2ElementBase
         int CavCnt = 1;
 
         // Define initial conditions.
-        double Fy_absState = ST.moment0[state_t::PS_S],
-               EkState     = IonEk + ST.moment0[state_t::PS_PS];
+        double EkState     = IonEk + ST.moment0[state_t::PS_PS];
 
         double accIonW, beta, gamma, avebeta, avegamma;
 
-        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
-                  beta, gamma, avebeta, avegamma, transfer);
+        //    Fy_absState = moment0[state_t::PS_S];
+        //    EkState     = IonEk + moment0[state_t::PS_PS];
+        ST.Fy_absState = ST.moment0[4];
+        ST.EkState     = IonEk + ST.moment0[5];
+
+        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, ST.EkState, ST.Fy_absState, accIonW,
+                  ST.beta, ST.gamma, avebeta, avegamma, transfer);
     }
 
     virtual const char* type_name() const {return "rfcavity";}

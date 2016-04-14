@@ -56,9 +56,12 @@ struct Moment2State : public StateBase
     double IonZ;       // Charge state.
     double Ekinetic;   // kinetic energy of reference particle
                        // actual is Ekinetic + moment0[6]
+    double SampleIonK;
 
     double sync_phase, // synchotron phase
-           FyAbs;      // Betatron phase for reference particle.
+           FyAbs,      // Betatron phase for reference particle.
+           EkState,
+           Fy_absState;
 
     double gamma,      // (Erest+Ekinetic)/Erest
            beta,       // sqrt(1e0-1e0/(gamma*gamma))
