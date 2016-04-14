@@ -216,7 +216,6 @@ public:
     }
 
     typedef value_proxy_iterator<p_lookup_t::iterator> lookup_iterator;
-    typedef value_proxy_iterator<p_lookup_t::const_iterator> const_lookup_iterator;
 
     //! Return a pair of iterators for the sequence [first, second) of those elements
     //! with the given name.
@@ -228,17 +227,19 @@ public:
     }
 
     //! Return a pair of iterators for the sequence [first, second) of those elements
-    //! with the given name.
-    std::pair<const_lookup_iterator, const_lookup_iterator> equal_range(const std::string& name) const {
-        p_lookup_t::const_iterator low (p_lookup.lower_bound(LookupKey(name, 0))),
-                                   high(p_lookup.upper_bound(LookupKey(name, (size_t)-1)));
-        return std::make_pair(const_lookup_iterator(low),
-                              const_lookup_iterator(high));
+    //! with the given type name.
+    std::pair<lookup_iterator, lookup_iterator> equal_range_type(const std::string& name) {
+        p_lookup_t::iterator low (p_lookup_type.lower_bound(LookupKey(name, 0))),
+                             high(p_lookup_type.upper_bound(LookupKey(name, (size_t)-1)));
+        return std::make_pair(lookup_iterator(low),
+                              lookup_iterator(high));
     }
+
 
 private:
     p_elements_t p_elements;
-    p_lookup_t p_lookup;
+    p_lookup_t p_lookup; //!< lookup by element instance name
+    p_lookup_t p_lookup_type; //!< lookup by element type name
     std::string p_simtype;
     std::ostream* p_trace;
     Config p_conf;
