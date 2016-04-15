@@ -1656,6 +1656,8 @@ struct ElementRFCavity : public Moment2ElementBase
 
         PropagateLongRFCav(conf(), n, IonZ, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
 
+        double Ekinetic = IonW - IonEs;
+
 //        ST.pos     += conf().get<double>("L");
 //        ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
 //        ST.gamma    = IonGamma;
@@ -1678,6 +1680,9 @@ struct ElementRFCavity : public Moment2ElementBase
 
         InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
                   ST.beta, ST.gamma, avebeta, avegamma, transfer);
+
+        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
+        ST.moment0[state_t::PS_PS] = EkState - Ekinetic;
     }
 
     virtual const char* type_name() const {return "rfcavity";}
