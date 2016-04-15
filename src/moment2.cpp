@@ -429,6 +429,9 @@ void Moment2ElementBase::advance(StateBase& s)
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
+    ST.Fy_absState = ST.moment0[state_t::PS_S];
+    ST.EkState     = ST.IonEk + ST.moment0[state_t::PS_PS]*MeVtoeV;
+
     if(ST.Ekinetic!=last_Kenergy_in) {
 
         // need to re-calculate energy dependent terms
@@ -1654,10 +1657,10 @@ struct ElementRFCavity : public Moment2ElementBase
         PropagateLongRFCav(conf(), n, IonZ, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
 
 //        ST.pos     += conf().get<double>("L");
-        ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
-        ST.gamma    = IonGamma;
-        ST.beta     = IonBeta;
-        ST.bg1      = IonBeta*IonGamma;
+//        ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
+//        ST.gamma    = IonGamma;
+//        ST.beta     = IonBeta;
+//        ST.bg1      = IonBeta*IonGamma;
 
         //-------------------------------------------------------------
 
@@ -1666,16 +1669,14 @@ struct ElementRFCavity : public Moment2ElementBase
         int CavCnt = 1;
 
         // Define initial conditions.
-        double EkState     = IonEk + ST.moment0[state_t::PS_PS];
+        double accIonW, EkState, beta, gamma, avebeta, avegamma;
 
-        double accIonW, beta, gamma, avebeta, avegamma;
+        EkState  = ST.EkState/MeVtoeV;
+        ST.gamma      = (EkState+IonEs)/IonEs;
+        ST.beta       = sqrt(1e0-1e0/sqr(ST.gamma));
+        SampleIonK = 2e0*M_PI/(ST.beta*SampleLambda);
 
-        //    Fy_absState = moment0[state_t::PS_S];
-        //    EkState     = IonEk + moment0[state_t::PS_PS];
-        ST.Fy_absState = ST.moment0[4];
-        ST.EkState     = IonEk + ST.moment0[5];
-
-        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, ST.EkState, ST.Fy_absState, accIonW,
+        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
                   ST.beta, ST.gamma, avebeta, avegamma, transfer);
     }
 
