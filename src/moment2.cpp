@@ -444,9 +444,6 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.pos += length;
 
-    ST.FyAbs += ST.SampleIonK*conf().get<double>("L")*MtoMM;
-
-    ST.Ekinetic = last_Kenergy_out;
     ST.sync_phase += phase_factor/ST.beta;
 
     // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in
@@ -461,6 +458,14 @@ void Moment2ElementBase::advance(StateBase& s)
               << "  ST.bg0 = " << ST.bg0 << ", ST.bg1 = " << ST.bg1 << "\n";
 
     ST.moment0 = prod(transfer, ST.moment0);
+
+    if (type_name() == "rfcavity") {
+        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
+        ST.moment0[state_t::PS_PS] = (ST.EkState-ST.Ekinetic)/MeVtoeV;
+    } else {
+        ST.FyAbs += ST.SampleIonK*length*MtoMM;
+        ST.Ekinetic = last_Kenergy_out;
+    }
 
     noalias(scratch) = prod(transfer, ST.state);
     noalias(ST.state) = prod(scratch, trans(transfer));
@@ -1673,16 +1678,19 @@ struct ElementRFCavity : public Moment2ElementBase
         // Define initial conditions.
         double accIonW, EkState, beta, gamma, avebeta, avegamma;
 
-        EkState  = ST.EkState/MeVtoeV;
-        ST.gamma      = (EkState+IonEs)/IonEs;
-        ST.beta       = sqrt(1e0-1e0/sqr(ST.gamma));
+        EkState    = ST.EkState/MeVtoeV;
+        ST.gamma   = (EkState+IonEs)/IonEs;
+        ST.beta    = sqrt(1e0-1e0/sqr(ST.gamma));
         SampleIonK = 2e0*M_PI/(ST.beta*SampleLambda);
 
         InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
                   ST.beta, ST.gamma, avebeta, avegamma, transfer);
 
-        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
-        ST.moment0[state_t::PS_PS] = EkState - Ekinetic;
+        ST.EkState  = EkState*MeVtoeV;
+        ST.Ekinetic = Ekinetic*MeVtoeV;
+
+//        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
+//        ST.moment0[state_t::PS_PS] = EkState - Ekinetic;
     }
 
     virtual const char* type_name() const {return "rfcavity";}
