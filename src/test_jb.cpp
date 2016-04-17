@@ -226,10 +226,10 @@ void GetCavTLMstr(void)
     std::fstream inf1, inf2;
 
     inf1.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
-    CavTLMstream[0] << inf1.rdbuf();
+    CavTLMstream2[0] << inf1.rdbuf();
 
     inf2.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
-    CavTLMstream[1] << inf2.rdbuf();
+    CavTLMstream2[1] << inf2.rdbuf();
 }
 
 
@@ -264,8 +264,8 @@ int main(int argc, char *argv[])
 //        GLPSPrint(std::cout, *conf);
 //        std::cout<<"\n";
 
-        CavData[0].RdData(HomeDir+"/data/axisData_41.txt");
-        CavData[1].RdData(HomeDir+"/data/axisData_85.txt");
+        CavData2[0].RdData(HomeDir+"/data/axisData_41.txt");
+        CavData2[1].RdData(HomeDir+"/data/axisData_85.txt");
 
         GetCavTLMstr();
 

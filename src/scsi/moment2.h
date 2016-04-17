@@ -25,8 +25,8 @@ public:
 };
 
 
-extern std::stringstream   CavTLMstream[];
-extern CavDataType         CavData[];
+extern std::stringstream   CavTLMstream2[];
+extern CavDataType         CavData2[];
 
 struct Moment2State : public StateBase
 {

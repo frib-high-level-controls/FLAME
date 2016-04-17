@@ -108,9 +108,9 @@ void CavTLMLineType::show(std::ostream& strm) const
 
 const int MaxNCav    = 5;
 
-CavDataType         CavData[MaxNCav];
-std::stringstream   CavTLMstream[MaxNCav];
-CavTLMLineType      CavTLMLineTab[MaxNCav];
+CavDataType         CavData2[MaxNCav];
+std::stringstream   CavTLMstream2[MaxNCav];
+CavTLMLineType      CavTLMLineTab2[MaxNCav];
 
 
 void PrtVec(const std::vector<double> &a)
@@ -1076,9 +1076,9 @@ void GetCavMatParams(const int cavi, std::stringstream &inf,
     inf.clear();
     inf.seekg(0, inf.beg);
 
-    CavTLMLineTab[cavi-1].clear();
+    CavTLMLineTab2[cavi-1].clear();
 
-    s = CavData[cavi-1].s[0];
+    s = CavData2[cavi-1].s[0];
     while (getline(inf, line) && !inf.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
         if (line[0] == '%') {
@@ -1182,13 +1182,13 @@ void GetCavMatParams(const int cavi, std::stringstream &inf,
                 exit(1);
             }
 
-            CavTLMLineTab[cavi-1].set(s, Elem, E0, T, S, Accel);
+            CavTLMLineTab2[cavi-1].set(s, Elem, E0, T, S, Accel);
         }
     }
 
     if (false) {
         std::cout << "\n";
-        CavTLMLineTab[cavi-1].show(std::cout);
+        CavTLMLineTab2[cavi-1].show(std::cout);
     }
 }
 
@@ -1280,7 +1280,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
 
-    s = CavData[cavi-1].s[0];
+    s = CavData2[cavi-1].s[0];
     n = 0;
     while (getline(inf, line) && !inf.fail()) {
         if (line[0] == '%') {
@@ -1309,9 +1309,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mprob(2, 3) = Length;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus1") {
-                V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab[cavi-1].T[n-1];
-                S    = CavTLMLineTab[cavi-1].S[n-1];
+                V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                T    = CavTLMLineTab2[cavi-1].T[n-1];
+                S    = CavTLMLineTab2[cavi-1].S[n-1];
                 kfdx = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = kfdx;
 
@@ -1319,9 +1319,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mprob(3, 2) = kfdy;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus2") {
-                V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab[cavi-1].T[n-1];
-                S    = CavTLMLineTab[cavi-1].S[n-1];
+                V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                T    = CavTLMLineTab2[cavi-1].T[n-1];
+                S    = CavTLMLineTab2[cavi-1].S[n-1];
                 kfdx = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = kfdx;
 
@@ -1330,9 +1330,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EDipole") {
                 if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab[cavi-1].T[n-1];
-                    S   = CavTLMLineTab[cavi-1].S[n-1];
+                    V0  = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T   = CavTLMLineTab2[cavi-1].T[n-1];
+                    S   = CavTLMLineTab2[cavi-1].S[n-1];
                     dpy = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
 
                     Mprob(3, 6) = dpy;
@@ -1340,9 +1340,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "EQuad") {
                 if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab[cavi-1].T[n-1];
-                    S    = CavTLMLineTab[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab2[cavi-1].T[n-1];
+                    S    = CavTLMLineTab2[cavi-1].S[n-1];
                     kfdx =  IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                     kfdy = -kfdx;
 
@@ -1352,9 +1352,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "HMono") {
                 if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab[cavi-1].T[n-1];
-                    S    = CavTLMLineTab[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab2[cavi-1].T[n-1];
+                    S    = CavTLMLineTab2[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                     kfdy = kfdx;
 
@@ -1364,9 +1364,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "HDipole") {
                 if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab[cavi-1].T[n-1];
-                    S   = CavTLMLineTab[cavi-1].S[n-1];
+                    V0  = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T   = CavTLMLineTab2[cavi-1].T[n-1];
+                    S   = CavTLMLineTab2[cavi-1].S[n-1];
                     dpy = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
 
                     Mprob(3, 6) = dpy;
@@ -1382,9 +1382,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                         beta  = (beta_tab[1]+beta_tab[2])/2e0;
                         gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
                     }
-                    V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab[cavi-1].T[n-1];
-                    S    = CavTLMLineTab[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab2[cavi-1].T[n-1];
+                    S    = CavTLMLineTab2[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                     kfdy = -kfdx;
 
@@ -1399,7 +1399,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 beta   = beta_tab[seg];
                 gamma  = gamma_tab[seg];
                 kfac   = 2e0*M_PI/(beta*Lambda);
-                Accel  = CavTLMLineTab[cavi-1].Accel[n-1];
+                Accel  = CavTLMLineTab2[cavi-1].Accel[n-1];
 
                 Mprob(1, 1) = Accel;
                 Mprob(3, 3) = Accel;
@@ -1441,8 +1441,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
     IonK_s[0]  = 2e0*M_PI/(beta_s[0]*IonLambda);
 
-    n   = CavData[cavi-1].s.size();
-    dis = (CavData[cavi-1].s[n-1]-CavData[cavi-1].s[0])/2e0;
+    n   = CavData2[cavi-1].s.size();
+    dis = (CavData2[cavi-1].s[n-1]-CavData2[cavi-1].s[0])/2e0;
 
     TransFacts(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
     EvalGapModel(dis, IonW_s[0], IonEs, IonFy_s[0], IonK_s[0], IonZ, IonLambda,
@@ -1478,8 +1478,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    GetCavMatParams(cavi, CavTLMstream[cavi-1], beta_s, gamma_s, IonK);
-    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream[cavi-1], Rm, M);
+    GetCavMatParams(cavi, CavTLMstream2[cavi-1], beta_s, gamma_s, IonK);
+    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
 }
 
 
@@ -1520,7 +1520,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     //double SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
 
-    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
+    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
                 fRF, EfieldScl, IonW_o, IonFy_o);
 
     accIonW      = IonW_o - IonW;
@@ -1606,7 +1606,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
+    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
                 IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
 
     IonW       = IonW_o;
