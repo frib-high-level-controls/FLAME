@@ -41,6 +41,7 @@ set(inst_HEADERS
   scsi/state/matrix.h
   scsi/linear.h
   scsi/moment.h
+  scsi/moment2.h
 
   scsi/h5loader.h
 )
@@ -57,7 +58,6 @@ add_library(uscsi_core SHARED
   moment.cpp
 
   moment2.cpp
-  scsi/moment2.h
 
   glps_parser.cpp glps_parser.h
   glps_ops.cpp
