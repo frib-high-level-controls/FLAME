@@ -321,7 +321,6 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,misalign_inv(state_t::maxsize, state_t::maxsize)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
-    length = c.get<double>("L", 0e0);
 //    FSampLength = C0/c.get<double>("Frf")*MtoMM;
     FSampLength = C0/80.5e6*MtoMM;
     phase_factor = length*2*M_PI/FSampLength;
