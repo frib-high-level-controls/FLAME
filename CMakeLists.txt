@@ -122,7 +122,7 @@ if(EPICS_FOUND AND EPICSTOOLS_FOUND)
 elseif(NEED_EPICS)
   message(SEND_ERROR "Unable to build EPICS support")
 else()
-  message(SEND_ERROR "Omitt EPICS support")
+  message(STATUS "Omit EPICS support")
 endif()
 
 if(DOXYGEN_FOUND)
