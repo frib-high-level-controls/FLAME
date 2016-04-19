@@ -90,3 +90,36 @@ BOOST_AUTO_TEST_CASE(config_scope_mutate)
     BOOST_CHECK_CLOSE(D.get<double>("world"), 102.0, 0.1);
     BOOST_CHECK_CLOSE(D.get<double>("other"), 103.0, 0.1);
 }
+
+
+BOOST_AUTO_TEST_CASE(config_flatten)
+{
+    Config C;
+
+    C.set<double>("A", 1.0);
+    C.set<double>("C", 1.0);
+
+    C.push_scope();
+
+    C.set<double>("A", 2.0);
+    C.set<double>("B", 2.0);
+
+    {
+        std::ostringstream strm;
+        C.show(strm);
+        BOOST_CHECK_EQUAL(strm.str(), "A = 2\nB = 2\n");
+    }
+
+    BOOST_CHECK_EQUAL(C.depth(), 2);
+    C.flatten();
+    // A from inner scope overwrites outer
+    // B from inner scope used
+    // C from outer scope used
+    BOOST_CHECK_EQUAL(C.depth(), 1);
+
+    {
+        std::ostringstream strm;
+        C.show(strm);
+        BOOST_CHECK_EQUAL(strm.str(), "A = 2\nB = 2\nC = 1\n");
+    }
+}

@@ -76,6 +76,25 @@ Config::swapAny(const std::string& name, value_t& val)
     ret.first->second.swap(val);
 }
 
+void
+Config::flatten()
+{
+    if(depth()<=1) return;
+
+    values_scope_t replace(1);
+    // copy inner scope
+    replace[0].reset(new values_t(*value_scopes.back()));
+    values_t& B(*replace[0]);
+
+    // copy enclosing scopes into new base scope
+    // inner most last to take priority
+    for(size_t i=value_scopes.size(); i; i--) {
+        const values_t& S(*value_scopes[i-1]);
+        B.insert(S.begin(), S.end()); // note that insert() will not overwrite existing keys
+    }
+
+    value_scopes.swap(replace);
+}
 
 size_t
 Config::depth() const
