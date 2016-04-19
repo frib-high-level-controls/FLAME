@@ -10,6 +10,7 @@ struct StateBase;
 
 Config* dict2conf(PyObject *dict);
 void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0);
+PyObject* conf2dict(const Config *conf);
 
 PyObject* wrapstate(StateBase*); // takes ownership of argument from caller
 StateBase* unwrapstate(PyObject*); // ownership of returned pointer remains with argument

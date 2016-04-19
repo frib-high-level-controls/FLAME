@@ -87,8 +87,8 @@ Config::flatten()
     values_t& B(*replace[0]);
 
     // copy enclosing scopes into new base scope
-    // inner most last to take priority
-    for(size_t i=value_scopes.size(); i; i--) {
+    // outer most is last to take lowest priority
+    for(size_t i=value_scopes.size()-1; i; i--) {
         const values_t& S(*value_scopes[i-1]);
         B.insert(S.begin(), S.end()); // note that insert() will not overwrite existing keys
     }

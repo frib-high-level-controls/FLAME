@@ -4,9 +4,6 @@
 #include "scsi/base.h"
 #include "pyscsi.h"
 
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
-#include <numpy/ndarrayobject.h>
 
 #define TRY PyMachine *machine = (PyMachine*)raw; try
 
@@ -99,16 +96,37 @@ PyObject *PyMachine_str(PyObject *raw)
 }
 
 static
+PyObject *PyMachine_conf(PyObject *raw, PyObject *args)
+{
+    TRY {
+        if(!PyArg_ParseTuple(args, ""))
+            return NULL;
+
+        Config C(machine->machine->conf());
+        C.flatten();
+
+        return conf2dict(&C);
+    } CATCH()
+}
+
+static
 PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *d;
+        PyObject *d = Py_None;
         const char *pnames[] = {"config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|", (char**)pnames, &d))
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "|O", (char**)pnames, &d))
             return NULL;
 
-        std::auto_ptr<Config> C(dict2conf(d));
-        std::auto_ptr<StateBase> state(machine->machine->allocState(*C));
+        std::auto_ptr<Config> C;
+        const Config *c;
+        if(d==Py_None) {
+            c = &machine->machine->conf();
+        } else {
+            C.reset(dict2conf(d));
+            c = C.get();
+        }
+        std::auto_ptr<StateBase> state(machine->machine->allocState(*c));
         PyObject *ret = wrapstate(state.get());
         state.release();
         return ret;
@@ -229,6 +247,8 @@ Py_ssize_t PyMachine_len(PyObject *raw)
 }
 
 static PyMethodDef PyMachine_methods[] = {
+    {"conf", (PyCFunction)&PyMachine_conf, METH_VARARGS,
+     "Return configuration used to construct the Machine"},
     {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
      "Allocate a new State based on this Machine's configuration"},
     {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
