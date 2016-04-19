@@ -444,14 +444,14 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.bg1   = ST.beta*ST.gamma;
 
     double SampleIonK0 = 2e0*M_PI/(ST.beta_ref*SampleLambda),
-           SampleIonK = 2e0*M_PI/(ST.beta*SampleLambda);
+           SampleIonK  = 2e0*M_PI/(ST.beta*SampleLambda);
 
     // Evaluate momentum compaction.
     const double R56 = -2e0*M_PI/(SampleLambda*Erest/MeVtoeV*cube(ST.beta*ST.gamma))*length*MtoMM;
 
     std::string t_name = type_name(); // C string -> C++ string.
     if (t_name != "rfcavity") {
-        ST.FyAbs += SampleIonK0*MtoMM;
+        ST.FyAbs += SampleIonK0*length*MtoMM;
 
         ST.Fy_absState += SampleIonK*length*MtoMM;
         ST.Ekinetic = last_Kenergy_out;
