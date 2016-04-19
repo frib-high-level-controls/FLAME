@@ -11,6 +11,9 @@ add_library(_internal SHARED
   modstate.cpp
   pyscsi.h
 )
+install(TARGETS _internal
+  LIBRARY DESTINATION ${Python_MODULE_DIR}/uscsi
+)
 
 target_link_libraries(_internal
   uscsi_core
@@ -19,12 +22,13 @@ target_link_libraries(_internal
 set_target_properties(_internal
   PROPERTIES
     PREFIX ""
-    INSTALL_RPATH ""
     NO_SONAME YES
 )
 
 set(PY_SRC
   __init__.py
+)
+set(PY_SRC_TEST
   test/__init__.py
   test/test_linear.py
   test/test_moment.py
@@ -37,9 +41,16 @@ set(PY_SRC
   test/test.h5
 )
 
+install(FILES ${PY_SRC}
+  DESTINATION ${Python_MODULE_DIR}/uscsi
+)
+install(FILES ${PY_SRC_TEST}
+  DESTINATION ${Python_MODULE_DIR}/uscsi/test
+)
+
 # Copy .py files to the binary dir in order to run unit-tests
 
-foreach(pyfile IN LISTS PY_SRC)
+foreach(pyfile IN LISTS PY_SRC PY_SRC_TEST)
   add_custom_command(
     OUTPUT ${pyfile}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${pyfile} ${pyfile}
