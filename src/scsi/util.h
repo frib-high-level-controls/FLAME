@@ -2,12 +2,25 @@
 #define UTIL_H
 
 #include <stdexcept>
-#include <iterator>
+
+#include <boost/call_traits.hpp>
 
 struct key_error : public std::runtime_error
 {
     key_error(const std::string& s) : std::runtime_error(s) {}
 };
+
+//! Helper for std::map lookup
+template<typename M>
+bool find(const M& map,
+          typename boost::call_traits<typename M::key_type>::param_type key,
+          typename M::mapped_type& result)
+{
+    typename M::const_iterator it = map.find(key);
+    if(it==map.end()) return false;
+    result = it->second;
+    return true;
+}
 
 //! An iterator which adapts the second member of a std::pair
 //! Allows iteration over a values of a std::map<K,V> to look like
