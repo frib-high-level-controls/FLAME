@@ -157,12 +157,14 @@ void propagate(std::auto_ptr<Config> conf)
 
 //        std::cout << "# Machine configuration\n" << *sims[0] << "\n\n";
 
-    Config  D;
+    Config D;
     state_t *StatePtr[nChgStates];
 
     std::cout << "\n";
     for (k = 0; k < nChgStates; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
+        Moment2State *ST = dynamic_cast<Moment2State*>(state.get());
+        if(!ST) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 
         it = sims[k]->begin();
         // Skip over state.
@@ -171,9 +173,9 @@ void propagate(std::auto_ptr<Config> conf)
         // Propagate through first element (beam initial conditions).
         sims[k]->propagate(state.get(), 0, 1);
 
-        IonEk = state->IonEk/MeVtoeV;
-        IonEs = state->IonEs/MeVtoeV;
-        IonW  = state->IonW/MeVtoeV;
+        IonEk = ST->IonEk/MeVtoeV;
+        IonEs = ST->IonEs/MeVtoeV;
+        IonW  = ST->IonW/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState = BC[k][state_t::PS_S];

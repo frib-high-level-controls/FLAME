@@ -132,7 +132,10 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
 //    ,pos(c.get<double>("L", 0e0))
-    ,pos(0e0)
+    ,IonZ(c.get<double >("IonZ", 0))
+    ,IonEs(c.get<double>("IonEs", 0))
+    ,IonEk(c.get<double>("IonEk", 0))
+    ,IonW(c.get<double >("IonW", 0))
     ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
     ,FyAbs(0e0)
     ,moment0(maxsize, 0e0)
@@ -184,8 +187,10 @@ Moment2State::~Moment2State() {}
 
 Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     :StateBase(o, t)
-    ,pos(o.pos)
     ,IonZ(o.IonZ)
+    ,IonEs(o.IonEs)
+    ,IonEk(o.IonEk)
+    ,IonW(o.IonW)
     ,Ekinetic(o.Ekinetic)
     ,moment0(o.moment0)
     ,state(o.state)
@@ -196,8 +201,10 @@ void Moment2State::assign(const StateBase& other)
     const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
-    pos = O->pos;
     IonZ = O->IonZ;
+    IonEs = O->IonEs;
+    IonEk = O->IonEk;
+    IonW  = O->IonW;
     Ekinetic = O->Ekinetic;
     sync_phase = O->sync_phase;
     FyAbs = O->FyAbs;
@@ -237,61 +244,73 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim[0] = moment0.size();
         return true;
     } else if(idx==2) {
-        Info.name = "pos";
-        Info.ptr = &pos;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==3) {
         Info.name = "IonZ";
         Info.ptr = &IonZ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
+    } else if(idx==3) {
+        Info.name = "IonEs";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonEs;
+        return true;
     } else if(idx==4) {
+        Info.name = "IonEk";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonEk;
+        return true;
+    } else if(idx==5) {
+        Info.name = "IonW";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonW;
+        return true;
+    } else if(idx==6) {
         Info.name = "FyAbs";
         Info.ptr = &FyAbs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==7) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==8) {
         Info.name = "sync_phase";
         Info.ptr = &sync_phase;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==7) {
+    } else if(idx==9) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==10) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==11) {
         Info.name = "bg0";
         Info.ptr = &bg0;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==12) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-11, Info);
+    return StateBase::getArray(idx-13, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
