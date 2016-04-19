@@ -1244,7 +1244,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
         multip     = 1;
         Rm         = 17e0;
     } else {
-        std::cerr << "*** InitLong: undef. cavity type: " << CavType << "\n";
+        std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
         exit(1);
     }
 

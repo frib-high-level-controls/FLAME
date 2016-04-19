@@ -182,7 +182,6 @@ Moment2State::Moment2State(const Config& c)
     :StateBase(c)
 //    ,pos(c.get<double>("L", 0e0))
     ,pos(0e0)
-    ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
     ,FyAbs(0e0)
     ,Fy_absState(0e0)
     ,EkState(0e0)
@@ -215,18 +214,11 @@ Moment2State::Moment2State(const Config& c)
            Ekinetic0 = c.get<double>("IonEk", 0e0);
            IonZ      = c.get<double>("IonZ", 0e0);
 
-    gamma       = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    beta        = sqrt(1e0-1e0/sqr(gamma));
-    bg0         = beta*gamma;
+    gamma_ref = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    beta_ref  = sqrt(1e0-1e0/sqr(gamma_ref));
+    bg0   = beta_ref*gamma_ref;
 
     Ekinetic    = Ekinetic0;
-
-    // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    //    gamma       = (Erest+Ekinetic)/Erest;
-    gamma       = (Erest+EkState)/Erest;
-    bg1         = beta*gamma;
-
-    SampleIonK  = 2e0*M_PI/(beta*SampleLambda);
 
     std::cout << std::scientific << std::setprecision(5)
               << "\nMoment2State(const Config& c): \n"
@@ -256,10 +248,11 @@ void Moment2State::assign(const StateBase& other)
     IonZ        = O->IonZ;
     Ekinetic    = O->Ekinetic;
     SampleIonK  = O->SampleIonK;
-    sync_phase  = O->sync_phase;
     FyAbs       = O->FyAbs;
     Fy_absState = O->Fy_absState;
     EkState     = O->EkState;
+    gamma_ref   = O->gamma_ref;
+    beta_ref    = O->beta_ref;
     gamma       = O->gamma;
     beta        = O->beta;
     bg0         = O->bg0;
@@ -338,37 +331,43 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==9) {
-        Info.name = "sync_phase";
-        Info.ptr = &sync_phase;
+        Info.name = "gamma_ref";
+        Info.ptr = &gamma_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==10) {
+        Info.name = "beta_ref";
+        Info.ptr = &beta_ref;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==11) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==11) {
+    } else if(idx==12) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==12) {
+    } else if(idx==13) {
         Info.name = "bg0";
         Info.ptr = &bg0;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==13) {
+    } else if(idx==14) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-14, Info);
+    return StateBase::getArray(idx-15, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -380,7 +379,6 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
     length = c.get<double>("L", 0e0);
-    phase_factor = length*2e0*M_PI/SampleLambda;
     Erest = c.get<double>("IonEs");
 
     inverse(misalign_inv, misalign);
@@ -398,7 +396,6 @@ void Moment2ElementBase::assign(const ElementVoid *other)
     const Moment2ElementBase *O = static_cast<const Moment2ElementBase*>(other);
     length = O->length;
     FSampLength = O->FSampLength;
-    phase_factor = O->phase_factor;
     Erest = O->Erest;
     transfer = O->transfer;
     transfer_raw = O->transfer_raw;
@@ -417,7 +414,6 @@ void Moment2ElementBase::show(std::ostream& strm) const
     ElementVoid::show(strm);
     strm<<"Length "<<length<<"\n"
           "FSampLength "<<FSampLength<<"\n"
-          "phase_factor "<<phase_factor<<"\n"
           "Erest "<<Erest<<"\n"
           "Transfer: "<<transfer<<"\n"
           "Transfer Raw: "<<transfer_raw<<"\n"
@@ -428,9 +424,6 @@ void Moment2ElementBase::advance(StateBase& s)
 {
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
-
-    ST.Fy_absState = ST.moment0[state_t::PS_S];
-    ST.EkState     = ST.IonEk + ST.moment0[state_t::PS_PS]*MeVtoeV;
 
     if(ST.Ekinetic!=last_Kenergy_in) {
 
@@ -444,27 +437,33 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.pos += length;
 
-    ST.sync_phase += phase_factor/ST.beta;
-
-    // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in
-    ST.gamma = (Erest+ST.Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in.
+    // Matrix elements are scaled with particle energy.
+    ST.gamma = (Erest+ST.EkState)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
     ST.beta  = sqrt(1e0-1e0/sqr(ST.gamma));
     ST.bg1   = ST.beta*ST.gamma;
 
-    std::cout << std::scientific << std::setprecision(5)
-              << "\nadvance:\n"
-              << "length = " << length << "\n"
-              << "  ST.Erest = " << Erest << ", ST.Ekinetic = " << ST.Ekinetic << "\n"
-              << "  ST.bg0 = " << ST.bg0 << ", ST.bg1 = " << ST.bg1 << "\n";
+    double SampleIonK0 = 2e0*M_PI/(ST.beta_ref*SampleLambda),
+           SampleIonK = 2e0*M_PI/(ST.beta*SampleLambda);
+
+    // Evaluate momentum compaction.
+    const double R56 = -2e0*M_PI/(SampleLambda*Erest/MeVtoeV*cube(ST.beta*ST.gamma))*length*MtoMM;
+
+    std::string t_name = type_name(); // C string -> C++ string.
+    if (t_name != "rfcavity") {
+        ST.FyAbs += SampleIonK0*MtoMM;
+
+        ST.Fy_absState += SampleIonK*length*MtoMM;
+        ST.Ekinetic = last_Kenergy_out;
+
+        transfer(state_t::PS_S, state_t::PS_PS) = R56;
+    }
 
     ST.moment0 = prod(transfer, ST.moment0);
 
-    if (type_name() == "rfcavity") {
+    if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
         ST.moment0[state_t::PS_PS] = (ST.EkState-ST.Ekinetic)/MeVtoeV;
-    } else {
-        ST.FyAbs += ST.SampleIonK*length*MtoMM;
-        ST.Ekinetic = last_Kenergy_out;
     }
 
     noalias(scratch) = prod(transfer, ST.state);
@@ -482,10 +481,13 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 
     transfer = transfer_raw;
 
-    // Scale matrix elements.
-    for (unsigned k = 0; k < 2; k++) {
-        transfer(2*k, 2*k+1) *= ST.bg0/ST.bg1;
-        transfer(2*k+1, 2*k) *= ST.bg0/ST.bg1;
+    std::string t_name = type_name(); // C string -> C++ string.
+    if (t_name != "drift") {
+        // Scale matrix elements.
+        for (unsigned k = 0; k < 2; k++) {
+            transfer(2*k, 2*k+1) *= ST.bg0/ST.bg1;
+            transfer(2*k+1, 2*k) *= ST.bg0/ST.bg1;
+        }
     }
 
     transfer(state_t::PS_S, state_t::PS_PS) *= cube(ST.bg0/ST.bg1);
@@ -1505,7 +1507,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
         multip     = 1;
         Rm         = 17e0;
     } else {
-        std::cerr << "*** InitLong: undef. cavity type: " << CavType << "\n";
+        std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
         exit(1);
     }
 
@@ -1681,17 +1683,13 @@ struct ElementRFCavity : public Moment2ElementBase
         EkState    = ST.EkState/MeVtoeV;
         ST.gamma   = (EkState+IonEs)/IonEs;
         ST.beta    = sqrt(1e0-1e0/sqr(ST.gamma));
-        SampleIonK = 2e0*M_PI/(ST.beta*SampleLambda);
 
         InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
                   ST.beta, ST.gamma, avebeta, avegamma, transfer);
 
         ST.EkState  = EkState*MeVtoeV;
         ST.Ekinetic = Ekinetic*MeVtoeV;
-
-//        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
-//        ST.moment0[state_t::PS_PS] = EkState - Ekinetic;
-    }
+   }
 
     virtual const char* type_name() const {return "rfcavity";}
 };

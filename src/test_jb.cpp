@@ -184,6 +184,9 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->moment0 = BC[k];
         StatePtr[k]->state   = BE[k];
 
+        StatePtr[k]->Fy_absState = StatePtr[k]->moment0[state_t::PS_S];
+        StatePtr[k]->EkState     = StatePtr[k]->IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
+
         std::cout << std::fixed << std::setprecision(5)
                   << "  IonZ = " << ChgState[k]
                   << ",  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
@@ -194,18 +197,34 @@ void propagate(std::auto_ptr<Config> conf)
     for (k = 0; k < 1; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
 
+        StatePtr[k] = dynamic_cast<state_t*>(state.get());
+
         std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
 
+        // Propagate through first element (beam initial conditions).
         sims[k]->propagate(state.get(), 0, 1);
 
-        it = sims[k]->p_elements.begin();
-        // Skip over state.
-        it++;
+        IonEk = state->IonEk/MeVtoeV;
+        IonEs = state->IonEs/MeVtoeV;
+        IonW  = state->IonW/MeVtoeV;
+
         // Initialize state.
         StatePtr[k]->moment0 = BC[k];
         StatePtr[k]->state   = BE[k];
 
-        ElementVoid* elem = *it;
+        // Approximate (E_k = m0*v^2/2 vs. p*c0).
+        StatePtr[k]->gamma  = (IonEs+IonEk)/IonEs;
+        StatePtr[k]->beta   = sqrt(1e0-1e0/sqr(StatePtr[k]->gamma));
+        StatePtr[k]->bg1    = StatePtr[k]->beta*StatePtr[k]->gamma;
+
+        StatePtr[k]->Fy_absState = StatePtr[k]->moment0[state_t::PS_S];
+        StatePtr[k]->EkState     = StatePtr[k]->IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
+
+        it = sims[k]->p_elements.begin();
+        // Skip over state.
+        it++;
+
+//        ElementVoid* elem = *it;
         for (; it != sims[k]->p_elements.end(); ++it) {
 //            elem->advance(*state);
 //            sims[k]->propagate(state.get(), elem->index+n-1, 1);
