@@ -1,0 +1,27 @@
+
+record(waveform, "$(P)Msg-I") {
+    field(DTYP, "FLAME Last Message")
+    field(INP , "@$(SIM)")
+    field(FTVL, "CHAR")
+    field(NELM, "200")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(P)Run-Cmd") {
+    field(DTYP, "FLAME Simulate")
+    field(OUT , "@$(SIM)")
+    field(ZNAM, "Run")
+    field(ONAM, "Run")
+    field(PINI, "$(PINI=NO)")
+    field(SCAN, "$(SCAN=Passive)")
+}
+
+record(ai, "$(P)Time-I") {
+    field(DESC, "Execution time")
+    field(DTYP, "FLAME Runtime")
+    field(INP , "@$(SIM)")
+    field(SCAN, "I/O Intr")
+    field(ASLO, "1e3")
+    field(EGU , "ms")
+    field(PREC, "3")
+}

@@ -17,28 +17,19 @@ StateBase::~StateBase() {}
 
 StateBase::StateBase(const Config& c)
     :next_elem(0)
-//    ,IonZ(c.get<double >("IonZ", 0))
-    ,IonEs(c.get<double>("IonEs", 0))
-    ,IonEk(c.get<double>("IonEk", 0))
-    ,IonW(c.get<double >("IonW", 0))
+    ,pos(0e0)
     ,pyptr(0)
 {}
 
 StateBase::StateBase(const StateBase& o, clone_tag)
     :next_elem(0)
-//    ,IonZ(o.IonZ)
-    ,IonEs(o.IonEs)
-    ,IonEk(o.IonEk)
-    ,IonW(o.IonW)
+    ,pos(o.pos)
     ,pyptr(0)
 {}
 
 void StateBase::assign(const StateBase& other)
 {
-//    IonZ  = other.IonZ;
-    IonEs = other.IonEs;
-    IonEk = other.IonEk;
-    IonW  = other.IonW;
+    pos = other.pos;
 }
 
 bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
@@ -49,29 +40,11 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
         Info.type = ArrayInfo::Sizet;
         Info.ptr = &next_elem;
         return true;
-//    } else if(idx==1) {
-//        Info.name = "IonZ";
-//        Info.ndim = 0;
-//        Info.type = ArrayInfo::Double;
-//        Info.ptr = &IonZ;
-//        return true;
     } else if(idx==1) {
-        Info.name = "IonEs";
-        Info.ndim = 0;
+        Info.name = "pos";
+        Info.ptr = &pos;
         Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEs;
-        return true;
-    } else if(idx==2) {
-        Info.name = "IonEk";
         Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEk;
-        return true;
-    } else if(idx==3) {
-        Info.name = "IonW";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonW;
         return true;
     }
     return false;
@@ -80,6 +53,7 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)
+    ,length(conf.get<double>("L",0.0))
     ,p_observe(NULL)
     ,p_conf(conf)
 {}
@@ -101,6 +75,7 @@ void ElementVoid::assign(const ElementVoid *other)
 Machine::Machine(const Config& c)
     :p_elements()
     ,p_trace(NULL)
+    ,p_conf(c)
     ,p_info()
 {
     std::string type(c.get<std::string>("sim_type"));
@@ -120,6 +95,7 @@ Machine::Machine(const Config& c)
     elements_t Es(c.get<elements_t>("elements"));
 
     p_elements_t result;
+    p_lookup_t result_l, result_t;
     result.reserve(Es.size());
 
     size_t idx=0;
@@ -151,14 +127,24 @@ Machine::Machine(const Config& c)
             throw std::runtime_error(strm.str());
         }
 
+        if(E->type_name()!=etype) {
+            std::ostringstream strm;
+            strm<<"Element type inconsistent "<<etype<<" "<<E->type_name();
+            throw std::logic_error(strm.str());
+        }
+
         *const_cast<size_t*>(&E->index) = idx++; // ugly
 
         result.push_back(E);
+        result_l.insert(std::make_pair(LookupKey(E->name, E->index), E));
+        result_t.insert(std::make_pair(LookupKey(etype, E->index), E));
     }
 
     G.unlock();
 
     p_elements.swap(result);
+    p_lookup.swap(result_l);
+    p_lookup_type.swap(result_t);
 }
 
 Machine::~Machine()

@@ -7,6 +7,8 @@ addons:
     - libboost-dev
     - libboost-system-dev
     - libboost-thread-dev
+    - libboost-filesystem-dev
+    - libboost-regex-dev
     - libboost-test-dev
     - python-decorator
     - cmake
@@ -25,10 +27,11 @@ python:
 env:
   - PROF=deb7
   - PROF=deb8
+  - PROF=deb8 XTRA=-DCMAKE_CXX_FLAGS=-std=c++11
 install:
  - pip install -r requirements-${PROF}.txt
  - mkdir build
- - (cd build && cmake -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=`which python` -DNEED_PYTHON=ON ..)
+ - (cd build && cmake -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=`which python` -DNEED_PYTHON=ON $XTRA ..)
  - make -C build -j2 VERBOSE=1
 script: make -C build -j2 VERBOSE=1 test
 after_failure: cat build/Testing/Temporary/LastTest.log
@@ -36,3 +39,5 @@ matrix:
   exclude:
   - python: "3.4"
     env: PROF=deb7
+  - python: "3.4"
+    env: PROF=deb7 XTRA=-DCMAKE_CXX_FLAGS=-std=c++11

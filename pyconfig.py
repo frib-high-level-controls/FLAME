@@ -15,7 +15,7 @@ if len(sys.argv)<2:
 else:
     out = open(sys.argv[1], 'w')
 
-from distutils.sysconfig import get_config_var, get_python_inc
+from distutils.sysconfig import get_config_var, get_python_inc, get_python_lib
 
 incdirs = [get_python_inc()]
 libdirs = [get_config_var('LIBDIR')]
@@ -43,6 +43,7 @@ print('set(Python_VERSION "%s")'%get_config_var('VERSION'), file=out)
 print('set(Python_VERSION_LD "%s")'%(get_config_var('LDVERSION') or get_config_var('VERSION')), file=out)
 print('set(Python_INCLUDE_DIRS "%s")'%';'.join(incdirs), file=out)
 print('set(Python_LIBRARY_DIRS "%s")'%';'.join(libdirs), file=out)
+print('set(Python_MODULE_DIR "%s")'%get_python_lib(), file=out)
 print('set(Python_NUMPY_FOUND %s)'%have_np, file=out)
 
 print('set(Python_VERSION_MAJOR %s)'%sys.version_info[0], file=out)

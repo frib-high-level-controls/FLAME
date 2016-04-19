@@ -142,6 +142,22 @@ public:
         return def;
     }
 
+    /** lookup where missing parameters returns false
+     *
+     * @returns true if val is updated, false otherwise
+     */
+    template<typename T>
+    bool
+    tryGet(const std::string& name, T& val) const {
+        try{
+            val = boost::get<typename detail::is_config_value<T>::type>(getAny(name));
+            return true;
+        } catch(boost::bad_get&) {
+        } catch(key_error&) {
+        }
+        return false;
+    }
+
     /** add/replace with a new value
      @code
      Config X;

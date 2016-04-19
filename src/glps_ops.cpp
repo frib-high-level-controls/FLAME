@@ -1,5 +1,9 @@
 
-#include "math.h"
+#if __cplusplus >= 201103L
+#  include <cmath>
+#else
+#  include <math.h>
+#endif
 
 #include <sstream>
 #include <limits>
@@ -8,6 +12,9 @@
 #include "glps_parser.h"
 #include "scsi/config.h"
 
+#if __cplusplus >= 201103L
+using std::isfinite;
+#endif
 namespace {
 // Numeric operations
 

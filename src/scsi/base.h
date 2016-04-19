@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <utility>
 
 #include <boost/noncopyable.hpp>
 #include <boost/any.hpp>
@@ -33,7 +34,8 @@ struct StateBase : public boost::noncopyable
     //! Index of ElementVoid in Machine to follow this the current one.
     //! May be altered within ElementVoid::advance() to achieve branching or looping.
     size_t next_elem;
-    double /*IonZ,*/ IonEs, IonEk, IonW;
+
+    double pos;        // absolute longitudinal position at end of Element
 
     virtual void assign(const StateBase& other) =0;
 
@@ -46,7 +48,7 @@ struct StateBase : public boost::noncopyable
             Double, Sizet
         } type;
         void *ptr;
-        int ndim;
+        unsigned ndim;
         size_t dim[5];
     };
 
@@ -99,6 +101,8 @@ struct ElementVoid : public boost::noncopyable
 
     const std::string name; //!< Name of this element (unique in its Machine)
     const size_t index; //!< Index of this element (unique in its Machine)
+
+    double length;
 
     Observer *observer() const { return p_observe; }
     /** Add Observer which will inspect the output State of this Element.
@@ -156,6 +160,9 @@ struct Machine : public boost::noncopyable
         return allocState(defaults);
     }
 
+    //! Fetch Config used to construct this Machine
+    inline const Config& conf() const { return p_conf; }
+
     void reconfigure(size_t idx, const Config& c);
 
     inline const std::string& simtype() const {return p_simtype;}
@@ -163,10 +170,31 @@ struct Machine : public boost::noncopyable
     inline std::ostream* trace() const {return p_trace;}
     void set_trace(std::ostream* v) {p_trace=v;}
 
+private:
     typedef std::vector<ElementVoid*> p_elements_t;
-    typedef std::map<std::string, ElementVoid*> p_lookup_t;
+
+    struct LookupKey {
+        std::string name;
+        size_t index;
+        LookupKey(const std::string& n, size_t i) :name(n), index(i) {}
+        bool operator<(const LookupKey& o) const {
+            int ord = name.compare(o.name);
+            if(ord<0)      return true;
+            else if(ord>0) return false;
+            else           return index<o.index;
+        }
+    };
+
+    typedef std::map<LookupKey, ElementVoid*> p_lookup_t;
+public:
 
     inline size_t size() const { return p_elements.size(); }
+
+    inline ElementVoid* operator[](size_t i) { return p_elements[i]; }
+    inline const ElementVoid* operator[](size_t i) const { return p_elements[i]; }
+
+    inline ElementVoid* at(size_t i) { return p_elements.at(i); }
+    inline const ElementVoid* at(size_t i) const { return p_elements.at(i); }
 
     typedef p_elements_t::iterator iterator;
     typedef p_elements_t::const_iterator const_iterator;
@@ -177,13 +205,47 @@ struct Machine : public boost::noncopyable
     iterator end() { return p_elements.end(); }
     const_iterator end() const { return p_elements.end(); }
 
-    inline ElementVoid* operator[](size_t i) { return p_elements[i]; }
-    inline const ElementVoid* operator[](size_t i) const { return p_elements[i]; }
+    //! Find the nth element with the given name
+    //! @return NULL on failure
+    ElementVoid* find(const std::string& name, size_t nth=0) {
+        p_lookup_t::const_iterator low (p_lookup.lower_bound(LookupKey(name, 0))),
+                                   high(p_lookup.upper_bound(LookupKey(name, (size_t)-1)));
+        size_t i=0;
+        for(;low!=high;++low,++i) {
+            if(i==nth)
+                return low->second;
+        }
+        return NULL;
+    }
+
+    typedef value_proxy_iterator<p_lookup_t::iterator> lookup_iterator;
+
+    //! Return a pair of iterators for the sequence [first, second) of those elements
+    //! with the given name.
+    std::pair<lookup_iterator, lookup_iterator> equal_range(const std::string& name) {
+        p_lookup_t::iterator low (p_lookup.lower_bound(LookupKey(name, 0))),
+                             high(p_lookup.upper_bound(LookupKey(name, (size_t)-1)));
+        return std::make_pair(lookup_iterator(low),
+                              lookup_iterator(high));
+    }
+
+    //! Return a pair of iterators for the sequence [first, second) of those elements
+    //! with the given type name.
+    std::pair<lookup_iterator, lookup_iterator> equal_range_type(const std::string& name) {
+        p_lookup_t::iterator low (p_lookup_type.lower_bound(LookupKey(name, 0))),
+                             high(p_lookup_type.upper_bound(LookupKey(name, (size_t)-1)));
+        return std::make_pair(lookup_iterator(low),
+                              lookup_iterator(high));
+    }
+
+
 private:
-//    p_elements_t p_elements;
-//    p_lookup_t p_lookup;
-//    std::string p_simtype;
-//    std::ostream* p_trace;
+    p_elements_t p_elements;
+    p_lookup_t p_lookup; //!< lookup by element instance name
+    p_lookup_t p_lookup_type; //!< lookup by element type name
+    std::string p_simtype;
+    std::ostream* p_trace;
+    Config p_conf;
 
     typedef StateBase* (*state_builder_t)(const Config& c);
     template<typename State>
@@ -218,7 +280,7 @@ private:
         elements_t elements;
     };
 
-//    state_info p_info;
+    state_info p_info;
 
     typedef std::map<std::string, state_info> p_state_infos_t;
     static p_state_infos_t p_state_infos;
@@ -228,11 +290,6 @@ private:
     static void p_registerElement(const std::string& sname, const char *ename, element_builder_t* b);
 
 public:
-    p_elements_t p_elements;
-    p_lookup_t p_lookup;
-    std::string p_simtype;
-    std::ostream* p_trace;
-    state_info p_info;
 
     template<typename State>
     static void registerState(const char *name)

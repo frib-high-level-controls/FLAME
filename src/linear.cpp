@@ -19,7 +19,7 @@
 
 MatrixState::MatrixState(const Config& c)
     :StateBase(c)
-    ,state(boost::numeric::ublas::identity_matrix<double>(6))
+    ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
     try{
         const std::vector<double>& I = c.get<std::vector<double> >("initial");
@@ -69,7 +69,7 @@ bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
 
 VectorState::VectorState(const Config& c)
     :StateBase(c)
-    ,state(6, 0.0)
+    ,state(maxsize, 0.0)
 {
     try{
         const std::vector<double>& I = c.get<std::vector<double> >("initial");

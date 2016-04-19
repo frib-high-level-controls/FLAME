@@ -9,3 +9,7 @@ add_executable(run_uscsi
 target_link_libraries(run_uscsi
   uscsi_core
 )
+
+install(TARGETS run_uscsi
+  RUNTIME DESTINATION bin
+)

@@ -32,20 +32,29 @@ set_source_files_properties(
     GENERATED TRUE
 )
 
-add_library(uscsi_core SHARED
+set(inst_HEADERS
   scsi/util.h
   scsi/base.h
-  base.cpp
-  config.cpp scsi/config.h
+  scsi/config.h
 
   scsi/state/vector.h
   scsi/state/matrix.h
+  scsi/linear.h
+  scsi/moment.h
+
+  scsi/h5loader.h
+)
+install(FILES ${inst_HEADERS}
+  DESTINATION include/uscsi
+)
+
+add_library(uscsi_core SHARED
+  base.cpp
+  config.cpp
 
   linear.cpp
-  scsi/linear.h
 
   moment.cpp
-  scsi/moment.h
 
   moment2.cpp
   scsi/moment2.h
@@ -55,7 +64,9 @@ add_library(uscsi_core SHARED
   glps.par.c glps.par.h
   glps.tab.c glps.tab.h
 
-  h5loader.cpp scsi/h5loader.h
+  h5loader.cpp
+
+  ${inst_HEADERS}
 )
 target_link_libraries(uscsi_core
   ${Boost_THREAD_LIBRARY}
@@ -63,6 +74,16 @@ target_link_libraries(uscsi_core
   ${Boost_FILESYSTEM_LIBRARY}
   ${HDF5_LIBRARIES}
 )
+set_target_properties(uscsi_core
+  PROPERTIES
+    SOVERSION 0
+)
+
+install(TARGETS uscsi_core
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
+
 
 add_executable(test_lex
   test_lex.cpp

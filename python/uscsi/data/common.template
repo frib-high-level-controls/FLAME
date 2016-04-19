@@ -1,0 +1,18 @@
+record(longin, "$(P):IDX-I") {
+    field(DESC, "Index in lattice")
+    field(DTYP, "FLAME Index")
+    field(INP , "@$(SIM) $(ELEM)")
+    field(PINI, "YES")
+}
+record(stringin, "$(P):Name-I") {
+    field(VAL , "$(ELEM)")
+    field(PINI, "YES")
+}
+
+record(ai, "$(P):S-I") {
+    field(DESC, "Position on exit")
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) pos")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}

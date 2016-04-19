@@ -255,7 +255,7 @@ void PrtMat(const value_mat &M)
 
 void PrtLat(const Machine &sim)
 {
-    Machine::p_elements_t::const_iterator it;
+    Machine::const_iterator it;
     element_t                     *ElemPtr;
     Config                                D;
     std::auto_ptr<StateBase>              state(sim.allocState(D));
@@ -265,10 +265,10 @@ void PrtLat(const Machine &sim)
 
 //    std::cout << "  Machine configuration:\n" << sim << "\n";
 
-    std::cout << "  Simulation type:    " << sim.p_info.name
-              << "\n  Number of elements: " << sim.p_elements.size() << "\n";
+    std::cout << "  Simulation type:    " << sim.simtype()
+              << "\n  Number of elements: " << sim.size() << "\n";
 
-    for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
+    for (it = sim.begin(); it != sim.end(); ++it) {
         elem = *it;
 
         std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";
@@ -473,20 +473,23 @@ void InitLong(const Machine &sim, const double IonZ)
     int                                   n;
     double                                IonGamma, IonBeta, SampleIonK;
     double                                IonW, IonZ1, IonEs, IonEk;
-    Machine::p_elements_t::const_iterator it;
+    Machine::const_iterator it;
     std::fstream                          outf;
 
     const char FileName[] = "long_tab.out";
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
+    MomentState *ST = dynamic_cast<MomentState*>(state.get());
+    if(!ST) throw std::runtime_error("Only sim_type MomentMatrix is supported");
+
     // Propagate through first element.
     sim.propagate(state.get(), 0, 1);
 
     IonZ1 = IonZ;
-    IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW/MeVtoeV;
-    IonEk = state->IonEk/MeVtoeV;
+    IonEs = ST->IonEs/MeVtoeV;
+    IonW  = ST->IonW/MeVtoeV;
+    IonEk = ST->IonEk/MeVtoeV;
 
     IonGamma   = IonW/IonEs;
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
@@ -503,10 +506,10 @@ void InitLong(const Machine &sim, const double IonZ)
     n = 1;
     LongTab.set(0e0, IonEk, 0e0, IonBeta, IonGamma);
 
-    it = sim.p_elements.begin();
+    it = sim.begin();
     // Skip over state.
     it++;
-    for (; it != sim.p_elements.end(); ++it) {
+    for (; it != sim.end(); ++it) {
         ElementVoid*  elem   = *it;
         const Config& conf   = elem->conf();
         std::string   t_name = elem->type_name(); // C string -> C++ string.
@@ -1336,7 +1339,7 @@ void calRFcaviEmitGrowth(const value_mat &matIn, const double ionZ, const double
 
 
 void ScaleandPropagate(Machine &sim, StateBase &state, state_t *StatePtr,
-                       Machine::p_elements_t::iterator it, int &n, int &CavCnt, double &s,
+                       Machine::iterator it, int &n, int &CavCnt, double &s,
                        const double IonZ, const double IonEs, double &EkState, double &Fy_absState)
 {
     // Scale matrix element for Charge State and propagate through element.
@@ -1514,16 +1517,18 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     int                             CavCnt, n;
     double                          IonEk, IonEs, IonW, EkState, Fy_absState, s;
     state_t                         *StatePtr;
-    Machine::p_elements_t::iterator it;
+    Machine::iterator it;
     Config                          D;
 
     std::auto_ptr<StateBase> state(sim.allocState(D));
+    MomentState *ST = static_cast<MomentState*>(state.get());
+
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
-    IonEk = state->IonEk/MeVtoeV;
-    IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW/MeVtoeV;
+    IonEk = ST->IonEk/MeVtoeV;
+    IonEs = ST->IonEs/MeVtoeV;
+    IonW  = ST->IonW/MeVtoeV;
 
     // Define initial conditions.
     Fy_absState = Mom1[state_t::PS_S];
@@ -1535,7 +1540,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
               << "  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
               << ", IonW [Mev/u] = " << IonW << "\n";
 
-    it = sim.p_elements.begin();
+    it = sim.begin();
     // Skip over state.
     it++;
     // Initialize state.
@@ -1544,7 +1549,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     StatePtr->state   = Mom2;
 
     s = 0e0, CavCnt = 0, n = 1;
-    for (; it != sim.p_elements.end(); ++it)
+    for (; it != sim.end(); ++it)
         ScaleandPropagate(sim, *state, StatePtr, it, n, CavCnt, s, IonZ, IonEs, EkState, Fy_absState);
 
     std::cout << std::fixed << std::setprecision(3) << "\n s [m] = " << s*1e-3 << "\n";
@@ -1568,7 +1573,7 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
     Config                                     D;
     std::vector<boost::shared_ptr<StateBase> > state;
     state_t                                    *StatePtr[nChgState];
-    Machine::p_elements_t::iterator            it[nChgState];
+    Machine::iterator            it[nChgState];
     std::fstream                               outf1, outf2;
 
     const char FileName1[] = "CenofChg.out", FileName2[] = "BeamRMS.out";
@@ -1589,17 +1594,19 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
     for (k = 0; k < nChgState; k++) {
         s[k] = 0e0, CavCnt[k] = 0, n[k] = 1;
 
-        it[k] = sim[k]->p_elements.begin();
+        it[k] = sim[k]->begin();
         // Skip over state.
         it[k]++;
 
         state.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState(D)));
+        MomentState *ST = static_cast<MomentState*>(state[k].get());
+
         // Propagate through first element (beam initial conditions).
         sim[k]->propagate(state[k].get(), 0, 1);
 
-        IonEk[k] = state[k]->IonEk/MeVtoeV;
-        IonEs[k] = state[k]->IonEs/MeVtoeV;
-        IonW[k]  = state[k]->IonW/MeVtoeV;
+        IonEk[k] = ST->IonEk/MeVtoeV;
+        IonEs[k] = ST->IonEs/MeVtoeV;
+        IonW[k]  = ST->IonW/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState[k] = Mom1[k][state_t::PS_S];
@@ -1616,7 +1623,7 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
                   << ", IonW [Mev/u] = " << IonW[k] << "\n";
     }
 
-    for (; it[0] != sim[0]->p_elements.end(); ++it[0], it[1]++) {
+    for (; it[0] != sim[0]->end(); ++it[0], it[1]++) {
         for (k = 0; k < nChgState; k++)
             ScaleandPropagate(*sim[k], *state[k], StatePtr[k], it[k], n[k], CavCnt[k], s[k],
                               IonZ[k], IonEs[k], EkState[k], Fy_absState[k]);
@@ -1656,7 +1663,7 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
 //void PropagateState(const Machine &sim, const value_mat &S)
 void PropagateState(const Machine &sim)
 {
-    Machine::p_elements_t::const_iterator it;
+    Machine::const_iterator it;
     element_t                             *ElemPtr;
     Config                                D;
     std::auto_ptr<StateBase>              state(sim.allocState(D));
@@ -1667,7 +1674,7 @@ void PropagateState(const Machine &sim)
 
     std::cout << "\n" << "PropagateState:" << "\n";
 
-    for (it = sim.p_elements.begin(); it != sim.p_elements.end(); ++it) {
+    for (it = sim.begin(); it != sim.end(); ++it) {
         elem = *it;
 
         std::cout << "\n" << elem->type_name() << " " << elem->name << "\n";

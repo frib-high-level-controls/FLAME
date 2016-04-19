@@ -34,6 +34,10 @@ struct MomentState : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
+    double IonEs,
+           IonEk,
+           IonW;
+
     vector_t moment0; //!< the state vector (0th moment)
     matrix_t state; //!< The state matrix (1st moment)
 
