@@ -22,7 +22,7 @@ struct LinearElementBase : public ElementVoid
 
     LinearElementBase(const Config& c)
         :ElementVoid(c)
-        ,transfer(boost::numeric::ublas::identity_matrix<double>(6))
+        ,transfer(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     {}
     virtual ~LinearElementBase() {}
 
