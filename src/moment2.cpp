@@ -180,15 +180,14 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
-//    ,pos(c.get<double>("L", 0e0))
     ,IonZ(c.get<double >("IonZ", 0))
     ,IonEs(c.get<double>("IonEs", 0))
     ,IonEk(c.get<double>("IonEk", 0))
     ,IonW(c.get<double >("IonW", 0))
     ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
     ,FyAbs(0e0)
-    ,Fy_absState(0e0)
     ,EkState(0e0)
+    ,Fy_absState(0e0)
     ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
@@ -477,7 +476,7 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.moment0 = prod(transfer, ST.moment0);
 
-    if (type_name() == "rfcavity") {
+    if (strcmp(type_name(), "rfcavity")==0) {
         ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
         ST.moment0[state_t::PS_PS] = (ST.EkState-ST.Ekinetic)/MeVtoeV;
     } else {
