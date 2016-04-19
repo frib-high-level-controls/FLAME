@@ -48,7 +48,7 @@ struct StateBase : public boost::noncopyable
             Double, Sizet
         } type;
         void *ptr;
-        int ndim;
+        unsigned ndim;
         size_t dim[5];
     };
 
