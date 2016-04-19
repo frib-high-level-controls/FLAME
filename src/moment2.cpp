@@ -482,13 +482,13 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
     transfer = transfer_raw;
 
     std::string t_name = type_name(); // C string -> C++ string.
-    if (t_name != "drift") {
-        // Scale matrix elements.
-        for (unsigned k = 0; k < 2; k++) {
-            transfer(2*k, 2*k+1) *= ST.bg0/ST.bg1;
-            transfer(2*k+1, 2*k) *= ST.bg0/ST.bg1;
-        }
-    }
+//    if (t_name != "drift") {
+//        // Scale matrix elements.
+//        for (unsigned k = 0; k < 2; k++) {
+//            transfer(2*k, 2*k+1) *= ST.bg0/ST.bg1;
+//            transfer(2*k+1, 2*k) *= ST.bg1/ST.bg0;
+//        }
+//    }
 
     transfer(state_t::PS_S, state_t::PS_PS) *= cube(ST.bg0/ST.bg1);
 
@@ -662,8 +662,19 @@ struct ElementSolenoid : public Moment2ElementBase
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*MtoMM,      // Convert from [m] to [mm].
-               K = c.get<double>("K", 0e0)/MtoMM, // Convert from [m] to [mm].
+    }
+    virtual ~ElementSolenoid() {}
+    virtual void recompute_matrix(state_t& ST)
+    {
+        // Re-initialize transport matrix.
+        this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+        double Brho = ST.beta*(ST.EkState+ST.IonEs)/(C0*ST.IonZ),
+               K = conf().get<double>("B")/(2e0*Brho)/MtoMM;
+
+//-----------------------------------------------
+        double L = conf().get<double>("L")*MtoMM,      // Convert from [m] to [mm].
+//               K = conf().get<double>("K", 0e0)/MtoMM, // Convert from [m] to [mm].
                C = ::cos(K*L),
                S = ::sin(K*L);
 
@@ -704,8 +715,12 @@ struct ElementSolenoid : public Moment2ElementBase
         // Longitudinal plane.
         // For total path length.
 //        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+//-----------------------------------------------
+
+        transfer = transfer_raw;
+
+        last_Kenergy_in = last_Kenergy_out = ST.Ekinetic; // no energy gain
     }
-    virtual ~ElementSolenoid() {}
 
     virtual const char* type_name() const {return "solenoid";}
 };
@@ -1511,7 +1526,8 @@ void InitRFCav(const Config &conf, const int CavCnt,
         exit(1);
     }
 
-    IonFy_i = multip*Fy_absState + CavPhases[CavCnt-1];
+//    IonFy_i = multip*Fy_absState + CavPhases[CavCnt-1];
+    IonFy_i = multip*Fy_absState + conf.get<double>("phi_ref");
     Ek_i    = EkState;
     IonW    = EkState + IonEs;
 
@@ -1572,7 +1588,7 @@ double GetCavPhase(const int cavi, const double IonEk, const double IonFys,
 }
 
 
-void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, const double IonEs, double &IonW,
+void PropagateLongRFCav(Config &conf, const int n, const double IonZ, const double IonEs, double &IonW,
                         double &FyAbs, double &SampleIonK, double &IonBeta, double &IonGamma)
 {
     std::string CavType;
@@ -1599,6 +1615,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
     caviFy = GetCavPhase(cavi, IonW-IonEs, IonFys, FyAbs, multip);
 
     IonFy_i = multip*FyAbs + caviFy;
+    conf.set<double>("phi_ref", caviFy);
     CavPhases.push_back(caviFy);
 
     if (false)
@@ -1633,7 +1650,8 @@ struct ElementRFCavity : public Moment2ElementBase
         :base_t(c)
     {
         std::string cav_type = c.get<std::string>("cavtype");
-        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
+        double L             = c.get<double>("L")*MtoMM,         // Convert from [m] to [mm].
+               phi_ref       = c.get<double>("phi_ref", 0e0);
 
         this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
