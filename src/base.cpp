@@ -53,6 +53,7 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
 ElementVoid::ElementVoid(const Config& conf)
     :name(conf.get<std::string>("name"))
     ,index(0)
+    ,length(conf.get<double>("L",0.0))
     ,p_observe(NULL)
     ,p_conf(conf)
 {}

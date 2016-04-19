@@ -53,6 +53,7 @@ private:
     void advanceT(State& s) const
     {
         using boost::numeric::ublas::prod;
+        s.pos += length;
         s.state = prod(transfer, s.state);
     }
 };

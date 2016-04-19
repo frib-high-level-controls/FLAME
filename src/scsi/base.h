@@ -102,6 +102,8 @@ struct ElementVoid : public boost::noncopyable
     const std::string name; //!< Name of this element (unique in its Machine)
     const size_t index; //!< Index of this element (unique in its Machine)
 
+    double length;
+
     Observer *observer() const { return p_observe; }
     /** Add Observer which will inspect the output State of this Element.
      *  Observer instance musy outlive the Element.
