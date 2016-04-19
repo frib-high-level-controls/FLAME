@@ -498,13 +498,16 @@ void InitLong(const Machine &sim, const double IonZ)
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
+    MomentState *ST = dynamic_cast<MomentState*>(state.get());
+    if(!ST) throw std::runtime_error("Only sim_type MomentMatrix is supported");
+
     // Propagate through first element.
     sim.propagate(state.get(), 0, 1);
 
     IonZ1 = IonZ;
-    IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW/MeVtoeV;
-    IonEk = state->IonEk/MeVtoeV;
+    IonEs = ST->IonEs/MeVtoeV;
+    IonW  = ST->IonW/MeVtoeV;
+    IonEk = ST->IonEk/MeVtoeV;
 
     IonGamma   = IonW/IonEs;
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
@@ -1536,12 +1539,14 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     Config                          D;
 
     std::auto_ptr<StateBase> state(sim.allocState(D));
+    MomentState *ST = static_cast<MomentState*>(state.get());
+
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
-    IonEk = state->IonEk/MeVtoeV;
-    IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW/MeVtoeV;
+    IonEk = ST->IonEk/MeVtoeV;
+    IonEs = ST->IonEs/MeVtoeV;
+    IonW  = ST->IonW/MeVtoeV;
 
     // Define initial conditions.
     Fy_absState = Mom1[state_t::PS_S];
@@ -1612,12 +1617,14 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
         it[k]++;
 
         state.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState(D)));
+        MomentState *ST = static_cast<MomentState*>(state[k].get());
+
         // Propagate through first element (beam initial conditions).
         sim[k]->propagate(state[k].get(), 0, 1);
 
-        IonEk[k] = state[k]->IonEk/MeVtoeV;
-        IonEs[k] = state[k]->IonEs/MeVtoeV;
-        IonW[k]  = state[k]->IonW/MeVtoeV;
+        IonEk[k] = ST->IonEk/MeVtoeV;
+        IonEs[k] = ST->IonEs/MeVtoeV;
+        IonW[k]  = ST->IonW/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState[k] = Mom1[k][state_t::PS_S];

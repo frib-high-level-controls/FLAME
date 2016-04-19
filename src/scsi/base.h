@@ -34,7 +34,8 @@ struct StateBase : public boost::noncopyable
     //! Index of ElementVoid in Machine to follow this the current one.
     //! May be altered within ElementVoid::advance() to achieve branching or looping.
     size_t next_elem;
-    double IonZ, IonEs, IonEk, IonW;
+
+    double pos;        // absolute longitudinal position at end of Element
 
     virtual void assign(const StateBase& other) =0;
 

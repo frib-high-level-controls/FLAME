@@ -17,28 +17,19 @@ StateBase::~StateBase() {}
 
 StateBase::StateBase(const Config& c)
     :next_elem(0)
-    ,IonZ(c.get<double >("IonZ", 0))
-    ,IonEs(c.get<double>("IonEs", 0))
-    ,IonEk(c.get<double>("IonEk", 0))
-    ,IonW(c.get<double >("IonW", 0))
+    ,pos(0e0)
     ,pyptr(0)
 {}
 
 StateBase::StateBase(const StateBase& o, clone_tag)
     :next_elem(0)
-    ,IonZ(o.IonZ)
-    ,IonEs(o.IonEs)
-    ,IonEk(o.IonEk)
-    ,IonW(o.IonW)
+    ,pos(o.pos)
     ,pyptr(0)
 {}
 
 void StateBase::assign(const StateBase& other)
 {
-    IonZ  = other.IonZ;
-    IonEs = other.IonEs;
-    IonEk = other.IonEk;
-    IonW  = other.IonW;
+    pos = other.pos;
 }
 
 bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
@@ -50,28 +41,10 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
         Info.ptr = &next_elem;
         return true;
     } else if(idx==1) {
-        Info.name = "IonZ";
-        Info.ndim = 0;
+        Info.name = "pos";
+        Info.ptr = &pos;
         Info.type = ArrayInfo::Double;
-        Info.ptr = &IonZ;
-        return true;
-    } else if(idx==2) {
-        Info.name = "IonEs";
         Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEs;
-        return true;
-    } else if(idx==3) {
-        Info.name = "IonEk";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEk;
-        return true;
-    } else if(idx==4) {
-        Info.name = "IonW";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonW;
         return true;
     }
     return false;
