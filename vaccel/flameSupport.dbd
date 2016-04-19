@@ -1,0 +1,14 @@
+registrar(flameRegistrar)
+
+device(waveform, INST_IO, devFLAMEwaveformLastMsg, "FLAME Last Message")
+device(bo,       INST_IO, devFLAMEboDoSim,         "FLAME Simulate")
+device(ai,       INST_IO, devFLAMEaiRuntime,       "FLAME Runtime")
+
+device(longin,   INST_IO, devFLAMElonginIndex,     "FLAME Index")
+
+device(ao,       INST_IO, devFLAMEaoSetting,       "FLAME Setting")
+
+device(ai,       INST_IO, devFLAMEaiState,         "FLAME State")
+
+device(waveform, INST_IO, devFLAMEwaveformSOrbit,  "FLAME State Orbit")
+device(waveform, INST_IO, devFLAMEwaveformIOrbit,  "FLAME Index Orbit")

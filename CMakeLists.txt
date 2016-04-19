@@ -5,11 +5,13 @@ project("uscsi" C CXX)
 option(USE_WERROR "Treat warnings as errors")
 option(USE_PYTHON "Build python support" ON)
 option(NEED_PYTHON "Require python support" OFF)
+option(NEED_EPICS  "Require EPICS support" OFF)
 
 message(STATUS "Option PYTHON ${USE_PYTHON}")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE DEBUG) # default to debug build
+  message(STATUS "Default to DEBUG build")
 endif()
 if(CMAKE_COMPILER_IS_GNUCC)
   # Turn on extra GCC warnings
@@ -20,10 +22,17 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif()
 message(STATUS "Build type ${CMAKE_BUILD_TYPE}")
 
+# see if git submodule is actually checked out
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake4epics/cmake/FindEPICS.cmake)
+  list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake4epics/cmake)
+  set(TRY_EPICS 1)
+endif()
+
 find_package(Boost 1.42.0 REQUIRED COMPONENTS
   system
   thread
   filesystem
+  regex
   prg_exec_monitor unit_test_framework
 )
 
@@ -86,6 +95,11 @@ endif()
 
 find_package(Doxygen)
 
+if(TRY_EPICS)
+  find_package(EPICS COMPONENTS IOC)
+  find_package(EPICSTools)
+endif()
+
 enable_testing()
 
 add_subdirectory(src)
@@ -101,6 +115,15 @@ else()
 endif()
 
 add_subdirectory(tools)
+
+if(EPICS_FOUND AND EPICSTOOLS_FOUND)
+  message(STATUS "Building virtual IOC")
+  add_subdirectory(vaccel)
+elseif(NEED_EPICS)
+  message(SEND_ERROR "Unable to build EPICS support")
+else()
+  message(SEND_ERROR "Omitt EPICS support")
+endif()
 
 if(DOXYGEN_FOUND)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/documentation)

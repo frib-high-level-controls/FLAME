@@ -1,0 +1,3 @@
+[submodule "cmake4epics"]
+	path = cmake4epics
+	url = https://github.com/mdavidsaver/cmake4epics.git
