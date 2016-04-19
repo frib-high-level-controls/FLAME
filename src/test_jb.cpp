@@ -114,7 +114,7 @@ void propagate(std::auto_ptr<Config> conf)
     value_vec                                BC[nChgStates];
     value_mat                                BE[nChgStates];
     std::vector<boost::shared_ptr<Machine> > sims;
-    Machine::p_elements_t::iterator          it;
+    Machine::iterator          it;
 
 
     for (k = 0; k < nChgStates; k++) {
@@ -164,7 +164,7 @@ void propagate(std::auto_ptr<Config> conf)
     for (k = 0; k < nChgStates; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
 
-        it = sims[k]->p_elements.begin();
+        it = sims[k]->begin();
         // Skip over state.
         it++;
 
@@ -198,7 +198,7 @@ void propagate(std::auto_ptr<Config> conf)
 
         sims[k]->propagate(state.get(), 0, 1);
 
-        it = sims[k]->p_elements.begin();
+        it = sims[k]->begin();
         // Skip over state.
         it++;
         // Initialize state.
@@ -206,7 +206,7 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->state   = BE[k];
 
         ElementVoid* elem = *it;
-        for (; it != sims[k]->p_elements.end(); ++it) {
+        for (; it != sims[k]->end(); ++it) {
 //            elem->advance(*state);
 //            sims[k]->propagate(state.get(), elem->index+n-1, 1);
             (*it)->advance(*state);
