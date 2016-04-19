@@ -101,11 +101,60 @@ void CavTLMLineType::show(std::ostream& strm) const
 }
 
 
+// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
+# define SampleFreq   80.5e6
+// Sampling distance [m].
+# define SampleLambda (C0/SampleFreq*MtoMM)
+
 const int MaxNCav    = 5;
 
-CavDataType         CavData[MaxNCav];
-std::stringstream   CavTLMstream[MaxNCav];
-CavTLMLineType      CavTLMLineTab[MaxNCav];
+CavDataType         CavData2[MaxNCav];
+std::stringstream   CavTLMstream2[MaxNCav];
+CavTLMLineType      CavTLMLineTab2[MaxNCav];
+
+
+void PrtVec(const std::vector<double> &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+typedef boost::numeric::ublas::vector<double> value_vec;
+typedef boost::numeric::ublas::matrix<double> value_mat;
+
+enum {maxsize = 7};
+
+typedef boost::numeric::ublas::vector<double,
+                boost::numeric::ublas::bounded_array<double, maxsize>
+> vector_t;
+
+typedef boost::numeric::ublas::matrix<double,
+                boost::numeric::ublas::row_major,
+                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
+> matrix_t;
+
+
+void PrtVec(const vector_t &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+void PrtMat(const value_mat &M)
+{
+    for (size_t j = 0; j < M.size1(); j++) {
+        for (size_t k = 0; k < M.size2(); k++)
+            std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << M(j, k);
+        std::cout << "\n";
+    }
+}
 
 
 namespace {
@@ -138,6 +187,8 @@ Moment2State::Moment2State(const Config& c)
     ,IonW(c.get<double >("IonW", 0))
     ,sync_phase(c.get<double>("IonFy", 0e0)) // TODO: sync_phase from pos?
     ,FyAbs(0e0)
+    ,Fy_absState(0e0)
+    ,EkState(0e0)
     ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
@@ -167,14 +218,18 @@ Moment2State::Moment2State(const Config& c)
            Ekinetic0 = c.get<double>("IonEk", 0e0);
            IonZ      = c.get<double>("IonZ", 0e0);
 
-    gamma            = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    beta             = sqrt(1e0-1e0/sqr(gamma));
-    bg0              = beta*gamma;
+    gamma       = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    beta        = sqrt(1e0-1e0/sqr(gamma));
+    bg0         = beta*gamma;
 
-    Ekinetic         = Ekinetic0;
-    gamma            = (Erest+Ekinetic)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    beta             = sqrt(1e0-1e0/sqr(gamma));
-    bg1              = beta*gamma;
+    Ekinetic    = Ekinetic0;
+
+    // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    //    gamma       = (Erest+Ekinetic)/Erest;
+    gamma       = (Erest+EkState)/Erest;
+    bg1         = beta*gamma;
+
+    SampleIonK  = 2e0*M_PI/(beta*SampleLambda);
 
     std::cout << std::scientific << std::setprecision(5)
               << "\nMoment2State(const Config& c): \n"
@@ -192,6 +247,7 @@ Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     ,IonEk(o.IonEk)
     ,IonW(o.IonW)
     ,Ekinetic(o.Ekinetic)
+    ,SampleIonK(o.SampleIonK)
     ,moment0(o.moment0)
     ,state(o.state)
 {}
@@ -201,19 +257,22 @@ void Moment2State::assign(const StateBase& other)
     const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
-    IonZ = O->IonZ;
-    IonEs = O->IonEs;
-    IonEk = O->IonEk;
-    IonW  = O->IonW;
-    Ekinetic = O->Ekinetic;
-    sync_phase = O->sync_phase;
-    FyAbs = O->FyAbs;
-    gamma = O->gamma;
-    beta = O->beta;
-    bg0 = O->bg0;
-    bg1 = O->bg1;
-    moment0 = O->moment0;
-    state = O->state;
+    IonZ        = O->IonZ;
+    IonEs       = O->IonEs;
+    IonEk       = O->IonEk;
+    IonW        = O->IonW;
+    Ekinetic    = O->Ekinetic;
+    SampleIonK  = O->SampleIonK;
+    sync_phase  = O->sync_phase;
+    FyAbs       = O->FyAbs;
+    Fy_absState = O->Fy_absState;
+    EkState     = O->EkState;
+    gamma       = O->gamma;
+    beta        = O->beta;
+    bg0         = O->bg0;
+    bg1         = O->bg1;
+    moment0     = O->moment0;
+    state       = O->state;
     StateBase::assign(other);
 
     std::cout << std::scientific << std::setprecision(5)
@@ -274,43 +333,61 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==7) {
+        Info.name = "Fy_absState";
+        Info.ptr = &Fy_absState;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==8) {
+        Info.name = "EkState";
+        Info.ptr = &EkState;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==9) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==10) {
+        Info.name = "SampleIonK";
+        Info.ptr = &SampleIonK;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==11) {
         Info.name = "sync_phase";
         Info.ptr = &sync_phase;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==12) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==13) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==11) {
+    } else if(idx==14) {
         Info.name = "bg0";
         Info.ptr = &bg0;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==12) {
+    } else if(idx==15) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-13, Info);
+    return StateBase::getArray(idx-16, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -321,9 +398,7 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,misalign_inv(state_t::maxsize, state_t::maxsize)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
-//    FSampLength = C0/c.get<double>("Frf")*MtoMM;
-    FSampLength = C0/80.5e6*MtoMM;
-    phase_factor = length*2*M_PI/FSampLength;
+    phase_factor = length*2e0*M_PI/SampleLambda;
     Erest = c.get<double>("IonEs");
 
     inverse(misalign_inv, misalign);
@@ -372,6 +447,9 @@ void Moment2ElementBase::advance(StateBase& s)
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
+    ST.Fy_absState = ST.moment0[state_t::PS_S];
+    ST.EkState     = ST.IonEk + ST.moment0[state_t::PS_PS]*MeVtoeV;
+
     if(ST.Ekinetic!=last_Kenergy_in) {
 
         // need to re-calculate energy dependent terms
@@ -383,7 +461,7 @@ void Moment2ElementBase::advance(StateBase& s)
     }
 
     ST.pos += length;
-    ST.Ekinetic = last_Kenergy_out;
+
     ST.sync_phase += phase_factor/ST.beta;
 
     // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in
@@ -398,6 +476,14 @@ void Moment2ElementBase::advance(StateBase& s)
               << "  ST.bg0 = " << ST.bg0 << ", ST.bg1 = " << ST.bg1 << "\n";
 
     ST.moment0 = prod(transfer, ST.moment0);
+
+    if (type_name() == "rfcavity") {
+        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
+        ST.moment0[state_t::PS_PS] = (ST.EkState-ST.Ekinetic)/MeVtoeV;
+    } else {
+        ST.FyAbs += ST.SampleIonK*length*MtoMM;
+        ST.Ekinetic = last_Kenergy_out;
+    }
 
     noalias(scratch) = prod(transfer, ST.state);
     noalias(ST.state) = prod(scratch, trans(transfer));
@@ -683,11 +769,6 @@ void LongTabType::show(std::ostream& strm, const int k) const
 
 // Global constants and variables.
 
-// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
-# define SampleFreq   80.5e6
-// Sampling distance [m].
-# define SampleLambda (C0/SampleFreq*MtoMM)
-
 // Phase space dimension; including vector for orbit/1st moment.
 # define PS_Dim        7
 
@@ -713,6 +794,7 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
            IonLambda, IonK, IonFylast, IonGamma, IonBeta;
 
     IonLambda = C0/fRF*MtoMM;
+
 
     IonFy = IonFy0;
     IonK  = IonK0;
@@ -1012,9 +1094,9 @@ void GetCavMatParams(const int cavi, std::stringstream &inf,
     inf.clear();
     inf.seekg(0, inf.beg);
 
-    CavTLMLineTab[cavi-1].clear();
+    CavTLMLineTab2[cavi-1].clear();
 
-    s = CavData[cavi-1].s[0];
+    s = CavData2[cavi-1].s[0];
     while (getline(inf, line) && !inf.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
         if (line[0] == '%') {
@@ -1118,13 +1200,13 @@ void GetCavMatParams(const int cavi, std::stringstream &inf,
                 exit(1);
             }
 
-            CavTLMLineTab[cavi-1].set(s, Elem, E0, T, S, Accel);
+            CavTLMLineTab2[cavi-1].set(s, Elem, E0, T, S, Accel);
         }
     }
 
     if (false) {
         std::cout << "\n";
-        CavTLMLineTab[cavi-1].show(std::cout);
+        CavTLMLineTab2[cavi-1].show(std::cout);
     }
 }
 
@@ -1216,7 +1298,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
 
-    s = CavData[cavi-1].s[0];
+    s = CavData2[cavi-1].s[0];
     n = 0;
     while (getline(inf, line) && !inf.fail()) {
         if (line[0] == '%') {
@@ -1245,9 +1327,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mprob(2, 3) = Length;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus1") {
-                V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab[cavi-1].T[n-1];
-                S    = CavTLMLineTab[cavi-1].S[n-1];
+                V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                T    = CavTLMLineTab2[cavi-1].T[n-1];
+                S    = CavTLMLineTab2[cavi-1].S[n-1];
                 kfdx = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = kfdx;
 
@@ -1255,9 +1337,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mprob(3, 2) = kfdy;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus2") {
-                V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab[cavi-1].T[n-1];
-                S    = CavTLMLineTab[cavi-1].S[n-1];
+                V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                T    = CavTLMLineTab2[cavi-1].T[n-1];
+                S    = CavTLMLineTab2[cavi-1].S[n-1];
                 kfdx = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = kfdx;
 
@@ -1266,9 +1348,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EDipole") {
                 if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab[cavi-1].T[n-1];
-                    S   = CavTLMLineTab[cavi-1].S[n-1];
+                    V0  = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T   = CavTLMLineTab2[cavi-1].T[n-1];
+                    S   = CavTLMLineTab2[cavi-1].S[n-1];
                     dpy = IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
 
                     Mprob(3, 6) = dpy;
@@ -1276,9 +1358,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "EQuad") {
                 if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab[cavi-1].T[n-1];
-                    S    = CavTLMLineTab[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab2[cavi-1].T[n-1];
+                    S    = CavTLMLineTab2[cavi-1].S[n-1];
                     kfdx =  IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                     kfdy = -kfdx;
 
@@ -1288,9 +1370,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "HMono") {
                 if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab[cavi-1].T[n-1];
-                    S    = CavTLMLineTab[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab2[cavi-1].T[n-1];
+                    S    = CavTLMLineTab2[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                     kfdy = kfdx;
 
@@ -1300,9 +1382,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "HDipole") {
                 if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab[cavi-1].T[n-1];
-                    S   = CavTLMLineTab[cavi-1].S[n-1];
+                    V0  = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T   = CavTLMLineTab2[cavi-1].T[n-1];
+                    S   = CavTLMLineTab2[cavi-1].S[n-1];
                     dpy = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
 
                     Mprob(3, 6) = dpy;
@@ -1318,9 +1400,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                         beta  = (beta_tab[1]+beta_tab[2])/2e0;
                         gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
                     }
-                    V0   = CavTLMLineTab[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab[cavi-1].T[n-1];
-                    S    = CavTLMLineTab[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab2[cavi-1].T[n-1];
+                    S    = CavTLMLineTab2[cavi-1].S[n-1];
                     kfdx = -MU0*C0*IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                     kfdy = -kfdx;
 
@@ -1335,7 +1417,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 beta   = beta_tab[seg];
                 gamma  = gamma_tab[seg];
                 kfac   = 2e0*M_PI/(beta*Lambda);
-                Accel  = CavTLMLineTab[cavi-1].Accel[n-1];
+                Accel  = CavTLMLineTab2[cavi-1].Accel[n-1];
 
                 Mprob(1, 1) = Accel;
                 Mprob(3, 3) = Accel;
@@ -1377,8 +1459,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
     IonK_s[0]  = 2e0*M_PI/(beta_s[0]*IonLambda);
 
-    n   = CavData[cavi-1].s.size();
-    dis = (CavData[cavi-1].s[n-1]-CavData[cavi-1].s[0])/2e0;
+    n   = CavData2[cavi-1].s.size();
+    dis = (CavData2[cavi-1].s[n-1]-CavData2[cavi-1].s[0])/2e0;
 
     TransFacts(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
     EvalGapModel(dis, IonW_s[0], IonEs, IonFy_s[0], IonK_s[0], IonZ, IonLambda,
@@ -1414,8 +1496,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    GetCavMatParams(cavi, CavTLMstream[cavi-1], beta_s, gamma_s, IonK);
-    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream[cavi-1], Rm, M);
+    GetCavMatParams(cavi, CavTLMstream2[cavi-1], beta_s, gamma_s, IonK);
+    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
 }
 
 
@@ -1456,7 +1538,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     //double SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
 
-    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
+    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
                 fRF, EfieldScl, IonW_o, IonFy_o);
 
     accIonW      = IonW_o - IonW;
@@ -1542,7 +1624,7 @@ void PropagateLongRFCav(const Config &conf, const int n, const double IonZ, cons
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
+    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, caviIonK, IonZ,
                 IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
 
     IonW       = IonW_o;
@@ -1597,11 +1679,13 @@ struct ElementRFCavity : public Moment2ElementBase
 
         PropagateLongRFCav(conf(), n, IonZ, IonEs, IonW, ST.FyAbs, SampleIonK, IonBeta, IonGamma);
 
-        ST.pos     += conf().get<double>("L");
-        ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
-        ST.gamma    = IonGamma;
-        ST.beta     = IonBeta;
-        ST.bg1      = IonBeta*IonGamma;
+        double Ekinetic = IonW - IonEs;
+
+//        ST.pos     += conf().get<double>("L");
+//        ST.Ekinetic = (IonW-IonEs)*MeVtoeV;
+//        ST.gamma    = IonGamma;
+//        ST.beta     = IonBeta;
+//        ST.bg1      = IonBeta*IonGamma;
 
         //-------------------------------------------------------------
 
@@ -1610,13 +1694,21 @@ struct ElementRFCavity : public Moment2ElementBase
         int CavCnt = 1;
 
         // Define initial conditions.
-        double Fy_absState = ST.moment0[state_t::PS_S],
-               EkState     = IonEk + ST.moment0[state_t::PS_PS];
+        double accIonW, EkState, beta, gamma, avebeta, avegamma;
 
-        double accIonW, beta, gamma, avebeta, avegamma;
+        EkState    = ST.EkState/MeVtoeV;
+        ST.gamma   = (EkState+IonEs)/IonEs;
+        ST.beta    = sqrt(1e0-1e0/sqr(ST.gamma));
+        SampleIonK = 2e0*M_PI/(ST.beta*SampleLambda);
 
-        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, Fy_absState, accIonW,
-                  beta, gamma, avebeta, avegamma, transfer);
+        InitRFCav(conf(), CavCnt, IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
+                  ST.beta, ST.gamma, avebeta, avegamma, transfer);
+
+        ST.EkState  = EkState*MeVtoeV;
+        ST.Ekinetic = Ekinetic*MeVtoeV;
+
+//        ST.moment0[state_t::PS_S]  = ST.Fy_absState - ST.FyAbs;
+//        ST.moment0[state_t::PS_PS] = EkState - Ekinetic;
     }
 
     virtual const char* type_name() const {return "rfcavity";}
