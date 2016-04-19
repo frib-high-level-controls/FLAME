@@ -4,6 +4,7 @@
 #include <limits>
 
 #include <boost/numeric/ublas/lu.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
@@ -191,37 +192,69 @@ Moment2State::Moment2State(const Config& c)
     ,moment0(maxsize, 0e0)
     ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
+    /* check to see if "cstate" is defined.
+     * If "cstate" is defined then we are simulating one of many charge states.
+     * If not take IonZ, moment0, and state directly from config variables.
+     * If so, then
+     *   for IonZ expect the config vector "IonChargeStates" and index with "cstate" (0 index).
+     *   append the value of "cstate" to the vector and matrix variable names.
+     *     eg. cstate=1, vector_variable=S -> looks for variable "S1".
+     */
+    double icstate_f = 0.0;
+    bool multistate = c.tryGet<double>("cstate", icstate_f);
+    size_t icstate = (size_t)icstate_f;
+
+    std::string vectorname(c.get<std::string>("vector_variable", "moment0"));
+    std::string matrixname(c.get<std::string>("matrix_variable", "initial"));
+
+    if(multistate) {
+        const std::vector<double>& ics = c.get<std::vector<double> >("IonChargeStates");
+        if(icstate>=ics.size())
+            throw std::invalid_argument("IonChargeStates[cstate] is out of bounds");
+        IonZ = ics[icstate];
+
+        std::string icstate_s(boost::lexical_cast<std::string>(icstate));
+        vectorname  += icstate_s;
+        matrixname  += icstate_s;
+    }
+
     try{
-        const std::vector<double>& I = c.get<std::vector<double> >("moment0");
-        if(I.size()>moment0.size())
-            throw std::invalid_argument("Initial moment0 size too big");
+        const std::vector<double>& I = c.get<std::vector<double> >(vectorname);
+        if(I.size()!=moment0.size())
+            throw std::invalid_argument("Initial moment0 size mis-match");
         std::copy(I.begin(), I.end(), moment0.begin());
     }catch(key_error&){
+        if(multistate)
+            throw std::invalid_argument(vectorname+" not defined");
         // default to zeros
     }catch(boost::bad_any_cast&){
         throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
 
     try{
-        const std::vector<double>& I = c.get<std::vector<double> >("initial");
-        if(I.size()>state.data().size())
-            throw std::invalid_argument("Initial state size too big");
+        const std::vector<double>& I = c.get<std::vector<double> >(matrixname);
+        if(I.size()!=state.size1()*state.size2())
+            throw std::invalid_argument("Initial state size mis-match");
         std::copy(I.begin(), I.end(), state.data().begin());
     }catch(key_error&){
+        if(multistate)
+            throw std::invalid_argument(matrixname+" not defined");
         // default to identity
     }catch(boost::bad_any_cast&){
         throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
 
-    double Erest     = c.get<double>("IonEs", 0e0), // Rest energy.
-           Ekinetic0 = c.get<double>("IonEk", 0e0);
-           IonZ      = c.get<double>("IonZ", 0e0);
+    double Erest     = IonEs, // Rest energy.
+           Ekinetic0 = IonEk;
 
     gamma       = (Erest+Ekinetic0)/Erest;      // Approximate (E_k = m0*v^2/2 vs. p*c0).
     beta        = sqrt(1e0-1e0/sqr(gamma));
     bg0         = beta*gamma;
 
     Ekinetic    = Ekinetic0;
+
+    Fy_absState = moment0[PS_S];
+    EkState     = IonEk + moment0[PS_PS]*MeVtoeV;
 
     // Approximate (E_k = m0*v^2/2 vs. p*c0).
     //    gamma       = (Erest+Ekinetic)/Erest;
