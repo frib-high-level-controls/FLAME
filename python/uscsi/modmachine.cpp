@@ -20,10 +20,10 @@ static
 int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *conf = NULL;
+        PyObject *conf = NULL, *extra_defs = Py_None;
         const char *path = NULL;
-        const char *pnames[] = {"config", "path", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|s", (char**)pnames, &conf, &path))
+        const char *pnames[] = {"config", "path", "extra", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|sO", (char**)pnames, &conf, &path, &extra_defs))
             return -1;
 
         assert(!machine->weak);
@@ -61,6 +61,16 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
             PyBuffer_Release(&buf);
         } else {
             throw std::invalid_argument("'config' must be dict or byte buffer");
+        }
+
+        if(extra_defs==Py_None) {
+            // no-op
+        } else if(PyDict_Check(extra_defs)) {
+            C->push_scope();
+            Dict2Config(*C, extra_defs);
+        } else {
+            PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
+            return -1;
         }
 
         machine->machine = new Machine(*C);
