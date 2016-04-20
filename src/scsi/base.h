@@ -35,7 +35,7 @@ struct StateBase : public boost::noncopyable
     //! May be altered within ElementVoid::advance() to achieve branching or looping.
     size_t next_elem;
 
-    double pos;        // absolute longitudinal position at end of Element
+    double pos;        //!< absolute longitudinal position at end of Element
 
     virtual void assign(const StateBase& other) =0;
 
@@ -102,7 +102,7 @@ struct ElementVoid : public boost::noncopyable
     const std::string name; //!< Name of this element (unique in its Machine)
     const size_t index; //!< Index of this element (unique in its Machine)
 
-    double length;
+    double length; //!< Longitudual length of this element (added to StateBase::pos)
 
     Observer *observer() const { return p_observe; }
     /** Add Observer which will inspect the output State of this Element.

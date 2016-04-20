@@ -290,9 +290,11 @@ elemname: generic, transfer = [1, 0, 0, 0, 0, 0, 0,
 /**
 @page apiusage API Usage
 
-@section apiusagecpp C++ API Usage
+@section apiusagecpp C++ Simulation API Usage
 
-The example @subpage examples_sim_cpp is a simplified version of cli.cpp.
+The example @subpage examples_sim_cpp demonstrates the basic process of running
+a simulation against an existing sim_type and set of Elements.
+This is a simplified version of cli.cpp, which is compiled as the run_uscsi executable.
 
 Most user code will only need base.h and config.h.
 
@@ -345,9 +347,10 @@ Before exiting some cleanup may be to clear the registry of "sim_type"s.
 
 @snippet sim.cpp Deinit
 
-@section apiusagepy Python API Usage
+@section apiusagepy Python Simulation API Usage
 
-The example @subpage examples_sim_py is a simplified work-alike of cli.cpp.
+The example @subpage examples_sim_cpp demonstrates the basic process of running
+a simulation using the python API.
 
 Importing "uscsi" also registers a standard set of "sim_type"s.
 
@@ -365,6 +368,90 @@ Propagate through all elements.
 
 @snippet sim.py Run simulation
 
+@section apicreatesim Defining a sim_type
+
+The example defines a new sim_type and two Elements.
+The simulation itself will be trivial.
+
+The full example can be found in @subpage examples_customsim_cpp
+
+@subsection apicreatestate Define state struct
+
+The first task is to define the state structure.
+This contains the variables which define the state of one "bunch".
+In this case "x" and "xv", which represent a transverse velocity and relative position.
+In addition the absolute logitudinal StateBase::pos is inherited.
+
+@snippet customsim.cpp StateDef
+
+The member variables of State1D are initialized from a Config.
+
+@snippet customsim.cpp StateInit
+
+The remainder of State1D is boilerplate which is repeated for each member variable.
+
+@subsection apicreatesource Define source element type
+
+Now define the "source" element type.
+By convention this is an element which simply overwrites it's input state with
+predefined values (eg. from lattice file).
+So it is simplest to give this struct it's own internal State1D instance.
+
+@snippet customsim.cpp ElemSrcDef
+
+Initialization of the element can also initialize this internal State1D from the same Config.
+
+@snippet customsim.cpp ElemSrcInit
+
+So the same "x" and "xv" used to initialize the state can be given to a source element.
+
+@code
+srcname : source, x=0, xv=0.1, L=0.5;
+@endcode
+
+With this lattice file entry, the "x" and "xv" are used to initialize the internal State1D.
+"L" is used to initialize ElementVoid::length.
+
+Next define the simulated action of this element with its advance() method.
+This method should modify it's input State1D.
+In this case, the source element simply overwrites the input state using its internal State1D.
+
+@snippet customsim.cpp ElemSrcAdvance
+
+@subsection apicreategeneric Define another element type
+
+Now define another "generic" element type which transforms the state in a more interesting way.
+
+@snippet customsim.cpp ElemGenericDef
+
+@snippet customsim.cpp ElemGenericInit
+
+Here we see that the name given to Config::get need not match a c++ variable name.
+Also that some calculations can be done once, and the result stored in a class member variable for later re-use.
+
+@snippet customsim.cpp ElemGenericAdvance
+
+The advance() function incrementally updates the state.
+
+@subsection apicreateregister Registration
+
+So far three types have been defined: State1D, Element1DSource, and Element1DGeneric.
+If nothing further is done there will be no way to make use of this code.
+As these definitions appear in an anonymous C++ namespace a modern compiler is able to issue a warn
+that this code is unreachable.
+
+In order for this code to be reachable it must be tied into the FLAME framework in some way.
+This is accomplished with Machine::registerState and Machine::registerElement.
+
+By convention a function "register...()" is defined, which must be called exactly once
+before Machine can make use of these definitions.
+
+@snippet customsim.cpp register
+
+Now to make use Simple1D we expand on @subpage examples_sim_cpp
+
+@snippet customsim.cpp main
+
 */
 
 // =====================================================================================
@@ -373,6 +460,14 @@ Propagate through all elements.
 @page examples_sim_cpp examples/sim.cpp
 
 @include sim.cpp
+*/
+
+// =====================================================================================
+
+/**
+@page examples_customsim_cpp examples/customsim.cpp
+
+@include customsim.cpp
 */
 
 // =====================================================================================

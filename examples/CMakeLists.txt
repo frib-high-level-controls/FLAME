@@ -12,4 +12,11 @@ target_link_libraries(example_sim
   uscsi_core
 )
 
+add_executable(example_customsim
+  customsim.cpp
+)
+target_link_libraries(example_customsim
+  uscsi_core
+)
+
 # example binaries should not be installed
