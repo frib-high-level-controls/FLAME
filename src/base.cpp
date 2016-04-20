@@ -163,13 +163,14 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
     S->next_elem = start;
     for(size_t i=0; S->next_elem<nelem && i<max; i++)
     {
-        ElementVoid* E = p_elements[S->next_elem];
+        size_t n = S->next_elem;
+        ElementVoid* E = p_elements[n];
         S->next_elem++;
         E->advance(*S);
         if(E->p_observe)
             E->p_observe->view(E, S);
         if(p_trace)
-            (*p_trace) << "After "<< i<< " " << *S;
+            (*p_trace) << "After "<< n<< " " << *S;
     }
 }
 
