@@ -36,6 +36,7 @@ set(inst_HEADERS
   scsi/util.h
   scsi/base.h
   scsi/config.h
+  scsi/constants.h
 
   scsi/state/vector.h
   scsi/state/matrix.h
