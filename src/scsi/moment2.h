@@ -66,7 +66,7 @@ struct Moment2State : public StateBase
            beta_ref,    // Beta for reference particle.
            gamma,       // Gamma for ion.
            beta,        // Beta for ion.
-           bg0,         // Initial beta*gamma.
+           bg_ref,         // Initial beta*gamma.
            bg1;         // Beta*gamma for reference particle.
 
     vector_t moment0;
