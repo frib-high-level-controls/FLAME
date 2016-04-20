@@ -219,12 +219,6 @@ Moment2State::Moment2State(const Config& c)
     bg0   = beta_ref*gamma_ref;
 
     Ekinetic    = Ekinetic0;
-
-    std::cout << std::scientific << std::setprecision(5)
-              << "\nMoment2State(const Config& c): \n"
-              << "  Erest = " << Erest << "  IonZ = " << IonZ
-              << ", Ekinetic0 = " << Ekinetic0  << ", Ekinetic = " << Ekinetic << "\n"
-              << "  bg0 = " << bg0 << ", bg1 = " << bg1 << "\n";
 }
 
 Moment2State::~Moment2State() {}
@@ -260,11 +254,6 @@ void Moment2State::assign(const StateBase& other)
     moment0     = O->moment0;
     state       = O->state;
     StateBase::assign(other);
-
-    std::cout << std::scientific << std::setprecision(5)
-              << "\nassign(const StateBase& other):\n"
-              << "  Ekinetic = " << O->Ekinetic << "\n"
-              << "  bg0 = " << O->bg0 << ", bg1 = " << O->bg1 << "\n";
 }
 
 void Moment2State::show(std::ostream& strm) const
@@ -385,8 +374,6 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
 
     // spoil to force recalculation of energy dependent terms
     last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
-
-    std::cout << "\nMoment2ElementBase(const Config& c):\n";
 }
 
 Moment2ElementBase::~Moment2ElementBase() {}
@@ -404,8 +391,6 @@ void Moment2ElementBase::assign(const ElementVoid *other)
 
     // spoil to force recalculation of energy dependent terms
     last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
-
-    std::cout << "\nassign(const ElementVoid *other):\n";
 }
 
 void Moment2ElementBase::show(std::ostream& strm) const
@@ -474,11 +459,6 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 {
     // Default, for passive elements.
 
-    std::cout << std::scientific << std::setprecision(5)
-              << "\nrecompute_matrix\n"
-              << "  ST.Erest = " << Erest << ", ST.Ekinetic = " << ST.Ekinetic << "\n"
-              << "  ST.bg0 = " << ST.bg0 << ", ST.bg1 = " << ST.bg1 << "\n";
-
     transfer = transfer_raw;
 
     std::string t_name = type_name(); // C string -> C++ string.
@@ -497,9 +477,9 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 
 namespace {
 
-void Get2by2Matrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M)
+void GetQuadMatrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M)
 {
-    // Transport matrix for one plane for a Quadrupole.
+    // 2D quadrupole transport matrix.
     double sqrtK,
            psi,
            cs,
@@ -538,6 +518,52 @@ void Get2by2Matrix(const double L, const double K, const unsigned ind, typename 
         else
             M(ind+1, ind) = 0e0;
     }
+}
+
+void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::value_t &M)
+{
+    typedef typename Moment2ElementBase::state_t state_t;
+
+    double C = ::cos(K*L),
+           S = ::sin(K*L);
+
+    M(state_t::PS_X, state_t::PS_X)
+            = M(state_t::PS_PX, state_t::PS_PX)
+            = M(state_t::PS_Y, state_t::PS_Y)
+            = M(state_t::PS_PY, state_t::PS_PY)
+            = sqr(C);
+
+    if (K != 0e0)
+        M(state_t::PS_X, state_t::PS_PX) = S*C/K;
+    else
+        M(state_t::PS_X, state_t::PS_PX) = L;
+    M(state_t::PS_X, state_t::PS_Y) = S*C;
+    if (K != 0e0)
+        M(state_t::PS_X, state_t::PS_PY) = sqr(S)/K;
+    else
+        M(state_t::PS_X, state_t::PS_PY) = 0e0;
+
+    M(state_t::PS_PX, state_t::PS_X) = -K*S*C;
+    M(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
+    M(state_t::PS_PX, state_t::PS_PY) = S*C;
+
+    M(state_t::PS_Y, state_t::PS_X) = -S*C;
+    if (K != 0e0)
+        M(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
+    else
+        M(state_t::PS_Y, state_t::PS_PX) = 0e0;
+    if (K != 0e0)
+        M(state_t::PS_Y, state_t::PS_PY) = S*C/K;
+    else
+        M(state_t::PS_Y, state_t::PS_PY) = L;
+
+    M(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
+    M(state_t::PS_PY, state_t::PS_PX) = -S*C;
+    M(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
+
+    // Longitudinal plane.
+    // For total path length.
+//        M(state_t::PS_S, state_t::PS_S) = L;
 }
 
 struct ElementSource : public Moment2ElementBase
@@ -618,10 +644,11 @@ struct ElementSBend : public Moment2ElementBase
                Ky  = -K;
 
         // Horizontal plane.
-        Get2by2Matrix(L, Kx, (unsigned)state_t::PS_X, this->transfer_raw);
+        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, this->transfer_raw);
         // Vertical plane.
-        Get2by2Matrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer_raw);
+        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer_raw);
         // Longitudinal plane.
+        // For total path length.
 //        this->transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
     }
     virtual ~ElementSBend() {}
@@ -646,21 +673,15 @@ struct ElementQuad : public Moment2ElementBase
         this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho = ST.beta*(ST.EkState+ST.IonEs)/(C0*ST.IonZ),
-               K = conf().get<double>("B2")/Brho/sqr(MtoMM);
-
-//-----------------------------------------------
-        double L = conf().get<double>("L")*MtoMM;
-               //B2 = c.get<double>("B2"),
-//               K = c.get<double>("K", 0e0)/sqr(MtoMM);
+               K = conf().get<double>("B2")/Brho/sqr(MtoMM),
+               L = conf().get<double>("L")*MtoMM;
 
         // Horizontal plane.
-        Get2by2Matrix(L,  K, (unsigned)state_t::PS_X, this->transfer_raw);
+        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, this->transfer_raw);
         // Vertical plane.
-        Get2by2Matrix(L, -K, (unsigned)state_t::PS_Y, this->transfer_raw);
+        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, this->transfer_raw);
         // Longitudinal plane.
-        // For total path length.
 //        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
-//-----------------------------------------------
 
         transfer = transfer_raw;
 
@@ -686,52 +707,10 @@ struct ElementSolenoid : public Moment2ElementBase
         this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho = ST.beta*(ST.EkState+ST.IonEs)/(C0*ST.IonZ),
-               K = conf().get<double>("B")/(2e0*Brho)/MtoMM;
+               K = conf().get<double>("B")/(2e0*Brho)/MtoMM,
+               L = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
-//-----------------------------------------------
-        double L = conf().get<double>("L")*MtoMM,      // Convert from [m] to [mm].
-//               K = conf().get<double>("K", 0e0)/MtoMM, // Convert from [m] to [mm].
-               C = ::cos(K*L),
-               S = ::sin(K*L);
-
-        this->transfer_raw(state_t::PS_X, state_t::PS_X)
-                = this->transfer_raw(state_t::PS_PX, state_t::PS_PX)
-                = this->transfer_raw(state_t::PS_Y, state_t::PS_Y)
-                = this->transfer_raw(state_t::PS_PY, state_t::PS_PY)
-                = sqr(C);
-
-        if (K != 0e0)
-            this->transfer_raw(state_t::PS_X, state_t::PS_PX) = S*C/K;
-        else
-            this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_X, state_t::PS_Y) = S*C;
-        if (K != 0e0)
-            this->transfer_raw(state_t::PS_X, state_t::PS_PY) = sqr(S)/K;
-        else
-            this->transfer_raw(state_t::PS_X, state_t::PS_PY) = 0e0;
-
-        this->transfer_raw(state_t::PS_PX, state_t::PS_X) = -K*S*C;
-        this->transfer_raw(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
-        this->transfer_raw(state_t::PS_PX, state_t::PS_PY) = S*C;
-
-        this->transfer_raw(state_t::PS_Y, state_t::PS_X) = -S*C;
-        if (K != 0e0)
-            this->transfer_raw(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
-        else
-            this->transfer_raw(state_t::PS_Y, state_t::PS_PX) = 0e0;
-        if (K != 0e0)
-            this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = S*C/K;
-        else
-            this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
-
-        this->transfer_raw(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
-        this->transfer_raw(state_t::PS_PY, state_t::PS_PX) = -S*C;
-        this->transfer_raw(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
-
-        // Longitudinal plane.
-        // For total path length.
-//        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
-//-----------------------------------------------
+        GetSolMatrix(L, K, this->transfer_raw);
 
         transfer = transfer_raw;
 
