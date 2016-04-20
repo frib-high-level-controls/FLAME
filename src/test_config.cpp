@@ -75,13 +75,13 @@ BOOST_AUTO_TEST_CASE(config_scope_mutate)
     BOOST_CHECK_CLOSE(D.get<double>("world"), 5.2, 0.1); // from outer
     BOOST_CHECK_THROW(D.get<double>("other"), key_error); // only inner
 
-    // Change D, which by copy on write is detached from C.
+    // Change D, which will effect C
     D.set<double>("hello", 101.0);
     D.set<double>("world", 102.0);
     D.set<double>("other", 103.0);
 
     // C's outer scope has not changed
-    BOOST_CHECK_CLOSE(C.get<double>("hello"), 4.2, 0.1);  // from outer
+    BOOST_CHECK_CLOSE(C.get<double>("hello"), 101.1, 0.1);  // from outer
     BOOST_CHECK_CLOSE(C.get<double>("world"), 1.2, 0.1);  // from inner
     BOOST_CHECK_CLOSE(C.get<double>("other"), 15.0, 0.1); // from inner
 
