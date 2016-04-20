@@ -54,13 +54,13 @@ struct Moment2State : public StateBase
 
     double pos;         // absolute longitudinal position at end of Element
     double IonZ;        // Charge state.
-    double Ekinetic;    // kinetic energy of reference particle
-                        // actual is Ekinetic + moment0[6]
+    double Ekinetic;    // Kinetic energy of reference particle.
+
     double SampleIonK;
 
     double FyAbs,       // Synchrotron phase for reference particle.
            Fy_absState, // Synchrotron phase for ion.
-           EkState;
+           EkState;     // Kinetic energy of ion: Ekinetic + moment0[6].
 
     double gamma_ref,   // Gamma for reference particle.
            beta_ref,    // Beta for reference particle.
