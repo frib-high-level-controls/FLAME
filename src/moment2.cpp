@@ -637,9 +637,21 @@ struct ElementQuad : public Moment2ElementBase
     ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*MtoMM,
+    }
+    virtual ~ElementQuad() {}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        // Re-initialize transport matrix.
+        this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+        double Brho = ST.beta*(ST.EkState+ST.IonEs)/(C0*ST.IonZ),
+               K = conf().get<double>("B2")/Brho/sqr(MtoMM);
+
+//-----------------------------------------------
+        double L = conf().get<double>("L")*MtoMM;
                //B2 = c.get<double>("B2"),
-               K = c.get<double>("K", 0e0)/sqr(MtoMM);
+//               K = c.get<double>("K", 0e0)/sqr(MtoMM);
 
         // Horizontal plane.
         Get2by2Matrix(L,  K, (unsigned)state_t::PS_X, this->transfer_raw);
@@ -648,8 +660,12 @@ struct ElementQuad : public Moment2ElementBase
         // Longitudinal plane.
         // For total path length.
 //        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+//-----------------------------------------------
+
+        transfer = transfer_raw;
+
+        last_Kenergy_in = last_Kenergy_out = ST.Ekinetic; // no energy gain
     }
-    virtual ~ElementQuad() {}
 
     virtual const char* type_name() const {return "quadrupole";}
 };
