@@ -66,7 +66,6 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
         if(extra_defs==Py_None) {
             // no-op
         } else if(PyDict_Check(extra_defs)) {
-            C->push_scope();
             Dict2Config(*C, extra_defs);
         } else {
             PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
