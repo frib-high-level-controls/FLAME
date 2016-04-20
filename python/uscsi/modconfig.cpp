@@ -96,9 +96,6 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
 
 namespace {
 
-static
-PyObject* conf2dict(const Config *conf);
-
 namespace {
 struct confval : public boost::static_visitor<PyObject*>
 {
@@ -133,7 +130,8 @@ struct confval : public boost::static_visitor<PyObject*>
 };
 }
 
-static
+} // namespace
+
 PyObject* conf2dict(const Config *conf)
 {
     PyRef<> ret(PyDict_New());
@@ -149,8 +147,6 @@ PyObject* conf2dict(const Config *conf)
 
     return ret.release();
 }
-
-} // namespace
 
 Config* dict2conf(PyObject *dict)
 {

@@ -75,13 +75,13 @@ BOOST_AUTO_TEST_CASE(config_scope_mutate)
     BOOST_CHECK_CLOSE(D.get<double>("world"), 5.2, 0.1); // from outer
     BOOST_CHECK_THROW(D.get<double>("other"), key_error); // only inner
 
-    // Change D, which by copy on write is detached from C.
+    // Change D, which will effect C
     D.set<double>("hello", 101.0);
     D.set<double>("world", 102.0);
     D.set<double>("other", 103.0);
 
     // C's outer scope has not changed
-    BOOST_CHECK_CLOSE(C.get<double>("hello"), 4.2, 0.1);  // from outer
+    BOOST_CHECK_CLOSE(C.get<double>("hello"), 101.1, 0.1);  // from outer
     BOOST_CHECK_CLOSE(C.get<double>("world"), 1.2, 0.1);  // from inner
     BOOST_CHECK_CLOSE(C.get<double>("other"), 15.0, 0.1); // from inner
 
@@ -108,4 +108,36 @@ BOOST_AUTO_TEST_CASE(config_print_stmt)
     std::auto_ptr<Config> conf(parse.parse_byte(config_print_stmt_input, sizeof(config_print_stmt_input)-1));
 
     BOOST_CHECK_EQUAL(strm.str(), "On line 2 : 14\n" "On line 4 : \"test\"\n");
+}
+
+BOOST_AUTO_TEST_CASE(config_flatten)
+{
+    Config C;
+
+    C.set<double>("A", 1.0);
+    C.set<double>("C", 1.0);
+
+    C.push_scope();
+
+    C.set<double>("A", 2.0);
+    C.set<double>("B", 2.0);
+
+    {
+        std::ostringstream strm;
+        C.show(strm);
+        BOOST_CHECK_EQUAL(strm.str(), "A = 2\nB = 2\n");
+    }
+
+    BOOST_CHECK_EQUAL(C.depth(), 2);
+    C.flatten();
+    // A from inner scope overwrites outer
+    // B from inner scope used
+    // C from outer scope used
+    BOOST_CHECK_EQUAL(C.depth(), 1);
+
+    {
+        std::ostringstream strm;
+        C.show(strm);
+        BOOST_CHECK_EQUAL(strm.str(), "A = 2\nB = 2\nC = 1\n");
+    }
 }

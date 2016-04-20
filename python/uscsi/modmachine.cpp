@@ -4,9 +4,6 @@
 #include "scsi/base.h"
 #include "pyscsi.h"
 
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
-#include <numpy/ndarrayobject.h>
 
 #define TRY PyMachine *machine = (PyMachine*)raw; try
 
@@ -23,10 +20,10 @@ static
 int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *conf = NULL;
+        PyObject *conf = NULL, *extra_defs = Py_None;
         const char *path = NULL;
-        const char *pnames[] = {"config", "path", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|s", (char**)pnames, &conf, &path))
+        const char *pnames[] = {"config", "path", "extra", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|sO", (char**)pnames, &conf, &path, &extra_defs))
             return -1;
 
         assert(!machine->weak);
@@ -66,6 +63,15 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
             throw std::invalid_argument("'config' must be dict or byte buffer");
         }
 
+        if(extra_defs==Py_None) {
+            // no-op
+        } else if(PyDict_Check(extra_defs)) {
+            Dict2Config(*C, extra_defs);
+        } else {
+            PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
+            return -1;
+        }
+
         machine->machine = new Machine(*C);
 
         return 0;
@@ -99,16 +105,39 @@ PyObject *PyMachine_str(PyObject *raw)
 }
 
 static
+PyObject *PyMachine_conf(PyObject *raw, PyObject *args)
+{
+    TRY {
+        if(!PyArg_ParseTuple(args, ""))
+            return NULL;
+
+        Config C(machine->machine->conf());
+        C.flatten();
+
+        return conf2dict(&C);
+    } CATCH()
+}
+
+static
 PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *d;
-        const char *pnames[] = {"config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|", (char**)pnames, &d))
+        PyObject *d = Py_None, *W = Py_False;
+        const char *pnames[] = {"config", "inherit", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "|OO", (char**)pnames, &d, &W))
             return NULL;
 
-        std::auto_ptr<Config> C(dict2conf(d));
-        std::auto_ptr<StateBase> state(machine->machine->allocState(*C));
+        Config C;
+        if(d==Py_None) {
+            C = machine->machine->conf();
+        } else if(PyDict_Check(d)) {
+            if(PyObject_IsTrue(W)) {
+                C = machine->machine->conf();
+                C.push_scope();
+            }
+            Dict2Config(C, d);
+        }
+        std::auto_ptr<StateBase> state(machine->machine->allocState(C));
         PyObject *ret = wrapstate(state.get());
         state.release();
         return ret;
@@ -229,6 +258,8 @@ Py_ssize_t PyMachine_len(PyObject *raw)
 }
 
 static PyMethodDef PyMachine_methods[] = {
+    {"conf", (PyCFunction)&PyMachine_conf, METH_VARARGS,
+     "Return configuration used to construct the Machine"},
     {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
      "Allocate a new State based on this Machine's configuration"},
     {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
