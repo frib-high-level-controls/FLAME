@@ -113,20 +113,22 @@ static
 PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *d = Py_None;
-        const char *pnames[] = {"config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "|O", (char**)pnames, &d))
+        PyObject *d = Py_None, *W = Py_False;
+        const char *pnames[] = {"config", "inherit", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "|OO", (char**)pnames, &d, &W))
             return NULL;
 
-        std::auto_ptr<Config> C;
-        const Config *c;
+        Config C;
         if(d==Py_None) {
-            c = &machine->machine->conf();
-        } else {
-            C.reset(dict2conf(d));
-            c = C.get();
+            C = machine->machine->conf();
+        } else if(PyDict_Check(d)) {
+            if(PyObject_IsTrue(W)) {
+                C = machine->machine->conf();
+                C.push_scope();
+            }
+            Dict2Config(C, d);
         }
-        std::auto_ptr<StateBase> state(machine->machine->allocState(*c));
+        std::auto_ptr<StateBase> state(machine->machine->allocState(C));
         PyObject *ret = wrapstate(state.get());
         state.release();
         return ret;
