@@ -214,9 +214,11 @@ Moment2State::Moment2State(const Config& c)
            Ekinetic0 = c.get<double>("IonEk", 0e0);
            IonZ      = c.get<double>("IonZ", 0e0);
 
-    gamma_ref = (Erest+Ekinetic0)/Erest;
-    beta_ref  = sqrt(1e0-1e0/sqr(gamma_ref));
-    bg_ref    = beta_ref*gamma_ref;
+    gamma_ref      = (Erest+Ekinetic0)/Erest;
+    beta_ref       = sqrt(1e0-1e0/sqr(gamma_ref));
+    bg_ref         = beta_ref*gamma_ref;
+
+    SampleIonK_ref = 2e0*M_PI/(beta_ref*SampleLambda);
 
     Ekinetic  = Ekinetic0;
 }
@@ -228,6 +230,7 @@ Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     ,pos(o.pos)
     ,IonZ(o.IonZ)
     ,Ekinetic(o.Ekinetic)
+    ,SampleIonK_ref(o.SampleIonK_ref)
     ,SampleIonK(o.SampleIonK)
     ,moment0(o.moment0)
     ,state(o.state)
@@ -238,21 +241,22 @@ void Moment2State::assign(const StateBase& other)
     const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
-    pos         = O->pos;
-    IonZ        = O->IonZ;
-    Ekinetic    = O->Ekinetic;
-    SampleIonK  = O->SampleIonK;
-    FyAbs       = O->FyAbs;
-    Fy_absState = O->Fy_absState;
-    EkState     = O->EkState;
-    gamma_ref   = O->gamma_ref;
-    beta_ref    = O->beta_ref;
-    gamma       = O->gamma;
-    beta        = O->beta;
-    bg_ref      = O->bg_ref;
-    bg1         = O->bg1;
-    moment0     = O->moment0;
-    state       = O->state;
+    pos             = O->pos;
+    IonZ            = O->IonZ;
+    Ekinetic        = O->Ekinetic;
+    SampleIonK_ref  = O->SampleIonK_ref;
+    SampleIonK      = O->SampleIonK;
+    FyAbs           = O->FyAbs;
+    Fy_absState     = O->Fy_absState;
+    EkState         = O->EkState;
+    gamma_ref       = O->gamma_ref;
+    beta_ref        = O->beta_ref;
+    gamma           = O->gamma;
+    beta            = O->beta;
+    bg_ref          = O->bg_ref;
+    bg1             = O->bg1;
+    moment0         = O->moment0;
+    state           = O->state;
     StateBase::assign(other);
 }
 
@@ -314,49 +318,55 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==8) {
+        Info.name = "SampleIonK_ref";
+        Info.ptr = &SampleIonK_ref;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==9) {
         Info.name = "SampleIonK";
         Info.ptr = &SampleIonK;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==10) {
         Info.name = "gamma_ref";
         Info.ptr = &gamma_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==11) {
         Info.name = "beta_ref";
         Info.ptr = &beta_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==11) {
+    } else if(idx==12) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==12) {
+    } else if(idx==13) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==13) {
+    } else if(idx==14) {
         Info.name = "bg_ref";
         Info.ptr = &bg_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==14) {
+    } else if(idx==15) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-15, Info);
+    return StateBase::getArray(idx-16, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -428,16 +438,16 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.beta  = sqrt(1e0-1e0/sqr(ST.gamma));
     ST.bg1   = ST.beta*ST.gamma;
 
-    double SampleIonK0 = 2e0*M_PI/(ST.beta_ref*SampleLambda),
-           SampleIonK  = 2e0*M_PI/(ST.beta*SampleLambda);
+    ST.SampleIonK_ref = 2e0*M_PI/(ST.beta_ref*SampleLambda);
+    ST.SampleIonK     = 2e0*M_PI/(ST.beta*SampleLambda);
 
     // Evaluate momentum compaction.
     const double R56 = -2e0*M_PI/(SampleLambda*Erest/MeVtoeV*cube(ST.beta*ST.gamma))*length*MtoMM;
 
     std::string t_name = type_name(); // C string -> C++ string.
     if (t_name != "rfcavity") {
-        ST.FyAbs       += SampleIonK0*length*MtoMM;
-        ST.Fy_absState += SampleIonK*length*MtoMM;
+        ST.FyAbs       += ST.SampleIonK_ref*length*MtoMM;
+        ST.Fy_absState += ST.SampleIonK*length*MtoMM;
         ST.Ekinetic     = last_Kenergy_out;
 
         transfer(state_t::PS_S, state_t::PS_PS) = R56;
@@ -1547,7 +1557,7 @@ double GetCavPhase(const int cavi, const double IonEk, const double IonFys,
 
 typedef typename Moment2ElementBase::state_t state_t;
 
-void PropagateLongRFCav(Config &conf, state_t &ST, double &SampleIonK)
+void PropagateLongRFCav(Config &conf, state_t &ST)
 {
     std::string CavType;
     int         cavi;
@@ -1580,11 +1590,11 @@ void PropagateLongRFCav(Config &conf, state_t &ST, double &SampleIonK)
     GetCavBoost(CavData2[cavi-1], ST.IonW, IonFy_i, caviIonK, ST.IonZ,
                 ST.IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
 
-    ST.IonW       = IonW_o;
+    ST.IonW        = IonW_o;
     ST.gamma_ref   = ST.IonW/ST.IonEs;
     ST.beta_ref    = sqrt(1e0-1e0/sqr(ST.gamma_ref));
-    SampleIonK = 2e0*M_PI/(ST.beta_ref*SampleLambda);
-    ST.FyAbs     += (IonFy_o-IonFy_i)/multip;
+    ST.SampleIonK  = 2e0*M_PI/(ST.beta_ref*SampleLambda);
+    ST.FyAbs      += (IonFy_o-IonFy_i)/multip;
 }
 
 //----------------------------------------------------------------
@@ -1623,7 +1633,7 @@ struct ElementRFCavity : public Moment2ElementBase
         double IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
         double SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
 
-        PropagateLongRFCav(conf(), ST, SampleIonK);
+        PropagateLongRFCav(conf(), ST);
 
         ST.Ekinetic = ST.IonW - ST.IonEs;
 

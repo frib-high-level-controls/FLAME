@@ -52,21 +52,22 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    double pos;         // absolute longitudinal position at end of Element
-    double IonZ;        // Charge state.
-    double Ekinetic;    // Kinetic energy of reference particle.
+    double pos,         // absolute longitudinal position at end of Element
+           IonZ,        // Charge state.
+           Ekinetic,    // Kinetic energy of reference particle.
 
-    double SampleIonK;
+           SampleIonK_ref,
+           SampleIonK,
 
-    double FyAbs,       // Synchrotron phase for reference particle.
+           FyAbs,       // Synchrotron phase for reference particle.
            Fy_absState, // Synchrotron phase for ion.
-           EkState;     // Kinetic energy of ion: Ekinetic + moment0[6].
+           EkState,     // Kinetic energy of ion: Ekinetic + moment0[6].
 
-    double gamma_ref,   // Gamma for reference particle.
+           gamma_ref,   // Gamma for reference particle.
            beta_ref,    // Beta for reference particle.
            gamma,       // Gamma for ion.
            beta,        // Beta for ion.
-           bg_ref,         // Initial beta*gamma.
+           bg_ref,      // Initial beta*gamma.
            bg1;         // Beta*gamma for reference particle.
 
     vector_t moment0;
