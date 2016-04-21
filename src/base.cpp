@@ -79,6 +79,7 @@ Machine::Machine(const Config& c)
     ,p_info()
 {
     std::string type(c.get<std::string>("sim_type"));
+    p_simtype = type;
 
     info_mutex_t::scoped_lock G(info_mutex);
 
