@@ -58,7 +58,10 @@ ElementVoid::ElementVoid(const Config& conf)
     ,p_conf(conf)
 {}
 
-ElementVoid::~ElementVoid() {}
+ElementVoid::~ElementVoid()
+{
+    delete p_observe;
+}
 
 void ElementVoid::show(std::ostream& strm) const
 {
