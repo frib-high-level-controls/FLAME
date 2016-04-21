@@ -759,7 +759,7 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
     for (k = 0; k < n-1; k++) {
         IonFylast = IonFy;
         IonFy += IonK*dz;
-        IonW  += IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/(2e0*MeVtoeV)
+        IonW  += IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
                  *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
         IonGamma = IonW/IonEs;
         IonBeta = sqrt(1e0-1e0/sqr(IonGamma));
@@ -887,13 +887,13 @@ void EvalGapModel(const double dis, const double IonW0, const double IonEs, cons
 {
     double Iongamma_f, IonBeta_f, k_f;
 
-    IonW_f     = IonW0 + IonZ*V0*T*cos(IonFy0+k*Ecen) - IonZ*V0*S*sin(IonFy0+k*Ecen);
+    IonW_f     = IonW0 + IonZ*V0*T*cos(IonFy0+k*Ecen)*MeVtoeV - IonZ*V0*S*sin(IonFy0+k*Ecen)*MeVtoeV;
     Iongamma_f = IonW_f/IonEs;
     IonBeta_f  = sqrt(1e0-1e0/sqr(Iongamma_f));
     k_f        = 2e0*M_PI/(IonBeta_f*Lambda);
 
     IonFy_f = IonFy0 + k*Ecen + k_f*(dis-Ecen)
-              + IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-IonEs));
+              + IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-IonEs)/MeVtoeV);
 }
 
 
@@ -1454,11 +1454,11 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     }
 
     GetCavMatParams(cavi, CavTLMstream2[cavi-1], beta_s, gamma_s, IonK);
-    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
+    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs/MeVtoeV, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
 }
 
 
-void InitRFCav(const Config &conf, const int CavCnt,
+void InitRFCav(const Config &conf,
                const double IonZ, const double IonEs, double &IonW, double &EkState,
                double &Fy_absState, double &accIonW,
                double &beta, double &gamma, double &avebeta, double &avegamma, value_mat &M)
@@ -1495,11 +1495,11 @@ void InitRFCav(const Config &conf, const int CavCnt,
     //double SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
 
-    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, CaviIonK, IonZ, IonEs,
+    GetCavBoost(CavData2[cavi-1], IonW*MeVtoeV, IonFy_i, CaviIonK, IonZ, IonEs*MeVtoeV,
                 fRF, EfieldScl, IonW_o, IonFy_o);
 
-    accIonW      = IonW_o - IonW;
-    IonW         = IonW_o;
+    accIonW      = IonW_o/MeVtoeV - IonW;
+    IonW         = IonW_o/MeVtoeV;
     EkState      = IonW - IonEs;
     IonW         = EkState + IonEs;
     gamma        = IonW/IonEs;
@@ -1508,7 +1508,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
     avegamma     = (avegamma+gamma)/2e0;
     Fy_absState += (IonFy_o-IonFy_i)/multip;
 
-    GetCavMat(cavi, cavilabel, Rm, IonZ, IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
+    GetCavMat(cavi, cavilabel, Rm, IonZ, IonEs*MeVtoeV, EfieldScl, IonFy_i, Ek_i*MeVtoeV, fRF, M);
 }
 
 
@@ -1545,8 +1545,9 @@ double GetCavPhase(const int cavi, const double IonEk, const double IonFys,
 }
 
 
-void PropagateLongRFCav(Config &conf, const int n, const double IonZ, const double IonEs, double &IonW,
-                        double &FyAbs, double &SampleIonK, double &IonBeta, double &IonGamma)
+typedef typename Moment2ElementBase::state_t state_t;
+
+void PropagateLongRFCav(Config &conf, state_t &ST, double &SampleIonK)
 {
     std::string CavType;
     int         cavi;
@@ -1565,25 +1566,25 @@ void PropagateLongRFCav(Config &conf, const int n, const double IonZ, const doub
 
     fRF       = conf.get<double>("f");
     multip    = fRF/SampleFreq;
-    caviIonK  = 2e0*M_PI*fRF/(IonBeta*C0)/MtoMM;
+    caviIonK  = 2e0*M_PI*fRF/(ST.beta_ref*C0)/MtoMM;
     IonFys    = conf.get<double>("phi")*M_PI/180e0; // Synchrotron phase [rad].
     EfieldScl = conf.get<double>("scl_fac");       // Electric field scale factor.
 
-    caviFy = GetCavPhase(cavi, (IonW-IonEs)/MeVtoeV, IonFys, FyAbs, multip);
+    caviFy = GetCavPhase(cavi, (ST.IonW-ST.IonEs)/MeVtoeV, IonFys, ST.FyAbs, multip);
 
-    IonFy_i = multip*FyAbs + caviFy;
+    IonFy_i = multip*ST.FyAbs + caviFy;
     conf.set<double>("phi_ref", caviFy);
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData2[cavi-1], IonW/MeVtoeV, IonFy_i, caviIonK, IonZ,
-                IonEs/MeVtoeV, fRF, EfieldScl, IonW_o, IonFy_o);
+    GetCavBoost(CavData2[cavi-1], ST.IonW, IonFy_i, caviIonK, ST.IonZ,
+                ST.IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
 
-    IonW       = IonW_o*MeVtoeV;
-    IonGamma   = IonW/IonEs;
-    IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
-    SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
-    FyAbs     += (IonFy_o-IonFy_i)/multip;
+    ST.IonW       = IonW_o;
+    ST.gamma_ref   = ST.IonW/ST.IonEs;
+    ST.beta_ref    = sqrt(1e0-1e0/sqr(ST.gamma_ref));
+    SampleIonK = 2e0*M_PI/(ST.beta_ref*SampleLambda);
+    ST.FyAbs     += (IonFy_o-IonFy_i)/multip;
 }
 
 //----------------------------------------------------------------
@@ -1622,16 +1623,11 @@ struct ElementRFCavity : public Moment2ElementBase
         double IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
         double SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
 
-        int n = 1;
+        PropagateLongRFCav(conf(), ST, SampleIonK);
 
-        PropagateLongRFCav(conf(), n, ST.IonZ, ST.IonEs, ST.IonW, ST.FyAbs, SampleIonK, ST.beta_ref, ST.gamma_ref);
-
-        ST.Ekinetic = ST.IonW-ST.IonEs;
-        ST.IonW     = ST.IonW;
+        ST.Ekinetic = ST.IonW - ST.IonEs;
 
         last_Kenergy_out = ST.Ekinetic;
-
-        int CavCnt = 1;
 
         // Define initial conditions.
         double accIonW, Ekinetic, EkState, beta, gamma, avebeta, avegamma;
@@ -1640,7 +1636,7 @@ struct ElementRFCavity : public Moment2ElementBase
         ST.gamma   = (ST.EkState+ST.IonEs)/ST.IonEs;
         ST.beta    = sqrt(1e0-1e0/sqr(ST.gamma));
 
-        InitRFCav(conf(), CavCnt, ST.IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
+        InitRFCav(conf(), ST.IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
                   ST.beta, ST.gamma, avebeta, avegamma, transfer);
 
         ST.EkState  = EkState*MeVtoeV;
