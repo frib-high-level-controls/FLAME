@@ -173,7 +173,7 @@ void propagate(std::auto_ptr<Config> conf)
 
         IonEk = state->IonEk/MeVtoeV;
         IonEs = state->IonEs/MeVtoeV;
-        IonW  = state->IonW/MeVtoeV;
+        IonW  = state->IonW_ref/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState = BC[k][state_t::PS_S];
@@ -206,7 +206,7 @@ void propagate(std::auto_ptr<Config> conf)
 
         IonEk = state->IonEk/MeVtoeV;
         IonEs = state->IonEs/MeVtoeV;
-        IonW  = state->IonW/MeVtoeV;
+        IonW  = state->IonW_ref/MeVtoeV;
 
         // Initialize state.
         StatePtr[k]->moment0 = BC[k];

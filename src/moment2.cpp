@@ -228,7 +228,6 @@ Moment2State::~Moment2State() {}
 Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     :StateBase(o, t)
     ,pos(o.pos)
-    ,IonZ(o.IonZ)
     ,Ekinetic(o.Ekinetic)
     ,SampleIonK_ref(o.SampleIonK_ref)
     ,SampleIonK(o.SampleIonK)
@@ -242,7 +241,6 @@ void Moment2State::assign(const StateBase& other)
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
     pos             = O->pos;
-    IonZ            = O->IonZ;
     Ekinetic        = O->Ekinetic;
     SampleIonK_ref  = O->SampleIonK_ref;
     SampleIonK      = O->SampleIonK;
@@ -288,85 +286,79 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==3) {
-        Info.name = "IonZ";
-        Info.ptr = &IonZ;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==4) {
         Info.name = "FyAbs";
         Info.ptr = &FyAbs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==4) {
         Info.name = "Fy_absState";
         Info.ptr = &Fy_absState;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==5) {
         Info.name = "EkState";
         Info.ptr = &EkState;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==7) {
+    } else if(idx==6) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==7) {
         Info.name = "SampleIonK_ref";
         Info.ptr = &SampleIonK_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==8) {
         Info.name = "SampleIonK";
         Info.ptr = &SampleIonK;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==9) {
         Info.name = "gamma_ref";
         Info.ptr = &gamma_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==11) {
+    } else if(idx==10) {
         Info.name = "beta_ref";
         Info.ptr = &beta_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==12) {
+    } else if(idx==11) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==13) {
+    } else if(idx==12) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==14) {
+    } else if(idx==13) {
         Info.name = "bg_ref";
         Info.ptr = &bg_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==15) {
+    } else if(idx==14) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-16, Info);
+    return StateBase::getArray(idx-15, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -434,11 +426,9 @@ void Moment2ElementBase::advance(StateBase& s)
 
     // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in.
     // Matrix elements are scaled with particle energy.
-    ST.gamma = (Erest+ST.EkState)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
-    ST.beta  = sqrt(1e0-1e0/sqr(ST.gamma));
-    ST.bg1   = ST.beta*ST.gamma;
-
-    ST.SampleIonK_ref = 2e0*M_PI/(ST.beta_ref*SampleLambda);
+    ST.gamma          = (Erest+ST.EkState)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    ST.beta           = sqrt(1e0-1e0/sqr(ST.gamma));
+    ST.bg1            = ST.beta*ST.gamma;
     ST.SampleIonK     = 2e0*M_PI/(ST.beta*SampleLambda);
 
     // Evaluate momentum compaction.
@@ -987,7 +977,7 @@ double GetCavPhase(const int cavi, state_t &ST, const double IonFys, const doubl
 
     double IonEk, Fyc;
 
-    IonEk = (ST.IonW-ST.IonEs)/MeVtoeV;
+    IonEk = (ST.IonW_ref-ST.IonEs)/MeVtoeV;
 
     switch (cavi) {
     case 1:
@@ -1516,17 +1506,17 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData2[cavi-1], ST.IonW, IonFy_i, caviIonK, ST.IonZ,
+    GetCavBoost(CavData2[cavi-1], ST.IonW_ref, IonFy_i, caviIonK, ST.IonZ,
                 ST.IonEs, fRF, EfieldScl, IonW_o, IonFy_o, accIonW);
 
-    ST.IonW = IonW_o;
-    ST.gamma_ref   = ST.IonW/ST.IonEs;
-    ST.beta_ref    = sqrt(1e0-1e0/sqr(ST.gamma_ref));
-    ST.SampleIonK  = 2e0*M_PI/(ST.beta_ref*SampleLambda);
-    ST.FyAbs      += (IonFy_o-IonFy_i)/multip;
-    ST.Ekinetic    = ST.IonW - ST.IonEs;
-    ST.gamma       = (ST.EkState+ST.IonEs)/ST.IonEs;
-    ST.beta        = sqrt(1e0-1e0/sqr(ST.gamma));
+    ST.IonW_ref        = IonW_o;
+    ST.gamma_ref       = ST.IonW_ref/ST.IonEs;
+    ST.beta_ref        = sqrt(1e0-1e0/sqr(ST.gamma_ref));
+    ST.SampleIonK_ref  = 2e0*M_PI/(ST.beta_ref*SampleLambda);
+    ST.FyAbs          += (IonFy_o-IonFy_i)/multip;
+    ST.Ekinetic        = ST.IonW_ref - ST.IonEs;
+    ST.gamma           = (ST.EkState+ST.IonEs)/ST.IonEs;
+    ST.beta            = sqrt(1e0-1e0/sqr(ST.gamma));
 }
 
 

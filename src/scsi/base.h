@@ -33,7 +33,10 @@ struct StateBase : public boost::noncopyable
     //! Index of ElementVoid in Machine to follow this the current one.
     //! May be altered within ElementVoid::advance() to achieve branching or looping.
     size_t next_elem;
-    double /*IonZ,*/ IonEs, IonEk, IonW;
+    double IonZ,
+           IonEs,
+           IonEk,
+           IonW_ref; // Total energy of reference particle.
 
     virtual void assign(const StateBase& other) =0;
 

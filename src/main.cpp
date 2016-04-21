@@ -485,7 +485,7 @@ void InitLong(const Machine &sim, const double IonZ)
 
     IonZ1 = IonZ;
     IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW/MeVtoeV;
+    IonW  = state->IonW_ref/MeVtoeV;
     IonEk = state->IonEk/MeVtoeV;
 
     IonGamma   = IonW/IonEs;
@@ -1523,7 +1523,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
 
     IonEk = state->IonEk/MeVtoeV;
     IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW/MeVtoeV;
+    IonW  = state->IonW_ref/MeVtoeV;
 
     // Define initial conditions.
     Fy_absState = Mom1[state_t::PS_S];
@@ -1599,7 +1599,7 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
 
         IonEk[k] = state[k]->IonEk/MeVtoeV;
         IonEs[k] = state[k]->IonEs/MeVtoeV;
-        IonW[k]  = state[k]->IonW/MeVtoeV;
+        IonW[k]  = state[k]->IonW_ref/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState[k] = Mom1[k][state_t::PS_S];
