@@ -730,8 +730,6 @@ struct ElementSolenoid : public Moment2ElementBase
 };
 
 
-//----------------------------------------------------------------
-
 // RF Cavity beam dynamics functions.
 
 typedef boost::numeric::ublas::matrix<double> value_mat;
@@ -1468,60 +1466,6 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
 }
 
 
-void InitRFCav(const Config &conf,
-               const double IonZ, const double IonEs, double &IonW, double &EkState,
-               double &Fy_absState, double &accIonW,
-               double &beta, double &gamma, double &avebeta, double &avegamma, value_mat &M)
-{
-    std::string CavType;
-    int         cavi, cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, fRF, CaviIonK, EfieldScl;
-    double      IonW_o, IonFy_o;
-
-    CavType = conf.get<std::string>("cavtype");
-    if (CavType == "0.041QWR") {
-        cavi       = 1;
-        cavilabel  = 41;
-        multip     = 1;
-        Rm         = 17e0;
-    } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
-        cavi       = 2;
-        cavilabel  = 85;
-        multip     = 1;
-        Rm         = 17e0;
-    } else {
-        std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-        exit(1);
-    }
-
-    IonFy_i = multip*Fy_absState + conf.get<double>("phi_ref");
-    Ek_i    = EkState;
-    IonW    = EkState + IonEs;
-
-    avebeta    = beta;
-    avegamma   = gamma;
-    fRF        = conf.get<double>("f");
-    CaviIonK   = 2e0*M_PI*fRF/(beta*C0*MtoMM);
-    //double SampleIonK = 2e0*M_PI/(beta*C0/SampleFreq*MtoMM);
-    EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
-
-    GetCavBoost(CavData2[cavi-1], IonW*MeVtoeV, IonFy_i, CaviIonK, IonZ, IonEs*MeVtoeV,
-                fRF, EfieldScl, IonW_o, IonFy_o);
-
-    accIonW      = IonW_o/MeVtoeV - IonW;
-    IonW         = IonW_o/MeVtoeV;
-    EkState      = IonW - IonEs;
-    IonW         = EkState + IonEs;
-    gamma        = IonW/IonEs;
-    beta         = sqrt(1e0-1e0/sqr(gamma));
-    avebeta      = (avebeta+beta)/2e0;
-    avegamma     = (avegamma+gamma)/2e0;
-    Fy_absState += (IonFy_o-IonFy_i)/multip;
-
-    GetCavMat(cavi, cavilabel, Rm, IonZ, IonEs*MeVtoeV, EfieldScl, IonFy_i, Ek_i*MeVtoeV, fRF, M);
-}
-
-
 double GetCavPhase(const int cavi, const double IonEk, const double IonFys,
                    const double FyAbs, const double multip)
 {
@@ -1588,16 +1532,68 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
     GetCavBoost(CavData2[cavi-1], ST.IonW, IonFy_i, caviIonK, ST.IonZ,
-                ST.IonEs, fRF, EfieldScl, IonW_o, IonFy_o);
+                ST.IonEs, fRF, EfieldScl, ST.IonW, IonFy_o);
 
-    ST.IonW        = IonW_o;
     ST.gamma_ref   = ST.IonW/ST.IonEs;
     ST.beta_ref    = sqrt(1e0-1e0/sqr(ST.gamma_ref));
     ST.SampleIonK  = 2e0*M_PI/(ST.beta_ref*SampleLambda);
     ST.FyAbs      += (IonFy_o-IonFy_i)/multip;
+    ST.Ekinetic    = ST.IonW - ST.IonEs;
+    ST.gamma       = (ST.EkState+ST.IonEs)/ST.IonEs;
+    ST.beta        = sqrt(1e0-1e0/sqr(ST.gamma));
 }
 
-//----------------------------------------------------------------
+
+void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
+               double &avebeta, double &avegamma, value_mat &M)
+{
+    std::string CavType;
+    int         cavi, cavilabel, multip;
+    double      Rm, IonFy_i, Ek_i, IonW, fRF, CaviIonK, EfieldScl;
+    double      IonW_o, IonFy_o;
+
+    CavType = conf.get<std::string>("cavtype");
+    if (CavType == "0.041QWR") {
+        cavi       = 1;
+        cavilabel  = 41;
+        multip     = 1;
+        Rm         = 17e0;
+    } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
+        cavi       = 2;
+        cavilabel  = 85;
+        multip     = 1;
+        Rm         = 17e0;
+    } else {
+        std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
+        exit(1);
+    }
+
+    IonFy_i = multip*ST.Fy_absState + conf.get<double>("phi_ref");
+    Ek_i    = ST.EkState;
+    IonW    = ST.EkState + ST.IonEs;
+
+    avebeta   = ST.beta;
+    avegamma  = ST.gamma;
+    fRF       = conf.get<double>("f");
+    CaviIonK  = 2e0*M_PI*fRF/(ST.beta*C0*MtoMM);
+    //double SampleIonK = 2e0*M_PI/(ST.beta*C0/SampleFreq*MtoMM);
+    EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
+
+    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, CaviIonK, ST.IonZ, ST.IonEs,
+                fRF, EfieldScl, IonW_o, IonFy_o);
+
+    accIonW        = IonW_o - IonW;
+    IonW           = IonW_o;
+    ST.EkState     = IonW - ST.IonEs;
+    IonW           = ST.EkState + ST.IonEs;
+    ST.gamma       = IonW/ST.IonEs;
+    ST.beta        = sqrt(1e0-1e0/sqr(ST.gamma));
+    avebeta        = (avebeta+ST.beta)/2e0;
+    avegamma       = (avegamma+ST.gamma)/2e0;
+    ST.Fy_absState += (IonFy_o-IonFy_i)/multip;
+
+    GetCavMat(cavi, cavilabel, Rm, ST.IonZ, ST.IonEs, EfieldScl, IonFy_i, Ek_i, fRF, M);
+}
 
 
 struct ElementRFCavity : public Moment2ElementBase
@@ -1625,31 +1621,14 @@ struct ElementRFCavity : public Moment2ElementBase
 
         last_Kenergy_in = ST.Ekinetic;
 
-        double IonEs = ST.IonEs/MeVtoeV;
-        double IonW  = ST.IonW/MeVtoeV;
-        double IonEk = ST.IonEk/MeVtoeV;
-
-        double IonGamma   = IonW/IonEs;
-        double IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
-        double SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
-
         PropagateLongRFCav(conf(), ST);
-
-        ST.Ekinetic = ST.IonW - ST.IonEs;
 
         last_Kenergy_out = ST.Ekinetic;
 
         // Define initial conditions.
-        double accIonW, Ekinetic, EkState, beta, gamma, avebeta, avegamma;
+        double accIonW, avebeta, avegamma;
 
-        EkState    = ST.EkState/MeVtoeV;
-        ST.gamma   = (ST.EkState+ST.IonEs)/ST.IonEs;
-        ST.beta    = sqrt(1e0-1e0/sqr(ST.gamma));
-
-        InitRFCav(conf(), ST.IonZ, IonEs, IonW, EkState, ST.Fy_absState, accIonW,
-                  ST.beta, ST.gamma, avebeta, avegamma, transfer);
-
-        ST.EkState  = EkState*MeVtoeV;
+        InitRFCav(conf(), ST, accIonW, avebeta, avegamma, transfer);
    }
 
     virtual const char* type_name() const {return "rfcavity";}
