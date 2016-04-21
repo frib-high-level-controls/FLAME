@@ -33,6 +33,7 @@ find_package(Boost 1.42.0 REQUIRED COMPONENTS
   thread
   filesystem
   regex
+  program_options
   prg_exec_monitor unit_test_framework
 )
 

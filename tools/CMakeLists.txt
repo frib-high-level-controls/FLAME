@@ -8,6 +8,7 @@ add_executable(run_uscsi
 )
 target_link_libraries(run_uscsi
   uscsi_core
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
 
 install(TARGETS run_uscsi
