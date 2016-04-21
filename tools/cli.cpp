@@ -14,14 +14,17 @@
 #include <scsi/base.h>
 #include <scsi/state/vector.h>
 #include <scsi/state/matrix.h>
+#include <scsi/h5writer.h>
 
 namespace po = boost::program_options;
 
 namespace {
 
-std::vector<std::string> tokenize(const std::string& inp)
+typedef std::vector<std::string> strvect;
+
+strvect tokenize(const std::string& inp)
 {
-    std::vector<std::string> ret;
+    strvect ret;
     size_t pos = 0;
     while(true) {
         size_t sep = inp.find_first_of(',', pos);
@@ -46,15 +49,16 @@ void getargs(int argc, char *argv[], po::variables_map& args)
     po::options_description opts(caption.str());
     opts.add_options()
             ("help,h", "Display this message")
-            ("verbose,v", "Make some noise")
+            ("verbose,v", po::value<std::string>()->default_value("0")->value_name("NUM"),
+                "Make some noise")
             ("define,D", po::value<std::vector<std::string> >()->composing()->value_name("name=val"),
                 "Override variable value (\"-Dname=value\")")
             ("lattice", po::value<std::string>()->value_name("FILE"),
                 "Input lattice file")
             ("max,M", po::value<std::string>()->value_name("NUM"),
                 "Maximum number of elements propagate through. (default is all)")
-            ("format,F", po::value<std::string>()->value_name("FMT")->default_value("csv"),
-                "output format")
+            ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
+                "output format (txt or hdf5)")
             ("select-all,A", "Select all elements for output")
             ("select-type,T", po::value<std::string>()->value_name("ETYPE"),
                 "Select all elements of the given type for output")
@@ -117,18 +121,18 @@ struct StreamObserver : public Observer
     {
         std::auto_ptr<std::ostream> owned_strm;
         std::ostream *strm;
-        Factory(const std::string& fmt) :strm(&std::cout)
+        Factory(const strvect& fmt) :strm(&std::cout)
         {
-            assert(fmt.substr(0,3)=="csv");
-            std::cerr<<"XXX '"<<fmt.substr(3)<<"'\n";
-            BOOST_FOREACH(const std::string& cmd, tokenize(fmt.substr(3)))
+            assert(!fmt.empty() && fmt[0]=="txt");
+
+            for(strvect::const_iterator it=fmt.begin()+1, end=fmt.end(); it!=end; ++it)
             {
-                std::cerr<<"YYY '"<<cmd<<"'\n";
+                const std::string& cmd = *it;
                 if(cmd.substr(0,5)=="file=") {
                     owned_strm.reset(new std::ofstream(cmd.substr(5).c_str()));
                     strm = owned_strm.get();
                 } else {
-                    std::cerr<<"Warning: -F "<<fmt<<" includes unknown option "<<cmd<<"\n";
+                    std::cerr<<"Warning: -F "<<fmt[0]<<" includes unknown option "<<cmd<<"\n";
                 }
             }
         }
@@ -145,6 +149,55 @@ struct StreamObserver : public Observer
     };
 };
 
+struct H5Observer : public Observer
+{
+    H5StateWriter *writer;
+    H5Observer(H5StateWriter *writer) : writer(writer) {}
+    virtual ~H5Observer() {}
+
+    struct Factory : public ObserverFactory
+    {
+        virtual ~Factory() {}
+        std::auto_ptr<H5StateWriter> writer;
+        Factory(const strvect& fmt)
+        {
+            assert(!fmt.empty() && fmt[0]=="hdf5");
+
+            for(strvect::const_iterator it=fmt.begin()+1, end=fmt.end(); it!=end; ++it)
+            {
+                const std::string& cmd = *it;
+                if(cmd.substr(0,5)=="file=") {
+                    writer.reset(new H5StateWriter(cmd.substr(5)));
+                } else {
+                    std::cerr<<"Warning: -F "<<fmt[0]<<" includes unknown option "<<cmd<<"\n";
+                }
+            }
+            if(!writer.get()) {
+                std::cerr<<"Warning: hdf5 output format requires file=...\n";
+            }
+        }
+        virtual Observer *observe(Machine &M, ElementVoid *E)
+        {
+            if(!writer.get()) return NULL;
+            else              return new H5Observer(writer.get());
+        }
+        virtual void before_sim(Machine & M)
+        {
+            if(writer.get()) writer->setAttr("sim_type", M.simtype());
+        }
+        virtual void after_sim(Machine&)
+        {
+            if(writer.get()) writer->close();
+            writer.reset();
+        }
+    };
+
+    virtual void view(const ElementVoid *, const StateBase *state)
+    {
+        writer->append(state);
+    }
+};
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -154,6 +207,10 @@ try {
     getargs(argc, argv, args);
 
     std::auto_ptr<Config> conf;
+
+    size_t verb = boost::lexical_cast<size_t>(args["verbose"].as<std::string>());
+    if(verb<=2)
+        H5StateWriter::dontPrint();
 
     try {
         GLPSParser P;
@@ -190,7 +247,7 @@ try {
         }
     }
 
-    if(args.count("verbose")) {
+    if(verb) {
         std::cout<<"# Reduced lattice\n";
         GLPSPrint(std::cout, *conf);
         std::cout<<"\n";
@@ -209,8 +266,15 @@ try {
 
     {
         const std::string& ofactname = args["format"].as<std::string>();
-        if(ofactname.substr(0, 3)=="csv") {
-            ofact.reset(new StreamObserver::Factory(ofactname));
+        strvect fmt(tokenize(ofactname));
+
+        if(fmt.empty()) {
+            std::cerr<<"Empty output format\n";
+            exit(1);
+        } else if(fmt[0]=="txt") {
+            ofact.reset(new StreamObserver::Factory(fmt));
+        } else if(fmt[0]=="hdf5") {
+            ofact.reset(new H5Observer::Factory(fmt));
         } else {
             std::cerr<<"Unknown output format \""<<ofactname<<"\"\n";
             exit(1);
@@ -247,7 +311,7 @@ try {
 
     ofact->before_sim(sim);
 
-    if(args.count("verbose")) {
+    if(verb) {
         sim.set_trace(&std::cout);
 
         std::cout<<"# Machine configuration\n"<<sim<<"\n\n";
@@ -258,7 +322,7 @@ try {
 
     ofact->after_sim(sim);
 
-    if(args.count("verbose")) {
+    if(verb) {
         std::cout << "\n# Final " << *state << "\n";
     }
 
