@@ -1222,7 +1222,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
     Mlon_L1 = Idmat;
     Mlon_K1 = Idmat;
     // Pay attention, original is -
-    Mlon_L1(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[0]*gamma_tab[0])/IonEs*L1);
+    Mlon_L1(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[0]*gamma_tab[0])*MeVtoeV/IonEs*L1);
     // Pay attention, original is -k1-k2
     Mlon_K1(5, 4) = -IonZ*V0s[0]*Ts[0]*sin(IonFys[0]+ks[0]*L1)-IonZ*V0s[0]*Ss[0]*cos(IonFys[0]+ks[0]*L1);
 
@@ -1236,13 +1236,13 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
     Mlon_L2 = Idmat;
     Mlon_K2 = Idmat;
 
-    Mlon_L2(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[1]*gamma_tab[1])/IonEs*L2); //Problem is Here!!
+    Mlon_L2(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[1]*gamma_tab[1])*MeVtoeV/IonEs*L2); //Problem is Here!!
     Mlon_K2(5, 4) = -IonZ*V0s[1]*Ts[1]*sin(IonFys[1]+ks[1]*Ecens[1])-IonZ*V0s[1]*Ss[1]*cos(IonFys[1]+ks[1]*Ecens[1]);
 
     L3 = dis - Ecens[1]; //try change dis/2 to dis 14/12/12
 
     Mlon_L3       = Idmat;
-    Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])/IonEs*L3);
+    Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])*MeVtoeV/IonEs*L3);
 
     Mlon = Idmat;
     Mlon = prod(Mlon_K1, Mlon_L1);
@@ -1379,7 +1379,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "AccGap") {
                 //IonFy = IonFy + IonZ*V0s[0]*kfac*(TTF_tab[2]*sin(IonFy)
-                //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*IonEs); //TTF_tab[2]~Tp
+                //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*IonEs/MeVtoeV); //TTF_tab[2]~Tp
                 seg    = seg + 1;
                 beta   = beta_tab[seg];
                 gamma  = gamma_tab[seg];
@@ -1464,7 +1464,7 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm,
     }
 
     GetCavMatParams(cavi, CavTLMstream2[cavi-1], beta_s, gamma_s, IonK);
-    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs/MeVtoeV, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
+    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, IonZ, IonEs, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
 }
 
 
