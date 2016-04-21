@@ -8,7 +8,7 @@ Compatible for python 2.6 -> 3.4
 
 from __future__ import print_function
 
-import sys
+import sys, os
 
 if len(sys.argv)<2:
     out = sys.stdout
@@ -37,13 +37,16 @@ libdirs = [get_config_var('LIBDIR')]
 libdirs.reverse()
 incdirs.reverse()
 
+# location of extension modules relative to prefix (eg. "lib/python3/dist-packages")
+moddir = os.path.relpath(get_python_lib(), get_config_var('exec_prefix'))
+
 print('set(Python_DEFINITIONS, "%s")'%get_config_var('BASECFLAGS'), file=out)
 
 print('set(Python_VERSION "%s")'%get_config_var('VERSION'), file=out)
 print('set(Python_VERSION_LD "%s")'%(get_config_var('LDVERSION') or get_config_var('VERSION')), file=out)
 print('set(Python_INCLUDE_DIRS "%s")'%';'.join(incdirs), file=out)
 print('set(Python_LIBRARY_DIRS "%s")'%';'.join(libdirs), file=out)
-print('set(Python_MODULE_DIR "%s")'%get_python_lib(), file=out)
+print('set(Python_MODULE_DIR "%s")'%moddir, file=out)
 print('set(Python_NUMPY_FOUND %s)'%have_np, file=out)
 
 print('set(Python_VERSION_MAJOR %s)'%sys.version_info[0], file=out)
