@@ -231,7 +231,9 @@ void H5StateWriter::append(const StateBase *RS)
 void H5StateWriter::setAttr(const char *name, const char *val)
 {
     try {
-        if(pvt->group.attrExists(name)) {
+        if(H5Aexists(pvt->group.getId(), name)>0)
+        //if(pvt->group.attrExists(name)) // H5Aexists was added in 1.8.0, c++ wrapper wasn't added until later...
+        {
             pvt->group.removeAttr(name);
         }
 
