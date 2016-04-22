@@ -158,41 +158,7 @@ void propagate(std::auto_ptr<Config> conf)
     Config  D;
     state_t *StatePtr[nChgStates];
 
-    std::cout << "\n";
     for (k = 0; k < nChgStates; k++) {
-        std::auto_ptr<StateBase> state(sims[k]->allocState(D));
-
-        it = sims[k]->p_elements.begin();
-        // Skip over state.
-        it++;
-
-        // Propagate through first element (beam initial conditions).
-        sims[k]->propagate(state.get(), 0, 1);
-
-        IonEk = state->IonEk/MeVtoeV;
-        IonEs = state->IonEs/MeVtoeV;
-        IonW  = state->IonW_ref/MeVtoeV;
-
-        // Define initial conditions.
-        Fy_absState = BC[k][state_t::PS_S];
-        EkState     = IonEk + BC[k][state_t::PS_PS];
-
-        // Initialize state.
-        StatePtr[k] = dynamic_cast<state_t*>(state.get());
-        StatePtr[k]->moment0 = BC[k];
-        StatePtr[k]->state   = BE[k];
-
-        StatePtr[k]->Fy_absState = StatePtr[k]->moment0[state_t::PS_S];
-        StatePtr[k]->EkState     = StatePtr[k]->IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
-
-        std::cout << std::fixed << std::setprecision(5)
-                  << "  IonZ = " << ChgState[k]
-                  << ",  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
-                  << ", IonW [Mev/u] = " << IonW << "\n";
-    }
-
-    //    for (k = 0; k < nChgStates; k++) {
-    for (k = 0; k < 1; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
 
         StatePtr[k] = dynamic_cast<state_t*>(state.get());

@@ -1901,8 +1901,7 @@ int main(int argc, char *argv[])
 
 //        InitLattice(*sims[0], ChgState[0], BC[0], BE[0]);
 //        InitLattice(*sims[1], ChgState[1], BC[1], BE[1]);
-//        InitLattice(2, sims, ChgState, NChg, BC, BE);
-        InitLattice(1, sims, ChgState, NChg, BC, BE);
+        InitLattice(2, sims, ChgState, NChg, BC, BE);
 
         tStamp[1] = clock();
 
