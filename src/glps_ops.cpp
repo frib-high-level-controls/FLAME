@@ -11,6 +11,8 @@
 
 #include "glps_parser.h"
 
+# define M_PI 3.14159265358979323846
+
 #if __cplusplus >= 201103L
 using std::isfinite;
 #endif
@@ -51,6 +53,21 @@ int unary_acos(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
 int unary_atan(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
 {
     *R = atan(boost::get<double>(A[0]->value));
+    return 0;
+}
+
+int unary_deg2rad(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
+{
+    double val = boost::get<double>(A[0]->value);
+    val *= M_PI/180.0;
+    *R = val;
+    return 0;
+}
+int unary_rad2deg(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
+{
+    double val = boost::get<double>(A[0]->value);
+    val *= 180.0/M_PI;
+    *R = val;
     return 0;
 }
 
@@ -196,6 +213,9 @@ parse_context::parse_context(const char *path)
     addop("arcsin",&unary_asin,glps_expr_number, 1, glps_expr_number);
     addop("arccos",&unary_acos,glps_expr_number, 1, glps_expr_number);
     addop("arctan",&unary_atan,glps_expr_number, 1, glps_expr_number);
+
+    addop("deg2rad",&unary_deg2rad,glps_expr_number, 1, glps_expr_number);
+    addop("rad2deg",&unary_rad2deg,glps_expr_number, 1, glps_expr_number);
 
     addop("+", &binary_add, glps_expr_number, 2, glps_expr_number, glps_expr_number);
     addop("-", &binary_sub, glps_expr_number, 2, glps_expr_number, glps_expr_number);

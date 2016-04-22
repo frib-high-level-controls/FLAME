@@ -647,6 +647,16 @@ file :
 <table class="param">
 <thead><tr><th>Op.</th><th>Desc.</th></tr></thead>
 <tbody>
+<tr><td>NUM := rad2deg(NUM)</td><td>Convert between radians and degrees</td></tr>
+<tr><td>NUM := deg2rad(NUM)</td><td></td></tr>
+</tbody>
+</table>
+@endhtmlonly
+
+@htmlonly
+<table class="param">
+<thead><tr><th>Op.</th><th>Desc.</th></tr></thead>
+<tbody>
 <tr><td>STR = file(STR)</td><td>Normalize file path.  Accepts a possibly relative path, returns the canonical path (no '.' or '..')</td></tr>
 <tr><td>STR = h5file(STR)</td><td>Normalize h5file path.  same as file() while also ignoring any trailing "/group/name".</td></tr>
 </tbody>
