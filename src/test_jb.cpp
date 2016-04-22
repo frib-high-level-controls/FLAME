@@ -176,7 +176,6 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->moment0 = BC[k];
         StatePtr[k]->state   = BE[k];
 
-        // Approximate (E_k = m0*v^2/2 vs. p*c0).
         StatePtr[k]->gamma  = (IonEs+IonEk)/IonEs;
         StatePtr[k]->beta   = sqrt(1e0-1e0/sqr(StatePtr[k]->gamma));
         StatePtr[k]->bg1    = StatePtr[k]->beta*StatePtr[k]->gamma;

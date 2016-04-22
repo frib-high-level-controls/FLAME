@@ -643,6 +643,7 @@ void CavDataType::RdData(const std::string &FileName)
     }
     while (getline(inf, line) && !inf.fail()) {
         str.str(line);
+        str.clear();
         str >> s >> Elong;
         this->s.push_back(s), this->Elong.push_back(Elong);
         // Convert from [mm] to [m].
@@ -1036,9 +1037,10 @@ struct ElementRFCavity : public Moment2ElementBase
     typedef Moment2ElementBase base_t;
     typedef typename base_t::state_t state_t;
 
-    CavDataType        CavData;
-    std::stringstream  CavTLMstream;
-    CavTLMLineType     CavTLMLineTab;
+    CavDataType    CavData;
+    std::fstream   inf;
+//    std::stringstream  inf;
+    CavTLMLineType CavTLMLineTab;
 
     ElementRFCavity(const Config& c)
         :base_t(c)
@@ -1048,16 +1050,13 @@ struct ElementRFCavity : public Moment2ElementBase
                phi_ref       = c.get<double>("phi_ref", 0e0);
 
         std::string  CavType = conf().get<std::string>("cavtype");
-        std::fstream inf;
 
         if (CavType == "0.041QWR") {
             CavData.RdData(HomeDir+"/data/axisData_41.txt");
             inf.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
-            CavTLMstream << inf.rdbuf();
         } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
             CavData.RdData(HomeDir+"/data/axisData_85.txt");
             inf.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
-            CavTLMstream << inf.rdbuf();
         } else {
             std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
             exit(1);
@@ -1069,7 +1068,7 @@ struct ElementRFCavity : public Moment2ElementBase
 //        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
 
-    void GetCavMatParams(const int cavi, std::stringstream &inf,
+    void GetCavMatParams(const int cavi,
                          const double beta_tab[], const double gamma_tab[], const double IonK[]);
 
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST,
@@ -1078,8 +1077,7 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
-                   state_t &ST, const double IonFys[], std::stringstream &inf,
-                   const double Rm, value_mat &M);
+                   state_t &ST, const double IonFys[], const double Rm, value_mat &M);
 
     void PropagateLongRFCav(Config &conf, state_t &ST);
 
@@ -1112,8 +1110,7 @@ struct ElementRFCavity : public Moment2ElementBase
 };
 
 
-void ElementRFCavity::GetCavMatParams(const int cavi, std::stringstream &inf,
-                                      const double beta_tab[], const double gamma_tab[], const double IonK[])
+void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double IonK[])
 {
     // Evaluate time transit factors and acceleration.
 
@@ -1133,6 +1130,7 @@ void ElementRFCavity::GetCavMatParams(const int cavi, std::stringstream &inf,
             // Comment.
         } else {
             str.str(line);
+            str.clear();
             str >> Elem >> Name >> Length >> Aper;
 
             s += Length;
@@ -1243,8 +1241,7 @@ void ElementRFCavity::GetCavMatParams(const int cavi, std::stringstream &inf,
 
 void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                                 const double beta_tab[], const double gamma_tab[], const double Lambda,
-                                state_t &ST, const double IonFys[], std::stringstream &inf,
-                                const double Rm, value_mat &M)
+                                state_t &ST, const double IonFys[], const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
@@ -1336,6 +1333,7 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
         } else {
             n++;
             str.str(line);
+            str.clear();
             str >> Elem >> Name >> Length >> Aper;
 
             s += Length;
@@ -1526,8 +1524,8 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    this->ElementRFCavity::GetCavMatParams(cavi, CavTLMstream, beta_s, gamma_s, IonK);
-    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, ST, IonFy_s, CavTLMstream, Rm, M);
+    this->ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, IonK);
+    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, ST, IonFy_s, Rm, M);
 }
 
 
