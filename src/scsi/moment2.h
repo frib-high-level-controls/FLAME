@@ -13,21 +13,6 @@
 /** @brief Simulation state which include only a matrix
  */
 
-class CavDataType {
-// Cavity on-axis longitudinal electric field vs. s.
-public:
-    std::vector<double> s,     // s coordinate [m]
-                        Elong; // Longitudinal Electric field [V/m].
-
-    void RdData(const std::string&);
-    void show(std::ostream&, const int) const;
-    void show(std::ostream&) const;
-};
-
-
-extern std::stringstream   CavTLMstream2[];
-extern CavDataType         CavData2[];
-
 struct Moment2State : public StateBase
 {
     enum {maxsize=7};

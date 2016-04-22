@@ -10,151 +10,11 @@
 
 #include "scsi/h5loader.h"
 
-void CavDataType::RdData(const std::string &FileName)
-{
-    std::string       line;
-    double            s, Elong;
-    std::stringstream str;
-    std::fstream      inf;
-
-    inf.open(FileName.c_str(), std::ifstream::in);
-    if (!inf.is_open()) {
-        std::cerr << "*** RdData: failed to open " << FileName << "\n";
-        exit(1);
-    }
-    while (getline(inf, line) && !inf.fail()) {
-        str.str(line);
-        str >> s >> Elong;
-        this->s.push_back(s), this->Elong.push_back(Elong);
-        // Convert from [mm] to [m].
-//        this->s[this->s.size()-1] /= MtoMM;
-    }
-    inf.close();
-
-    if (false) {
-        std::cout << "\n";
-        for (size_t k = 0; k < this->s.size(); k++)
-            this->show(std::cout, k);
-    }
-}
-
-
-void CavDataType::show(std::ostream& strm, const int k) const
-{
-    strm << std::scientific << std::setprecision(5)
-         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k] << "\n";
-}
-
-
-void CavDataType::show(std::ostream& strm) const
-{
-    for (unsigned int k = 0; k < this->s.size(); k++)
-        this->show(strm, k);
-}
-
-
-class CavTLMLineType {
-public:
-    std::vector<double> s;         // Longitudinal position [m].
-    std::vector<std::string> Elem;
-    std::vector<double> E0,
-                        T,
-                        S,
-                        Accel;
-
-    void clear(void);
-    void set(const double, const std::string &, const double,
-             const double, const double, const double);
-    void show(std::ostream& strm, const int) const;
-    void show(std::ostream& strm) const;
-};
-
-
-void CavTLMLineType::clear(void)
-{
-    this->s.clear(); this->Elem.clear(); this->E0.clear();
-    this->T.clear(); this->S.clear(); this->Accel.clear();
-}
-
-
-void CavTLMLineType::set(const double s, const std::string &Elem, const double E0,
-                         const double T, const double S, const double Accel)
-{
-    this->s.push_back(s); this->Elem.push_back(Elem); this->E0.push_back(E0);
-    this->T.push_back(T); this->S.push_back(S); this->Accel.push_back(Accel);
-}
-
-
-void CavTLMLineType::show(std::ostream& strm, const int k) const
-{
-    strm << std::fixed << std::setprecision(5)
-         << std::setw(9) << this->s[k] << std::setw(10) << this->Elem[k]
-         << std::setw(9) << this->T[k] << std::setw(9) << this->S[k]
-         << std::setw(9) << this->Accel[k] << "\n";
-}
-
-
-void CavTLMLineType::show(std::ostream& strm) const
-{
-    for (unsigned int k = 0; k < this->s.size(); k++)
-        this->show(strm, k);
-}
-
 
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6
 // Sampling distance [m].
 # define SampleLambda (C0/SampleFreq*MtoMM)
-
-const int MaxNCav    = 5;
-
-CavDataType         CavData2[MaxNCav];
-std::stringstream   CavTLMstream2[MaxNCav];
-CavTLMLineType      CavTLMLineTab2[MaxNCav];
-
-
-void PrtVec(const std::vector<double> &a)
-{
-    for (size_t k = 0; k < a.size(); k++)
-        std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << a[k];
-    std::cout << "\n";
-}
-
-
-typedef boost::numeric::ublas::vector<double> value_vec;
-typedef boost::numeric::ublas::matrix<double> value_mat;
-
-enum {maxsize = 7};
-
-typedef boost::numeric::ublas::vector<double,
-                boost::numeric::ublas::bounded_array<double, maxsize>
-> vector_t;
-
-typedef boost::numeric::ublas::matrix<double,
-                boost::numeric::ublas::row_major,
-                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
-> matrix_t;
-
-
-void PrtVec(const vector_t &a)
-{
-    for (size_t k = 0; k < a.size(); k++)
-        std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << a[k];
-    std::cout << "\n";
-}
-
-
-void PrtMat(const value_mat &M)
-{
-    for (size_t j = 0; j < M.size1(); j++) {
-        for (size_t k = 0; k < M.size2(); k++)
-            std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << M(j, k);
-        std::cout << "\n";
-    }
-}
 
 
 namespace {
@@ -735,7 +595,156 @@ typedef boost::numeric::ublas::matrix<double> value_mat;
 //                   2 include quadrupole terms.
 const int MpoleLevel = 2;
 
+const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
+
+class CavDataType {
+// Cavity on-axis longitudinal electric field vs. s.
+public:
+    std::vector<double> s,     // s coordinate [m]
+                        Elong; // Longitudinal Electric field [V/m].
+
+    void RdData(const std::string&);
+    void show(std::ostream&, const int) const;
+    void show(std::ostream&) const;
+};
+
+
+class CavTLMLineType {
+public:
+    std::vector<double> s;         // Longitudinal position [m].
+    std::vector<std::string> Elem;
+    std::vector<double> E0,
+                        T,
+                        S,
+                        Accel;
+
+    void clear(void);
+    void set(const double, const std::string &, const double,
+             const double, const double, const double);
+    void show(std::ostream& strm, const int) const;
+    void show(std::ostream& strm) const;
+};
+
+
 typedef typename Moment2ElementBase::state_t state_t;
+
+
+void CavDataType::RdData(const std::string &FileName)
+{
+    std::string       line;
+    double            s, Elong;
+    std::stringstream str;
+    std::fstream      inf;
+
+    inf.open(FileName.c_str(), std::ifstream::in);
+    if (!inf.is_open()) {
+        std::cerr << "*** RdData: failed to open " << FileName << "\n";
+        exit(1);
+    }
+    while (getline(inf, line) && !inf.fail()) {
+        str.str(line);
+        str >> s >> Elong;
+        this->s.push_back(s), this->Elong.push_back(Elong);
+        // Convert from [mm] to [m].
+//        this->s[this->s.size()-1] /= MtoMM;
+    }
+    inf.close();
+
+    if (false) {
+        std::cout << "\n";
+        for (size_t k = 0; k < this->s.size(); k++)
+            this->show(std::cout, k);
+    }
+}
+
+
+void CavDataType::show(std::ostream& strm, const int k) const
+{
+    strm << std::scientific << std::setprecision(5)
+         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k] << "\n";
+}
+
+
+void CavDataType::show(std::ostream& strm) const
+{
+    for (unsigned int k = 0; k < this->s.size(); k++)
+        this->show(strm, k);
+}
+
+
+void CavTLMLineType::clear(void)
+{
+    this->s.clear(); this->Elem.clear(); this->E0.clear();
+    this->T.clear(); this->S.clear(); this->Accel.clear();
+}
+
+
+void CavTLMLineType::set(const double s, const std::string &Elem, const double E0,
+                         const double T, const double S, const double Accel)
+{
+    this->s.push_back(s); this->Elem.push_back(Elem); this->E0.push_back(E0);
+    this->T.push_back(T); this->S.push_back(S); this->Accel.push_back(Accel);
+}
+
+
+void CavTLMLineType::show(std::ostream& strm, const int k) const
+{
+    strm << std::fixed << std::setprecision(5)
+         << std::setw(9) << this->s[k] << std::setw(10) << this->Elem[k]
+         << std::setw(9) << this->T[k] << std::setw(9) << this->S[k]
+         << std::setw(9) << this->Accel[k] << "\n";
+}
+
+
+void CavTLMLineType::show(std::ostream& strm) const
+{
+    for (unsigned int k = 0; k < this->s.size(); k++)
+        this->show(strm, k);
+}
+
+
+void PrtVec(const std::vector<double> &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+typedef boost::numeric::ublas::vector<double> value_vec;
+typedef boost::numeric::ublas::matrix<double> value_mat;
+
+enum {maxsize = 7};
+
+typedef boost::numeric::ublas::vector<double,
+                boost::numeric::ublas::bounded_array<double, maxsize>
+> vector_t;
+
+typedef boost::numeric::ublas::matrix<double,
+                boost::numeric::ublas::row_major,
+                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
+> matrix_t;
+
+
+void PrtVec(const vector_t &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
+void PrtMat(const value_mat &M)
+{
+    for (size_t j = 0; j < M.size1(); j++) {
+        for (size_t k = 0; k < M.size2(); k++)
+            std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << M(j, k);
+        std::cout << "\n";
+    }
+}
 
 
 double PwrSeries(const double beta,
@@ -1004,8 +1013,107 @@ double GetCavPhase(const int cavi, state_t &ST, const double IonFys, const doubl
 }
 
 
-void GetCavMatParams(const int cavi, std::stringstream &inf,
-                     const double beta_tab[], const double gamma_tab[], const double IonK[])
+void EvalGapModel(const double dis, const double IonW0, state_t &ST, const double IonFy0,
+                  const double k, const double Lambda, const double Ecen,
+                  const double T, const double S, const double Tp, const double Sp, const double V0,
+                  double &IonW_f, double &IonFy_f)
+{
+    double Iongamma_f, IonBeta_f, k_f;
+
+    IonW_f     = IonW0 + ST.IonZ*V0*T*cos(IonFy0+k*Ecen)*MeVtoeV - ST.IonZ*V0*S*sin(IonFy0+k*Ecen)*MeVtoeV;
+    Iongamma_f = IonW_f/ST.IonEs;
+    IonBeta_f  = sqrt(1e0-1e0/sqr(Iongamma_f));
+    k_f        = 2e0*M_PI/(IonBeta_f*Lambda);
+
+    IonFy_f = IonFy0 + k*Ecen + k_f*(dis-Ecen)
+              + ST.IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-ST.IonEs)/MeVtoeV);
+}
+
+
+struct ElementRFCavity : public Moment2ElementBase
+{
+    // Transport matrix for an RF Cavity.
+    typedef Moment2ElementBase base_t;
+    typedef typename base_t::state_t state_t;
+
+    CavDataType        CavData;
+    std::stringstream  CavTLMstream;
+    CavTLMLineType     CavTLMLineTab;
+
+    ElementRFCavity(const Config& c)
+        :base_t(c)
+    {
+        std::string cav_type = c.get<std::string>("cavtype");
+        double L             = c.get<double>("L")*MtoMM,         // Convert from [m] to [mm].
+               phi_ref       = c.get<double>("phi_ref", 0e0);
+
+        std::string  CavType = conf().get<std::string>("cavtype");
+        std::fstream inf;
+
+        if (CavType == "0.041QWR") {
+            CavData.RdData(HomeDir+"/data/axisData_41.txt");
+            inf.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
+            CavTLMstream << inf.rdbuf();
+        } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
+            CavData.RdData(HomeDir+"/data/axisData_85.txt");
+            inf.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
+            CavTLMstream << inf.rdbuf();
+        } else {
+            std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
+            exit(1);
+        }
+
+        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
+        // For total path length.
+//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
+    }
+
+    void GetCavMatParams(const int cavi, std::stringstream &inf,
+                         const double beta_tab[], const double gamma_tab[], const double IonK[]);
+
+    void GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST,
+                   const double EfieldScl, const double IonFyi_s,
+                   const double IonEk_s, const double fRF, value_mat &M);
+
+    void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
+                   const double beta_tab[], const double gamma_tab[], const double Lambda,
+                   state_t &ST, const double IonFys[], std::stringstream &inf,
+                   const double Rm, value_mat &M);
+
+    void PropagateLongRFCav(Config &conf, state_t &ST);
+
+    void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
+                   double &avebeta, double &avegamma, value_mat &M);
+
+    void GetCavBoost(const CavDataType &CavData, state_t &ST,
+                     const double IonFy0, const double IonK0, const double fRF,
+                     const double EfieldScl, double &IonW, double &IonFy, double &accIonW);
+
+    virtual ~ElementRFCavity() {}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        transfer = transfer_raw;
+
+        last_Kenergy_in = ST.Ekinetic;
+
+        this->ElementRFCavity::PropagateLongRFCav(conf(), ST);
+
+        last_Kenergy_out = ST.Ekinetic;
+
+        // Define initial conditions.
+        double accIonW, avebeta, avegamma;
+
+        this->ElementRFCavity::InitRFCav(conf(), ST, accIonW, avebeta, avegamma, transfer);
+   }
+
+    virtual const char* type_name() const {return "rfcavity";}
+};
+
+
+void ElementRFCavity::GetCavMatParams(const int cavi, std::stringstream &inf,
+                                      const double beta_tab[], const double gamma_tab[], const double IonK[])
 {
     // Evaluate time transit factors and acceleration.
 
@@ -1016,9 +1124,9 @@ void GetCavMatParams(const int cavi, std::stringstream &inf,
     inf.clear();
     inf.seekg(0, inf.beg);
 
-    CavTLMLineTab2[cavi-1].clear();
+    CavTLMLineTab.clear();
 
-    s = CavData2[cavi-1].s[0];
+    s = CavData.s[0];
     while (getline(inf, line) && !inf.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
         if (line[0] == '%') {
@@ -1122,38 +1230,21 @@ void GetCavMatParams(const int cavi, std::stringstream &inf,
                 exit(1);
             }
 
-            CavTLMLineTab2[cavi-1].set(s, Elem, E0, T, S, Accel);
+            CavTLMLineTab.set(s, Elem, E0, T, S, Accel);
         }
     }
 
     if (false) {
         std::cout << "\n";
-        CavTLMLineTab2[cavi-1].show(std::cout);
+        CavTLMLineTab.show(std::cout);
     }
 }
 
 
-void EvalGapModel(const double dis, const double IonW0, state_t &ST, const double IonFy0,
-                  const double k, const double Lambda, const double Ecen,
-                  const double T, const double S, const double Tp, const double Sp, const double V0,
-                  double &IonW_f, double &IonFy_f)
-{
-    double Iongamma_f, IonBeta_f, k_f;
-
-    IonW_f     = IonW0 + ST.IonZ*V0*T*cos(IonFy0+k*Ecen)*MeVtoeV - ST.IonZ*V0*S*sin(IonFy0+k*Ecen)*MeVtoeV;
-    Iongamma_f = IonW_f/ST.IonEs;
-    IonBeta_f  = sqrt(1e0-1e0/sqr(Iongamma_f));
-    k_f        = 2e0*M_PI/(IonBeta_f*Lambda);
-
-    IonFy_f = IonFy0 + k*Ecen + k_f*(dis-Ecen)
-              + ST.IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-ST.IonEs)/MeVtoeV);
-}
-
-
-void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
-               const double beta_tab[], const double gamma_tab[], const double Lambda,
-               state_t &ST, const double IonFys[], std::stringstream &inf,
-               const double Rm, value_mat &M)
+void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
+                                const double beta_tab[], const double gamma_tab[], const double Lambda,
+                                state_t &ST, const double IonFys[], std::stringstream &inf,
+                                const double Rm, value_mat &M)
 {
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
@@ -1237,7 +1328,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 
     V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
 
-    s = CavData2[cavi-1].s[0];
+    s = CavData.s[0];
     n = 0;
     while (getline(inf, line) && !inf.fail()) {
         if (line[0] == '%') {
@@ -1266,9 +1357,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mprob(2, 3) = Length;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus1") {
-                V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab2[cavi-1].T[n-1];
-                S    = CavTLMLineTab2[cavi-1].S[n-1];
+                V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
+                T    = CavTLMLineTab.T[n-1];
+                S    = CavTLMLineTab.S[n-1];
                 kfdx = ST.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = kfdx;
 
@@ -1276,9 +1367,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mprob(3, 2) = kfdy;
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EFocus2") {
-                V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab2[cavi-1].T[n-1];
-                S    = CavTLMLineTab2[cavi-1].S[n-1];
+                V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
+                T    = CavTLMLineTab.T[n-1];
+                S    = CavTLMLineTab.S[n-1];
                 kfdx = ST.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = kfdx;
 
@@ -1287,9 +1378,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 Mtrans      = prod(Mprob, Mtrans);
             } else if (Elem == "EDipole") {
                 if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab2[cavi-1].T[n-1];
-                    S   = CavTLMLineTab2[cavi-1].S[n-1];
+                    V0  = CavTLMLineTab.E0[n-1]*EfieldScl;
+                    T   = CavTLMLineTab.T[n-1];
+                    S   = CavTLMLineTab.S[n-1];
                     dpy = ST.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
 
                     Mprob(3, 6) = dpy;
@@ -1297,9 +1388,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "EQuad") {
                 if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab2[cavi-1].T[n-1];
-                    S    = CavTLMLineTab2[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab.T[n-1];
+                    S    = CavTLMLineTab.S[n-1];
                     kfdx =  ST.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                     kfdy = -kfdx;
 
@@ -1309,9 +1400,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "HMono") {
                 if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab2[cavi-1].T[n-1];
-                    S    = CavTLMLineTab2[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab.T[n-1];
+                    S    = CavTLMLineTab.S[n-1];
                     kfdx = -MU0*C0*ST.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                     kfdy = kfdx;
 
@@ -1321,9 +1412,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 }
             } else if (Elem == "HDipole") {
                 if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab2[cavi-1].T[n-1];
-                    S   = CavTLMLineTab2[cavi-1].S[n-1];
+                    V0  = CavTLMLineTab.E0[n-1]*EfieldScl;
+                    T   = CavTLMLineTab.T[n-1];
+                    S   = CavTLMLineTab.S[n-1];
                     dpy = -MU0*C0*ST.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
 
                     Mprob(3, 6) = dpy;
@@ -1339,9 +1430,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                         beta  = (beta_tab[1]+beta_tab[2])/2e0;
                         gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
                     }
-                    V0   = CavTLMLineTab2[cavi-1].E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab2[cavi-1].T[n-1];
-                    S    = CavTLMLineTab2[cavi-1].S[n-1];
+                    V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
+                    T    = CavTLMLineTab.T[n-1];
+                    S    = CavTLMLineTab.S[n-1];
                     kfdx = -MU0*C0*ST.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                     kfdy = -kfdx;
 
@@ -1356,7 +1447,7 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
                 beta   = beta_tab[seg];
                 gamma  = gamma_tab[seg];
                 kfac   = 2e0*M_PI/(beta*Lambda);
-                Accel  = CavTLMLineTab2[cavi-1].Accel[n-1];
+                Accel  = CavTLMLineTab.Accel[n-1];
 
                 Mprob(1, 1) = Accel;
                 Mprob(3, 3) = Accel;
@@ -1381,9 +1472,9 @@ void GenCavMat(const int cavi, const double dis, const double EfieldScl, const d
 }
 
 
-void GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST,
-               const double EfieldScl, const double IonFyi_s,
-               const double IonEk_s, const double fRF, value_mat &M)
+void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST,
+                                const double EfieldScl, const double IonFyi_s,
+                                const double IonEk_s, const double fRF, value_mat &M)
 {
     int    n;
     double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
@@ -1398,8 +1489,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST
     beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
     IonK_s[0]  = 2e0*M_PI/(beta_s[0]*IonLambda);
 
-    n   = CavData2[cavi-1].s.size();
-    dis = (CavData2[cavi-1].s[n-1]-CavData2[cavi-1].s[0])/2e0;
+    n   = CavData.s.size();
+    dis = (CavData.s[n-1]-CavData.s[0])/2e0;
 
     TransFacts(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
     EvalGapModel(dis, IonW_s[0], ST, IonFy_s[0], IonK_s[0], IonLambda,
@@ -1435,14 +1526,14 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    GetCavMatParams(cavi, CavTLMstream2[cavi-1], beta_s, gamma_s, IonK);
-    GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, ST, IonFy_s, CavTLMstream2[cavi-1], Rm, M);
+    this->ElementRFCavity::GetCavMatParams(cavi, CavTLMstream, beta_s, gamma_s, IonK);
+    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, ST, IonFy_s, CavTLMstream, Rm, M);
 }
 
 
-void GetCavBoost(const CavDataType &CavData, state_t &ST,
-                 const double IonFy0, const double IonK0, const double fRF,
-                 const double EfieldScl, double &IonW, double &IonFy, double &accIonW)
+void ElementRFCavity::GetCavBoost(const CavDataType &CavData, state_t &ST,
+                                  const double IonFy0, const double IonK0, const double fRF,
+                                  const double EfieldScl, double &IonW, double &IonFy, double &accIonW)
 {
     int    n = CavData.s.size(),
            k;
@@ -1474,7 +1565,7 @@ void GetCavBoost(const CavDataType &CavData, state_t &ST,
 }
 
 
-void PropagateLongRFCav(Config &conf, state_t &ST)
+void ElementRFCavity::PropagateLongRFCav(Config &conf, state_t &ST)
 {
     std::string CavType;
     int         cavi;
@@ -1502,7 +1593,7 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData2[cavi-1], ST, IonFy_i, ST.SampleIonK_ref, fRF, EfieldScl, ST.IonW_ref, IonFy_o, accIonW);
+    this->GetCavBoost(CavData, ST, IonFy_i, ST.SampleIonK_ref, fRF, EfieldScl, ST.IonW_ref, IonFy_o, accIonW);
 
     ST.gamma_ref       = ST.IonW_ref/ST.IonEs;
     ST.beta_ref        = sqrt(1e0-1e0/sqr(ST.gamma_ref));
@@ -1514,8 +1605,8 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
 }
 
 
-void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
-               double &avebeta, double &avegamma, value_mat &M)
+void ElementRFCavity::InitRFCav(const Config &conf, state_t &ST, double &accIonW,
+                                double &avebeta, double &avegamma, value_mat &M)
 {
     std::string CavType;
     int         cavi, cavilabel, multip;
@@ -1551,7 +1642,7 @@ void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
 //    vs.:
 //    double SampleIonK = 2e0*M_PI/(ST.beta*C0/SampleFreq*MtoMM);
 
-    GetCavBoost(CavData2[cavi-1], ST, IonFy_i, ST.SampleIonK, fRF, EfieldScl, ST.IonW, IonFy_o, accIonW);
+    ElementRFCavity::GetCavBoost(CavData, ST, IonFy_i, ST.SampleIonK, fRF, EfieldScl, ST.IonW, IonFy_o, accIonW);
 
     ST.EkState     = ST.IonW - ST.IonEs;
     ST.gamma       = ST.IonW/ST.IonEs;
@@ -1563,47 +1654,9 @@ void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
     avegamma       += ST.gamma;
     avegamma       /= 2e0;
 
-    GetCavMat(cavi, cavilabel, Rm, ST, EfieldScl, IonFy_i, Ek_i, fRF, M);
+    this->GetCavMat(cavi, cavilabel, Rm, ST, EfieldScl, IonFy_i, Ek_i, fRF, M);
 }
 
-
-struct ElementRFCavity : public Moment2ElementBase
-{
-    // Transport matrix for an RF Cavity.
-    typedef Moment2ElementBase base_t;
-    typedef typename base_t::state_t state_t;
-    ElementRFCavity(const Config& c)
-        :base_t(c)
-    {
-        std::string cav_type = c.get<std::string>("cavtype");
-        double L             = c.get<double>("L")*MtoMM,         // Convert from [m] to [mm].
-               phi_ref       = c.get<double>("phi_ref", 0e0);
-
-        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
-        // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
-    }
-    virtual ~ElementRFCavity() {}
-
-    virtual void recompute_matrix(state_t& ST)
-    {
-        transfer = transfer_raw;
-
-        last_Kenergy_in = ST.Ekinetic;
-
-        PropagateLongRFCav(conf(), ST);
-
-        last_Kenergy_out = ST.Ekinetic;
-
-        // Define initial conditions.
-        double accIonW, avebeta, avegamma;
-
-        InitRFCav(conf(), ST, accIonW, avebeta, avegamma, transfer);
-   }
-
-    virtual const char* type_name() const {return "rfcavity";}
-};
 
 struct ElementStripper : public Moment2ElementBase
 {

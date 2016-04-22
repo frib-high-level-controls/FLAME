@@ -14,8 +14,6 @@
 #include <scsi/state/matrix.h>
 
 
-std::string HomeDir = "";
-
 typedef Moment2State state_t;
 
 typedef boost::numeric::ublas::vector<double> value_vec;
@@ -240,18 +238,6 @@ void propagate(std::auto_ptr<Config> conf)
 }
 
 
-void GetCavTLMstr(void)
-{
-    std::fstream inf1, inf2;
-
-    inf1.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
-    CavTLMstream2[0] << inf1.rdbuf();
-
-    inf2.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
-    CavTLMstream2[1] << inf2.rdbuf();
-}
-
-
 int main(int argc, char *argv[])
 {
     try {
@@ -259,7 +245,6 @@ int main(int argc, char *argv[])
         FILE                  *inf = NULL;
 
         if(argc > 1) {
-            HomeDir = argv[2];
             inf = fopen(argv[1], "r");
             if (!inf) {
                 fprintf(stderr, "Failed to open %s\n", argv[1]);
@@ -282,11 +267,6 @@ int main(int argc, char *argv[])
 //        std::cout<<"# Reduced lattice\n";
 //        GLPSPrint(std::cout, *conf);
 //        std::cout<<"\n";
-
-        CavData2[0].RdData(HomeDir+"/data/axisData_41.txt");
-        CavData2[1].RdData(HomeDir+"/data/axisData_85.txt");
-
-        GetCavTLMstr();
 
         // register state and element types
         registerLinear();
