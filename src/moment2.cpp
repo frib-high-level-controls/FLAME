@@ -1440,9 +1440,8 @@ void GetCavMat(const int cavi, const int cavilabel, const double Rm, state_t &ST
 }
 
 
-void GetCavBoost(const CavDataType &CavData, const double IonW0,
-                 const double IonFy0, const double IonK0, const double IonZ,
-                 const double IonEs, const double fRF,
+void GetCavBoost(const CavDataType &CavData, state_t &ST,
+                 const double IonFy0, const double IonK0, const double fRF,
                  const double EfieldScl, double &IonW, double &IonFy, double &accIonW)
 {
     int    n = CavData.s.size(),
@@ -1457,22 +1456,21 @@ void GetCavBoost(const CavDataType &CavData, const double IonW0,
 
     IonFy = IonFy0;
     IonK  = IonK0;
-    IonW  = IonW0;
     for (k = 0; k < n-1; k++) {
         IonFylast = IonFy;
         IonFy += IonK*dz;
-        IonW  += IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
+        IonW  += ST.IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
                  *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
-        IonGamma = IonW/IonEs;
-        IonBeta = sqrt(1e0-1e0/sqr(IonGamma));
-        if ((IonW-IonEs) < 0e0) {
-            IonW = IonEs;
+        IonGamma = IonW/ST.IonEs;
+        IonBeta  = sqrt(1e0-1e0/sqr(IonGamma));
+        if ((IonW-ST.IonEs) < 0e0) {
+            IonW = ST.IonEs;
             IonBeta = 0e0;
         }
         IonK = 2e0*M_PI/(IonBeta*IonLambda);
     }
 
-    accIonW = IonW - IonW0;
+    accIonW = IonW - ST.IonW;
 }
 
 
@@ -1480,8 +1478,7 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
 {
     std::string CavType;
     int         cavi;
-    double      fRF, multip, caviIonK, IonFys, EfieldScl, caviFy, IonFy_i, IonFy_o;
-    double      IonW_o, accIonW;
+    double      fRF, multip, IonFys, EfieldScl, caviFy, IonFy_i, IonFy_o, accIonW;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -1495,7 +1492,6 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
 
     fRF       = conf.get<double>("f");
     multip    = fRF/SampleFreq;
-    caviIonK  = 2e0*M_PI*fRF/(ST.beta_ref*C0)/MtoMM;
     IonFys    = conf.get<double>("phi")*M_PI/180e0;  // Synchrotron phase [rad].
     EfieldScl = conf.get<double>("scl_fac");         // Electric field scale factor.
 
@@ -1506,10 +1502,8 @@ void PropagateLongRFCav(Config &conf, state_t &ST)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData2[cavi-1], ST.IonW_ref, IonFy_i, caviIonK, ST.IonZ,
-                ST.IonEs, fRF, EfieldScl, IonW_o, IonFy_o, accIonW);
+    GetCavBoost(CavData2[cavi-1], ST, IonFy_i, ST.SampleIonK_ref, fRF, EfieldScl, ST.IonW_ref, IonFy_o, accIonW);
 
-    ST.IonW_ref        = IonW_o;
     ST.gamma_ref       = ST.IonW_ref/ST.IonEs;
     ST.beta_ref        = sqrt(1e0-1e0/sqr(ST.gamma_ref));
     ST.SampleIonK_ref  = 2e0*M_PI/(ST.beta_ref*SampleLambda);
@@ -1525,8 +1519,7 @@ void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
 {
     std::string CavType;
     int         cavi, cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, IonW, fRF, CaviIonK, EfieldScl;
-    double      IonW_o, IonFy_o;
+    double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
 
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
@@ -1544,24 +1537,26 @@ void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
         exit(1);
     }
 
-    IonFy_i = multip*ST.Fy_absState + conf.get<double>("phi_ref");
-    Ek_i    = ST.EkState;
-    IonW    = ST.EkState + ST.IonEs;
+    IonFy_i   = multip*ST.Fy_absState + conf.get<double>("phi_ref");
+    Ek_i      = ST.EkState;
+    ST.IonW   = ST.EkState + ST.IonEs;
 
     avebeta   = ST.beta;
     avegamma  = ST.gamma;
     fRF       = conf.get<double>("f");
-    CaviIonK  = 2e0*M_PI*fRF/(ST.beta*C0*MtoMM);
-    //double SampleIonK = 2e0*M_PI/(ST.beta*C0/SampleFreq*MtoMM);
     EfieldScl  = conf.get<double>("scl_fac");         // Electric field scale factor.
 
-    GetCavBoost(CavData2[cavi-1], IonW, IonFy_i, CaviIonK, ST.IonZ, ST.IonEs,
-                fRF, EfieldScl, IonW_o, IonFy_o, accIonW);
+//    J.B.: Note, this was passed:
+//    CaviIonK  = 2e0*M_PI*fRF/(ST.beta*C0*MtoMM);
+//    vs.:
+//    double SampleIonK = 2e0*M_PI/(ST.beta*C0/SampleFreq*MtoMM);
 
-    ST.EkState     = IonW_o - ST.IonEs;
-    IonW           = ST.EkState + ST.IonEs;
-    ST.gamma       = IonW/ST.IonEs;
+    GetCavBoost(CavData2[cavi-1], ST, IonFy_i, ST.SampleIonK, fRF, EfieldScl, ST.IonW, IonFy_o, accIonW);
+
+    ST.EkState     = ST.IonW - ST.IonEs;
+    ST.gamma       = ST.IonW/ST.IonEs;
     ST.beta        = sqrt(1e0-1e0/sqr(ST.gamma));
+    ST.SampleIonK  = 2e0*M_PI/(ST.beta*SampleLambda);
     ST.Fy_absState += (IonFy_o-IonFy_i)/multip;
     avebeta        += ST.beta;
     avebeta        /= 2e0;

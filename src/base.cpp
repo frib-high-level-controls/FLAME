@@ -21,6 +21,7 @@ StateBase::StateBase(const Config& c)
     ,IonEs(c.get<double>("IonEs", 0))
     ,IonEk(c.get<double>("IonEk", 0))
     ,IonW_ref(c.get<double >("IonW", 0))
+    ,IonW(c.get<double >("IonW", 0))
     ,pyptr(0)
 {}
 
@@ -30,6 +31,7 @@ StateBase::StateBase(const StateBase& o, clone_tag)
     ,IonEs(o.IonEs)
     ,IonEk(o.IonEk)
     ,IonW_ref(o.IonW_ref)
+    ,IonW(o.IonW)
     ,pyptr(0)
 {}
 
@@ -39,6 +41,7 @@ void StateBase::assign(const StateBase& other)
     IonEs     = other.IonEs;
     IonEk     = other.IonEk;
     IonW_ref  = other.IonW_ref;
+    IonW      = other.IonW;
 }
 
 bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
@@ -72,6 +75,12 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
         Info.ndim = 0;
         Info.type = ArrayInfo::Double;
         Info.ptr = &IonW_ref;
+        return true;
+    } else if(idx==5) {
+        Info.name = "IonW";
+        Info.ndim = 0;
+        Info.type = ArrayInfo::Double;
+        Info.ptr = &IonW;
         return true;
     }
     return false;

@@ -36,7 +36,8 @@ struct StateBase : public boost::noncopyable
     double IonZ,
            IonEs,
            IonEk,
-           IonW_ref; // Total energy of reference particle.
+           IonW_ref, // Total energy of reference particle.
+           IonW;     // Total energy of ion.
 
     virtual void assign(const StateBase& other) =0;
 
