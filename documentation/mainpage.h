@@ -15,6 +15,9 @@ A discrete accelerator simulation engine
 @subpage typesparams
 
 @subpage apiusage
+
+Source doc repository https://github.com/frib-high-level-controls/FLAME
+
 */
 
 // =====================================================================================
