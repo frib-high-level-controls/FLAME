@@ -206,7 +206,7 @@ Sector bend magnet.
 Supported by all "sim_type"s.
 
 @code
-elemname: sbend, L = 0.1, phi = 3.14159/16, K = 10;
+elemname: sbend, L = 0.1, phi = pi/16, K = 10;
 @endcode
 
 @subsubsection elementquad quadrupole
