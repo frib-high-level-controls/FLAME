@@ -1,3 +1,8 @@
+Documentation
+=============
+
+Generated [documentation](http://frib-high-level-controls.github.io/FLAME)
+
 Pre-requisites
 ==============
 

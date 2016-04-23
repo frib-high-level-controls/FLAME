@@ -45,6 +45,7 @@ set(inst_HEADERS
   scsi/moment2.h
 
   scsi/h5loader.h
+  scsi/h5writer.h
 )
 install(FILES ${inst_HEADERS}
   DESTINATION include/uscsi
@@ -66,6 +67,7 @@ add_library(uscsi_core SHARED
   glps.tab.c glps.tab.h
 
   h5loader.cpp
+  h5writer.cpp
 
   ${inst_HEADERS}
 )

@@ -9,6 +9,7 @@ addons:
     - libboost-thread-dev
     - libboost-filesystem-dev
     - libboost-regex-dev
+    - libboost-program-options-dev
     - libboost-test-dev
     - python-decorator
     - cmake

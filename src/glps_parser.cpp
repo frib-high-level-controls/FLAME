@@ -9,6 +9,8 @@
 
 #include "glps_parser.h"
 
+# define M_PI 3.14159265358979323846
+
 #define YYSTYPE         GLPS_STYPE
 extern "C" {
 // the generated headers wrap some parts in extern "C" blocks, but not all...
@@ -239,15 +241,21 @@ expr_t *glps_add_value(parse_context *ctxt, glps_expr_type t, ...)
                 ret->value = E.value;
 
             } else if(ctxt->element_idx.find(name->str)!=ctxt->element_idx.end()) {
+                // expand element
                 strlist_t::list_t T(1);
                 T[0] = name->str;
                 ret->etype = glps_expr_line;
                 ret->value = T;
 
             } else if((it=ctxt->line_idx.find(name->str))!=ctxt->line_idx.end()) {
+                // expand beamline
                 parse_line &L = ctxt->line[it->second];
                 ret->etype = glps_expr_line;
                 ret->value = L.names;
+
+            } else if(name->str=="pi") {
+                ret->etype = glps_expr_number;
+                ret->value = M_PI;
 
             } else {
                 /* having this check in the parser ensure that variables

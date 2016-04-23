@@ -58,7 +58,10 @@ ElementVoid::ElementVoid(const Config& conf)
     ,p_conf(conf)
 {}
 
-ElementVoid::~ElementVoid() {}
+ElementVoid::~ElementVoid()
+{
+    delete p_observe;
+}
 
 void ElementVoid::show(std::ostream& strm) const
 {
@@ -79,6 +82,7 @@ Machine::Machine(const Config& c)
     ,p_info()
 {
     std::string type(c.get<std::string>("sim_type"));
+    p_simtype = type;
 
     info_mutex_t::scoped_lock G(info_mutex);
 
@@ -163,13 +167,14 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
     S->next_elem = start;
     for(size_t i=0; S->next_elem<nelem && i<max; i++)
     {
-        ElementVoid* E = p_elements[S->next_elem];
+        size_t n = S->next_elem;
+        ElementVoid* E = p_elements[n];
         S->next_elem++;
         E->advance(*S);
         if(E->p_observe)
             E->p_observe->view(E, S);
         if(p_trace)
-            (*p_trace) << "After "<< i<< " " << *S;
+            (*p_trace) << "After "<< n<< " " << *S;
     }
 }
 
