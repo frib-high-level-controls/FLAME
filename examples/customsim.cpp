@@ -80,7 +80,7 @@ struct Element1DSource : public ElementVoid
 //! [ElemSrcInit]
 
 //! [ElemSrcAdvance]
-    virtual void advance(StateBase& s) const
+    virtual void advance(StateBase& s)
     {
         s.assign(initial);
         s.pos += length; // source element ususaly has zero length, but not required
@@ -115,7 +115,7 @@ struct Element1DGeneric : public ElementVoid
 //! [ElemGenericInit]
 
 //! [ElemGenericAdvance]
-    virtual void advance(StateBase& s) const
+    virtual void advance(StateBase& s)
     {
         State1D &ST = static_cast<State1D&>(s); // safe since sim_type=Simple1D will only use State1D
 
