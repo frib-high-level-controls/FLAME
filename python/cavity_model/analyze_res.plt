@@ -138,11 +138,11 @@ plot file_name_7 using 1:6 title "z [rad]" with lines ls 4, \
 if (term_type == 0) pause mouse "click on graph to cont.\n"
 
 if (term_type != 0) set output "E_Tot_Diff.pdf"
-set title "Total Energy Difference Between New Code and TLM"
-set xlabel "s [m]"; set ylabel ""
+set title "Total Energy and Phase Difference Between New Code and TLM"
+set xlabel "s [m]"; set ylabel "[MeV/u]"; set y2label "[rad]";
 set ytics nomirror; set y2tics;
-plot file_name_8 using 1:2 title "E_tot [MeV/u]" with lines ls 3, \
-     file_name_8 using 1:3 axis x1y2 title "{/Symbol j} [rad]" with lines ls 1
+plot file_name_8 using 1:2 title "E_tot" with lines ls 3, \
+     file_name_8 using 1:3 axis x1y2 title "{/Symbol j}" with lines ls 1
 if (term_type == 0) pause mouse "click on graph to cont.\n"
 
 set ytics nomirror; unset y2tics; unset y2label
