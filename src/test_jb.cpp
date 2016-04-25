@@ -107,7 +107,6 @@ void propagate(std::auto_ptr<Config> conf)
     const int nChgStates = 2;
 
     int                                      k;
-    double                                   IonEk, IonEs, IonW, Fy_absState, EkState;
     std::vector<double>                      ChgState, NChg;
     value_vec                                BC[nChgStates];
     value_mat                                BE[nChgStates];
@@ -134,12 +133,8 @@ void propagate(std::auto_ptr<Config> conf)
 
     std::cout << "\nIon charge states:\n";
     for (k = 0; k < nChgStates; k++)
-        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
-    std::cout << "\n";
-    std::cout << "\nIon charge amount:\n";
-    for (k = 0; k < nChgStates; k++)
-        std::cout << std::fixed << std::setprecision(1) << std::setw(8) << NChg[k];
-    std::cout << "\n";
+        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k]
+                  << std::setprecision(1) << std::setw(8) << NChg[k] << "\n";
     std::cout << "\nBarycenter:\n";
     PrtVec(BC[0]);
     PrtVec(BC[1]);
@@ -168,17 +163,16 @@ void propagate(std::auto_ptr<Config> conf)
         // Propagate through first element (beam initial conditions).
         sims[k]->propagate(state.get(), 0, 1);
 
-        IonEk = state->IonEk/MeVtoeV;
-        IonEs = state->IonEs/MeVtoeV;
-        IonW  = state->IonW_ref/MeVtoeV;
-
         // Initialize state.
-        StatePtr[k]->moment0 = BC[k];
-        StatePtr[k]->state   = BE[k];
+        StatePtr[k]->IonZ_ref    = ChgState[0];
+        StatePtr[k]->IonZ        = ChgState[k];
 
-        StatePtr[k]->gamma  = (IonEs+IonEk)/IonEs;
-        StatePtr[k]->beta   = sqrt(1e0-1e0/sqr(StatePtr[k]->gamma));
-        StatePtr[k]->bg1    = StatePtr[k]->beta*StatePtr[k]->gamma;
+        StatePtr[k]->moment0     = BC[k];
+        StatePtr[k]->state       = BE[k];
+
+        StatePtr[k]->gamma       = state->IonW/state->IonEs;
+        StatePtr[k]->beta        = sqrt(1e0-1e0/sqr(StatePtr[k]->gamma));
+        StatePtr[k]->bg1         = StatePtr[k]->beta*StatePtr[k]->gamma;
 
         StatePtr[k]->Fy_absState = StatePtr[k]->moment0[state_t::PS_S];
         StatePtr[k]->EkState     = StatePtr[k]->IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;

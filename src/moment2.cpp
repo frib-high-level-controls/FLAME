@@ -1084,7 +1084,7 @@ struct ElementRFCavity : public Moment2ElementBase
     void InitRFCav(const Config &conf, state_t &ST, double &accIonW,
                    double &avebeta, double &avegamma, value_mat &M);
 
-    void GetCavBoost(const CavDataType &CavData, state_t &ST,
+    void GetCavBoost(const CavDataType &CavData, state_t &ST, const double IonZ0,
                      const double IonFy0, const double IonK0, const double fRF,
                      const double EfieldScl, double &IonW, double &IonFy, double &accIonW);
 
@@ -1529,7 +1529,7 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
 }
 
 
-void ElementRFCavity::GetCavBoost(const CavDataType &CavData, state_t &ST,
+void ElementRFCavity::GetCavBoost(const CavDataType &CavData, state_t &ST, const double IonZ0,
                                   const double IonFy0, const double IonK0, const double fRF,
                                   const double EfieldScl, double &IonW, double &IonFy, double &accIonW)
 {
@@ -1548,7 +1548,7 @@ void ElementRFCavity::GetCavBoost(const CavDataType &CavData, state_t &ST,
     for (k = 0; k < n-1; k++) {
         IonFylast = IonFy;
         IonFy += IonK*dz;
-        IonW  += ST.IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
+        IonW  += IonZ0*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
                  *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
         IonGamma = IonW/ST.IonEs;
         IonBeta  = sqrt(1e0-1e0/sqr(IonGamma));
@@ -1591,7 +1591,7 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, state_t &ST)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    this->GetCavBoost(CavData, ST, IonFy_i, ST.SampleIonK_ref, fRF, EfieldScl, ST.IonW_ref, IonFy_o, accIonW);
+    this->GetCavBoost(CavData, ST, ST.IonZ_ref, IonFy_i, ST.SampleIonK_ref, fRF, EfieldScl, ST.IonW_ref, IonFy_o, accIonW);
 
     ST.gamma_ref       = ST.IonW_ref/ST.IonEs;
     ST.beta_ref        = sqrt(1e0-1e0/sqr(ST.gamma_ref));
@@ -1640,7 +1640,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, state_t &ST, double &accIonW
 //    vs.:
 //    double SampleIonK = 2e0*M_PI/(ST.beta*C0/SampleFreq*MtoMM);
 
-    ElementRFCavity::GetCavBoost(CavData, ST, IonFy_i, ST.SampleIonK, fRF, EfieldScl, ST.IonW, IonFy_o, accIonW);
+    ElementRFCavity::GetCavBoost(CavData, ST, ST.IonZ, IonFy_i, ST.SampleIonK, fRF, EfieldScl, ST.IonW, IonFy_o, accIonW);
 
     ST.EkState     = ST.IonW - ST.IonEs;
     ST.gamma       = ST.IonW/ST.IonEs;
