@@ -166,18 +166,18 @@ void propagate(std::auto_ptr<Config> conf)
         sims[k]->propagate(state.get(), 0, 1);
 
         // Initialize state.
-        StatePtr[k]->IonZ_ref    = ChgState[0];
-        StatePtr[k]->IonZ        = ChgState[k];
+        StatePtr[k]->ref.IonZ       = ChgState[0];
+        StatePtr[k]->real.IonZ      = ChgState[k];
 
-        StatePtr[k]->moment0     = BC[k];
-        StatePtr[k]->state       = BE[k];
+        StatePtr[k]->moment0        = BC[k];
+        StatePtr[k]->state          = BE[k];
 
-        StatePtr[k]->gamma       = StatePtr[k]->IonW/StatePtr[k]->IonEs;
-        StatePtr[k]->beta        = sqrt(1e0-1e0/sqr(StatePtr[k]->gamma));
-        StatePtr[k]->bg1         = StatePtr[k]->beta*StatePtr[k]->gamma;
+        StatePtr[k]->real.gamma     = StatePtr[k]->real.IonW/StatePtr[k]->real.IonEs;
+        StatePtr[k]->real.beta      = sqrt(1e0-1e0/sqr(StatePtr[k]->real.gamma));
+        StatePtr[k]->real.bg        = StatePtr[k]->real.beta*StatePtr[k]->real.gamma;
 
-        StatePtr[k]->Fy_absState = StatePtr[k]->moment0[state_t::PS_S];
-        StatePtr[k]->EkState     = StatePtr[k]->IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
+        StatePtr[k]->real.phis      = StatePtr[k]->moment0[state_t::PS_S];
+        StatePtr[k]->real.Ekinetic += StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
 
         it = sims[k]->p_elements.begin();
         // Skip over state.

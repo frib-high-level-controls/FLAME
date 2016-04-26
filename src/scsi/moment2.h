@@ -13,6 +13,19 @@
 /** @brief Simulation state which include only a matrix
  */
 
+struct Particle {
+    double IonZ,        // Charge state.
+           IonEs,       // Rest energy.
+           IonEk,       // Reference kinetic energy.
+           IonW,        // Total energy.
+           gamma,       // Gamma for ion.
+           beta,        // Beta for ion.
+           bg,          // Beta*gamma;
+           SampleIonK,
+           phis,        // Synchrotron phase.
+           Ekinetic;    // Total kinetic energy.
+};
+
 struct Moment2State : public StateBase
 {
     enum {maxsize=7};
@@ -37,27 +50,7 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    double Ekinetic,    // Kinetic energy of reference particle.
-           IonZ_ref,
-           IonZ,
-           IonEs,
-           IonEk,
-           IonW_ref,    // Total energy of reference particle.
-           IonW,        // Total energy of ion.
-
-           SampleIonK_ref,
-           SampleIonK,
-
-           FyAbs,       // Synchrotron phase for reference particle.
-           Fy_absState, // Synchrotron phase for ion.
-           EkState,     // Kinetic energy of ion: Ekinetic + moment0[6].
-
-           gamma_ref,   // Gamma for reference particle.
-           beta_ref,    // Beta for reference particle.
-           gamma,       // Gamma for ion.
-           beta,        // Beta for ion.
-           bg_ref,      // Initial beta*gamma.
-           bg1;         // Beta*gamma for reference particle.
+    Particle ref, real;
 
     vector_t moment0;
     matrix_t state; // TODO: better name
