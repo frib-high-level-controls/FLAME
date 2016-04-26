@@ -517,8 +517,6 @@ typedef boost::numeric::ublas::matrix<double> value_mat;
 //                   2 include quadrupole terms.
 const int MpoleLevel = 2;
 
-const std::string HomeDir = "/home/johan/tlm_workspace/TLM_JB";
-
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
 public:
@@ -970,14 +968,15 @@ struct ElementRFCavity : public Moment2ElementBase
         std::string cav_type = c.get<std::string>("cavtype");
         double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
-        std::string  CavType = conf().get<std::string>("cavtype");
+        std::string CavType      = conf().get<std::string>("cavtype");
+        std::string Eng_Data_Dir = conf().get<std::string>("Eng_Data_Dir", "");
 
         if (CavType == "0.041QWR") {
-            CavData.RdData(HomeDir+"/data/axisData_41.txt");
-            inf.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
+            CavData.RdData(Eng_Data_Dir+"/data/axisData_41.txt");
+            inf.open((Eng_Data_Dir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
         } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-            CavData.RdData(HomeDir+"/data/axisData_85.txt");
-            inf.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
+            CavData.RdData(Eng_Data_Dir+"/data/axisData_85.txt");
+            inf.open((Eng_Data_Dir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
         } else {
             std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
             exit(1);
@@ -1469,7 +1468,7 @@ void ElementRFCavity::GetCavBoost(const CavDataType &CavData, Particle &state, c
         IonFylast = IonFy;
         IonFy += IonK*dz;
         state.IonW  += state.IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
-                 *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
+                       *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
         IonGamma = state.IonW/state.IonEs;
         IonBeta  = sqrt(1e0-1e0/sqr(IonGamma));
         if ((state.IonW-state.IonEs) < 0e0) {
@@ -1541,6 +1540,22 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
         cavilabel  = 85;
         multip     = 1;
         Rm         = 17e0;
+    } else if (conf.get<std::string>("cavtype") == "0.29HWR") {
+        cavi       = 3;
+        cavilabel  = 29;
+        multip     = 4;
+        Rm         = 20e0;
+    } else if (conf.get<std::string>("cavtype") == "0.53HWR") {
+        cavi       = 4;
+        cavilabel  = 53;
+        multip     = 4;
+        Rm         = 20e0;
+    } else if (conf.get<std::string>("cavtype") == "??EL") {
+        // 5 Cell elliptical.
+        cavi       = 5;
+        cavilabel  = 53;
+        multip     = 8;
+        Rm         = 20e0;
     } else {
         std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
         exit(1);
