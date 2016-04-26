@@ -49,7 +49,8 @@ S2 = [
 
 S: source, initial = S1;
 
-Eng_Data_Dir = "../python/uscsi/test";
+#Eng_Data_Dir = "../python/uscsi/test";
+Eng_Data_Dir = "/home/johan/git_repos/jmbgsddb/build/python/uscsi/test";
 
 drift_1: drift, L = 0.072000, aper = 0.020000;
 drift_2: drift, L = 0.135064, aper = 0.020000;

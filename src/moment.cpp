@@ -107,7 +107,7 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-7, Info);
+    return StateBase::getArray(idx-6, Info);
 }
 
 MomentElementBase::MomentElementBase(const Config& c)
