@@ -84,11 +84,6 @@ struct Moment2ElementBase : public ElementVoid
     typedef boost::numeric::ublas::matrix<double> value_t;
 
     double length;
-    double FSampLength; //!< sample (rf) clock wavelength
-    /** Fy += phase_factor/beta
-     * phase_factor := L*2*pi*Fsamp/C
-     */
-    double phase_factor;
     double Erest; //!< rest energy of particle species
 
     double last_Kenergy_in, last_Kenergy_out;

@@ -73,11 +73,11 @@ Moment2State::Moment2State(const Config& c)
     ref.IonZ       = c.get<double>("IonZ", 0e0);
 
     ref.IonW       = ref.IonEs + ref.IonEk;
-    ref.gamma      = ref.IonW/ref.IonEs;
+    ref.gamma      = (ref.IonEs != 0e0)? ref.IonW/ref.IonEs : 1e0;
     ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
-    ref.bg         = ref.beta*ref.gamma;
+    ref.bg         = (ref.beta != 0e0)? ref.beta*ref.gamma : 1e0;
 
-    ref.SampleIonK = 2e0*M_PI/(ref.beta*SampleLambda);
+    ref.SampleIonK = (ref.IonEs != 0e0)? 2e0*M_PI/(ref.beta*SampleLambda) : 2e0*M_PI/SampleLambda;
 
     ref.Ekinetic   = ref.IonEk;
 
@@ -260,7 +260,6 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
     length = c.get<double>("L", 0e0);
-    Erest = c.get<double>("IonEs");
 
     inverse(misalign_inv, misalign);
 
@@ -274,8 +273,6 @@ void Moment2ElementBase::assign(const ElementVoid *other)
 {
     const Moment2ElementBase *O = static_cast<const Moment2ElementBase*>(other);
     length = O->length;
-    FSampLength = O->FSampLength;
-    Erest = O->Erest;
     transfer = O->transfer;
     transfer_raw = O->transfer_raw;
     misalign = O->misalign;
@@ -290,8 +287,6 @@ void Moment2ElementBase::show(std::ostream& strm) const
     using namespace boost::numeric::ublas;
     ElementVoid::show(strm);
     strm<<"Length "<<length<<"\n"
-          "FSampLength "<<FSampLength<<"\n"
-          "Erest "<<Erest<<"\n"
           "Transfer: "<<transfer<<"\n"
           "Transfer Raw: "<<transfer_raw<<"\n"
           "Mis-align: "<<misalign<<"\n";
@@ -308,7 +303,7 @@ void Moment2ElementBase::advance(StateBase& s)
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-        noalias(scratch) = prod(misalign, transfer);
+        noalias(scratch)  = prod(misalign, transfer);
         noalias(transfer) = prod(scratch, misalign_inv);
     }
 
@@ -316,13 +311,13 @@ void Moment2ElementBase::advance(StateBase& s)
 
     // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in.
     // Matrix elements are scaled with particle energy.
-    ST.real.gamma      = (ST.real.IonEs+ST.real.Ekinetic)/Erest;   // Approximate (E_k = m0*v^2/2 vs. p*c0).
+    ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
     ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
-    ST.real.bg         = ST.real.beta*ST.real.gamma;
+    ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
     ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
 
     // Evaluate momentum compaction.
-    const double R56 = -2e0*M_PI/(SampleLambda*Erest/MeVtoeV*cube(ST.real.beta*ST.real.gamma))*length*MtoMM;
+    const double R56 = -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*length*MtoMM;
 
     std::string t_name = type_name(); // C string -> C++ string.
     if (t_name != "rfcavity") {
@@ -358,8 +353,6 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 //            transfer(2*k+1, 2*k) *= ST.bg1/ST.bg_ref;
 //        }
 //    }
-
-    transfer(state_t::PS_S, state_t::PS_PS) *= cube(ST.ref.bg/ST.real.bg);
 
     last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
 }
@@ -490,7 +483,7 @@ struct ElementMark : public Moment2ElementBase
     typedef Moment2ElementBase base_t;
     typedef typename base_t::state_t state_t;
     ElementMark(const Config& c) :base_t(c){
-        length = phase_factor = 0e0;
+        length = 0e0;
     }
     virtual ~ElementMark() {}
     virtual const char* type_name() const {return "marker";}

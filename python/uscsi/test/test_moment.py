@@ -7,6 +7,7 @@ from numpy import testing as NT
 from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 
 from .. import Machine
+import sys
 
 class testBasic(unittest.TestCase):
   def setUp(self):
@@ -103,13 +104,24 @@ foo : LINE = (elem0, elem1);
         "Propogate a state matrix through a generic section"
 
         S = self.M.allocState({})
+        self.M.propagate(S, 0, 1)
+        S.moment0[:] = self.expect0
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.Ekinetic, 0.0)
-        self.assertEqual(S.gamma, 1.0)
-        self.assertAlmostEqual(S.beta, numpy.sqrt(2.0))
+        self.assertEqual(S.real_Ekinetic, 0.0)
+        self.assertEqual(S.real_gamma, 1.0)
+        self.assertAlmostEqual(S.real_beta, 0.0)
 
-        self.M.propagate(S)
+        self.M.propagate(S, 1, len(self.M))
 
         self.assertEqual(S.pos, 2.0)
         assert_aequal(S.moment0, self.expect0)
-        assert_aequal(S.state, self.expect, 1e10)
+        # m56 is re-computed.
+        assert_aequal(S.state, [
+          [ 1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
+          [ 1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
+          [ 1.00000000e+00, -3.37431049e+06,  1.00000000e+00, -3.37431049e+06,  1.13859713e+13, -3.37431049e+06,  0.00000000e+00],
+          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
+        ], 1e10)
