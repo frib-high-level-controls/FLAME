@@ -17,34 +17,19 @@ StateBase::~StateBase() {}
 
 StateBase::StateBase(const Config& c)
     :next_elem(0)
-    ,IonZ_ref(c.get<double >("IonZ", 0))
-    ,IonZ(c.get<double >("IonZ", 0))
-    ,IonEs(c.get<double>("IonEs", 0))
-    ,IonEk(c.get<double>("IonEk", 0))
-    ,IonW_ref(c.get<double >("IonW", 0))
-    ,IonW(c.get<double >("IonW", 0))
+    ,pos(0e0)
     ,pyptr(0)
 {}
 
 StateBase::StateBase(const StateBase& o, clone_tag)
     :next_elem(0)
-    ,IonZ_ref(o.IonZ_ref)
-    ,IonZ(o.IonZ)
-    ,IonEs(o.IonEs)
-    ,IonEk(o.IonEk)
-    ,IonW_ref(o.IonW_ref)
-    ,IonW(o.IonW)
+    ,pos(o.pos)
     ,pyptr(0)
 {}
 
 void StateBase::assign(const StateBase& other)
 {
-    IonZ_ref  = other.IonZ_ref;
-    IonZ      = other.IonZ;
-    IonEs     = other.IonEs;
-    IonEk     = other.IonEk;
-    IonW_ref  = other.IonW_ref;
-    IonW      = other.IonW;
+    pos = other.pos;
 }
 
 bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
@@ -56,40 +41,10 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
         Info.ptr = &next_elem;
         return true;
     } else if(idx==1) {
-        Info.name = "IonZ";
+        Info.name = "pos";
         Info.ndim = 0;
         Info.type = ArrayInfo::Double;
-        Info.ptr = &IonZ_ref;
-        return true;
-    } else if(idx==2) {
-        Info.name = "IonZ";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonZ;
-        return true;
-    } else if(idx==3) {
-        Info.name = "IonEs";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEs;
-        return true;
-    } else if(idx==4) {
-        Info.name = "IonEk";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEk;
-        return true;
-    } else if(idx==5) {
-        Info.name = "IonW_ref";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonW_ref;
-        return true;
-    } else if(idx==6) {
-        Info.name = "IonW";
-        Info.ndim = 0;
-        Info.type = ArrayInfo::Double;
-        Info.ptr = &IonW;
+        Info.ptr = &pos;
         return true;
     }
     return false;

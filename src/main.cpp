@@ -474,19 +474,23 @@ void InitLong(const Machine &sim, const double IonZ)
     double                                IonGamma, IonBeta, SampleIonK;
     double                                IonW, IonZ1, IonEs, IonEk;
     Machine::p_elements_t::const_iterator it;
+    state_t                               *StatePtr;
     std::fstream                          outf;
 
     const char FileName[] = "long_tab.out";
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
+
     // Propagate through first element.
     sim.propagate(state.get(), 0, 1);
 
+    StatePtr = dynamic_cast<state_t*>(state.get());
+
     IonZ1 = IonZ;
-    IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW_ref/MeVtoeV;
-    IonEk = state->IonEk/MeVtoeV;
+    IonEs = StatePtr->IonEs/MeVtoeV;
+    IonW  = StatePtr->IonW/MeVtoeV;
+    IonEk = StatePtr->IonEk/MeVtoeV;
 
     IonGamma   = IonW/IonEs;
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
@@ -1518,12 +1522,14 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     Config                          D;
 
     std::auto_ptr<StateBase> state(sim.allocState(D));
+    StatePtr = dynamic_cast<state_t*>(state.get());
+
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
-    IonEk = state->IonEk/MeVtoeV;
-    IonEs = state->IonEs/MeVtoeV;
-    IonW  = state->IonW_ref/MeVtoeV;
+    IonEk = StatePtr->IonEk/MeVtoeV;
+    IonEs = StatePtr->IonEs/MeVtoeV;
+    IonW  = StatePtr->IonW/MeVtoeV;
 
     // Define initial conditions.
     Fy_absState = Mom1[state_t::PS_S];
@@ -1539,7 +1545,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     // Skip over state.
     it++;
     // Initialize state.
-    StatePtr = dynamic_cast<state_t*>(state.get());
+//    StatePtr = dynamic_cast<state_t*>(state.get());
     StatePtr->moment0 = Mom1;
     StatePtr->state   = Mom2;
 
@@ -1597,16 +1603,18 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
         // Propagate through first element (beam initial conditions).
         sim[k]->propagate(state[k].get(), 0, 1);
 
-        IonEk[k] = state[k]->IonEk/MeVtoeV;
-        IonEs[k] = state[k]->IonEs/MeVtoeV;
-        IonW[k]  = state[k]->IonW_ref/MeVtoeV;
+        StatePtr[k] = dynamic_cast<state_t*>(state[k].get());
+
+        IonEk[k] = StatePtr[k]->IonEk/MeVtoeV;
+        IonEs[k] = StatePtr[k]->IonEs/MeVtoeV;
+        IonW[k]  = StatePtr[k]->IonW/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState[k] = Mom1[k][state_t::PS_S];
         EkState[k]     = IonEk[k] + Mom1[k][state_t::PS_PS];
 
         // Initialize state.
-        StatePtr[k] = dynamic_cast<state_t*>(state[k].get());
+//        StatePtr[k] = dynamic_cast<state_t*>(state[k].get());
         StatePtr[k]->moment0 = Mom1[k];
         StatePtr[k]->state   = Mom2[k];
 

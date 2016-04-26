@@ -41,7 +41,6 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
 //    ,pos(c.get<double>("L", 0e0))
-    ,pos(0e0)
     ,FyAbs(0e0)
     ,Fy_absState(0e0)
     ,EkState(0e0)
@@ -70,25 +69,35 @@ Moment2State::Moment2State(const Config& c)
         throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
 
-    double Erest     = c.get<double>("IonEs", 0e0), // Rest energy.
-           Ekinetic0 = c.get<double>("IonEk", 0e0);
-           IonZ      = c.get<double>("IonZ", 0e0);
+    IonEs          = c.get<double>("IonEs", 0e0), // Rest energy.
+    IonEk          = c.get<double>("IonEk", 0e0);
+    IonZ           = c.get<double>("IonZ", 0e0);
 
-    gamma_ref      = (Erest+Ekinetic0)/Erest;
+    IonW           = IonEs + IonEk;
+
+    IonZ_ref       = IonZ;
+    IonW_ref       = IonW;
+
+    gamma_ref      = IonW_ref/IonEs;
     beta_ref       = sqrt(1e0-1e0/sqr(gamma_ref));
     bg_ref         = beta_ref*gamma_ref;
 
     SampleIonK_ref = 2e0*M_PI/(beta_ref*SampleLambda);
 
-    Ekinetic  = Ekinetic0;
+    Ekinetic       = IonEk;
 }
 
 Moment2State::~Moment2State() {}
 
 Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     :StateBase(o, t)
-    ,pos(o.pos)
     ,Ekinetic(o.Ekinetic)
+    ,IonZ_ref(o.IonZ_ref)
+    ,IonZ(o.IonZ)
+    ,IonEs(o.IonEs)
+    ,IonEk(o.IonEk)
+    ,IonW_ref(o.IonW_ref)
+    ,IonW(o.IonW)
     ,SampleIonK_ref(o.SampleIonK_ref)
     ,SampleIonK(o.SampleIonK)
     ,moment0(o.moment0)
@@ -100,21 +109,26 @@ void Moment2State::assign(const StateBase& other)
     const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
-    pos             = O->pos;
-    Ekinetic        = O->Ekinetic;
-    SampleIonK_ref  = O->SampleIonK_ref;
-    SampleIonK      = O->SampleIonK;
-    FyAbs           = O->FyAbs;
-    Fy_absState     = O->Fy_absState;
-    EkState         = O->EkState;
-    gamma_ref       = O->gamma_ref;
-    beta_ref        = O->beta_ref;
-    gamma           = O->gamma;
-    beta            = O->beta;
-    bg_ref          = O->bg_ref;
-    bg1             = O->bg1;
-    moment0         = O->moment0;
-    state           = O->state;
+    Ekinetic       = O->Ekinetic;
+    IonZ_ref       = O->IonZ_ref;
+    IonZ           = O->IonZ;
+    IonEs          = O->IonEs;
+    IonEk          = O->IonEk;
+    IonW_ref       = O->IonW_ref;
+    IonW           = O->IonW;
+    SampleIonK_ref = O->SampleIonK_ref;
+    SampleIonK     = O->SampleIonK;
+    FyAbs          = O->FyAbs;
+    Fy_absState    = O->Fy_absState;
+    EkState        = O->EkState;
+    gamma_ref      = O->gamma_ref;
+    beta_ref       = O->beta_ref;
+    gamma          = O->gamma;
+    beta           = O->beta;
+    bg_ref         = O->bg_ref;
+    bg1            = O->bg1;
+    moment0        = O->moment0;
+    state          = O->state;
     StateBase::assign(other);
 }
 
@@ -140,85 +154,115 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim[0] = moment0.size();
         return true;
     } else if(idx==2) {
-        Info.name = "pos";
-        Info.ptr = &pos;
+        Info.name = "IonZ_ref";
+        Info.ptr = &IonZ_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==3) {
+        Info.name = "IonZ";
+        Info.ptr = &IonZ;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==4) {
+        Info.name = "IonEs";
+        Info.ptr = &IonEs;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==5) {
+        Info.name = "IonEk";
+        Info.ptr = &IonEk;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==6) {
+        Info.name = "IonW_ref";
+        Info.ptr = &IonW_ref;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==7) {
+        Info.name = "IonW";
+        Info.ptr = &IonW;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==8) {
         Info.name = "FyAbs";
         Info.ptr = &FyAbs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==4) {
+    } else if(idx==9) {
         Info.name = "Fy_absState";
         Info.ptr = &Fy_absState;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==10) {
         Info.name = "EkState";
         Info.ptr = &EkState;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==11) {
         Info.name = "Ekinetic";
         Info.ptr = &Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==7) {
+    } else if(idx==12) {
         Info.name = "SampleIonK_ref";
         Info.ptr = &SampleIonK_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==13) {
         Info.name = "SampleIonK";
         Info.ptr = &SampleIonK;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==14) {
         Info.name = "gamma_ref";
         Info.ptr = &gamma_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==15) {
         Info.name = "beta_ref";
         Info.ptr = &beta_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==11) {
+    } else if(idx==16) {
         Info.name = "gamma";
         Info.ptr = &gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==12) {
+    } else if(idx==17) {
         Info.name = "beta";
         Info.ptr = &beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==13) {
+    } else if(idx==18) {
         Info.name = "bg_ref";
         Info.ptr = &bg_ref;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==14) {
+    } else if(idx==19) {
         Info.name = "bg1";
         Info.ptr = &bg1;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-15, Info);
+    return StateBase::getArray(idx-20, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
@@ -1046,8 +1090,7 @@ struct ElementRFCavity : public Moment2ElementBase
         :base_t(c)
     {
         std::string cav_type = c.get<std::string>("cavtype");
-        double L             = c.get<double>("L")*MtoMM,         // Convert from [m] to [mm].
-               phi_ref       = c.get<double>("phi_ref", 0e0);
+        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
         std::string  CavType = conf().get<std::string>("cavtype");
 

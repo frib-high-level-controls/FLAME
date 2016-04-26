@@ -34,6 +34,11 @@ struct MomentState : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
+    double IonZ,
+           IonEs,
+           IonEk,
+           IonW;        // Total energy of ion.
+
     vector_t moment0;
     matrix_t state; // TODO: better name
 

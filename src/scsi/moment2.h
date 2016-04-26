@@ -37,8 +37,13 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    double pos,         // absolute longitudinal position at end of Element
-           Ekinetic,    // Kinetic energy of reference particle.
+    double Ekinetic,    // Kinetic energy of reference particle.
+           IonZ_ref,
+           IonZ,
+           IonEs,
+           IonEk,
+           IonW_ref,    // Total energy of reference particle.
+           IonW,        // Total energy of ion.
 
            SampleIonK_ref,
            SampleIonK,

@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <fstream>
 #include <list>
+#include <ctime>
 
 #include <boost/numeric/ublas/io.hpp>
 
@@ -112,6 +113,7 @@ void propagate(std::auto_ptr<Config> conf)
     value_mat                                BE[nChgStates];
     std::vector<boost::shared_ptr<Machine> > sims;
     Machine::p_elements_t::iterator          it;
+    clock_t                                  tStamp[2];
 
 
     for (k = 0; k < nChgStates; k++) {
@@ -170,7 +172,7 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->moment0     = BC[k];
         StatePtr[k]->state       = BE[k];
 
-        StatePtr[k]->gamma       = state->IonW/state->IonEs;
+        StatePtr[k]->gamma       = StatePtr[k]->IonW/StatePtr[k]->IonEs;
         StatePtr[k]->beta        = sqrt(1e0-1e0/sqr(StatePtr[k]->gamma));
         StatePtr[k]->bg1         = StatePtr[k]->beta*StatePtr[k]->gamma;
 
@@ -181,12 +183,19 @@ void propagate(std::auto_ptr<Config> conf)
         // Skip over state.
         it++;
 
-//        ElementVoid* elem = *it;
+        tStamp[0] = clock();
+
+        //        ElementVoid* elem = *it;
         for (; it != sims[k]->p_elements.end(); ++it) {
 //            elem->advance(*state);
 //            sims[k]->propagate(state.get(), elem->index+n-1, 1);
             (*it)->advance(*state);
         }
+
+        tStamp[1] = clock();
+
+        std::cout << std::fixed << std::setprecision(5)
+                  << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
         std::cout << "\n";
         PrtVec(StatePtr[k]->moment0);
