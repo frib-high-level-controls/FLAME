@@ -108,7 +108,20 @@ void Moment2State::assign(const StateBase& other)
 
 void Moment2State::show(std::ostream& strm) const
 {
-    strm<<"State: energy="<<real.Ekinetic<<" moment0="<<moment0<<" state="<<state<<"\n";
+    int j, k;
+
+    strm << std::scientific << std::setprecision(8)
+         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real.Ekinetic << "\n  moment0 =\n    ";
+    for (k = 0; k < Moment2State::maxsize; k++)
+        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0(k);
+    strm << "\n  state =\n";
+    for (j = 0; j < Moment2State::maxsize; j++) {
+        strm << "    ";
+        for (k = 0; k < Moment2State::maxsize; k++) {
+            strm << std::scientific << std::setprecision(8) << std::setw(16) << state(j, k);
+        }
+        if (j < Moment2State::maxsize-1) strm << "\n";
+    }
 }
 
 bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {

@@ -17,25 +17,14 @@ __all__ = ['Machine',
     'GLPSParser',
 ]
 
+# Must be executed from: ../build/src
+
 PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
 
 MeVtoeV = 1e6
 
 
 def sqr(a): return a*a; 
-
-
-def print_state(S):
-  n = 7
-
-  sys.stdout.write('\n')
-  for j in range(n):
-      sys.stdout.write('%16.8e' % (S.moment0[j]))
-  sys.stdout.write('\n\n')
-  for i in range(n):
-    for j in range(n):
-      sys.stdout.write('%16.8e' % (S.state[i, j]))
-    sys.stdout.write('\n')
 
 
 home_dir = '/home/johan/git_repos/jmbgsddb/build/python/uscsi/test/'
@@ -50,9 +39,6 @@ with open(file_name, 'rb') as inf:
     S = M.allocState({})
     M.propagate(S, 0, 1)
     S.moment0[:] = [-0.0007886,   1.08371e-05,  0.01337343,   6.678534e-06,  -0.0001847729, 0.000309995, 1.0];
-    print_state(S)
-
-    # print S.real
 
     S.real_gamma     = S.real_IonW/S.real_IonEs;
     S.real_beta      = math.sqrt(1e0-1e0/sqr(S.real_gamma));
@@ -61,6 +47,8 @@ with open(file_name, 'rb') as inf:
     S.real_phis      = S.moment0[PS_S];
     S.real_Ekinetic += S.moment0[PS_PS]*MeVtoeV;
 
+    print S
+
     M.propagate(S, 1, len(M))
 
-    print_state(S)
+    print S

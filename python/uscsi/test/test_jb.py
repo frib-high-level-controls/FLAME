@@ -15,7 +15,7 @@ import os
 datadir = os.path.dirname(__file__)
 
 def print_state(S):
-  n = 6
+  n = 7
   for i in range(n):
     sys.stdout.write('[')
     for j in range(n):
@@ -325,3 +325,45 @@ class testBasic(unittest.TestCase):
           [-2.34554323e-05,  5.28564016e-09,  7.51043870e-05,  5.57484222e-08, -1.23223342e-05,  1.99524669e-06, 0],
           [ 0,               0,               0,               0,               0,               0,              0]
         ], decimal=6)
+
+
+  def test_LS1(self):
+    "Propagate through LS1."
+    PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
+
+    MeVtoeV = 1e6
+
+    def sqr(a): return a*a;
+
+    P = GLPSParser()
+
+    file_name = 'latticeout_IMP_withPV_consolidate2.lat'
+
+    with open(os.path.join(datadir, file_name), 'rb') as inf:
+      M = Machine(inf.read())
+
+      S = M.allocState({})
+      M.propagate(S, 0, 1)
+      S.moment0[:] = [-0.0007886,   1.08371e-05,  0.01337343,   6.678534e-06,  -0.0001847729, 0.000309995, 1.0];
+
+      S.real_gamma     = S.real_IonW/S.real_IonEs;
+      S.real_beta      = math.sqrt(1e0-1e0/sqr(S.real_gamma));
+      S.real_bg        = S.real_beta*S.real_gamma;
+      S.real_phis      = S.moment0[PS_S];
+      S.real_Ekinetic += S.moment0[PS_PS]*MeVtoeV;
+
+      M.propagate(S, 1, len(M))
+
+      assert_aequal(S.moment0,
+        [-1.31487198e+00, -6.14116226e-04, -7.31682439e-01, -7.46618429e-04, -2.39819002e-03, -4.72758705e-04,  1.00000000e+00],
+        decimal=8)
+
+      assert_aequal(S.state, [
+        [ 1.28985466e+00,  5.25768610e-04, -1.07818343e-01, -8.75275442e-05, -1.74466591e-04, -4.89638797e-05,  0.00000000e+00],
+        [ 5.25768610e-04,  4.63230951e-07, -1.87620874e-04, -4.61354166e-08,  4.10553482e-08,  1.86305659e-08,  0.00000000e+00],
+        [-1.07818343e-01, -1.87620874e-04,  2.54172968e+00,  4.50707865e-04,  2.29903897e-04,  1.14226041e-04,  0.00000000e+00],
+        [-8.75275442e-05, -4.61354166e-08,  4.50707865e-04,  2.09807522e-07,  1.67123574e-07,  7.00281218e-08,  0.00000000e+00],
+        [-1.74466591e-04,  4.10553482e-08,  2.29903897e-04,  1.67123574e-07,  3.45700733e-04,  1.29370100e-04,  0.00000000e+00],
+        [-4.89638797e-05,  1.86305659e-08,  1.14226041e-04,  7.00281218e-08,  1.29370100e-04,  5.18511035e-05,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
+      ], decimal=8)
