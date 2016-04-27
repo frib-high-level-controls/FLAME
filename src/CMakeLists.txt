@@ -69,17 +69,17 @@ target_link_libraries(test_lex
   uscsi_core
 )
 
-add_executable(main
-  main.cpp
+add_executable(test_jb_1
+  test_jb_1.cpp
 )
-target_link_libraries(main
+target_link_libraries(test_jb_1
   uscsi_core
 )
 
-add_executable(test_jb
-  test_jb.cpp
+add_executable(test_jb_2
+  test_jb_2.cpp
 )
-target_link_libraries(test_jb
+target_link_libraries(test_jb_2
   uscsi_core
 )
 
