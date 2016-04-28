@@ -7,6 +7,7 @@ from numpy import testing as NT
 from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 
 from .. import Machine
+import sys
 
 class testBasic(unittest.TestCase):
   def setUp(self):
@@ -93,15 +94,28 @@ foo : LINE = (elem0, elem1);
         self.assertEqual(C['IonEk'], 1.0)
         assert_aequal(C['IV'], numpy.asfarray([1,1,0,0,0,0,0]))
 
+    expect = numpy.asfarray([
+        [1, 0, 1, 0, 1, 0, 0],
+        [0, 1, 0, 1, -0.001193, 1, 0],
+        [1, 0, 1, 0, 1, 0, 0],
+        [0, 1, 0, 1, -0.001193, 1, 0],
+        [1, -0.001193, 1.00000142, -0.001193, 1, -0.001193, 0],
+        [0, 1, 0, 1, -0.001193, 1, 0],
+        [0, 0, 0, 0, 0, 0, 0]
+    ])
+
     def test_generic(self):
         "Propogate a state matrix through a generic section"
         C = self.M.conf()
 
-        S = self.M.allocState({'moment0':C['IV'], 'initial':C['IM']}, inherit=True)
+        S = self.M.allocState({})
+        self.M.propagate(S, 0, 1)
+
+        ##S.moment0[:] = self.expect0
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.Ekinetic, 1.0)
-        self.assertEqual(S.IonEk, 1.0)
-        self.assertEqual(S.IonEs, 1.0)
+        self.assertEqual(S.real_Ekinetic, 0.0)
+        self.assertEqual(S.real_gamma, 1.0)
+        self.assertAlmostEqual(S.real_beta, 0.0)
         self.assertEqual(S.gamma, 2.0)
         self.assertAlmostEqual(S.beta, 0.8660254037844386)
 
@@ -110,29 +124,34 @@ foo : LINE = (elem0, elem1);
         print("state", S.state, C['IM'])
         assert_aequal(S.state, C['IM'].reshape((7,7)), 1e10)
 
-        self.M.propagate(S)
+        self.M.propagate(S, 1, len(self.M))
 
         self.assertEqual(S.pos, 2.0)
         print("moment0",  S.moment0, C['IV'])
-        assert_aequal(S.moment0, C['IV'])
-        print("state", S.state, C['IM'])
-        assert_aequal(S.state, C['IM'].reshape((7,7)), 1e10)
+        # m56 is re-computed.
+        assert_aequal(S.state, [
+          [ 1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
+          [ 1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
+          [ 1.00000000e+00, -3.37431049e+06,  1.00000000e+00, -3.37431049e+06,  1.13859713e+13, -3.37431049e+06,  0.00000000e+00],
+          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
+          [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
+        ], 1e10)
 
     def test_source(self):
         "Initialize w/ all zeros, then propagate through source element to overwrite"
         C = self.M.conf()
 
         S = self.M.allocState({}, inherit=False)
-        self.assertEqual(S.Ekinetic, 0.0) # default (all zeros)
 
         self.M.propagate(S, max=1) # propagate through source element
 
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.Ekinetic, 1.0)
-        self.assertEqual(S.IonEk, 1.0)
-        self.assertEqual(S.IonEs, 1.0)
-        self.assertEqual(S.gamma, 2.0)
-        self.assertAlmostEqual(S.beta, 0.8660254037844386)
+        self.assertEqual(S.ref_IonEk, 1.0)
+        self.assertEqual(S.ref_IonEs, 1.0)
+        self.assertEqual(S.ref_gamma, 2.0)
+        self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)
 
         print("moment0",  S.moment0, C['IV'])
         assert_aequal(S.moment0, C['IV'])
@@ -188,16 +207,14 @@ foo : LINE = (elem0, elem1);
         C = M.conf()
 
         S = M.allocState({}, inherit=False) # defaults
-        self.assertEqual(S.Ekinetic, 0.0)
 
         M.propagate(S, max=1) # propagate through source element
 
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.Ekinetic, 1.0)
-        self.assertEqual(S.IonEk, 1.0)
-        self.assertEqual(S.IonEs, 1.0)
-        self.assertEqual(S.gamma, 2.0)
-        self.assertAlmostEqual(S.beta, 0.8660254037844386)
+        self.assertEqual(S.ref_IonEk, 1.0)
+        self.assertEqual(S.ref_IonEs, 1.0)
+        self.assertEqual(S.ref_gamma, 2.0)
+        self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)
 
         print("moment0",  S.moment0, C['IV1'])
         assert_aequal(S.moment0, C['IV1'])

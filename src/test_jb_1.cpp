@@ -474,22 +474,24 @@ void InitLong(const Machine &sim, const double IonZ)
     double                                IonGamma, IonBeta, SampleIonK;
     double                                IonW, IonZ1, IonEs, IonEk;
     Machine::const_iterator it;
+    state_t                               *StatePtr;
     std::fstream                          outf;
 
     const char FileName[] = "long_tab.out";
 
     Config                   D;
     std::auto_ptr<StateBase> state(sim.allocState(D));
-    MomentState *ST = dynamic_cast<MomentState*>(state.get());
-    if(!ST) throw std::runtime_error("Only sim_type MomentMatrix is supported");
 
     // Propagate through first element.
     sim.propagate(state.get(), 0, 1);
 
+    StatePtr = dynamic_cast<state_t*>(state.get());
+    if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix is supported");
+
     IonZ1 = IonZ;
-    IonEs = ST->IonEs/MeVtoeV;
-    IonW  = ST->IonW/MeVtoeV;
-    IonEk = ST->IonEk/MeVtoeV;
+    IonEs = StatePtr->IonEs/MeVtoeV;
+    IonW  = StatePtr->IonW/MeVtoeV;
+    IonEk = StatePtr->IonEk/MeVtoeV;
 
     IonGamma   = IonW/IonEs;
     IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
@@ -1247,7 +1249,7 @@ void InitRFCav(const Config &conf, const int CavCnt,
         multip     = 1;
         Rm         = 17e0;
     } else {
-        std::cerr << "*** InitLong: undef. cavity type: " << CavType << "\n";
+        std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
         exit(1);
     }
 
@@ -1521,14 +1523,14 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     Config                          D;
 
     std::auto_ptr<StateBase> state(sim.allocState(D));
-    MomentState *ST = static_cast<MomentState*>(state.get());
+    StatePtr = dynamic_cast<state_t*>(state.get());
 
     // Propagate through first element (beam initial conditions).
     sim.propagate(state.get(), 0, 1);
 
-    IonEk = ST->IonEk/MeVtoeV;
-    IonEs = ST->IonEs/MeVtoeV;
-    IonW  = ST->IonW/MeVtoeV;
+    IonEk = StatePtr->IonEk/MeVtoeV;
+    IonEs = StatePtr->IonEs/MeVtoeV;
+    IonW  = StatePtr->IonW/MeVtoeV;
 
     // Define initial conditions.
     Fy_absState = Mom1[state_t::PS_S];
@@ -1544,7 +1546,7 @@ void InitLattice(Machine &sim, const double IonZ, const value_vec &Mom1, const v
     // Skip over state.
     it++;
     // Initialize state.
-    StatePtr = dynamic_cast<state_t*>(state.get());
+//    StatePtr = dynamic_cast<state_t*>(state.get());
     StatePtr->moment0 = Mom1;
     StatePtr->state   = Mom2;
 
@@ -1599,21 +1601,22 @@ void InitLattice(const int nChgState, std::vector<boost::shared_ptr<Machine> > s
         it[k]++;
 
         state.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState(D)));
-        MomentState *ST = static_cast<MomentState*>(state[k].get());
 
         // Propagate through first element (beam initial conditions).
         sim[k]->propagate(state[k].get(), 0, 1);
 
-        IonEk[k] = ST->IonEk/MeVtoeV;
-        IonEs[k] = ST->IonEs/MeVtoeV;
-        IonW[k]  = ST->IonW/MeVtoeV;
+        StatePtr[k] = dynamic_cast<state_t*>(state[k].get());
+
+        IonEk[k] = StatePtr[k]->IonEk/MeVtoeV;
+        IonEs[k] = StatePtr[k]->IonEs/MeVtoeV;
+        IonW[k]  = StatePtr[k]->IonW/MeVtoeV;
 
         // Define initial conditions.
         Fy_absState[k] = Mom1[k][state_t::PS_S];
         EkState[k]     = IonEk[k] + Mom1[k][state_t::PS_PS];
 
         // Initialize state.
-        StatePtr[k] = dynamic_cast<state_t*>(state[k].get());
+//        StatePtr[k] = dynamic_cast<state_t*>(state[k].get());
         StatePtr[k]->moment0 = Mom1[k];
         StatePtr[k]->state   = Mom2[k];
 
@@ -1897,10 +1900,12 @@ int main(int argc, char *argv[])
         std::cout << std::fixed << std::setprecision(5)
                   << "\nInitLong: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
+//        InitLong(*sims[0], ChgState[0]);
 //        InitLattice(*sims[0], ChgState[0], BC[0], BE[0]);
+//        InitLong(*sims[1], ChgState[1]);
 //        InitLattice(*sims[1], ChgState[1], BC[1], BE[1]);
-//        InitLattice(2, sims, ChgState, NChg, BC, BE);
-        InitLattice(1, sims, ChgState, NChg, BC, BE);
+
+        InitLattice(2, sims, ChgState, NChg, BC, BE);
 
         tStamp[1] = clock();
 

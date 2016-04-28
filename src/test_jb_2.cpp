@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <fstream>
 #include <list>
+#include <ctime>
 
 #include <boost/numeric/ublas/io.hpp>
 
@@ -13,8 +14,6 @@
 #include <scsi/state/vector.h>
 #include <scsi/state/matrix.h>
 
-
-std::string HomeDir = "";
 
 typedef Moment2State state_t;
 
@@ -109,12 +108,12 @@ void propagate(std::auto_ptr<Config> conf)
     const int nChgStates = 2;
 
     int                                      k;
-    double                                   IonEk, IonEs, IonW, Fy_absState, EkState;
     std::vector<double>                      ChgState, NChg;
     value_vec                                BC[nChgStates];
     value_mat                                BE[nChgStates];
     std::vector<boost::shared_ptr<Machine> > sims;
     Machine::iterator          it;
+    clock_t                                  tStamp[2];
 
 
     for (k = 0; k < nChgStates; k++) {
@@ -136,12 +135,8 @@ void propagate(std::auto_ptr<Config> conf)
 
     std::cout << "\nIon charge states:\n";
     for (k = 0; k < nChgStates; k++)
-        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k];
-    std::cout << "\n";
-    std::cout << "\nIon charge amount:\n";
-    for (k = 0; k < nChgStates; k++)
-        std::cout << std::fixed << std::setprecision(1) << std::setw(8) << NChg[k];
-    std::cout << "\n";
+        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k]
+                  << std::setprecision(1) << std::setw(8) << NChg[k] << "\n";
     std::cout << "\nBarycenter:\n";
     PrtVec(BC[0]);
     PrtVec(BC[1]);
@@ -160,59 +155,46 @@ void propagate(std::auto_ptr<Config> conf)
     Config D;
     state_t *StatePtr[nChgStates];
 
-    std::cout << "\n";
     for (k = 0; k < nChgStates; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
-        Moment2State *ST = dynamic_cast<Moment2State*>(state.get());
-        if(!ST) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 
-        it = sims[k]->begin();
-        // Skip over state.
-        it++;
+        StatePtr[k] = dynamic_cast<state_t*>(state.get());
+        if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
 
         // Propagate through first element (beam initial conditions).
         sims[k]->propagate(state.get(), 0, 1);
 
-        IonEk = ST->IonEk/MeVtoeV;
-        IonEs = ST->IonEs/MeVtoeV;
-        IonW  = ST->IonW/MeVtoeV;
-
-        // Define initial conditions.
-        Fy_absState = BC[k][state_t::PS_S];
-        EkState     = IonEk + BC[k][state_t::PS_PS];
-
         // Initialize state.
-        StatePtr[k] = dynamic_cast<state_t*>(state.get());
-        StatePtr[k]->moment0 = BC[k];
-        StatePtr[k]->state   = BE[k];
+        StatePtr[k]->ref.IonZ       = ChgState[0];
+        StatePtr[k]->real.IonZ      = ChgState[k];
 
-        std::cout << std::fixed << std::setprecision(5)
-                  << "  IonZ = " << ChgState[k]
-                  << ",  IonEs [Mev/u] = " << IonEs << ", IonEk [Mev/u] = " << IonEk
-                  << ", IonW [Mev/u] = " << IonW << "\n";
-    }
+        StatePtr[k]->moment0        = BC[k];
+        StatePtr[k]->state          = BE[k];
 
-    //    for (k = 0; k < nChgStates; k++) {
-    for (k = 0; k < 1; k++) {
-        std::auto_ptr<StateBase> state(sims[k]->allocState(D));
+        StatePtr[k]->real.gamma     = StatePtr[k]->real.IonW/StatePtr[k]->real.IonEs;
+        StatePtr[k]->real.beta      = sqrt(1e0-1e0/sqr(StatePtr[k]->real.gamma));
+        StatePtr[k]->real.bg        = StatePtr[k]->real.beta*StatePtr[k]->real.gamma;
 
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
-
-        sims[k]->propagate(state.get(), 0, 1);
+        StatePtr[k]->real.phis      = StatePtr[k]->moment0[state_t::PS_S];
+        StatePtr[k]->real.Ekinetic += StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
 
         it = sims[k]->begin();
         // Skip over state.
         it++;
-        // Initialize state.
-        StatePtr[k]->moment0 = BC[k];
-        StatePtr[k]->state   = BE[k];
 
-        ElementVoid* elem = *it;
+        tStamp[0] = clock();
         for (; it != sims[k]->end(); ++it) {
 //            elem->advance(*state);
 //            sims[k]->propagate(state.get(), elem->index+n-1, 1);
             (*it)->advance(*state);
         }
+
+        tStamp[1] = clock();
+
+        std::cout << std::fixed << std::setprecision(5)
+                  << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
         std::cout << "\n";
         PrtVec(StatePtr[k]->moment0);
@@ -223,25 +205,12 @@ void propagate(std::auto_ptr<Config> conf)
 }
 
 
-void GetCavTLMstr(void)
-{
-    std::fstream inf1, inf2;
-
-    inf1.open((HomeDir+"/data/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
-    CavTLMstream2[0] << inf1.rdbuf();
-
-    inf2.open((HomeDir+"/data/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
-    CavTLMstream2[1] << inf2.rdbuf();
-}
-
-
 int main(int argc, char *argv[])
 {
     try {
         std::auto_ptr<Config> conf;
 
         if(argc>2)
-            HomeDir = argv[2];
 
         glps_debug = 0; // 0 or 1.
 
@@ -257,11 +226,6 @@ int main(int argc, char *argv[])
 //        std::cout<<"# Reduced lattice\n";
 //        GLPSPrint(std::cout, *conf);
 //        std::cout<<"\n";
-
-        CavData2[0].RdData(HomeDir+"/data/axisData_41.txt");
-        CavData2[1].RdData(HomeDir+"/data/axisData_85.txt");
-
-        GetCavTLMstr();
 
         // register state and element types
         registerLinear();

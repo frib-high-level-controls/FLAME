@@ -30,12 +30,19 @@ MomentState::MomentState(const Config& c)
     }catch(boost::bad_any_cast&){
         throw std::invalid_argument("'initial' has wrong type (must be vector)");
     }
+
+    IonEs          = c.get<double>("IonEs", 0e0), // Rest energy.
+    IonEk          = c.get<double>("IonEk", 0e0);
+    IonZ           = c.get<double>("IonZ", 0e0);
+
+    IonW           = IonEs + IonEk;
 }
 
 MomentState::~MomentState() {}
 
 MomentState::MomentState(const MomentState& o, clone_tag t)
     :StateBase(o, t)
+    ,IonZ(o.IonZ)
     ,IonEs(o.IonEs)
     ,IonEk(o.IonEk)
     ,IonW(o.IonW)
@@ -48,11 +55,12 @@ void MomentState::assign(const StateBase& other)
     const MomentState *O = dynamic_cast<const MomentState*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
-    IonEs = O->IonEs;
-    IonEk = O->IonEk;
-    IonW  = O->IonW;
-    moment0 = O->moment0;
-    state = O->state;
+    IonZ     = O->IonZ;
+    IonEs    = O->IonEs;
+    IonEk    = O->IonEk;
+    IonW     = O->IonW;
+    moment0  = O->moment0;
+    state    = O->state;
     StateBase::assign(other);
 }
 
@@ -78,25 +86,31 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim[0] = moment0.size();
         return true;
     } else if(idx==2) {
-        Info.name = "IonEs";
-        Info.ndim = 0;
+        Info.name = "IonZ";
+        Info.ptr = &IonZ;
         Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEs;
+        Info.ndim = 0;
         return true;
     } else if(idx==3) {
-        Info.name = "IonEk";
-        Info.ndim = 0;
+        Info.name = "IonEs";
+        Info.ptr = &IonEs;
         Info.type = ArrayInfo::Double;
-        Info.ptr = &IonEk;
+        Info.ndim = 0;
         return true;
     } else if(idx==4) {
-        Info.name = "IonW";
-        Info.ndim = 0;
+        Info.name = "IonEk";
+        Info.ptr = &IonEk;
         Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==5) {
+        Info.name = "IonW";
         Info.ptr = &IonW;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-5, Info);
+    return StateBase::getArray(idx-6, Info);
 }
 
 MomentElementBase::MomentElementBase(const Config& c)

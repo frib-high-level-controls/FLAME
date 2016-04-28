@@ -49,15 +49,7 @@ S2 = [
 
 S: source, initial = S1;
 
-# Default.
-# S: source, initial = [
-#  1.0,  0,   0,   0,   0,   0,
-#   0,  1.0,  0,   0,   0,   0,
-#   0,   0,  1.0,  0,   0,   0,
-#   0,   0,   0,  1.0,  0,   0,
-#   0,   0,   0,   0,  1.0,  0,
-#   0,   0,   0,   0,   0,  1.0
-# ];
+Eng_Data_Dir = "../python/uscsi/test";
 
 drift_1: drift, L = 0.072000, aper = 0.020000;
 drift_2: drift, L = 0.135064, aper = 0.020000;
@@ -1610,16 +1602,18 @@ cell: LINE = (
   FS1_STRL, FS1_CSS2, FS1_CH03, FS1_CSS3, FS1_BBS, FS1_BMS1, FS1_CH04, FS1_BMS2
 );
 
-#test: LINE = (
-#  S,
-#  drift_1, drift_2, ls1_ca01_cav1_d1127, drift_3, ls1_ca01_bpm_d1129_1, drift_4, drift_5, ls1_ca01_sol1_d1131_1,
-#  ls1_ca01_dch_d1131_2, ls1_ca01_dcv_d1131_3, ls1_ca01_sol1_d1131_2, drift_6, drift_7, ls1_ca01_cav2_d1135, drift_8, ls1_ca01_cav3_d1143,
-#  drift_9, ls1_ca01_bpm_d1144_4, drift_10, drift_11, ls1_ca01_sol2_d1147_3, ls1_ca01_dch_d1147_5, ls1_ca01_dcv_d1147_6, ls1_ca01_sol2_d1147_4,
-#  drift_12, drift_13, ls1_ca01_cav4_d1150, drift_14, drift_15);
-#);
+test1: LINE = (S, drift_1, drift_2, ls1_ca01_cav1_d1127);
+test2: LINE = (S, drift_1, drift_2, ls1_ca01_cav1_d1127, drift_3, ls1_ca01_bpm_d1129_1, drift_4, drift_5, ls1_ca01_sol1_d1131_1,
+               ls1_ca01_dch_d1131_2, ls1_ca01_dcv_d1131_3, ls1_ca01_sol1_d1131_2, drift_6, drift_7, ls1_ca01_cav2_d1135);
 
-test: LINE = (S, drift_1);
+test: LINE = (
+  S,
+  drift_1, drift_2, ls1_ca01_cav1_d1127, drift_3, ls1_ca01_bpm_d1129_1, drift_4, drift_5, ls1_ca01_sol1_d1131_1,
+  ls1_ca01_dch_d1131_2, ls1_ca01_dcv_d1131_3, ls1_ca01_sol1_d1131_2, drift_6, drift_7, ls1_ca01_cav2_d1135, drift_8, ls1_ca01_cav3_d1143,
+  drift_9, ls1_ca01_bpm_d1144_4, drift_10, drift_11, ls1_ca01_sol2_d1147_3, ls1_ca01_dch_d1147_5, ls1_ca01_dcv_d1147_6, ls1_ca01_sol2_d1147_4,
+  drift_12, drift_13, ls1_ca01_cav4_d1150, drift_14, drift_15);
 
-#USE: LS1;
+#USE: test;
 
-USE: test;
+USE: LS1;
+

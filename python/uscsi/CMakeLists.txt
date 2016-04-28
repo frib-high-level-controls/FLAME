@@ -43,6 +43,11 @@ set(PY_SRC_TEST
   test/latticeout_IMP_All.lat
   test/test_h5.lat
   test/test.h5
+
+  test/data/axisData_41.txt
+  test/data/axisData_85.txt
+  test/data/Multipole41/thinlenlon_41.txt
+  test/data/Multipole85/thinlenlon_85.txt
 )
 
 set(PY_SRC_DATA

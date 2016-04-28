@@ -13,20 +13,18 @@
 /** @brief Simulation state which include only a matrix
  */
 
-class CavDataType {
-// Cavity on-axis longitudinal electric field vs. s.
-public:
-    std::vector<double> s,     // s coordinate [m]
-                        Elong; // Longitudinal Electric field [V/m].
-
-    void RdData(const std::string&);
-    void show(std::ostream&, const int) const;
-    void show(std::ostream&) const;
+struct Particle {
+    double IonZ,        // Charge state.
+           IonEs,       // Rest energy.
+           IonEk,       // Reference kinetic energy.
+           IonW,        // Total energy.
+           gamma,       // Gamma for ion.
+           beta,        // Beta for ion.
+           bg,          // Beta*gamma;
+           SampleIonK,
+           phis,        // Synchrotron phase.
+           Ekinetic;    // Total kinetic energy.
 };
-
-
-extern std::stringstream   CavTLMstream2[];
-extern CavDataType         CavData2[];
 
 struct Moment2State : public StateBase
 {
@@ -52,23 +50,7 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    double IonZ;       // Charge state.
-    double IonEs,
-           IonEk,
-           IonW;
-    double Ekinetic;   // kinetic energy of reference particle
-                       // actual is Ekinetic + moment0[6]
-    double SampleIonK;
-
-    double sync_phase, // synchotron phase
-           FyAbs,      // Betatron phase for reference particle.
-           EkState,
-           Fy_absState;
-
-    double gamma,      // (Erest+Ekinetic)/Erest
-           beta,       // sqrt(1e0-1e0/(gamma*gamma))
-           bg0,        // Initial beta*gamma.
-           bg1;        // Beta*gamma for reference particle.
+    Particle ref, real;
 
     vector_t moment0;
     matrix_t state; // TODO: better name
@@ -101,11 +83,6 @@ struct Moment2ElementBase : public ElementVoid
 
     typedef boost::numeric::ublas::matrix<double> value_t;
 
-    double FSampLength; //!< sample (rf) clock wavelength
-    /** Fy += phase_factor/beta
-     * phase_factor := L*2*pi*Fsamp/C
-     */
-    double phase_factor;
     double Erest; //!< rest energy of particle species
 
     double last_Kenergy_in, last_Kenergy_out;
