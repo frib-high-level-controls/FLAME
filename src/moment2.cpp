@@ -109,12 +109,13 @@ Moment2State::Moment2State(const Config& c)
     ref.bg         = (ref.beta != 0e0)? ref.beta*ref.gamma : 1e0;
 
     ref.SampleIonK = (ref.IonEs != 0e0)? 2e0*M_PI/(ref.beta*SampleLambda) : 2e0*M_PI/SampleLambda;
-    //EkState     = IonEk + moment0[PS_PS]*MeVtoeV;
-
 
     ref.Ekinetic   = ref.IonEk;
 
     real = ref;
+
+    real.phis      = moment0[PS_S];
+    real.Ekinetic += moment0[PS_PS]*MeVtoeV;
 }
 
 Moment2State::~Moment2State() {}
