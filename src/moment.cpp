@@ -70,7 +70,8 @@ void MomentState::show(std::ostream& strm) const
 }
 
 bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
-    if(idx==0) {
+    unsigned I=0;
+    if(idx==I++) {
         Info.name = "state";
         Info.ptr = &state(0,0);
         Info.type = ArrayInfo::Double;
@@ -78,39 +79,39 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim[0] = state.size1();
         Info.dim[1] = state.size2();
         return true;
-    } else if(idx==1) {
+    } else if(idx==I++) {
         Info.name = "moment0";
         Info.ptr = &moment0(0);
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = moment0.size();
         return true;
-    } else if(idx==2) {
+    } else if(idx==I++) {
         Info.name = "IonZ";
         Info.ptr = &IonZ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==3) {
+    } else if(idx==I++) {
         Info.name = "IonEs";
         Info.ptr = &IonEs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==4) {
+    } else if(idx==I++) {
         Info.name = "IonEk";
         Info.ptr = &IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==I++) {
         Info.name = "IonW";
         Info.ptr = &IonW;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-6, Info);
+    return StateBase::getArray(idx-I, Info);
 }
 
 MomentElementBase::MomentElementBase(const Config& c)

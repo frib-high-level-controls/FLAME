@@ -34,13 +34,14 @@ void StateBase::assign(const StateBase& other)
 
 bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
 {
-    if(idx==0) {
+    unsigned I=0;
+    if(idx==I++) {
         Info.name = "next_elem";
         Info.ndim = 0;
         Info.type = ArrayInfo::Sizet;
         Info.ptr = &next_elem;
         return true;
-    } else if(idx==1) {
+    } else if(idx==I++) {
         Info.name = "pos";
         Info.ptr = &pos;
         Info.type = ArrayInfo::Double;

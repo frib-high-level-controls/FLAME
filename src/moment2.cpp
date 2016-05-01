@@ -158,7 +158,8 @@ void Moment2State::show(std::ostream& strm) const
 }
 
 bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
-    if(idx==0) {
+    unsigned I=0;
+    if(idx==I++) {
         Info.name = "state";
         Info.ptr = &state(0,0);
         Info.type = ArrayInfo::Double;
@@ -166,135 +167,135 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim[0] = state.size1();
         Info.dim[1] = state.size2();
         return true;
-    } else if(idx==1) {
+    } else if(idx==I++) {
         Info.name = "moment0";
         Info.ptr = &moment0(0);
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = moment0.size();
         return true;
-    } else if(idx==2) {
+    } else if(idx==I++) {
         Info.name = "ref_IonZ";
         Info.ptr = &ref.IonZ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==3) {
+    } else if(idx==I++) {
         Info.name = "ref_IonEs";
         Info.ptr = &ref.IonEs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==4) {
+    } else if(idx==I++) {
         Info.name = "ref_IonEk";
         Info.ptr = &ref.IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==5) {
+    } else if(idx==I++) {
         Info.name = "ref_IonW";
         Info.ptr = &ref.IonW;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==6) {
+    } else if(idx==I++) {
         Info.name = "ref_gamma";
         Info.ptr = &ref.gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==7) {
+    } else if(idx==I++) {
         Info.name = "ref_beta";
         Info.ptr = &ref.beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==8) {
+    } else if(idx==I++) {
         Info.name = "ref_bg";
         Info.ptr = &ref.bg;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==9) {
+    } else if(idx==I++) {
         Info.name = "ref_SampleIonK";
         Info.ptr = &ref.SampleIonK;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==10) {
+    } else if(idx==I++) {
         Info.name = "ref_phis";
         Info.ptr = &ref.phis;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==11) {
+    } else if(idx==I++) {
         Info.name = "ref_Ekinetic";
         Info.ptr = &ref.Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==12) {
+    } else if(idx==I++) {
         Info.name = "real_IonZ";
         Info.ptr = &real.IonZ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==13) {
+    } else if(idx==I++) {
         Info.name = "real_IonEs";
         Info.ptr = &real.IonEs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==14) {
+    } else if(idx==I++) {
         Info.name = "real_IonEk";
         Info.ptr = &real.IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==15) {
+    } else if(idx==I++) {
         Info.name = "real_IonW";
         Info.ptr = &real.IonW;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==16) {
+    } else if(idx==I++) {
         Info.name = "real_gamma";
         Info.ptr = &real.gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==17) {
+    } else if(idx==I++) {
         Info.name = "real_beta";
         Info.ptr = &real.beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==18) {
+    } else if(idx==I++) {
         Info.name = "real_bg";
         Info.ptr = &real.bg;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==19) {
+    } else if(idx==I++) {
         Info.name = "real_SampleIonK";
         Info.ptr = &real.SampleIonK;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==20) {
+    } else if(idx==I++) {
         Info.name = "real_phis";
         Info.ptr = &real.phis;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
-    } else if(idx==21) {
+    } else if(idx==I++) {
         Info.name = "real_Ekinetic";
         Info.ptr = &real.Ekinetic;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
-    return StateBase::getArray(idx-22, Info);
+    return StateBase::getArray(idx-I, Info);
 }
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
