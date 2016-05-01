@@ -19,10 +19,10 @@ simtype = grp.attrs['sim_type']
 
 print('sim_type', simtype)
 
-def show_vector(grp):
+def show_vector(grp, vector='state'):
     'Show envelope size and angle as a function of s position'
     pos   = grp['pos']
-    state = grp['state']
+    state = grp[vector]
 
     subplot(2,1,1)
     plot(pos, state[:,0], '-b',
@@ -43,7 +43,8 @@ def show_generic(grp):
     print("Unknown sim_type")
 
 showsim = {
-  'Vector': show_vector
+  'Vector': show_vector,
+  'MomentMatrix2': lambda x:show_vector(x,'moment0'),
 }
 
 showsim.get(simtype)(grp)
