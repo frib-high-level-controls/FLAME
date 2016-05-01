@@ -706,8 +706,9 @@ void CavDataType::RdData(const std::string &FileName)
 
     inf.open(FileName.c_str(), std::ifstream::in);
     if (!inf.is_open()) {
-        std::cerr << "*** RdData: failed to open " << FileName << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** RdData: failed to open " << FileName << "\n";
+        throw std::runtime_error(strm.str());
     }
     while (getline(inf, line) && !inf.fail()) {
         str.str(line);
@@ -844,8 +845,9 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
     switch (cavilabel) {
     case 41:
         if (beta < 0.025 || beta > 0.08) {
-            std::cerr << "*** GetTransitFac: beta out of Range " << beta << "\n";
-            exit(1);
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: beta out of Range " << beta << "\n";
+            throw std::runtime_error(strm.str());
         }
         switch (gaplabel) {
         case 0:
@@ -876,14 +878,16 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             V0   = 0.492385*EfieldScl;
             break;
         default:
-            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
-            exit(1);
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
+            throw std::runtime_error(strm.str());
         }
         break;
     case 85:
         if (beta < 0.05 || beta > 0.25) {
-            std::cerr << "*** GetTransitFac: beta out of range " << beta << "\n";
-            exit(1);
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: beta out of range " << beta << "\n";
+            throw std::runtime_error(strm.str());
         }
         switch (gaplabel) {
           case 0:
@@ -911,13 +915,15 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             V0   = 0.9838574*EfieldScl;
             break;
         default:
-            std::cerr << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
-            exit(1);
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
+            throw std::runtime_error(strm.str());
         }
         break;
     default:
-        std::cerr << "*** GetTransitFac: undef. cavity type" << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** GetTransitFac: undef. cavity type" << "\n";
+        throw std::runtime_error(strm.str());
     }
 
     // Convert from [mm] to [m].
@@ -930,8 +936,9 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 {
 
     if ((cavi == 1) && (IonK < 0.025 || IonK > 0.055)) {
-        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** TransitFacMultipole: IonK out of Range" << "\n";
+        throw std::runtime_error(strm.str());
     } else if ((cavi == 2) && (IonK < 0.006 || IonK > 0.035)) {
         std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";
     }
@@ -1042,8 +1049,9 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             break;
         }
     } else {
-        std::cerr << "*** TransitFacMultipole: undef. multipole type " << flabel << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** TransitFacMultipole: undef. multipole type " << flabel << "\n";
+        throw std::runtime_error(strm.str());
     }
 }
 
@@ -1074,8 +1082,9 @@ double GetCavPhase(const int cavi, Particle ref, const double IonFys, const doub
         Fyc = 5.428*pow(IonEk, -0.5008) + 1.6;
         break;
     default:
-        std::cerr << "*** GetCavPhase: undef. cavity type" << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** GetCavPhase: undef. cavity type" << "\n";
+        throw std::runtime_error(strm.str());
     }
 
     return IonFys - Fyc - ref.phis*multip;
@@ -1126,8 +1135,9 @@ struct ElementRFCavity : public Moment2ElementBase
             CavData.RdData(Eng_Data_Dir+"/axisData_85.txt");
             inf.open((Eng_Data_Dir+"/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
         } else {
-            std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-            exit(1);
+            std::ostringstream strm;
+            strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
+            throw std::runtime_error(strm.str());
         }
 
         this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
@@ -1291,8 +1301,9 @@ void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], c
                     Accel = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
                 }
             } else {
-                std::cerr << "*** GetCavMatParams: undef. multipole element " << Elem << "\n";
-                exit(1);
+                std::ostringstream strm;
+                strm << "*** GetCavMatParams: undef. multipole element " << Elem << "\n";
+                throw std::runtime_error(strm.str());
             }
 
             CavTLMLineTab.set(s, Elem, E0, T, S, Accel);
@@ -1518,8 +1529,9 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
                 Mprob(3, 3) = Accel;
                 Mtrans      = prod(Mprob, Mtrans);
             } else {
-                std::cerr << "*** GenCavMat: undef. multipole type " << Elem << "\n";
-                exit(1);
+                std::ostringstream strm;
+                strm << "*** GetCavMat: undef. multipole type " << Elem << "\n";
+                throw std::runtime_error(strm.str());
             }
 //            std::cout << Elem << "\n";
 //            PrtMat(Mprob);
@@ -1642,8 +1654,9 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
         cavi = 2;
     } else {
-        std::cerr << "*** PropagateLongRFCav: undef. cavity type: " << CavType << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** PropagateLongRFCav: undef. cavity type: " << CavType << "\n";
+        throw std::runtime_error(strm.str());
     }
 
     fRF       = conf.get<double>("f");
@@ -1705,8 +1718,9 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
         multip     = 8;
         Rm         = 20e0;
     } else {
-        std::cerr << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-        exit(1);
+        std::ostringstream strm;
+        strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
+        throw std::runtime_error(strm.str());
     }
 
     IonFy_i   = multip*real.phis + conf.get<double>("phi_ref");
