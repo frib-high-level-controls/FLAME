@@ -2,6 +2,7 @@
 #define SCSI_MOMENT_H
 
 #include <ostream>
+#include <limits>
 #include <iomanip>
 #include <math.h>
 
@@ -24,6 +25,14 @@ struct Particle {
            SampleIonK,
            phis,        // Synchrotron phase.
            Ekinetic;    // Total kinetic energy.
+
+    Particle() {
+        // initially spoil all
+        IonZ = IonEs = IonEk = IonW
+        = gamma = beta = bg
+        = SampleIonK = phis = Ekinetic
+        = std::numeric_limits<double>::quiet_NaN();
+    }
 };
 
 struct Moment2State : public StateBase
