@@ -244,6 +244,7 @@ parse_context::parse_context(const char *path)
 
     addop("parse", &unary_parse, glps_expr_config, 1, glps_expr_string);
     addop("file", &unary_file, glps_expr_string, 1, glps_expr_string);
+    addop("dir", &unary_file, glps_expr_string, 1, glps_expr_string);
     addop("h5file", &unary_h5file, glps_expr_string, 1, glps_expr_string);
 }
 

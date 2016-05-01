@@ -340,7 +340,7 @@ class testBasic(unittest.TestCase):
     file_name = 'latticeout_IMP_withPV_consolidate2.lat'
 
     with open(os.path.join(datadir, file_name), 'rb') as inf:
-      M = Machine(inf.read())
+      M = Machine(inf, path=os.path.dirname(inf.name))
 
       S = M.allocState({})
       M.propagate(S, 0, 1)

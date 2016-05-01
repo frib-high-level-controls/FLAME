@@ -49,7 +49,7 @@ S2 = [
 
 S: source, moment0=BaryCenter1, initial = S1;
 
-Eng_Data_Dir = "../python/uscsi/test";
+Eng_Data_Dir = dir("data");
 
 drift_1: drift, L = 0.072000, aper = 0.020000;
 drift_2: drift, L = 0.135064, aper = 0.020000;
