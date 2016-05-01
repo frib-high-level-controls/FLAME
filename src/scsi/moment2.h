@@ -27,10 +27,11 @@ struct Particle {
            Ekinetic;    // Total kinetic energy.
 
     Particle() {
-        // initially spoil all
+        phis = 0.0;
+        // initially spoil
         IonZ = IonEs = IonEk = IonW
         = gamma = beta = bg
-        = SampleIonK = phis = Ekinetic
+        = SampleIonK = Ekinetic
         = std::numeric_limits<double>::quiet_NaN();
     }
 };
