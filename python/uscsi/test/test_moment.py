@@ -1,6 +1,8 @@
 
 from __future__ import print_function
 
+from math import sqrt
+
 import unittest
 import numpy
 from numpy import testing as NT
@@ -65,8 +67,8 @@ class testMoment2Single(unittest.TestCase):
         self.M = Machine(b'''
 sim_type = "MomentMatrix2";
 Frf = 80.5e6;
-IonEs = 1.0;
-IonEk = 1.0;
+IonEs = 930e6;
+IonEk = 500e3;
 IM = [1,0,1,0,1,0,0,
       0,1,0,1,0,1,0,
       1,0,1,0,1,0,0,
@@ -91,7 +93,7 @@ foo : LINE = (elem0, elem1);
     def test_config(self):
         C = self.M.conf()
         self.assertTrue("elements" in C)
-        self.assertEqual(C['IonEk'], 1.0)
+        self.assertEqual(C['IonEk'], 500e3)
         assert_aequal(C['IV'], numpy.asfarray([1,1,0,0,0,0,0]))
 
     expect = numpy.asfarray([
@@ -113,30 +115,32 @@ foo : LINE = (elem0, elem1);
 
         ##S.moment0[:] = self.expect0
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.real_Ekinetic, 0.0)
-        self.assertEqual(S.real_gamma, 1.0)
-        self.assertAlmostEqual(S.real_beta, 0.0)
-        self.assertEqual(S.gamma, 2.0)
-        self.assertAlmostEqual(S.beta, 0.8660254037844386)
+        self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
+        self.assertEqual(S.real_Ekinetic, C['IonEk'])
+        self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
+        self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
 
-        print("moment0",  S.moment0, C['IV'])
+        print("moment0",  S.moment0.tolist(), C['IV'].tolist())
         assert_aequal(S.moment0, C['IV'])
-        print("state", S.state, C['IM'])
+        print("state", S.state.tolist(), C['IM'].tolist())
         assert_aequal(S.state, C['IM'].reshape((7,7)), 1e10)
 
         self.M.propagate(S, 1, len(self.M))
 
         self.assertEqual(S.pos, 2.0)
-        print("moment0",  S.moment0, C['IV'])
+        print("moment0",  S.moment0.tolist(), C['IV'].tolist())
+        assert_aequal(S.moment0, C['IV'])
+
+        print("state", S.state.tolist(), C['IM'].tolist())
         # m56 is re-computed.
         assert_aequal(S.state, [
-          [ 1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
-          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
-          [ 1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  0.00000000e+00],
-          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
-          [ 1.00000000e+00, -3.37431049e+06,  1.00000000e+00, -3.37431049e+06,  1.13859713e+13, -3.37431049e+06,  0.00000000e+00],
-          [ 0.00000000e+00,  1.00000000e+00,  0.00000000e+00,  1.00000000e+00, -3.37431049e+06,  1.00000000e+00,  0.00000000e+00],
-          [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
+          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+          [0.0, 1.0, 0.0, 1.0, -102.86116067064165, 1.0, 0.0],
+          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+          [0.0, 1.0, 0.0, 1.0, -102.86116067064165, 1.0, 0.0],
+          [1.0, -102.86116067064165, 1.0, -102.86116067064165, 10581.418374511557, -102.86116067064165, 0.0],
+          [0.0, 1.0, 0.0, 1.0, -102.86116067064165, 1.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         ], 1e10)
 
     def test_source(self):
@@ -148,10 +152,10 @@ foo : LINE = (elem0, elem1);
         self.M.propagate(S, max=1) # propagate through source element
 
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.ref_IonEk, 1.0)
-        self.assertEqual(S.ref_IonEs, 1.0)
-        self.assertEqual(S.ref_gamma, 2.0)
-        self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)
+        self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
+        self.assertEqual(S.real_Ekinetic, C['IonEk'])
+        self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
+        self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
 
         print("moment0",  S.moment0, C['IV'])
         assert_aequal(S.moment0, C['IV'])
