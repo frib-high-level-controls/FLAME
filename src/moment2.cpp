@@ -372,6 +372,16 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 
 namespace {
 
+void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBase::value_t &M)
+{
+    typedef typename Moment2ElementBase::state_t state_t;
+
+    M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+    M(state_t::PS_PX, state_t::PS_X) =  tan(phi)/rho;
+    M(state_t::PS_PY, state_t::PS_Y) = -tan(phi)/rho;
+}
+
 void GetQuadMatrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M)
 {
     // 2D quadrupole transport matrix.
@@ -520,6 +530,17 @@ struct ElementDrift : public Moment2ElementBase
     virtual const char* type_name() const {return "drift";}
 };
 
+typedef boost::numeric::ublas::matrix<double> value_mat;
+void PrtMat1(const value_mat &M)
+{
+    for (size_t j = 0; j < M.size1(); j++) {
+        for (size_t k = 0; k < M.size2(); k++)
+            std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << M(j, k);
+        std::cout << "\n";
+    }
+}
+
 struct ElementSBend : public Moment2ElementBase
 {
     // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
@@ -531,22 +552,69 @@ struct ElementSBend : public Moment2ElementBase
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L")*MtoMM,
-               phi = c.get<double>("phi"),               // [rad].
-               rho = L/phi,
-               K   = c.get<double>("K", 0e0)/sqr(MtoMM), // [1/m^2].
-               Kx  = K + 1e0/sqr(rho),
-               Ky  = -K;
+    }
+    virtual ~ElementSBend() {}
 
+    virtual void recompute_matrix(state_t& ST)
+    {
+        double L    = conf().get<double>("L")*MtoMM,
+               phi  = conf().get<double>("phi")*M_PI/180e0,
+               phi1 = conf().get<double>("phi1")*M_PI/180e0,
+               phi2 = conf().get<double>("phi2")*M_PI/180e0,
+               rho  = L/phi,
+               K    = conf().get<double>("K", 0e0)/sqr(MtoMM),
+               Kx   = K + 1e0/sqr(rho),
+               Ky   = -K,
+               dx   = 0e0,
+               sx   = 0e0,
+               m51  = 0e0;
+
+        typename Moment2ElementBase::value_t edge1, edge2;
+
+        // Edge focusing.
+        GetEdgeMatrix(rho, phi1, edge1);
         // Horizontal plane.
         GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, this->transfer_raw);
         // Vertical plane.
         GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer_raw);
+
+        // Include dispersion.
+        if (Kx == 0e0) {
+            dx = sqr(L)/(2e0*rho);
+            sx = L;
+        } else if (Kx > 0e0) {
+            dx = (1e0-cos(sqrt(Kx)*L))/(rho*Kx);
+            sx = sin(sqrt(Kx)*L)/sqrt(Kx);
+        } else {
+            dx = (1e0-cosh(sqrt(-Kx)*L))/(rho*Kx);
+            sx = sin(sqrt(Kx)*L)/sqrt(Kx);
+        }
+
+        this->transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        this->transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        this->transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
+        this->transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx*ST.ref.SampleIonK;
+        // Low beta approximation.
+        this->transfer_raw(state_t::PS_S,  state_t::PS_PS) =
+                -(-(L-sx)/(Kx*sqr(rho))+L/sqr(ST.ref.gamma))*ST.ref.SampleIonK/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+
+        // Edge focusing.
+        GetEdgeMatrix(rho, phi2, edge2);
+
+        transfer_raw = prod(transfer_raw, edge1);
+        transfer_raw = prod(edge2, transfer_raw);
+
+        std::cout << "\n";
+        PrtMat1(transfer_raw);
+
         // Longitudinal plane.
         // For total path length.
 //        this->transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
+
+        transfer = transfer_raw;
+
+        last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
     }
-    virtual ~ElementSBend() {}
 
     virtual const char* type_name() const {return "sbend";}
 };
