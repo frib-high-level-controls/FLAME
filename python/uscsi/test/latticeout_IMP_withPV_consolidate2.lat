@@ -1619,7 +1619,13 @@ to_strl: LINE = (
   LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02, FS1_CSS1
 );
 
-USE: to_strl;
+tst_bend: LINE = (
+  S,
+  fs1_css_dh_d2163_1
+);
+
+USE: tst_bend;
 
 #USE: LS1;
 
+#USE: to_strl;

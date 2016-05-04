@@ -114,8 +114,9 @@ Moment2State::Moment2State(const Config& c)
 
     real = ref;
 
-    real.phis      = moment0[PS_S];
-    real.Ekinetic += moment0[PS_PS]*MeVtoeV;
+    // Initialized by user.
+//    real.phis      = moment0[PS_S];
+//    real.Ekinetic += moment0[PS_PS]*MeVtoeV;
 }
 
 Moment2State::~Moment2State() {}
@@ -344,6 +345,12 @@ void Moment2ElementBase::advance(StateBase& s)
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
+    // Ekinetic is Es + E_state; the latter is set by user.
+    ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
+    ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
+    ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
+    ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
+
     if(ST.real.Ekinetic!=last_Kenergy_in) {
 
         // need to re-calculate energy dependent terms
@@ -352,16 +359,17 @@ void Moment2ElementBase::advance(StateBase& s)
 
         noalias(scratch)  = prod(misalign, transfer);
         noalias(transfer) = prod(scratch, misalign_inv);
-    }
 
-    ST.pos += length;
+        ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
+        ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
+        ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
+        ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
+    }
 
     // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in.
     // Matrix elements are scaled with particle energy.
-    ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
-    ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
-    ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
-    ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
+
+    ST.pos += length;
 
     // Evaluate momentum compaction.
     const double R56 = -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*length*MtoMM;
@@ -600,8 +608,7 @@ struct ElementSBend : public Moment2ElementBase
                Kx   = K + 1e0/sqr(rho),
                Ky   = -K,
                dx   = 0e0,
-               sx   = 0e0,
-               m51  = 0e0;
+               sx   = 0e0;
 
         typename Moment2ElementBase::value_t edge1, edge2;
 
@@ -614,23 +621,30 @@ struct ElementSBend : public Moment2ElementBase
 
         // Include dispersion.
         if (Kx == 0e0) {
-            dx = sqr(L)/(2e0*rho);
+            dx = sqr(L)/2e0;
             sx = L;
         } else if (Kx > 0e0) {
-            dx = (1e0-cos(sqrt(Kx)*L))/(rho*Kx);
+            dx = (1e0-cos(sqrt(Kx)*L))/Kx;
             sx = sin(sqrt(Kx)*L)/sqrt(Kx);
         } else {
-            dx = (1e0-cosh(sqrt(-Kx)*L))/(rho*Kx);
+            dx = (1e0-cosh(sqrt(-Kx)*L))/Kx;
             sx = sin(sqrt(Kx)*L)/sqrt(Kx);
         }
 
-        this->transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        double phib  = -ST.moment0[state_t::PS_S]/ST.ref.SampleIonK/MtoMM;
+        double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
+
+        this->transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
         this->transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
         this->transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
-        this->transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx*ST.ref.SampleIonK;
+        this->transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
         // Low beta approximation.
         this->transfer_raw(state_t::PS_S,  state_t::PS_PS) =
                 -(-(L-sx)/(Kx*sqr(rho))+L/sqr(ST.ref.gamma))*ST.ref.SampleIonK/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+
+        // Add dipole terms.
+        this->transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
+        this->transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi2, edge2);
