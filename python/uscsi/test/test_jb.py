@@ -337,7 +337,8 @@ class testBasic(unittest.TestCase):
 
     P = GLPSParser()
 
-    file_name = 'latticeout_IMP_withPV_consolidate2.lat'
+#    file_name = 'latticeout_IMP_withPV_consolidate2.lat'
+    file_name = 'LS1.lat'
 
     with open(os.path.join(datadir, file_name), 'rb') as inf:
       M = Machine(inf, path=os.path.dirname(inf.name))

@@ -371,16 +371,18 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.pos += length;
 
-    // Evaluate momentum compaction.
-    const double R56 = -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*length*MtoMM;
-
     std::string t_name = type_name(); // C string -> C++ string.
     if (t_name != "rfcavity") {
         ST.ref.phis      += ST.ref.SampleIonK*length*MtoMM;
         ST.real.phis     += ST.real.SampleIonK*length*MtoMM;
         ST.real.Ekinetic  = last_Kenergy_out;
 
-        transfer(state_t::PS_S, state_t::PS_PS) = R56;
+        if (t_name != "sbend") {
+            // Evaluate momentum compaction.
+            const double R56 = -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*length*MtoMM;
+
+            transfer(state_t::PS_S, state_t::PS_PS) = R56;
+        }
     }
 
     ST.moment0 = prod(transfer, ST.moment0);
@@ -631,20 +633,29 @@ struct ElementSBend : public Moment2ElementBase
             sx = sin(sqrt(Kx)*L)/sqrt(Kx);
         }
 
-        double phib  = -ST.moment0[state_t::PS_S]/ST.ref.SampleIonK/MtoMM;
-        double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
-
         this->transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
         this->transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
         this->transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
         this->transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
         // Low beta approximation.
         this->transfer_raw(state_t::PS_S,  state_t::PS_PS) =
-                -(-(L-sx)/(Kx*sqr(rho))+L/sqr(ST.ref.gamma))*ST.ref.SampleIonK/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+                ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK
+                /(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+
+        double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
+
+        double d = ST.moment0[state_t::PS_PS]/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV) - qmrel;
+
+        double gam2 = sqr(ST.ref.gamma);
+        double m56  = ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK;
+        double m56d = m56*d;
 
         // Add dipole terms.
         this->transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
         this->transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
+        // Check expression.
+        this->transfer_raw(state_t::PS_S,  6) =
+                -((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma)+L/sqr(ST.ref.gamma))*ST.ref.SampleIonK*qmrel;
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi2, edge2);

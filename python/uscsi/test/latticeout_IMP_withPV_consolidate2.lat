@@ -1624,8 +1624,8 @@ tst_bend: LINE = (
   fs1_css_dh_d2163_1
 );
 
-USE: tst_bend;
+#USE: tst_bend;
 
-#USE: LS1;
+USE: LS1;
 
 #USE: to_strl;
