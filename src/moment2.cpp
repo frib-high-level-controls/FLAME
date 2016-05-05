@@ -352,7 +352,6 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
 
     if(ST.real.Ekinetic!=last_Kenergy_in) {
-
         // need to re-calculate energy dependent terms
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
@@ -376,13 +375,6 @@ void Moment2ElementBase::advance(StateBase& s)
         ST.ref.phis      += ST.ref.SampleIonK*length*MtoMM;
         ST.real.phis     += ST.real.SampleIonK*length*MtoMM;
         ST.real.Ekinetic  = last_Kenergy_out;
-
-        if (t_name != "sbend") {
-            // Evaluate momentum compaction.
-            const double R56 = -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*length*MtoMM;
-
-            transfer(state_t::PS_S, state_t::PS_PS) = R56;
-        }
     }
 
     ST.moment0 = prod(transfer, ST.moment0);
@@ -564,12 +556,22 @@ struct ElementDrift : public Moment2ElementBase
     ElementDrift(const Config& c)
         :base_t(c)
     {
+    }
+    virtual ~ElementDrift() {}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
         double L = length*MtoMM; // Convert from [m] to [mm].
 
         this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
+        transfer_raw(state_t::PS_S, state_t::PS_PS) =
+                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+
+        transfer = transfer_raw;
+
+        last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
     }
-    virtual ~ElementDrift() {}
 
     virtual const char* type_name() const {return "drift";}
 };
@@ -633,12 +635,6 @@ struct ElementSBend : public Moment2ElementBase
 
         double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
-        double d = ST.moment0[state_t::PS_PS]/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV) - qmrel;
-
-        double gam2 = sqr(ST.ref.gamma);
-        double m56  = ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK;
-        double m56d = m56*d;
-
         // Add dipole terms.
         this->transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
         this->transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
@@ -691,6 +687,9 @@ struct ElementQuad : public Moment2ElementBase
         // Longitudinal plane.
 //        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
 
+        transfer_raw(state_t::PS_S, state_t::PS_PS) =
+                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+
         transfer = transfer_raw;
 
         last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
@@ -719,6 +718,9 @@ struct ElementSolenoid : public Moment2ElementBase
                L    = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
         GetSolMatrix(L, K, this->transfer_raw);
+
+        transfer_raw(state_t::PS_S, state_t::PS_PS) =
+                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
         transfer = transfer_raw;
 
