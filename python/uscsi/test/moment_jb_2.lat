@@ -45,7 +45,7 @@ S2 = [
   0.0,                   0.0,                   0.0,                   0.0,                   0.0,                   0.0,                  0.0
 ];
 
-S: source, initial = S1;
+S: source, moment0 = BaryCenter1, initial = S1;
 
 # Default.
 # S0: source, initial = [
