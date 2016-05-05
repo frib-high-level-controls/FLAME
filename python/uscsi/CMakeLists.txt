@@ -41,6 +41,7 @@ set(PY_SRC_TEST
   test/latticeout_IMP_withPV_consolidate.lat
   test/latticeout_IMP_withPV_consolidate2.lat
   test/LS1.lat
+  test/to_strl.lat
   test/latticeout_IMP_All.lat
   test/test_h5.lat
   test/test.h5

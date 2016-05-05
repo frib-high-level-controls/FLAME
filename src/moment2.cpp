@@ -574,17 +574,6 @@ struct ElementDrift : public Moment2ElementBase
     virtual const char* type_name() const {return "drift";}
 };
 
-typedef boost::numeric::ublas::matrix<double> value_mat;
-void PrtMat1(const value_mat &M)
-{
-    for (size_t j = 0; j < M.size1(); j++) {
-        for (size_t k = 0; k < M.size2(); k++)
-            std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << M(j, k);
-        std::cout << "\n";
-    }
-}
-
 struct ElementSBend : public Moment2ElementBase
 {
     // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
@@ -662,9 +651,6 @@ struct ElementSBend : public Moment2ElementBase
 
         transfer_raw = prod(transfer_raw, edge1);
         transfer_raw = prod(edge2, transfer_raw);
-
-        std::cout << "\n";
-        PrtMat1(transfer_raw);
 
         // Longitudinal plane.
         // For total path length.
