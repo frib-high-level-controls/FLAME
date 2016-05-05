@@ -105,45 +105,47 @@ value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
 
 void propagate(std::auto_ptr<Config> conf)
 {
-    const int nChgStates = 2;
 
     int                                      k;
-    std::vector<double>                      ChgState, NChg;
-    value_vec                                BC[nChgStates];
-    value_mat                                BE[nChgStates];
+    std::vector<value_vec>                   BC;
+    std::vector<value_mat>                   BE;
     std::vector<boost::shared_ptr<Machine> > sims;
     Machine::iterator          it;
-    clock_t                                  tStamp[2];
 
+    std::vector<double>                      ChgState(GetChgState(*conf, "IonChargeStates")),
+                                             NChg(GetNChg(*conf, "NCharge"));
+
+    const int nChgStates = ChgState.size();
+
+    BC.resize(nChgStates);
+    BE.resize(nChgStates);
 
     for (k = 0; k < nChgStates; k++) {
-        BC[k].resize(PS_Dim);
-        BE[k].resize(PS_Dim, PS_Dim);
+        {
+            std::ostringstream strm;
+            strm<<"BaryCenter"<<(k+1);
+            BC[k] = GetBaryCenter(*conf, strm.str());
+        }
+
+        {
+            std::ostringstream strm;
+            strm<<"S"<<(k+1);
+            BE[k] = GetBeamEnvelope(*conf, strm.str());
+        }
     }
-
-    ChgState.resize(nChgStates);
-    ChgState = GetChgState(*conf, "IonChargeStates");
-
-    NChg.resize(nChgStates);
-    NChg = GetNChg(*conf, "NCharge");
-
-    BC[0] = GetBaryCenter(*conf, "BaryCenter1");
-    BC[1] = GetBaryCenter(*conf, "BaryCenter2");
-
-    BE[0] = GetBeamEnvelope(*conf, "S1");
-    BE[1] = GetBeamEnvelope(*conf, "S2");
 
     std::cout << "\nIon charge states:\n";
     for (k = 0; k < nChgStates; k++)
         std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k]
                   << std::setprecision(1) << std::setw(8) << NChg[k] << "\n";
+
     std::cout << "\nBarycenter:\n";
-    PrtVec(BC[0]);
-    PrtVec(BC[1]);
+    for (k = 0; k < nChgStates; k++) PrtVec(BC[k]);
     std::cout << "\nBeam envelope:\n";
-    PrtMat(BE[0]);
-    std::cout << "\n";
-    PrtMat(BE[1]);
+    for (k = 0; k < nChgStates; k++) {
+        if(k!=0) std::cout<<"\n";
+        PrtMat(BE[k]);
+    }
 
     for (k = 0; k < nChgStates; k++) {
         sims.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
@@ -153,7 +155,7 @@ void propagate(std::auto_ptr<Config> conf)
 //        std::cout << "# Machine configuration\n" << *sims[0] << "\n\n";
 
     Config D;
-    state_t *StatePtr[nChgStates];
+    std::vector<state_t *> StatePtr(nChgStates);
 
     for (k = 0; k < nChgStates; k++) {
         std::auto_ptr<StateBase> state(sims[k]->allocState(D));
@@ -184,6 +186,7 @@ void propagate(std::auto_ptr<Config> conf)
         // Skip over state.
         it++;
 
+        clock_t tStamp[2];
         tStamp[0] = clock();
         for (; it != sims[k]->end(); ++it) {
 //            elem->advance(*state);
