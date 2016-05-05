@@ -60,11 +60,12 @@ Moment2State::Moment2State(const Config& c)
 
     std::string vectorname(c.get<std::string>("vector_variable", "moment0"));
     std::string matrixname(c.get<std::string>("matrix_variable", "initial"));
-
-    ref.IonZ       = c.get<double>("IonZ", 0e0);
+    std::vector<double> ics;
 
     if(multistate) {
-        const std::vector<double>& ics = c.get<std::vector<double> >("IonChargeStates");
+        ics = c.get<std::vector<double> >("IonChargeStates");
+        if(ics.empty())
+            throw std::invalid_argument("IonChargeStates w/ length 0");
         if(icstate>=ics.size())
             throw std::invalid_argument("IonChargeStates[cstate] is out of bounds");
         ref.IonZ = ics[icstate];
@@ -114,9 +115,15 @@ Moment2State::Moment2State(const Config& c)
 
     real = ref;
 
-    // Initialized by user.
-//    real.phis      = moment0[PS_S];
-//    real.Ekinetic += moment0[PS_PS]*MeVtoeV;
+    real.phis      = moment0[PS_S];
+    real.Ekinetic += moment0[PS_PS]*MeVtoeV;
+
+    if(!multistate) {
+        real.IonZ = ref.IonZ       = c.get<double>("IonZ", 0e0);
+    } else {
+        ref.IonZ  = ics[0];
+        real.IonZ = ics[icstate];
+    }
 }
 
 Moment2State::~Moment2State() {}

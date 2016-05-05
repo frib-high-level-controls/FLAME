@@ -123,13 +123,13 @@ void propagate(std::auto_ptr<Config> conf)
     for (k = 0; k < nChgStates; k++) {
         {
             std::ostringstream strm;
-            strm<<"BaryCenter"<<(k+1);
+            strm<<"BaryCenter"<<k;
             BC[k] = GetBaryCenter(*conf, strm.str());
         }
 
         {
             std::ostringstream strm;
-            strm<<"S"<<(k+1);
+            strm<<"S"<<k;
             BE[k] = GetBeamEnvelope(*conf, strm.str());
         }
     }
@@ -148,17 +148,17 @@ void propagate(std::auto_ptr<Config> conf)
     }
 
     for (k = 0; k < nChgStates; k++) {
+        conf->set<double>("cstate", k);
         sims.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
         sims[k]->set_trace(NULL);
     }
 
 //        std::cout << "# Machine configuration\n" << *sims[0] << "\n\n";
 
-    Config D;
     std::vector<state_t *> StatePtr(nChgStates);
 
     for (k = 0; k < nChgStates; k++) {
-        std::auto_ptr<StateBase> state(sims[k]->allocState(D));
+        std::auto_ptr<StateBase> state(sims[k]->allocState());
 
         StatePtr[k] = dynamic_cast<state_t*>(state.get());
         if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
@@ -168,32 +168,9 @@ void propagate(std::auto_ptr<Config> conf)
         // Propagate through first element (beam initial conditions).
         sims[k]->propagate(state.get(), 0, 1);
 
-        // Initialize state.
-        StatePtr[k]->ref.IonZ      = ChgState[0];
-        StatePtr[k]->real.IonZ     = ChgState[k];
-
-        StatePtr[k]->moment0       = BC[k];
-        StatePtr[k]->state         = BE[k];
-
-        StatePtr[k]->real.gamma    = StatePtr[k]->real.IonW/StatePtr[k]->real.IonEs;
-        StatePtr[k]->real.beta     = sqrt(1e0-1e0/sqr(StatePtr[k]->real.gamma));
-        StatePtr[k]->real.bg       = StatePtr[k]->real.beta*StatePtr[k]->real.gamma;
-
-        StatePtr[k]->real.phis     = StatePtr[k]->moment0[state_t::PS_S];
-        StatePtr[k]->real.Ekinetic = StatePtr[k]->ref.IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
-
-        it = sims[k]->begin();
-        // Skip over state.
-        it++;
-
         clock_t tStamp[2];
         tStamp[0] = clock();
-        for (; it != sims[k]->end(); ++it) {
-//            elem->advance(*state);
-//            sims[k]->propagate(state.get(), elem->index+n-1, 1);
-            (*it)->advance(*state);
-        }
-
+        sims[k]->propagate(state.get(), 1);
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
