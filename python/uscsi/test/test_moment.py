@@ -214,7 +214,7 @@ foo : LINE = (elem0, elem1);
         M.propagate(S, max=1) # propagate through source element
 
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.ref_IonEk, 1.0)
+        self.assertEqual(S.ref_Ekinetic, 1.0)
         self.assertEqual(S.ref_IonEs, 1.0)
         self.assertEqual(S.ref_gamma, 2.0)
         self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)

@@ -356,12 +356,12 @@ class testBasic(unittest.TestCase):
 
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
-      self.assertAlmostEqual(S.real_IonEk, 500000.0, 14)
+#      self.assertAlmostEqual(S.real_Ek, 500000.0, 14)
       self.assertAlmostEqual(S.real_IonW,  931994629.995, 14)
 
       self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 14)
-      self.assertAlmostEqual(S.ref_IonEk, 500000.0, 14)
+      self.assertAlmostEqual(S.ref_Ekinetic, 500000.0, 14)
       self.assertAlmostEqual(S.ref_IonW,  931994320.0, 14)
 
       def checkConsist(self, S, P='real', extra=False):
@@ -371,12 +371,11 @@ class testBasic(unittest.TestCase):
           self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'))
           if extra:
               self.assertEqual(getattr(S, P+'_phis')    , S.moment0[PS_S])
-              self.assertEqual(getattr(S, P+'_Ekinetic'), getattr(S, P+'_IonEk') + S.moment0[PS_PS]*MeVtoeV)
+#              self.assertEqual(getattr(S, P+'_Ekinetic'), getattr(S, P+'_IonEk') + S.moment0[PS_PS]*MeVtoeV)
 
       checkConsist(self, S, 'real', extra=True)
       checkConsist(self, S, 'ref')
       self.assertAlmostEqual(S.ref_phis,  0.0, 14)
-      self.assertAlmostEqual(S.ref_Ekinetic,  S.ref_IonEk, 14)
 
       assert_aequal(S.moment0,
         [-7.88600000e-04, 1.08371000e-05, 1.33734300e-02, 6.67853400e-06, -1.84772900e-04, 3.09995000e-04, 1.00000000e+00],
@@ -396,12 +395,10 @@ class testBasic(unittest.TestCase):
 
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 12)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
-      self.assertAlmostEqual(S.real_IonEk, 500000.0, 12)
       self.assertAlmostEqual(S.real_IonW,  948584259.4594134, 12)
 
       self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 12)
       self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
-      self.assertAlmostEqual(S.ref_IonEk, 500000.0, 12)
       self.assertAlmostEqual(S.ref_IonW,  948584732.218118, 12)
 
       checkConsist(self, S, 'real')

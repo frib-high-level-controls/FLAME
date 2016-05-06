@@ -174,7 +174,7 @@ void propagate(std::auto_ptr<Config> conf)
         StatePtr[k]->state         = BE[k];
 
         StatePtr[k]->real.phis     = StatePtr[k]->moment0[state_t::PS_S];
-        StatePtr[k]->real.Ekinetic = StatePtr[k]->ref.IonEk + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
+        StatePtr[k]->real.Ekinetic = StatePtr[k]->ref.Ekinetic + StatePtr[k]->moment0[state_t::PS_PS]*MeVtoeV;
 
         StatePtr[k]->real.IonW     = StatePtr[k]->real.Ekinetic + StatePtr[k]->real.IonEs;
         StatePtr[k]->real.gamma    = StatePtr[k]->real.IonW/StatePtr[k]->real.IonEs;

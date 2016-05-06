@@ -101,18 +101,16 @@ Moment2State::Moment2State(const Config& c)
     }
 
     ref.IonEs      = c.get<double>("IonEs", 0e0),
-    ref.IonEk      = c.get<double>("IonEk", 0e0);
+    ref.Ekinetic   = c.get<double>("IonEk", 0e0);
 
-    ref.IonW       = ref.IonEs + ref.IonEk;
+    ref.IonW       = ref.IonEs + ref.Ekinetic;
     ref.gamma      = (ref.IonEs != 0e0)? ref.IonW/ref.IonEs : 1e0;
     ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
     ref.bg         = (ref.beta != 0e0)? ref.beta*ref.gamma : 1e0;
 
     ref.SampleIonK = (ref.IonEs != 0e0)? 2e0*M_PI/(ref.beta*SampleLambda) : 2e0*M_PI/SampleLambda;
 
-    ref.Ekinetic   = ref.IonEk;
-
-    real = ref;
+    real           = ref;
 
     // Initialized by user.
 //    real.phis      = moment0[PS_S];
@@ -189,12 +187,6 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
-        Info.name = "ref_IonEk";
-        Info.ptr = &ref.IonEk;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
         Info.name = "ref_IonW";
         Info.ptr = &ref.IonW;
         Info.type = ArrayInfo::Double;
@@ -245,12 +237,6 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
     } else if(idx==I++) {
         Info.name = "real_IonEs";
         Info.ptr = &real.IonEs;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
-        Info.name = "real_IonEk";
-        Info.ptr = &real.IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
