@@ -337,7 +337,6 @@ class testBasic(unittest.TestCase):
 
     P = GLPSParser()
 
-#    file_name = 'latticeout_IMP_withPV_consolidate2.lat'
     file_name = 'LS1.lat'
 
     with open(os.path.join(datadir, file_name), 'rb') as inf:
@@ -345,6 +344,13 @@ class testBasic(unittest.TestCase):
 
       S = M.allocState({})
       M.propagate(S, 0, 1)
+
+      S.real_gamma     = S.real_IonW/S.real_IonEs;
+      S.real_beta      = math.sqrt(1e0-1e0/sqr(S.real_gamma));
+      S.real_bg        = S.real_beta*S.real_gamma;
+
+      S.real_phis      = S.moment0[PS_S];
+      S.real_Ekinetic += S.moment0[PS_PS]*MeVtoeV;
 
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
