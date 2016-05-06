@@ -38,7 +38,11 @@ with open(file_name, 'rb') as inf:
 
     S = M.allocState({})
     M.propagate(S, 0, 1)
-    S.moment0[:] = [-0.0007886,   1.08371e-05,  0.01337343,   6.678534e-06,  -0.0001847729, 0.000309995, 1.0];
+    S.moment0[:] = [
+        -0.0007886,   1.08371e-05,
+         0.01337343,  6.678534e-06,
+        -0.0001847729, 0.000309995, 1.0
+    ];
 
     S.real_gamma     = S.real_IonW/S.real_IonEs;
     S.real_beta      = math.sqrt(1e0-1e0/sqr(S.real_gamma));
