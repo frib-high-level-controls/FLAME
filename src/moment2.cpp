@@ -61,7 +61,7 @@ Moment2State::Moment2State(const Config& c)
     std::string vectorname(c.get<std::string>("vector_variable", "moment0"));
     std::string matrixname(c.get<std::string>("matrix_variable", "initial"));
 
-    ref.IonZ       = c.get<double>("IonZ", 0e0);
+    ref.IonZ = c.get<double>("IonZ", 0e0);
 
     if(multistate) {
         const std::vector<double>& ics = c.get<std::vector<double> >("IonChargeStates");
@@ -101,9 +101,9 @@ Moment2State::Moment2State(const Config& c)
     }
 
     ref.IonEs      = c.get<double>("IonEs", 0e0),
-    ref.Ekinetic   = c.get<double>("IonEk", 0e0);
+    ref.IonEk      = c.get<double>("IonEk", 0e0);
 
-    ref.IonW       = ref.IonEs + ref.Ekinetic;
+    ref.IonW       = ref.IonEs + ref.IonEk;
     ref.gamma      = (ref.IonEs != 0e0)? ref.IonW/ref.IonEs : 1e0;
     ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
     ref.bg         = (ref.beta != 0e0)? ref.beta*ref.gamma : 1e0;
@@ -113,8 +113,8 @@ Moment2State::Moment2State(const Config& c)
     real           = ref;
 
     // Initialized by user.
-//    real.phis      = moment0[PS_S];
-//    real.Ekinetic += moment0[PS_PS]*MeVtoeV;
+//    real.phis   = moment0[PS_S];
+//    real.IonEk += moment0[PS_PS]*MeVtoeV;
 }
 
 Moment2State::~Moment2State() {}
@@ -144,7 +144,7 @@ void Moment2State::show(std::ostream& strm) const
     int j, k;
 
     strm << std::scientific << std::setprecision(8)
-         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real.Ekinetic << "\n  moment0 =\n    ";
+         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real.IonEk << "\n  moment0 =\n    ";
     for (k = 0; k < Moment2State::maxsize; k++)
         strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0(k);
     strm << "\n  state =\n";
@@ -223,8 +223,8 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
-        Info.name = "ref_Ekinetic";
-        Info.ptr = &ref.Ekinetic;
+        Info.name = "ref_IonEk";
+        Info.ptr = &ref.IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
@@ -277,8 +277,8 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
-        Info.name = "real_Ekinetic";
-        Info.ptr = &real.Ekinetic;
+        Info.name = "real_IonEk";
+        Info.ptr = &real.IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
@@ -331,14 +331,14 @@ void Moment2ElementBase::advance(StateBase& s)
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
-    // Ekinetic is Es + E_state; the latter is set by user.
-    ST.real.IonW       = ST.real.Ekinetic + ST.real.IonEs;
-    ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
+    // IonEk is Es + E_state; the latter is set by user.
+    ST.real.IonW       = ST.real.IonEk + ST.real.IonEs;
+    ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.IonEk)/ST.real.IonEs : 1e0;
     ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
     ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
     ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
 
-    if(ST.real.Ekinetic!=last_Kenergy_in) {
+    if(ST.real.IonEk!=last_Kenergy_in) {
         // need to re-calculate energy dependent terms
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
@@ -346,30 +346,30 @@ void Moment2ElementBase::advance(StateBase& s)
         noalias(scratch)  = prod(misalign, transfer);
         noalias(transfer) = prod(scratch, misalign_inv);
 
-        ST.real.IonW       = ST.real.Ekinetic + ST.real.IonEs;
-        ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
+        ST.real.IonW       = ST.real.IonEk + ST.real.IonEs;
+        ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.IonEk)/ST.real.IonEs : 1e0;
         ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
         ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
         ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
     }
 
-    // recompute_matrix only called when ST.Ekinetic != last_Kenergy_in.
+    // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
     // Matrix elements are scaled with particle energy.
 
     ST.pos += length;
 
     std::string t_name = type_name(); // C string -> C++ string.
     if (t_name != "rfcavity") {
-        ST.ref.phis      += ST.ref.SampleIonK*length*MtoMM;
-        ST.real.phis     += ST.real.SampleIonK*length*MtoMM;
-        ST.real.Ekinetic  = last_Kenergy_out;
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+        ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
+        ST.real.IonEk  = last_Kenergy_out;
     }
 
     ST.moment0 = prod(transfer, ST.moment0);
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
-        ST.moment0[state_t::PS_PS] = (ST.real.Ekinetic-ST.ref.Ekinetic)/MeVtoeV;
+        ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
     }
 
     noalias(scratch) = prod(transfer, ST.state);
@@ -391,7 +391,7 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 //        }
 //    }
 
-    last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
+    last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
 }
 
 namespace {
@@ -558,7 +558,7 @@ struct ElementDrift : public Moment2ElementBase
 
         transfer = transfer_raw;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
 
     virtual const char* type_name() const {return "drift";}
@@ -642,7 +642,7 @@ struct ElementSBend : public Moment2ElementBase
 
         transfer = transfer_raw;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
 
     virtual const char* type_name() const {return "sbend";}
@@ -664,7 +664,7 @@ struct ElementQuad : public Moment2ElementBase
         // Re-initialize transport matrix.
         this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        double Brho = ST.real.beta*(ST.real.Ekinetic+ST.real.IonEs)/(C0*ST.real.IonZ),
+        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K    = conf().get<double>("B2")/Brho/sqr(MtoMM),
                L    = conf().get<double>("L")*MtoMM;
 
@@ -680,7 +680,7 @@ struct ElementQuad : public Moment2ElementBase
 
         transfer = transfer_raw;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
 
     virtual const char* type_name() const {return "quadrupole";}
@@ -701,7 +701,7 @@ struct ElementSolenoid : public Moment2ElementBase
         // Re-initialize transport matrix.
         this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        double Brho = ST.real.beta*(ST.real.Ekinetic+ST.real.IonEs)/(C0*ST.real.IonZ),
+        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K    = conf().get<double>("B")/(2e0*Brho)/MtoMM,
                L    = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
@@ -712,7 +712,7 @@ struct ElementSolenoid : public Moment2ElementBase
 
         transfer = transfer_raw;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.Ekinetic; // no energy gain
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
 
     virtual const char* type_name() const {return "solenoid";}
@@ -1240,11 +1240,11 @@ struct ElementRFCavity : public Moment2ElementBase
     {
         transfer = transfer_raw;
 
-        last_Kenergy_in = ST.real.Ekinetic;
+        last_Kenergy_in = ST.real.IonEk;
 
         this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
 
-        last_Kenergy_out = ST.real.Ekinetic;
+        last_Kenergy_out = ST.real.IonEk;
 
         // Define initial conditions.
         double accIonW, avebeta, avegamma;
@@ -1746,8 +1746,8 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
     ref.beta        = sqrt(1e0-1e0/sqr(ref.gamma));
     ref.SampleIonK  = 2e0*M_PI/(ref.beta*SampleLambda);
     ref.phis       += (IonFy_o-IonFy_i)/multip;
-    ref.Ekinetic    = ref.IonW - ref.IonEs;
-    ref.gamma       = (ref.Ekinetic+ref.IonEs)/ref.IonEs;
+    ref.IonEk       = ref.IonW - ref.IonEs;
+    ref.gamma       = (ref.IonEk+ref.IonEs)/ref.IonEs;
     ref.beta        = sqrt(1e0-1e0/sqr(ref.gamma));
     ref.bg          = ref.beta*ref.gamma;
 }
@@ -1794,8 +1794,8 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
     }
 
     IonFy_i   = multip*real.phis + conf.get<double>("phi_ref");
-    Ek_i      = real.Ekinetic;
-    real.IonW = real.Ekinetic + real.IonEs;
+    Ek_i      = real.IonEk;
+    real.IonW = real.IonEk + real.IonEs;
 
     avebeta   = real.beta;
     avegamma  = real.gamma;
@@ -1809,7 +1809,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
 
     ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
 
-    real.Ekinetic    = real.IonW - real.IonEs;
+    real.IonEk       = real.IonW - real.IonEs;
     real.gamma       = real.IonW/real.IonEs;
     real.beta        = sqrt(1e0-1e0/sqr(real.gamma));
     real.SampleIonK  = 2e0*M_PI/(real.beta*SampleLambda);

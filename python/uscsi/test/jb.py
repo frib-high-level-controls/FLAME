@@ -44,12 +44,12 @@ with open(file_name, 'rb') as inf:
         -0.0001847729, 0.000309995, 1.0
     ];
 
-    S.real_gamma     = S.real_IonW/S.real_IonEs;
-    S.real_beta      = math.sqrt(1e0-1e0/sqr(S.real_gamma));
-    S.real_bg        = S.real_beta*S.real_gamma;
+    S.real_gamma  = S.real_IonW/S.real_IonEs;
+    S.real_beta   = math.sqrt(1e0-1e0/sqr(S.real_gamma));
+    S.real_bg     = S.real_beta*S.real_gamma;
 
-    S.real_phis      = S.moment0[PS_S];
-    S.real_Ekinetic += S.moment0[PS_PS]*MeVtoeV;
+    S.real_phis   = S.moment0[PS_S];
+    S.real_IonEk += S.moment0[PS_PS]*MeVtoeV;
 
     print S
 

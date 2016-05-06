@@ -50,18 +50,18 @@ def track_chg_state(IonZ_ref, IonZ, m1, m2):
     S = M.allocState({})
     M.propagate(S, 0, 1)
 
-    S.ref_IonZ       = IonZ_ref
-    S.real_IonZ      = IonZ
+    S.ref_IonZ    = IonZ_ref
+    S.real_IonZ   = IonZ
 
-    S.moment0[:]     = m1
-    S.state[:]       = numpy.split(m2, 7)
+    S.moment0[:]  = m1
+    S.state[:]    = numpy.split(m2, 7)
 
-    S.real_gamma     = S.real_IonW/S.real_IonEs;
-    S.real_beta      = math.sqrt(1e0-1e0/sqr(S.real_gamma));
-    S.real_bg        = S.real_beta*S.real_gamma;
+    S.real_gamma  = S.real_IonW/S.real_IonEs;
+    S.real_beta   = math.sqrt(1e0-1e0/sqr(S.real_gamma));
+    S.real_bg     = S.real_beta*S.real_gamma;
 
-    S.real_phis      = S.moment0[PS_S];
-    S.real_Ekinetic += S.moment0[PS_PS]*MeVtoeV;
+    S.real_phis   = S.moment0[PS_S];
+    S.real_IonEk += S.moment0[PS_PS]*MeVtoeV;
 
     M.propagate(S, 1, len(M))
     print S

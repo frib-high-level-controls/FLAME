@@ -23,15 +23,14 @@ struct Particle {
            bg,          // Beta*gamma;
            SampleIonK,
            phis,        // Synchrotron phase.
-           Ekinetic;    // ref.Ekinetic:  local kinetic energy for reference particle,
-                        // real.Ekinetic: local kinetic energy for ion.
+           IonEk;       // Kinetic energy.
 
     Particle() {
         phis = 0.0;
         // initially spoil
         IonZ = IonEs = IonW
         = gamma = beta = bg
-        = SampleIonK = Ekinetic
+        = SampleIonK = IonEk
         = std::numeric_limits<double>::quiet_NaN();
     }
 };
