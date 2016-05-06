@@ -105,13 +105,23 @@ PyObject *PyMachine_str(PyObject *raw)
 }
 
 static
-PyObject *PyMachine_conf(PyObject *raw, PyObject *args)
+PyObject *PyMachine_conf(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        if(!PyArg_ParseTuple(args, ""))
+        PyObject *pyindex = Py_None;
+        const char *pnames[] = {"index", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "|O", (char**)pnames, &pyindex))
             return NULL;
 
-        Config C(machine->machine->conf());
+        Config C;
+        if(pyindex==Py_None) {
+            C = machine->machine->conf();
+        } else {
+            long index = PyInt_AsLong(pyindex);
+            if(index<0 || (unsigned long)index>=machine->machine->size())
+                return PyErr_Format(PyExc_IndexError, "Element index out of range");
+            C = (*machine->machine)[index]->conf();
+        }
         C.flatten();
 
         return conf2dict(&C);
@@ -258,7 +268,7 @@ Py_ssize_t PyMachine_len(PyObject *raw)
 }
 
 static PyMethodDef PyMachine_methods[] = {
-    {"conf", (PyCFunction)&PyMachine_conf, METH_VARARGS,
+    {"conf", (PyCFunction)&PyMachine_conf, METH_VARARGS|METH_KEYWORDS,
      "Return configuration used to construct the Machine"},
     {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
      "Allocate a new State based on this Machine's configuration"},
