@@ -346,6 +346,7 @@ void Moment2ElementBase::advance(StateBase& s)
     using namespace boost::numeric::ublas;
 
     // Ekinetic is Es + E_state; the latter is set by user.
+    ST.real.IonW       = ST.real.Ekinetic + ST.real.IonEs;
     ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
     ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
     ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
@@ -359,6 +360,7 @@ void Moment2ElementBase::advance(StateBase& s)
         noalias(scratch)  = prod(misalign, transfer);
         noalias(transfer) = prod(scratch, misalign_inv);
 
+        ST.real.IonW       = ST.real.Ekinetic + ST.real.IonEs;
         ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.Ekinetic)/ST.real.IonEs : 1e0;
         ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
         ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
@@ -1761,6 +1763,7 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
     ref.Ekinetic    = ref.IonW - ref.IonEs;
     ref.gamma       = (ref.Ekinetic+ref.IonEs)/ref.IonEs;
     ref.beta        = sqrt(1e0-1e0/sqr(ref.gamma));
+    ref.bg          = ref.beta*ref.gamma;
 }
 
 
