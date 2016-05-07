@@ -28,15 +28,9 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
     Py_ssize_t pos = 0;
 
     while(PyDict_Next(dict, &pos, &key, &value)) {
-#if PY_MAJOR_VERSION >= 3
-        PyRef<> ascii(PyUnicode_AsASCIIString(key));
-        const char *kname = PyBytes_AsString(ascii.py());
-#else
-        const char *kname = PyString_AsString(key);
-#endif
-
-        if(!kname)
-            throw std::invalid_argument("dict() keys must be string");
+        PyRef<> keyref(key, borrow());
+        PyCString skey(keyref);
+        const char *kname = skey.c_str();
 
         PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(value);
         if(valuetype==&PyFloat_Type) { // scalar double
@@ -48,12 +42,9 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
             ret.set<double>(kname, val);
 
         } else if(PyString_Check(value)) { // string
-#if PY_MAJOR_VERSION >= 3
-            PyRef<> kascii(PyUnicode_AsASCIIString(value));
-            const char *val = PyBytes_AsString(kascii.py());
-#else
-            const char *val = PyString_AsString(value);
-#endif
+            PyRef<> valref(value, borrow());
+            PyCString sval(valref);
+            const char *val = sval.c_str();
 
             ret.set<std::string>(kname, val);
 
@@ -96,7 +87,14 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
 
 namespace {
 
-namespace {
+PyObject* pydirname(PyObject *obj)
+{
+    if(!obj) return NULL;
+
+    PyRef<> ospath(PyImport_ImportModule("os.path"));
+    return PyObject_CallMethod(ospath.py(), "dirname", "O", obj);
+}
+
 struct confval : public boost::static_visitor<PyObject*>
 {
     PyObject* operator()(double v) const
@@ -128,7 +126,6 @@ struct confval : public boost::static_visitor<PyObject*>
         return L.release();
     }
 };
-}
 
 } // namespace
 
@@ -176,18 +173,67 @@ PyObject* PyGLPSPrint(PyObject *, PyObject *args)
 #error the following assumes ssize_t is used
 #endif
 
-PyObject* PyGLPSParse(PyObject *, PyObject *args, PyObject *kws)
+Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
 {
-    try{
-        const char *buf, *path = NULL;
-        Py_ssize_t blen;
-        const char *pnames[] = {"data", "path", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "s#|z", (char**)pnames, &buf, &blen, &path))
+    PyObject *conf = NULL, *extra_defs = Py_None;
+    const char *path = NULL;
+    const char *pnames[] = {"config", "path", "extra", NULL};
+    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|zO", (char**)pnames, &conf, &path, &extra_defs))
+        return NULL;
+
+    PyGetBuf buf;
+    std::auto_ptr<Config> C;
+
+    if(PyDict_Check(conf)) {
+        C.reset(dict2conf(conf));
+
+    } else if(PyObject_HasAttrString(conf, "read")) { // file-like
+        PyCString pyname;
+
+        if(!path && PyObject_HasAttrString(conf, "name")) {
+            path = pyname.c_str(pydirname(PyObject_GetAttrString(conf, "name")));
+        }
+
+        PyRef<> pybytes(PyObject_CallMethod(conf, "read", ""));
+        if(!buf.get(pybytes.py())) {
+            PyErr_SetString(PyExc_TypeError, "read() must return a buffer");
             return NULL;
+        }
+        GLPSParser parser;
+        C.reset(parser.parse_byte((const char*)buf.data(), buf.size(), path));
+
+    } else if(buf.get(conf)) {
+        GLPSParser parser;
+        C.reset(parser.parse_byte((const char*)buf.data(), buf.size(), path));
+
+#if PY_MAJOR_VERSION >= 3
+    } else if(PyUnicode_Check(conf)) { // py3 str (aka unicode) doesn't implement buffer iface
+        PyCString buf;
+        const char *cbuf = buf.c_str(conf);
 
         GLPSParser parser;
-        std::auto_ptr<Config> conf(parser.parse_byte(buf, blen, path));
-        return conf2dict(conf.get());
+        C.reset(parser.parse_byte(cbuf, strlen(cbuf), path));
+#endif
 
+    } else {
+        throw std::invalid_argument("'config' must be dict or byte buffer");
+    }
+
+    if(extra_defs==Py_None) {
+        // no-op
+    } else if(PyDict_Check(extra_defs)) {
+        Dict2Config(*C, extra_defs);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
+        return NULL;
+    }
+
+    return C.release();
+}
+
+PyObject* PyGLPSParse(PyObject *unused, PyObject *args, PyObject *kws)
+{
+    try{
+        return conf2dict(PyGLPSParse2Config(unused, args, kws));
     }CATCH()
 }

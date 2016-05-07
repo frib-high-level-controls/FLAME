@@ -190,11 +190,20 @@ foo: LINE = (x1, x1);
         assert_array_equal(C['elements'][0]['extra'], asarray([1,3,5]))
 
 class testHDF5(unittest.TestCase):
-    def test_good(self):
+    def test_good_explicit(self):
         P = GLPSParser()
 
         with open(os.path.join(datadir, "test_h5.lat"), "rb") as F:
-            C = P.parse(F.read(), path=datadir)
+            C = P.parse(F.read(), path=datadir) # explicitly provide path
+
+        self.assertEqual(C['plainname'], os.path.join(datadir, "test.h5"))
+        self.assertEqual(C['h5name'], os.path.join(datadir, "test.h5/foo/baz"))
+
+    def test_good_implicit(self):
+        P = GLPSParser()
+
+        with open(os.path.join(datadir, "test_h5.lat"), "rb") as F:
+            C = P.parse(F) # uses os.path.dirname(F.name)
 
         self.assertEqual(C['plainname'], os.path.join(datadir, "test.h5"))
         self.assertEqual(C['h5name'], os.path.join(datadir, "test.h5/foo/baz"))

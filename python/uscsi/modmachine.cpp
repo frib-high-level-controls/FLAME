@@ -20,57 +20,9 @@ static
 int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY {
-        PyObject *conf = NULL, *extra_defs = Py_None;
-        const char *path = NULL;
-        const char *pnames[] = {"config", "path", "extra", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|sO", (char**)pnames, &conf, &path, &extra_defs))
-            return -1;
-
         assert(!machine->weak);
 
-        Py_buffer buf;
-        std::auto_ptr<Config> C;
-
-        if(PyDict_Check(conf)) {
-            C.reset(dict2conf(conf));
-
-        } else if(PyObject_HasAttrString(conf, "read")) {
-            PyRef<> pybytes(PyObject_CallMethod(conf, "read", ""));
-            if(PyObject_GetBuffer(pybytes.py(), &buf, PyBUF_SIMPLE)) {
-                PyErr_SetString(PyExc_TypeError, "read() must return a buffer");
-                return -1;
-            }
-            try {
-                GLPSParser parser;
-                C.reset(parser.parse_byte((const char*)buf.buf, buf.len, path));
-            }catch(...){
-                PyBuffer_Release(&buf);
-                throw;
-            }
-            PyBuffer_Release(&buf);
-
-
-        } else if(!PyObject_GetBuffer(conf, &buf, PyBUF_SIMPLE)) {
-            try {
-                GLPSParser parser;
-                C.reset(parser.parse_byte((const char*)buf.buf, buf.len, path));
-            }catch(...){
-                PyBuffer_Release(&buf);
-                throw;
-            }
-            PyBuffer_Release(&buf);
-        } else {
-            throw std::invalid_argument("'config' must be dict or byte buffer");
-        }
-
-        if(extra_defs==Py_None) {
-            // no-op
-        } else if(PyDict_Check(extra_defs)) {
-            Dict2Config(*C, extra_defs);
-        } else {
-            PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
-            return -1;
-        }
+        std::auto_ptr<Config> C(PyGLPSParse2Config(raw, args, kws));
 
         machine->machine = new Machine(*C);
 
@@ -297,12 +249,17 @@ static PyTypeObject PyMachineType = {
 } // namespace
 
 static const char pymdoc[] =
-        "Simulation execution engine.\n"
+        "Machine(config, path=\"/directory/\", extra={})\n"
         "\n"
-        "A Machine object is responsible for carrying out calculations\n"
-        "based on a Config provided when it was constructed.\n"
+        "A Machine() the primary interface to the FLAME simulation engine.\n"
         "\n"
-        "See the allocState and propagate methods.\n"
+        "The 'config' argument may be a file-like object (with read())"
+        " or buffer which will be parsed with the GLPS parser (see GLPSParser::parse)."
+        "  Or it may be a dictionary.\n"
+        "\n"
+        ">>> with open('some.lat', 'rb') as F:\n"
+        "      M = Machine(F)\n"
+        ">>>\n"
         ;
 
 int registerModMachine(PyObject *mod)

@@ -1,4 +1,4 @@
-#include <exception>
+#include <stdexcept>
 
 #ifndef PYSCSI_H
 #define PYSCSI_H
@@ -16,6 +16,7 @@ PyObject* wrapstate(StateBase*); // takes ownership of argument from caller
 StateBase* unwrapstate(PyObject*); // ownership of returned pointer remains with argument
 
 PyObject* PyGLPSPrint(PyObject *, PyObject *args);
+Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws);
 PyObject* PyGLPSParse(PyObject *, PyObject *args, PyObject *kws);
 
 int registerModMachine(PyObject *mod);
@@ -42,15 +43,43 @@ int registerModState(PyObject *mod);
 
 #endif
 
+struct borrow {};
+
 template<typename T = PyObject>
 struct PyRef {
     T* _ptr;
     PyRef() :_ptr(NULL) {}
-    PyRef(T* p) : _ptr(p) {
+    //! copy an existing reference (calls Py_XINCREF)
+    PyRef(const PyRef& o)
+        :_ptr(o._ptr)
+    {
+        Py_XINCREF(_ptr);
+    }
+    //! Construct around an existing reference (does not call Py_XINCREF).
+    //! Explicitly take ownership of a reference which must already
+    //! be implicitly owned by the caller.
+    //! @throws std::bad_allo if p==NULL (assumed to be a python exception)
+    explicit PyRef(T* p) : _ptr(p) {
         if(!p)
             throw std::bad_alloc(); // TODO: probably already a python exception
     }
+    //! Construct around a borrowed reference (calls Py_XINCREF)
+    PyRef(T* p, borrow) : _ptr(p) {
+        if(!p)
+            throw std::bad_alloc();
+        Py_INCREF(p);
+    }
     ~PyRef() {Py_CLEAR(_ptr);}
+    PyRef& operator =(const PyRef& o)
+    {
+        if(&o!=this) {
+            PyObject *tmp = _ptr;
+            _ptr = o._ptr;
+            Py_XINCREF(_ptr);
+            Py_XDECREF(tmp);
+        }
+        return *this;
+    }
     T* release() {
         T* ret = _ptr;
         assert(ret);
@@ -59,13 +88,20 @@ struct PyRef {
     }
     void clear() {
         Py_CLEAR(_ptr);
-        _ptr = NULL;
     }
     void reset(T* p) {
         if(!p)
             throw std::bad_alloc(); // TODO: probably already a python exception
         Py_CLEAR(_ptr);
         _ptr = p;
+    }
+    void reset(T* p, borrow) {
+        if(!p)
+            throw std::bad_alloc(); // TODO: probably already a python exception
+        PyObject *tmp = _ptr;
+        _ptr = p;
+        Py_INCREF(p);
+        Py_XDECREF(tmp);
     }
     struct allow_null {};
     T* reset(T* p, allow_null) {
@@ -80,18 +116,76 @@ struct PyRef {
         return (PyObject*)_ptr;
     }
     template<typename E>
-    E* as() {
+    E* as() const {
         return (E*)_ptr;
     }
-    T& operator*() {
+    T& operator*() const {
         return *_ptr;
     }
-    T* operator->() {
+    T* operator->() const {
         return _ptr;
     }
+};
+
+//! Extract C string from python object (py2 str or py3 unicode)
+struct PyCString
+{
+#if PY_MAJOR_VERSION >= 3
+    PyRef<> ascii;
+#else
+    PyRef<> pystr;
+#endif
+    PyCString() {}
+    PyCString(PyRef<>& o)
+#if PY_MAJOR_VERSION >= 3
+        :ascii(PyUnicode_AsASCIIString(o.py()))
+#else
+        :pystr(o, borrow())
+#endif
+    {}
+    const char *c_str(PyObject *obj) {
+        if(!obj)
+            throw std::bad_alloc();
+#if PY_MAJOR_VERSION >= 3
+        ascii.reset(PyUnicode_AsASCIIString(obj));
+#else
+        pystr.reset(obj, borrow());
+#endif
+        return c_str();
+    }
+    const char *c_str() const {
+        const char *ret;
+#if PY_MAJOR_VERSION >= 3
+        ret = PyBytes_AsString(ascii.py());
+#else
+        ret = PyString_AsString(pystr.py());
+#endif
+        if(!ret)
+            throw std::invalid_argument("Can't extract string from object");
+        return ret;
+
+    }
 private:
-    PyRef(const PyRef&);
-    PyRef& operator =(const PyRef&);
+    PyCString(const PyCString&);
+    PyCString& operator=(const PyCString&);
+};
+
+struct PyGetBuf
+{
+    Py_buffer buf;
+    bool havebuf;
+    PyGetBuf() : havebuf(false) {}
+    ~PyGetBuf() {
+        if(havebuf) PyBuffer_Release(&buf);
+    }
+    bool get(PyObject *obj) {
+        if(havebuf) PyBuffer_Release(&buf);
+        havebuf = PyObject_GetBuffer(obj, &buf, PyBUF_SIMPLE)==0;
+        if(!havebuf) PyErr_Clear();
+        return havebuf;
+    }
+    size_t size() const { return havebuf ? buf.len : 0; }
+    void * data() const { return buf.buf; }
 };
 
 #endif // PYSCSI_H
