@@ -140,7 +140,7 @@ struct PyCString
 #if PY_MAJOR_VERSION >= 3
         :ascii(PyUnicode_AsASCIIString(o.py()))
 #else
-        :pystr(o, borrow())
+        :pystr(o)
 #endif
     {}
     const char *c_str(PyObject *obj) {
