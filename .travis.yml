@@ -34,8 +34,7 @@ install:
  - mkdir build
  - (cd build && cmake -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=`which python` -DNEED_PYTHON=ON $XTRA ..)
  - make -C build -j2 VERBOSE=1
-script: make -C build -j2 VERBOSE=1 test
-after_failure: cat build/Testing/Temporary/LastTest.log
+script: cd build && ctest --output-on-failure
 matrix:
   exclude:
   - python: "3.4"
