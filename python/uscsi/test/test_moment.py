@@ -116,7 +116,7 @@ foo : LINE = (elem0, elem1);
         ##S.moment0[:] = self.expect0
         self.assertEqual(S.pos, 0.0)
         self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
-        self.assertEqual(S.real_Ekinetic, C['IonEk'])
+        self.assertEqual(S.real_IonEk, C['IonEk'])
         self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
         self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
 
@@ -132,14 +132,13 @@ foo : LINE = (elem0, elem1);
         assert_aequal(S.moment0, C['IV'])
 
         print("state", S.state.tolist(), C['IM'].tolist())
-        # m56 is re-computed.
         assert_aequal(S.state, [
           [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-          [0.0, 1.0, 0.0, 1.0, -102.86116067064165, 1.0, 0.0],
+          [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
           [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-          [0.0, 1.0, 0.0, 1.0, -102.86116067064165, 1.0, 0.0],
-          [1.0, -102.86116067064165, 1.0, -102.86116067064165, 10581.418374511557, -102.86116067064165, 0.0],
-          [0.0, 1.0, 0.0, 1.0, -102.86116067064165, 1.0, 0.0],
+          [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
+          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
+          [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
           [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         ], 1e10)
 
@@ -153,7 +152,7 @@ foo : LINE = (elem0, elem1);
 
         self.assertEqual(S.pos, 0.0)
         self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
-        self.assertEqual(S.real_Ekinetic, C['IonEk'])
+        self.assertEqual(S.real_IonEk, C['IonEk'])
         self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
         self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
 

@@ -40,9 +40,13 @@ set(PY_SRC_TEST
   test/parse1.lat
   test/latticeout_IMP_withPV_consolidate.lat
   test/latticeout_IMP_withPV_consolidate2.lat
+  test/LS1.lat
+  test/to_strl.lat
   test/latticeout_IMP_All.lat
   test/test_h5.lat
   test/test.h5
+  test/jb.py
+  test/jb_example.py
 
   test/data/axisData_41.txt
   test/data/axisData_85.txt

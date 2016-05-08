@@ -17,21 +17,20 @@
 struct Particle {
     double IonZ,        // Charge state.
            IonEs,       // Rest energy.
-           IonEk,       // Reference kinetic energy.
            IonW,        // Total energy.
            gamma,       // Gamma for ion.
            beta,        // Beta for ion.
            bg,          // Beta*gamma;
            SampleIonK,
            phis,        // Synchrotron phase.
-           Ekinetic;    // Total kinetic energy.
+           IonEk;       // Kinetic energy.
 
     Particle() {
         phis = 0.0;
         // initially spoil
-        IonZ = IonEs = IonEk = IonW
+        IonZ = IonEs = IonW
         = gamma = beta = bg
-        = SampleIonK = Ekinetic
+        = SampleIonK = IonEk
         = std::numeric_limits<double>::quiet_NaN();
     }
 };

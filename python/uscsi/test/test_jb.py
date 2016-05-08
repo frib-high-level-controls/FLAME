@@ -339,7 +339,7 @@ class testBasic(unittest.TestCase):
 
     P = GLPSParser()
 
-    file_name = 'latticeout_IMP_withPV_consolidate2.lat'
+    file_name = 'LS1.lat'
 
     with open(os.path.join(datadir, file_name), 'rb') as inf:
       M = Machine(inf, path=os.path.dirname(inf.name))
@@ -347,37 +347,33 @@ class testBasic(unittest.TestCase):
       S = M.allocState({})
       M.propagate(S, 0, 1)
 
+      S.real_phis   = S.moment0[PS_S];
+      S.real_IonEk += S.moment0[PS_PS]*MeVtoeV;
+
+      S.real_IonW   = S.real_IonEk + S.real_IonEs
+
+      S.real_gamma  = S.real_IonW/S.real_IonEs;
+      S.real_beta   = math.sqrt(1e0-1e0/sqr(S.real_gamma));
+      S.real_bg     = S.real_beta*S.real_gamma;
+
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
-      self.assertAlmostEqual(S.real_IonEk, 500000.0, 14)
-      self.assertAlmostEqual(S.real_IonW,  S.real_IonEs+S.real_IonEk, 12)
+      self.assertAlmostEqual(S.real_IonW,  931994629.995, 14)
 
       self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 14)
       self.assertAlmostEqual(S.ref_IonEk, 500000.0, 14)
       self.assertAlmostEqual(S.ref_IonW,  S.ref_IonEs+S.ref_IonEk, 12)
 
-      def checkConsist(self, S, P='real', extra=False, skipbg=False, useekin=False):
-          Es, Ek, Ekin = getattr(S, P+'_IonEs'), getattr(S, P+'_IonEk'), getattr(S, P+'_Ekinetic')
-          W = Es+Ek
-          if not useekin:
-              Ekin = Ek
-          gamma = (Es+Ekin)/Es
-          beta = math.sqrt(1e0-1e0/sqr(gamma))
-          print("check",P,"Es",Es,"Ek",Ek,"W",W,"gamma",gamma,"beta",beta)
-          self.assertEqual(getattr(S, P+'_IonW')    , W)
-          self.assertEqual(getattr(S, P+'_gamma')   , gamma)
-          self.assertEqual(getattr(S, P+'_beta')    , beta)
-          if not skipbg:
-              self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'))
-          if extra:
-              self.assertEqual(getattr(S, P+'_phis')    , S.moment0[PS_S])
-              self.assertEqual(getattr(S, P+'_Ekinetic'), getattr(S, P+'_IonEk') + S.moment0[PS_PS]*MeVtoeV)
+      def checkConsist(self, S, P='real'):
+          self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'))
+          self.assertEqual(getattr(S, P+'_gamma')   , getattr(S, P+'_IonW')/getattr(S, P+'_IonEs'))
+          self.assertEqual(getattr(S, P+'_beta')    , math.sqrt(1e0-1e0/sqr(getattr(S, P+'_gamma'))))
+          self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'))
 
-      checkConsist(self, S, 'real', extra=True)
+      checkConsist(self, S, 'real')
       checkConsist(self, S, 'ref')
       self.assertAlmostEqual(S.ref_phis,  0.0, 14)
-      self.assertAlmostEqual(S.ref_Ekinetic,  S.ref_IonEk, 14)
 
       assert_aequal(S.moment0,
         [-7.88600000e-04, 1.08371000e-05, 1.33734300e-02, 6.67853400e-06, -1.84772900e-04, 3.09995000e-04, 1.00000000e+00],
@@ -397,22 +393,20 @@ class testBasic(unittest.TestCase):
 
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 12)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
-      self.assertAlmostEqual(S.real_IonEk, 500000.0, 12)
       self.assertAlmostEqual(S.real_IonW,  S.real_IonEs+S.real_IonEk, 12)
 
       self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 12)
       self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
-      self.assertAlmostEqual(S.ref_IonEk, 500000.0, 12)
       self.assertAlmostEqual(S.ref_IonW,  S.ref_IonEs+S.ref_IonEk, 12)
 
       checkConsist(self, S, 'real', useekin=True)
       self.assertAlmostEqual(S.real_phis,  3.0896603113090544, 14)
-      self.assertAlmostEqual(S.real_Ekinetic,  500309.995, 14)
+      self.assertAlmostEqual(S.real_IonEk,  17089939.45941341, 14)
 
-      checkConsist(self, S, 'ref', skipbg=True)
-      self.assertAlmostEqual(S.ref_bg,  0.03276937557631209, 14) # TODO: ref_bg isn't consistent w/ ref_gamma*ref_beta
+      checkConsist(self, S, 'ref')
+      self.assertAlmostEqual(S.ref_bg,  0.19243502172784563, 14)
       self.assertAlmostEqual(S.ref_phis,  3.090802001354058, 14)
-      self.assertAlmostEqual(S.ref_Ekinetic,  500000.0, 14)
+      self.assertAlmostEqual(S.ref_IonEk,  17090412.218117952, 14)
 
       assert_aequal(S.moment0,
         [-3.0184343918e-04, 5.4077762312e-06, 1.3753721277e-02, 6.3381879549e-06, -1.1408279955e-03, 3.0999500000e-04, 1.0000000000e+00],
