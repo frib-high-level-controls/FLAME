@@ -40,6 +40,7 @@ struct Particle {
         = std::numeric_limits<double>::quiet_NaN();
     }
 
+    // call after changing IonEs or IonEk
     void recalc() {
         IonW       = IonEs + IonEk;
         gamma      = (IonEs != 0e0)? IonW/IonEs : 1e0;

@@ -333,11 +333,7 @@ void Moment2ElementBase::advance(StateBase& s)
     using namespace boost::numeric::ublas;
 
     // IonEk is Es + E_state; the latter is set by user.
-    ST.real.IonW       = ST.real.IonEk + ST.real.IonEs;
-    ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.IonEk)/ST.real.IonEs : 1e0;
-    ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
-    ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
-    ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
+    ST.real.recalc();
 
     if(ST.real.IonEk!=last_Kenergy_in) {
         // need to re-calculate energy dependent terms
@@ -347,11 +343,7 @@ void Moment2ElementBase::advance(StateBase& s)
         noalias(scratch)  = prod(misalign, transfer);
         noalias(transfer) = prod(scratch, misalign_inv);
 
-        ST.real.IonW       = ST.real.IonEk + ST.real.IonEs;
-        ST.real.gamma      = (ST.real.IonEs != 0e0)? (ST.real.IonEs+ST.real.IonEk)/ST.real.IonEs : 1e0;
-        ST.real.beta       = sqrt(1e0-1e0/sqr(ST.real.gamma));
-        ST.real.bg         = (ST.real.beta != 0e0)? ST.real.beta*ST.real.gamma : 1e0;
-        ST.real.SampleIonK = 2e0*M_PI/(ST.real.beta*SampleLambda);
+        ST.real.recalc();
     }
 
     // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
@@ -1286,14 +1278,9 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
     // kinetic energy, absolute phase, beta, and gamma.
     this->GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
 
-    ref.gamma       = ref.IonW/ref.IonEs;
-    ref.beta        = sqrt(1e0-1e0/sqr(ref.gamma));
-    ref.SampleIonK  = 2e0*M_PI/(ref.beta*SampleLambda);
-    ref.phis       += (IonFy_o-IonFy_i)/multip;
     ref.IonEk       = ref.IonW - ref.IonEs;
-    ref.gamma       = (ref.IonEk+ref.IonEs)/ref.IonEs;
-    ref.beta        = sqrt(1e0-1e0/sqr(ref.gamma));
-    ref.bg          = ref.beta*ref.gamma;
+    ref.recalc();
+    ref.phis       += (IonFy_o-IonFy_i)/multip;
 }
 
 
@@ -1354,9 +1341,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
     ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
 
     real.IonEk       = real.IonW - real.IonEs;
-    real.gamma       = real.IonW/real.IonEs;
-    real.beta        = sqrt(1e0-1e0/sqr(real.gamma));
-    real.SampleIonK  = 2e0*M_PI/(real.beta*SampleLambda);
+    real.recalc();
     real.phis       += (IonFy_o-IonFy_i)/multip;
     avebeta         += real.beta;
     avebeta         /= 2e0;
