@@ -347,23 +347,12 @@ class testBasic(unittest.TestCase):
       S = M.allocState({})
       M.propagate(S, 0, 1)
 
-      S.real_phis   = S.moment0[PS_S];
-      S.real_IonEk += S.moment0[PS_PS]*MeVtoeV;
-
-      S.real_IonW   = S.real_IonEk + S.real_IonEs
-
-      S.real_gamma  = S.real_IonW/S.real_IonEs;
-      S.real_beta   = math.sqrt(1e0-1e0/sqr(S.real_gamma));
-      S.real_bg     = S.real_beta*S.real_gamma;
-
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
-      self.assertAlmostEqual(S.real_IonW,  931994629.995, 14)
 
       self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 14)
       self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 14)
       self.assertAlmostEqual(S.ref_IonEk, 500000.0, 14)
-      self.assertAlmostEqual(S.ref_IonW,  S.ref_IonEs+S.ref_IonEk, 12)
 
       def checkConsist(self, S, P='real'):
           self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'))
@@ -393,31 +382,29 @@ class testBasic(unittest.TestCase):
 
       self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 12)
       self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
-      self.assertAlmostEqual(S.real_IonW,  S.real_IonEs+S.real_IonEk, 12)
 
       self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 12)
       self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
-      self.assertAlmostEqual(S.ref_IonW,  S.ref_IonEs+S.ref_IonEk, 12)
 
-      checkConsist(self, S, 'real', useekin=True)
-      self.assertAlmostEqual(S.real_phis,  3.0896603113090544, 14)
+      checkConsist(self, S, 'real')
+      self.assertAlmostEqual(S.real_phis,  1532.1994551432952, 14)
       self.assertAlmostEqual(S.real_IonEk,  17089939.45941341, 14)
 
       checkConsist(self, S, 'ref')
       self.assertAlmostEqual(S.ref_bg,  0.19243502172784563, 14)
-      self.assertAlmostEqual(S.ref_phis,  3.090802001354058, 14)
+      self.assertAlmostEqual(S.ref_phis,  1532.2018533339335, 14)
       self.assertAlmostEqual(S.ref_IonEk,  17090412.218117952, 14)
 
       assert_aequal(S.moment0,
-        [-3.0184343918e-04, 5.4077762312e-06, 1.3753721277e-02, 6.3381879549e-06, -1.1408279955e-03, 3.0999500000e-04, 1.0000000000e+00],
+        [-1.31487198e+00, -6.14116226e-04, -7.31682439e-01, -7.46618429e-04, -2.39819002e-03, -4.72758705e-04,  1.00000000e+00],
         decimal=8)
 
       assert_aequal(S.state, [
-        [ 2.7331265092e+00,-1.4148093054e-04, 1.6955848120e-02, 2.0046548495e-05,-2.1667389747e-03,-3.0708443149e-05, 0.0000000000e+00],
-        [-1.4148093054e-04, 3.8324416294e-06,-2.3212368375e-06,-1.9042231298e-08, 6.4927858847e-07,-3.0156196233e-08, 0.0000000000e+00],
-        [ 1.6955848120e-02,-2.3212368375e-06, 2.2927366186e+00,-4.3348232840e-04,-6.5562980984e-04, 1.0051164786e-05, 0.0000000000e+00],
-        [ 2.0046548495e-05,-1.9042231298e-08,-4.3348232840e-04, 4.9327116630e-06,-6.7686902261e-07, 5.5577490757e-08, 0.0000000000e+00],
-        [-2.1667389747e-03, 6.4927858847e-07,-6.5562980984e-04,-6.7686902261e-07, 7.6843385644e-04,-1.8451762248e-05, 0.0000000000e+00],
-        [-3.0708443149e-05,-3.0156196233e-08, 1.0051164786e-05, 5.5577490757e-08,-1.8451762248e-05, 1.9952466899e-06, 0.0000000000e+00],
-        [ 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00],
+        [ 1.28985466e+00,  5.25768610e-04, -1.07818343e-01, -8.75275442e-05, -1.74466591e-04, -4.89638797e-05,  0.00000000e+00],
+        [ 5.25768610e-04,  4.63230951e-07, -1.87620874e-04, -4.61354166e-08,  4.10553482e-08,  1.86305659e-08,  0.00000000e+00],
+        [-1.07818343e-01, -1.87620874e-04,  2.54172968e+00,  4.50707865e-04,  2.29903897e-04,  1.14226041e-04,  0.00000000e+00],
+        [-8.75275442e-05, -4.61354166e-08,  4.50707865e-04,  2.09807522e-07,  1.67123574e-07,  7.00281218e-08,  0.00000000e+00],
+        [-1.74466591e-04,  4.10553482e-08,  2.29903897e-04,  1.67123574e-07,  3.45700733e-04,  1.29370100e-04,  0.00000000e+00],
+        [-4.89638797e-05,  1.86305659e-08,  1.14226041e-04,  7.00281218e-08,  1.29370100e-04,  5.18511035e-05,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
       ], decimal=8)

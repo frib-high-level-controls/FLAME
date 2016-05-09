@@ -11,6 +11,12 @@
 
 #include "base.h"
 
+// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
+# define SampleFreq   80.5e6
+// Sampling distance [m].
+# define SampleLambda (C0/SampleFreq*MtoMM)
+
+
 /** @brief Simulation state which include only a matrix
  */
 
@@ -32,6 +38,14 @@ struct Particle {
         = gamma = beta = bg
         = SampleIonK = IonEk
         = std::numeric_limits<double>::quiet_NaN();
+    }
+
+    void recalc() {
+        IonW       = IonEs + IonEk;
+        gamma      = (IonEs != 0e0)? IonW/IonEs : 1e0;
+        beta       = sqrt(1e0-1e0/sqr(gamma));
+        bg         = (beta != 0e0)? beta*gamma : 1e0;
+        SampleIonK = 2e0*M_PI/(beta*SampleLambda);
     }
 };
 

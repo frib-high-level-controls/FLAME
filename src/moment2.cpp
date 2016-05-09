@@ -14,12 +14,6 @@
 #include "scsi/h5loader.h"
 
 
-// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
-# define SampleFreq   80.5e6
-// Sampling distance [m].
-# define SampleLambda (C0/SampleFreq*MtoMM)
-
-
 namespace {
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
 // by LU-decomposition.
@@ -106,17 +100,16 @@ Moment2State::Moment2State(const Config& c)
     ref.IonEs      = c.get<double>("IonEs", 0e0),
     ref.IonEk      = c.get<double>("IonEk", 0e0);
 
-    ref.IonW       = ref.IonEs + ref.IonEk;
-    ref.gamma      = (ref.IonEs != 0e0)? ref.IonW/ref.IonEs : 1e0;
-    ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
-    ref.bg         = (ref.beta != 0e0)? ref.beta*ref.gamma : 1e0;
-
     ref.SampleIonK = (ref.IonEs != 0e0)? 2e0*M_PI/(ref.beta*SampleLambda) : 2e0*M_PI/SampleLambda;
 
     real           = ref;
 
     real.phis      = moment0[PS_S];
     real.IonEk    += moment0[PS_PS]*MeVtoeV;
+
+    ref.recalc();
+    real.recalc();
+
     if(!multistate) {
         real.IonZ = ref.IonZ       = c.get<double>("IonZ", 0e0);
     } else {
