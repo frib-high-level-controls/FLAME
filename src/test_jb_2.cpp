@@ -106,81 +106,43 @@ value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
 void propagate(std::auto_ptr<Config> conf)
 {
 
-    int                                      k;
-    std::vector<value_vec>                   BC;
-    std::vector<value_mat>                   BE;
-    std::vector<boost::shared_ptr<Machine> > sims;
-    Machine::iterator          it;
-
-    std::vector<double>                      ChgState(GetChgState(*conf, "IonChargeStates")),
-                                             NChg(GetNChg(*conf, "NCharge"));
+    int                        k;
+    boost::shared_ptr<Machine> sim;
+    std::vector<double>        ChgState(GetChgState(*conf, "IonChargeStates"));
 
     const int nChgStates = ChgState.size();
 
-    BC.resize(nChgStates);
-    BE.resize(nChgStates);
-
-    for (k = 0; k < nChgStates; k++) {
-        {
-            std::ostringstream strm;
-            strm<<"BaryCenter"<<k;
-            BC[k] = GetBaryCenter(*conf, strm.str());
-        }
-
-        {
-            std::ostringstream strm;
-            strm<<"S"<<k;
-            BE[k] = GetBeamEnvelope(*conf, strm.str());
-        }
-    }
-
-    std::cout << "\nIon charge states:\n";
-    for (k = 0; k < nChgStates; k++)
-        std::cout << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k]
-                  << std::setprecision(1) << std::setw(8) << NChg[k] << "\n";
-
-    std::cout << "\nBarycenter:\n";
-    for (k = 0; k < nChgStates; k++) PrtVec(BC[k]);
-    std::cout << "\nBeam envelope:\n";
-    for (k = 0; k < nChgStates; k++) {
-        if(k!=0) std::cout<<"\n";
-        PrtMat(BE[k]);
-    }
+    state_t * StatePtr;
 
     for (k = 0; k < nChgStates; k++) {
         conf->set<double>("cstate", k);
-        sims.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
-        sims[k]->set_trace(NULL);
-    }
 
-//        std::cout << "# Machine configuration\n" << *sims[0] << "\n\n";
+        sim = boost::shared_ptr<Machine> (new Machine(*conf));
+        sim->set_trace(NULL);
 
-    std::vector<state_t *> StatePtr(nChgStates);
+        std::auto_ptr<StateBase> state(sim->allocState());
 
-    for (k = 0; k < nChgStates; k++) {
-        std::auto_ptr<StateBase> state(sims[k]->allocState());
+        StatePtr = dynamic_cast<state_t*>(state.get());
+        if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 
-        StatePtr[k] = dynamic_cast<state_t*>(state.get());
-        if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
-
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr->pos << "\n";
 
         // Propagate through first element (beam initial conditions).
-        sims[k]->propagate(state.get(), 0, 1);
+        sim->propagate(state.get(), 0, 1);
 
         clock_t tStamp[2];
         tStamp[0] = clock();
-        sims[k]->propagate(state.get(), 1);
+        sim->propagate(state.get(), 1);
         tStamp[1] = clock();
 
         std::cout << std::fixed << std::setprecision(5)
                   << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
         std::cout << "\n";
-        PrtVec(StatePtr[k]->moment0);
+        PrtVec(StatePtr->moment0);
         std::cout << "\n";
-        PrtMat(StatePtr[k]->state);
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+        PrtMat(StatePtr->state);
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr->pos << "\n";
     }
 }
 
