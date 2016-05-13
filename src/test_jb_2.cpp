@@ -109,10 +109,10 @@ void propagate(std::auto_ptr<Config> conf)
     int                        k;
     boost::shared_ptr<Machine> sim;
     std::vector<double>        ChgState(GetChgState(*conf, "IonChargeStates"));
+    state_t                    *StatePtr;
 
     const int nChgStates = ChgState.size();
 
-    state_t * StatePtr;
 
     for (k = 0; k < nChgStates; k++) {
         conf->set<double>("cstate", k);
@@ -147,6 +147,66 @@ void propagate(std::auto_ptr<Config> conf)
 }
 
 
+void propagate1(std::auto_ptr<Config> conf)
+{
+    // Propagate element-by-element for each charge state.
+    int                                        k;
+    std::vector<double>                        ChgState(GetChgState(*conf, "IonChargeStates"));
+    std::vector<boost::shared_ptr<Machine> >   sim;
+    std::vector<boost::shared_ptr<StateBase> > state;
+    std::vector<state_t*>                      StatePtr;
+    std::vector<Machine::iterator>             it;
+
+    const int nChgStates = ChgState.size();
+
+
+    for (k = 0; k < nChgStates; k++) {
+        conf->set<double>("cstate", k);
+
+        sim.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
+        sim[k]->set_trace(NULL);
+
+        state.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState()));
+
+        StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
+        if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+
+        // Propagate through first element (beam initial conditions).
+        sim[k]->propagate(state[k].get(), 0, 1);
+
+        it.push_back(sim[k]->begin());
+        // Skip over state.
+        it[k]++;
+
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+    }
+
+    clock_t tStamp[2];
+
+    tStamp[0] = clock();
+
+    while (it[0] != sim[0]->end()) {
+        for (k = 0; k < nChgStates; k++) {
+            (*it[k])->advance(*state[k]);
+            ++it[k];
+        }
+    }
+
+    tStamp[1] = clock();
+
+    std::cout << std::fixed << std::setprecision(5)
+              << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
+
+    for (k = 0; k < nChgStates; k++) {
+        std::cout << "\n";
+        PrtVec(StatePtr[k]->moment0);
+        std::cout << "\n";
+        PrtMat(StatePtr[k]->state);
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
     try {
@@ -170,11 +230,13 @@ int main(int argc, char *argv[])
 //        std::cout<<"\n";
 
         // register state and element types
-        registerLinear();
+//        registerLinear();
 //        registerMoment();
         registerMoment2();
 
-        propagate(conf);
+//        propagate(conf);
+//        propagate(conf);
+        propagate1(conf);
 
         return 0;
     } catch(std::exception& e) {
