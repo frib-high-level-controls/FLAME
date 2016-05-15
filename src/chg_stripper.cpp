@@ -117,6 +117,7 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp;
     std::vector<double>    NChg;
+    state_t                *StatePtr;
     Moment2State::vector_t CenofChg, BeamRMS;
     Moment2State::matrix_t tmpmat;
 
@@ -133,7 +134,7 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
     Ek_recomb     = 0e0;
     tmpmat        = boost::numeric::ublas::zero_matrix<double>(PS_Dim);
     for (k = 0; k < ST.size(); k++) {
-        state_t *StatePtr = dynamic_cast<state_t*>(ST[k].get());
+        StatePtr = dynamic_cast<state_t*>(ST[k].get());
 
         tmptotCharge  += NChg[k];
         Fy_abs_recomb += NChg[k]*StatePtr->real.phis;
@@ -185,8 +186,9 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
 
         state_t* StatePtr = dynamic_cast<state_t*>(ST[k].get());
 
+        StatePtr->real.IonZ  = Stripper_IonZ;
         StatePtr->real.IonEk = Ek_recomb;
-        StatePtr->real.IonW  = StatePtr->real.IonEk+StatePtr->ref.IonEs;
+        StatePtr->real.IonW  = StatePtr->real.IonEk + StatePtr->ref.IonEs;
         StatePtr->real.gamma = StatePtr->real.IonW/StatePtr->ref.IonEs;
         StatePtr->real.beta  = sqrt(1e0-1e0/sqr(StatePtr->real.gamma));
         StatePtr->real.phis  = Fy_abs_recomb;

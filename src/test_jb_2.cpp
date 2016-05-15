@@ -91,6 +91,30 @@ value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
 }
 
 
+void prt_initial_cond(std::vector<boost::shared_ptr<Machine> > &sim, std::vector<double> ChgState,
+                      std::vector<boost::shared_ptr<StateBase> > &ST)
+{
+    int     k;
+    state_t *StatePtr;
+
+    for (k = 0; k < ChgState.size(); k++) {
+        std::cout << "\nIon charge state:\n"
+                  << "\nIonZ = " << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k] << "\n";
+        // Propagate through first element (beam initial conditions).
+        sim[k]->propagate(ST[k].get(), 0, 1);
+
+        StatePtr = dynamic_cast<state_t*>(ST[k].get());
+
+        std::cout << "\nBarycenter:\n";
+        PrtVec(StatePtr->moment0);
+        std::cout << "\nBeam envelope:\n";
+        PrtMat(StatePtr->state);
+
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr->pos << "\n";
+    }
+}
+
+
 void propagate(std::auto_ptr<Config> &conf)
 {
     int                        k, nChgStates;
@@ -138,7 +162,7 @@ void propagate(std::auto_ptr<Config> &conf)
 void propagate1(std::auto_ptr<Config> &conf)
 {
     // Propagate element-by-element for each charge state.
-    int                                        k, nChgStates;
+    int                                        k, nChgStates, elem_no;
     std::vector<double>                        ChgState;
     std::vector<boost::shared_ptr<Machine> >   sim;
     std::vector<boost::shared_ptr<StateBase> > state;
@@ -148,6 +172,9 @@ void propagate1(std::auto_ptr<Config> &conf)
     nChgStates = GetChgState(*conf).size();
     ChgState.resize(nChgStates);
     ChgState = GetChgState(*conf);
+
+    for (k = 0; k < nChgStates; k++)
+        conf->set<double>("cstate", k);
 
     for (k = 0; k < nChgStates; k++) {
         conf->set<double>("cstate", k);
@@ -161,9 +188,9 @@ void propagate1(std::auto_ptr<Config> &conf)
         if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 
         it.push_back(sim[k]->begin());
-
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
     }
+
+    prt_initial_cond(sim, ChgState, state);
 
     clock_t tStamp[2];
 
@@ -172,22 +199,41 @@ void propagate1(std::auto_ptr<Config> &conf)
     while (it[0] != sim[0]->end()) {
         ElementVoid* elem   = *it[0];
         std::string  t_name = elem->type_name(); // C string -> C++ string.
+
         if (t_name == "stripper") {
-            Stripper_GetMat(conf, sim, state);
-        } else {
-            for (k = 0; k < nChgStates; k++) {
-                (*it[k])->advance(*state[k]);
-                ++it[k];
-            }
+            elem_no = it[0] - sim[0]->begin();
+            std::cout << "\nElement no: " << elem_no << "\n";
+            std::cout << conf->get<Config::vector_t>("elements")[elem_no] << "\n";
+            break;
+        }
+
+        for (k = 0; k < nChgStates; k++) {
+            (*it[k])->advance(*state[k]);
+            ++it[k];
         }
     }
+
+    Stripper_GetMat(conf, sim, state);
+
+    StatePtr.clear();
+    for (k = 0; k < state.size(); k++) {
+        StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
+        if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+    }
+
+//    while (it[0] != sim[0]->end()) {
+//        for (k = 0; k < state.size(); k++) {
+//            (*it[k])->advance(*state[k]);
+//            ++it[k];
+//        }
+//    }
 
     tStamp[1] = clock();
 
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 
-    for (k = 0; k < nChgStates; k++) {
+    for (k = 0; k < state.size(); k++) {
         std::cout << "\n";
         PrtVec(StatePtr[k]->moment0);
         std::cout << "\n";
