@@ -44,6 +44,7 @@ set(inst_HEADERS
   scsi/moment.h
   scsi/moment2.h
   scsi/rf_cavity.h
+  scsi/chg_stripper.h
 
   scsi/h5loader.h
   scsi/h5writer.h
@@ -63,6 +64,8 @@ add_library(uscsi_core SHARED
   moment2.cpp
 
   rf_cavity.cpp
+
+  chg_stripper.cpp
 
   glps_parser.cpp glps_parser.h
   glps_ops.cpp

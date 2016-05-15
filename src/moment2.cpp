@@ -10,6 +10,7 @@
 #include "scsi/moment2.h"
 
 #include "scsi/rf_cavity.h"
+#include "scsi/chg_stripper.h"
 
 #include "scsi/h5loader.h"
 
@@ -709,22 +710,6 @@ struct ElementSolenoid : public Moment2ElementBase
     }
 
     virtual const char* type_name() const {return "solenoid";}
-};
-
-
-struct ElementStripper : public Moment2ElementBase
-{
-    // Transport (identity) matrix for a Charge Stripper.
-    typedef Moment2ElementBase base_t;
-    typedef typename base_t::state_t state_t;
-    ElementStripper(const Config& c)
-        :base_t(c)
-    {
-        // Identity matrix.
-    }
-    virtual ~ElementStripper() {}
-
-    virtual const char* type_name() const {return "stripper";}
 };
 
 struct ElementEDipole : public Moment2ElementBase

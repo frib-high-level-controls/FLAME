@@ -11,6 +11,7 @@
 #include <scsi/constants.h>
 #include <scsi/base.h>
 #include <scsi/moment2.h>
+#include <scsi/chg_stripper.h>
 #include <scsi/state/vector.h>
 #include <scsi/state/matrix.h>
 
@@ -22,19 +23,6 @@ typedef boost::numeric::ublas::matrix<double> value_mat;
 
 extern int glps_debug;
 
-enum {maxsize = 7};
-
-typedef boost::numeric::ublas::vector<double,
-                boost::numeric::ublas::bounded_array<double, maxsize>
-> vector_t;
-typedef boost::numeric::ublas::matrix<double,
-                boost::numeric::ublas::row_major,
-                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
-> matrix_t;
-
-// Phase space dimension; including vector for orbit/1st moment.
-# define PS_Dim       7
-
 
 void PrtVec(const std::vector<double> &a)
 {
@@ -45,7 +33,7 @@ void PrtVec(const std::vector<double> &a)
 }
 
 
-void PrtVec(const vector_t &a)
+void PrtVec(const Moment2State::vector_t &a)
 {
     for (size_t k = 0; k < a.size(); k++)
         std::cout << std::scientific << std::setprecision(10)
@@ -65,15 +53,15 @@ void PrtMat(const value_mat &M)
 }
 
 
-std::vector<double> GetChgState(Config &conf, const std::string &CSstr)
+std::vector<double> GetChgState(Config &conf)
 {
-    return conf.get<std::vector<double> >(CSstr);
+    return conf.get<std::vector<double> >("IonChargeStates");
 }
 
 
-std::vector<double> GetNChg(Config &conf, const std::string &CAstr)
+std::vector<double> GetNChg(Config &conf)
 {
-    return conf.get<std::vector<double> >(CAstr);
+    return conf.get<std::vector<double> >("NCharge");
 }
 
 
@@ -103,16 +91,16 @@ value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
 }
 
 
-void propagate(std::auto_ptr<Config> conf)
+void propagate(std::auto_ptr<Config> &conf)
 {
-
-    int                        k;
+    int                        k, nChgStates;
     boost::shared_ptr<Machine> sim;
-    std::vector<double>        ChgState(GetChgState(*conf, "IonChargeStates"));
+    std::vector<double>        ChgState;
     state_t                    *StatePtr;
 
-    const int nChgStates = ChgState.size();
-
+    nChgStates = GetChgState(*conf).size();
+    ChgState.resize(nChgStates);
+    ChgState = GetChgState(*conf);
 
     for (k = 0; k < nChgStates; k++) {
         conf->set<double>("cstate", k);
@@ -147,18 +135,19 @@ void propagate(std::auto_ptr<Config> conf)
 }
 
 
-void propagate1(std::auto_ptr<Config> conf)
+void propagate1(std::auto_ptr<Config> &conf)
 {
     // Propagate element-by-element for each charge state.
-    int                                        k;
-    std::vector<double>                        ChgState(GetChgState(*conf, "IonChargeStates"));
+    int                                        k, nChgStates;
+    std::vector<double>                        ChgState;
     std::vector<boost::shared_ptr<Machine> >   sim;
     std::vector<boost::shared_ptr<StateBase> > state;
     std::vector<state_t*>                      StatePtr;
     std::vector<Machine::iterator>             it;
 
-    const int nChgStates = ChgState.size();
-
+    nChgStates = GetChgState(*conf).size();
+    ChgState.resize(nChgStates);
+    ChgState = GetChgState(*conf);
 
     for (k = 0; k < nChgStates; k++) {
         conf->set<double>("cstate", k);
@@ -171,12 +160,7 @@ void propagate1(std::auto_ptr<Config> conf)
         StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
         if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 
-        // Propagate through first element (beam initial conditions).
-        sim[k]->propagate(state[k].get(), 0, 1);
-
         it.push_back(sim[k]->begin());
-        // Skip over state.
-        it[k]++;
 
         std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
     }
@@ -186,9 +170,15 @@ void propagate1(std::auto_ptr<Config> conf)
     tStamp[0] = clock();
 
     while (it[0] != sim[0]->end()) {
-        for (k = 0; k < nChgStates; k++) {
-            (*it[k])->advance(*state[k]);
-            ++it[k];
+        ElementVoid* elem   = *it[0];
+        std::string  t_name = elem->type_name(); // C string -> C++ string.
+        if (t_name == "stripper") {
+            Stripper_GetMat(conf, sim, state);
+        } else {
+            for (k = 0; k < nChgStates; k++) {
+                (*it[k])->advance(*state[k]);
+                ++it[k];
+            }
         }
     }
 

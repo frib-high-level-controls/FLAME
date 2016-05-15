@@ -97,8 +97,6 @@ struct ElementRFCavity : public Moment2ElementBase
     void GetCavMatParams(const int cavi,
                          const double beta_tab[], const double gamma_tab[], const double IonK[]);
 
-    typedef boost::numeric::ublas::matrix<double> value_mat;
-
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                    const double EfieldScl, const double IonFyi_s,
                    const double IonEk_s, const double fRF, value_mat &M);

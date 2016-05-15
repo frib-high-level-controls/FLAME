@@ -7,10 +7,6 @@
 
 // RF Cavity beam dynamics functions.
 
-// Constants.
-
-typedef typename Moment2ElementBase::state_t state_t;
-
 
 void CavDataType::RdData(const std::string &FileName)
 {
@@ -97,22 +93,7 @@ void PrtVec(const std::vector<double> &a)
 }
 
 
-typedef boost::numeric::ublas::vector<double> value_vec;
-typedef boost::numeric::ublas::matrix<double> value_mat;
-
-enum {maxsize = 7};
-
-typedef boost::numeric::ublas::vector<double,
-                boost::numeric::ublas::bounded_array<double, maxsize>
-> vector_t;
-
-typedef boost::numeric::ublas::matrix<double,
-                boost::numeric::ublas::row_major,
-                boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
-> matrix_t;
-
-
-void PrtVec(const vector_t &a)
+void PrtVec(const Moment2State::vector_t &a)
 {
     for (size_t k = 0; k < a.size(); k++)
         std::cout << std::scientific << std::setprecision(10)
