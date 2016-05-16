@@ -220,14 +220,11 @@ void propagate1(std::auto_ptr<Config> &conf)
         }
     }
 
-    Stripper_GetMat(*conf, sim, state);
+    Stripper_GetMat(*conf, sim, state, ChgState);
 
-    ChgState.clear();
     StatePtr.clear();
     it.clear();
     for (k = 0; k < state.size(); k++) {
-        ChgState.push_back(Stripper_IonChargeStates[k]);
-
         StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
         if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 

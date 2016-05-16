@@ -38,23 +38,19 @@ typedef Moment2State state_t;
    -0.10681 is thickness dependence of E0 after stripper.                                                       */
 
 // Number of charge states.
-const int    Stripper_n_chg_states      = 5;
-const double Stripper_IonZ              = 78.0/238.0,
-             Stripper_IonMass           = 238.0,
-             Stripper_IonProton         = 92.0,
-             Stripper_IonChargeStates[] = {76.0/238.0, 77.0/238.0, 78.0/238.0, 79.0/238.0, 80.0/238.0},
+const double Stripper_IonZ      = 78.0/238.0,
+             Stripper_IonMass   = 238.0,
+             Stripper_IonProton = 92.0,
              // Thickness [microns], thickness variation [%], reference energy [eV/u].
-             Stripper_Para[]            = {3.0, 20.0, 16.623e6},
+             Stripper_Para[]    = {3.0, 20.0, 16.623e6},
              // E0 after stripper [eV/u], energy dependance, gap dependance. Unit for last parameter ???
-             Stripper_E0Para[]          = {16.348e6, 1.00547, -0.10681},
+             Stripper_E0Para[]  = {16.348e6, 1.00547, -0.10681},
              // E1 after stripper; Gaussian distribution.
-             Stripper_E1Para            = 2.8874e-3,
+             Stripper_E1Para    = 2.8874e-3,
              // Theta after stripper.
-             Stripper_lambda            = 5.5740,
+             Stripper_lambda    = 5.5740,
              // U after stripper.
-             Stripper_upara             = 2.6903,
-             // Modeled by Baron's formula.
-             Stripper_chargeAmount[]    = {2660.0, 4360.0, 5300.0, 5090.0, 3230.0};
+             Stripper_upara     = 2.6903;
 
 
 struct ElementStripper : public Moment2ElementBase
@@ -74,4 +70,4 @@ struct ElementStripper : public Moment2ElementBase
 
 
 void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> > &sim,
-                     std::vector<boost::shared_ptr<StateBase> > &ST);
+                     std::vector<boost::shared_ptr<StateBase> > &ST, std::vector<double> ChgState);
