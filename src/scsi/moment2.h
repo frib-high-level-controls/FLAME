@@ -28,6 +28,7 @@ typedef boost::numeric::ublas::matrix<double> value_mat;
 
 struct Particle {
     double IonZ,        // Charge state.
+           IonQ,        // Ion Charge
            IonEs,       // Rest energy.
            IonW,        // Total energy.
            gamma,       // Gamma for ion.
@@ -40,7 +41,7 @@ struct Particle {
     Particle() {
         phis = 0.0;
         // initially spoil
-        IonZ = IonEs = IonW
+        IonZ = IonQ = IonEs = IonW
         = gamma = beta = bg
         = SampleIonK = IonEk
         = std::numeric_limits<double>::quiet_NaN();
@@ -76,7 +77,7 @@ struct Moment2State : public StateBase
                     boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
     > matrix_t;
 
-    void assign(const StateBase& other);
+    virtual void assign(const StateBase& other);
 
     virtual void show(std::ostream& strm) const;
 

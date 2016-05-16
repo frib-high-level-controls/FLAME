@@ -193,6 +193,7 @@ TM = [1,0,0,0,0,0,0,
       0,0,0,0,0,1,0,
       0,0,0,0,0,0,1];
 IonChargeStates = [42, 43];
+NCharge = [1000, 1010];
 elem0 : source, vector_variable="IV", matrix_variable="IM";
 elem1 : generic, transfer = TM, L=2.0;
 foo : LINE = (elem0, elem1);

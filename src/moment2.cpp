@@ -51,6 +51,11 @@ Moment2State::Moment2State(const Config& c)
             throw std::invalid_argument("IonChargeStates[cstate] is out of bounds");
         ref.IonZ = ics[icstate];
 
+        std::vector<double> nchg = c.get<std::vector<double> >("NCharge");
+        if(nchg.size()!=ics.size())
+            throw std::invalid_argument("NCharge[] and IonChargeStates[] must have equal length");
+        ref.IonQ = nchg[icstate];
+
         std::string icstate_s(boost::lexical_cast<std::string>(icstate));
         vectorname  += icstate_s;
         matrixname  += icstate_s;
@@ -163,6 +168,12 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
     } else if(idx==I++) {
         Info.name = "ref_IonZ";
         Info.ptr = &ref.IonZ;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "ref_IonQ";
+        Info.ptr = &ref.IonQ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
