@@ -220,7 +220,7 @@ void propagate1(std::auto_ptr<Config> &conf)
         }
     }
 
-    Stripper_GetMat(conf, sim, state);
+    Stripper_GetMat(*conf, sim, state);
 
     ChgState.clear();
     StatePtr.clear();
@@ -234,8 +234,6 @@ void propagate1(std::auto_ptr<Config> &conf)
         it.push_back(sim[k]->begin()+elem_no+1);
     }
 
-    PrtState(StatePtr);
-
     while (it[0] != sim[0]->end()) {
         for (k = 0; k < state.size(); k++) {
             (*it[k])->advance(*state[k]);
@@ -243,9 +241,10 @@ void propagate1(std::auto_ptr<Config> &conf)
         }
     }
 
+    tStamp[1] = clock();
+
     PrtState(StatePtr);
 
-    tStamp[1] = clock();
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
 }

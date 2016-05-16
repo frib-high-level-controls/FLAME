@@ -353,17 +353,26 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.pos += length;
 
     std::string t_name = type_name(); // C string -> C++ string.
-    if (t_name != "rfcavity") {
+    if ((t_name != "rfcavity") && (t_name != "sbend")) {
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
         ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
         ST.real.IonEk  = last_Kenergy_out;
     }
+
+    double phis_temp = ST.moment0[state_t::PS_S];
 
     ST.moment0 = prod(transfer, ST.moment0);
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
         ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
+    } else if (t_name == "sbend") {
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        double dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
+        ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
+
+        ST.real.IonEk  = last_Kenergy_out;
     }
 
     noalias(scratch) = prod(transfer, ST.state);

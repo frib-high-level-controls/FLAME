@@ -29,7 +29,7 @@ typedef Moment2State state_t;
 
    RMS standard deviation of <> after stripper can be calculated as:
 
-     std_e=sqrt(std_i^2+std_s^2+std_f^2)
+     std_e = sqrt(std_i^2+std_s^2+std_f^2)
 
    std_i is the initial sqrt(<>), std_s is the variance introduced by interacting with perfect stripper,
    std_f is the variance introduced by stripper foil thickness variation.
@@ -73,5 +73,5 @@ struct ElementStripper : public Moment2ElementBase
 };
 
 
-void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<Machine> > &sim,
+void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> > &sim,
                      std::vector<boost::shared_ptr<StateBase> > &ST);

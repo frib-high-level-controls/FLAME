@@ -3,7 +3,7 @@
 #include "scsi/chg_stripper.h"
 
 
-void GetCenofChg(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<StateBase> > &ST,
+void GetCenofChg(const Config &conf, std::vector<boost::shared_ptr<StateBase> > &ST,
                  Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
 {
     int                    i, j, n;
@@ -15,9 +15,9 @@ void GetCenofChg(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<Stat
     BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
     BeamVar  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
 
-    n = conf->get<std::vector<double> >("IonChargeStates").size();
+    n = conf.get<std::vector<double> >("IonChargeStates").size();
     NChg.resize(n);
-    NChg = conf->get<std::vector<double> >("NCharge");
+    NChg = conf.get<std::vector<double> >("NCharge");
 
     Ntot = 0e0;
     for (i = 0; i < n; i++) {
@@ -52,48 +52,45 @@ double Gaussian(double in, const double Q_ave, const double d)
 }
 
 
-void StripperCharge(const double IonProton, const double beta, double &Q_ave, double &d)
+void StripperCharge(const double beta, double &Q_ave, double &d)
 {
-    // Use Baron's formula for carbon foil.
+    // Baron's formula for carbon foil.
     double Q_ave1, Y;
 
-    Q_ave1 = IonProton*(1e0-exp(-83.275*(beta/pow(IonProton, 0.447))));
-    Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*IonProton-0.00122*sqr(IonProton)));
-    Y      = Q_ave1/IonProton;
+    Q_ave1 = Stripper_IonProton*(1e0-exp(-83.275*(beta/pow(Stripper_IonProton, 0.447))));
+    Q_ave  = Q_ave1*(1e0-exp(-12.905+0.2124*Stripper_IonProton-0.00122*sqr(Stripper_IonProton)));
+    Y      = Q_ave1/Stripper_IonProton;
     d      = sqrt(Q_ave1*(0.07535+0.19*Y-0.2654*sqr(Y)));
 }
 
 
-void ChargeStripper(const double IonMass, const double IonProton, const double beta,
-                    const int nChargeStates, const double IonChargeStates[],
-                    double chargeAmount_Baron[])
+void ChargeStripper(const double beta, double chargeAmount_Baron[])
 {
     int    k;
     double Q_ave, d;
 
-    StripperCharge(IonProton, beta, Q_ave, d);
-    for (k = 0; k < nChargeStates; k++)
-        chargeAmount_Baron[k] = Gaussian(IonChargeStates[k]*IonMass, Q_ave, d);
+    StripperCharge(beta, Q_ave, d);
+    for (k = 0; k < Stripper_n_chg_states; k++)
+        chargeAmount_Baron[k] = Gaussian(Stripper_IonChargeStates[k]*Stripper_IonMass, Q_ave, d);
 }
 
 
-void PropagateLongStripper(const Config &conf, const int n, double &IonZ, const double IonEs,
-                           double &IonW, double &SampleIonK, double &IonBeta)
+void Stripper_Propagate_ref(const Config &conf, Particle &ref)
 {
-    double IonEk, IonGamma, chargeAmount_Baron[Stripper_n_chg_states];
+    double chargeAmount_Baron[Stripper_n_chg_states];
 
-    IonZ = Stripper_IonZ;
-    ChargeStripper(Stripper_IonMass, Stripper_IonProton, IonBeta,
-                   Stripper_n_chg_states, Stripper_IonChargeStates,
-                   chargeAmount_Baron);
+    // Change reference particle charge state.
+    ref.IonZ = Stripper_IonZ;
+
+    ChargeStripper(ref.beta, chargeAmount_Baron);
+
     // Evaluate change in reference particle energy due to stripper model energy straggling.
-//    IonEk      = (LongTab.Ek[n-2]-StripperPara[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
-    IonW       = IonEk + IonEs;
-    IonGamma   = IonW/IonEs;
-    IonBeta    = sqrt(1e0-1e0/sqr(IonGamma));
-    SampleIonK = 2e0*M_PI/(IonBeta*SampleLambda);
+    ref.IonEk      = (ref.IonEk-Stripper_Para[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
 
-//    LongTab.set(LongTab.s[n-2], IonEk, LongTab.FyAbs[n-2], IonBeta, IonGamma);
+    ref.IonW       = ref.IonEk + ref.IonEs;
+    ref.gamma      = ref.IonW/ref.IonEs;
+    ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
+    ref.SampleIonK = 2e0*M_PI/(ref.beta*SampleLambda);
 
     // chargeAmount = fribstripper.chargeAmount_Baron;
 }
@@ -110,12 +107,12 @@ void PrtMat1(const value_mat &M)
 }
 
 
-void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<Machine> > &sim,
+void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> > &sim,
                      std::vector<boost::shared_ptr<StateBase> > &ST)
 {
     int                    k, n;
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
-    double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp;
+    double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
     std::vector<double>    NChg;
     Particle               ref;
     state_t                *StatePtr;
@@ -126,9 +123,9 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
 
     GetCenofChg(conf, ST, CenofChg, BeamRMS);
 
-    n = conf->get<std::vector<double> >("IonChargeStates").size();
+    n = conf.get<std::vector<double> >("IonChargeStates").size();
     NChg.resize(n);
-    NChg = conf->get<std::vector<double> >("NCharge");
+    NChg = conf.get<std::vector<double> >("NCharge");
 
     tmptotCharge  = 0e0;
     Fy_abs_recomb = 0e0;
@@ -176,23 +173,30 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
         tmpmat(3, k) = tmpmat(3, k)*growthRateYp;
     }
 
+    // Propagate reference particle.
     ref = dynamic_cast<state_t*>(ST[0].get())->ref;
+    Stripper_Propagate_ref(conf, ref);
+
+    StatePtr = dynamic_cast<state_t*>(ST[0].get());
+    s = StatePtr->pos;
 
     sim.clear();
     ST.clear();
     for (k = 0; k < Stripper_n_chg_states; k++) {
-        sim.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
+        sim.push_back(boost::shared_ptr<Machine> (new Machine(conf)));
         ST.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState()));
 
 //        Move iterator to after charge splitter.
-//        ST.pos += length;
 
         state_t* StatePtr = dynamic_cast<state_t*>(ST[k].get());
 
-        StatePtr->ref        = ref;
-        StatePtr->ref.IonZ   = Stripper_IonZ;
+        // Length is zero.
+        StatePtr->pos        = s;
 
-        StatePtr->real.IonZ  = Stripper_IonZ;
+        StatePtr->ref        = ref;
+
+        StatePtr->real.IonZ  = Stripper_IonChargeStates[k];
+        StatePtr->real.IonEs = ref.IonEs;
         StatePtr->real.IonEk = Ek_recomb;
         StatePtr->real.IonW  = StatePtr->real.IonEk + StatePtr->ref.IonEs;
         StatePtr->real.gamma = StatePtr->real.IonW/StatePtr->ref.IonEs;
