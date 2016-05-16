@@ -311,6 +311,7 @@ void Moment2ElementBase::assign(const ElementVoid *other)
     transfer = O->transfer;
     transfer_raw = O->transfer_raw;
     misalign = O->misalign;
+    misalign_inv = O->misalign_inv;
     ElementVoid::assign(other);
 
     // spoil to force recalculation of energy dependent terms
