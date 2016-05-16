@@ -53,6 +53,20 @@ void PrtMat(const value_mat &M)
 }
 
 
+void PrtState(std::vector<state_t*> StatePtr)
+{
+    int k;
+
+    for (k = 0; k < StatePtr.size(); k++) {
+        std::cout << "\n";
+        PrtVec(StatePtr[k]->moment0);
+        std::cout << "\n";
+        PrtMat(StatePtr[k]->state);
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+    }
+}
+
+
 std::vector<double> GetChgState(Config &conf)
 {
     return conf.get<std::vector<double> >("IonChargeStates");
@@ -120,7 +134,7 @@ void propagate(std::auto_ptr<Config> &conf)
     int                        k, nChgStates;
     boost::shared_ptr<Machine> sim;
     std::vector<double>        ChgState;
-    state_t                    *StatePtr;
+    std::vector<state_t*>      StatePtr;
 
     nChgStates = GetChgState(*conf).size();
     ChgState.resize(nChgStates);
@@ -134,10 +148,10 @@ void propagate(std::auto_ptr<Config> &conf)
 
         std::auto_ptr<StateBase> state(sim->allocState());
 
-        StatePtr = dynamic_cast<state_t*>(state.get());
-        if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+        StatePtr.push_back(dynamic_cast<state_t*>(state.get()));
+        if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
 
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr->pos << "\n";
+        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
 
         // Propagate through first element (beam initial conditions).
         sim->propagate(state.get(), 0, 1);
@@ -149,13 +163,9 @@ void propagate(std::auto_ptr<Config> &conf)
 
         std::cout << std::fixed << std::setprecision(5)
                   << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
-
-        std::cout << "\n";
-        PrtVec(StatePtr->moment0);
-        std::cout << "\n";
-        PrtMat(StatePtr->state);
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr->pos << "\n";
     }
+
+    PrtState(StatePtr);
 }
 
 
@@ -172,9 +182,6 @@ void propagate1(std::auto_ptr<Config> &conf)
     nChgStates = GetChgState(*conf).size();
     ChgState.resize(nChgStates);
     ChgState = GetChgState(*conf);
-
-    for (k = 0; k < nChgStates; k++)
-        conf->set<double>("cstate", k);
 
     for (k = 0; k < nChgStates; k++) {
         conf->set<double>("cstate", k);
@@ -215,31 +222,32 @@ void propagate1(std::auto_ptr<Config> &conf)
 
     Stripper_GetMat(conf, sim, state);
 
+    ChgState.clear();
     StatePtr.clear();
+    it.clear();
     for (k = 0; k < state.size(); k++) {
+        ChgState.push_back(Stripper_IonChargeStates[k]);
+
         StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
         if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+
+        it.push_back(sim[k]->begin()+elem_no+1);
     }
 
-//    while (it[0] != sim[0]->end()) {
-//        for (k = 0; k < state.size(); k++) {
-//            (*it[k])->advance(*state[k]);
-//            ++it[k];
-//        }
-//    }
+    PrtState(StatePtr);
+
+    while (it[0] != sim[0]->end()) {
+        for (k = 0; k < state.size(); k++) {
+            (*it[k])->advance(*state[k]);
+            ++it[k];
+        }
+    }
+
+    PrtState(StatePtr);
 
     tStamp[1] = clock();
-
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
-
-    for (k = 0; k < state.size(); k++) {
-        std::cout << "\n";
-        PrtVec(StatePtr[k]->moment0);
-        std::cout << "\n";
-        PrtMat(StatePtr[k]->state);
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
-    }
 }
 
 

@@ -117,6 +117,7 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp;
     std::vector<double>    NChg;
+    Particle               ref;
     state_t                *StatePtr;
     Moment2State::vector_t CenofChg, BeamRMS;
     Moment2State::matrix_t tmpmat;
@@ -166,6 +167,7 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
     growthRateXp = sqrt(XpAfStr/tmpmat(1, 1));
     YpAfStr      = tmpmat(3, 3) + sqr(stdXYp);
     growthRateYp = sqrt(YpAfStr/tmpmat(3, 3));
+
     for (k = 0; k < 6; k++) {
         tmpmat(k, 1) = tmpmat(k, 1)*growthRateXp;
         // This trick allows two times growthRate for <Zp, Zp>.
@@ -174,17 +176,21 @@ void Stripper_GetMat(std::auto_ptr<Config> &conf, std::vector<boost::shared_ptr<
         tmpmat(3, k) = tmpmat(3, k)*growthRateYp;
     }
 
+    ref = dynamic_cast<state_t*>(ST[0].get())->ref;
+
     sim.clear();
     ST.clear();
-
     for (k = 0; k < Stripper_n_chg_states; k++) {
         sim.push_back(boost::shared_ptr<Machine> (new Machine(*conf)));
         ST.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState()));
-        // Move iterator to after charge splitter.
-        // Center Track.
-//        mscpTracker.position = fribnode.position + fribnode.length;
+
+//        Move iterator to after charge splitter.
+//        ST.pos += length;
 
         state_t* StatePtr = dynamic_cast<state_t*>(ST[k].get());
+
+        StatePtr->ref        = ref;
+        StatePtr->ref.IonZ   = Stripper_IonZ;
 
         StatePtr->real.IonZ  = Stripper_IonZ;
         StatePtr->real.IonEk = Ek_recomb;
