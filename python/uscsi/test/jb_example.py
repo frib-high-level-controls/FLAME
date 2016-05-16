@@ -35,10 +35,10 @@ def prt_lat_prms(M):
     print '\nIon Charge States = ', M.conf()['IonChargeStates']
     print 'IonEs [MeV]       = ', M.conf()['IonEs']/1e6
     print 'IonEk [MeV]       = ', M.conf()['IonEk']/1e6
-    print '\nBaryCenter 1:\n', M.conf()['BaryCenter1']
-    print '\nBaryCenter 2:\n', M.conf()['BaryCenter2']
-    print '\nBeam Envelope 1:\n', M.conf()['S1']
-    print '\nBeam Envelope 2:\n', M.conf()['S2']
+    print '\nBaryCenter 1:\n', M.conf()['BaryCenter0']
+    print '\nBaryCenter 2:\n', M.conf()['BaryCenter1']
+    print '\nBeam Envelope 1:\n', M.conf()['S0']
+    print '\nBeam Envelope 2:\n', M.conf()['S1']
 
 
 def prt_lat(M):
