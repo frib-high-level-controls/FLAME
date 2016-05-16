@@ -790,6 +790,17 @@ struct ElementRFCavity : public Moment2ElementBase
         this->ElementRFCavity::InitRFCav(conf(), ST.real, accIonW, avebeta, avegamma, transfer);
    }
 
+   virtual void assign(const ElementVoid *other)
+   {
+        throw std::logic_error("assign/reconfigure() not implemented for rf cavity");
+        // TODO: can't copy 'inf'.  Need to parse once in ctor.
+//        const ElementRFCavity *O = static_cast<const ElementRFCavity*>(other);
+//        Moment2ElementBase::assign(O);
+//        CavData = O->CavData;
+//        CavTLMLineTab = O->CavTLMLineTab;
+//        phi_ref = O->phi_ref;
+   }
+
     virtual const char* type_name() const {return "rfcavity";}
 };
 
