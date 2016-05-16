@@ -721,9 +721,11 @@ struct ElementRFCavity : public Moment2ElementBase
     CavDataType    CavData;
     std::fstream   inf;
     CavTLMLineType CavTLMLineTab;
+    double phi_ref;
 
     ElementRFCavity(const Config& c)
         :base_t(c)
+        ,phi_ref(std::numeric_limits<double>::quiet_NaN())
     {
         std::string cav_type = c.get<std::string>("cavtype");
         double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
@@ -762,7 +764,7 @@ struct ElementRFCavity : public Moment2ElementBase
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
                    Particle &real, const double IonFys[], const double Rm, value_mat &M);
 
-    void PropagateLongRFCav(Config &conf, Particle &ref);
+    void PropagateLongRFCav(const Config &conf, Particle &ref);
 
     void InitRFCav(const Config &conf, Particle &real, double &accIonW,
                    double &avebeta, double &avegamma, value_mat &M);
@@ -1247,7 +1249,7 @@ void ElementRFCavity::GetCavBoost(const CavDataType &CavData, Particle &state, c
 }
 
 
-void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
+void ElementRFCavity::PropagateLongRFCav(const Config &conf, Particle &ref)
 {
     std::string CavType;
     int         cavi;
@@ -1272,7 +1274,7 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
     caviFy = GetCavPhase(cavi, ref, IonFys, multip);
 
     IonFy_i = multip*ref.phis + caviFy;
-    conf.set<double>("phi_ref", caviFy);
+    phi_ref = caviFy;
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
@@ -1324,7 +1326,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
         throw std::runtime_error(strm.str());
     }
 
-    IonFy_i   = multip*real.phis + conf.get<double>("phi_ref");
+    IonFy_i   = multip*real.phis + phi_ref;
     Ek_i      = real.IonEk;
     real.IonW = real.IonEk + real.IonEs;
 

@@ -97,8 +97,7 @@ struct ElementVoid : public boost::noncopyable
     //! Propogate the given State through this Element
     virtual void advance(StateBase& s) =0;
 
-//    inline const Config& conf() const {return p_conf;}
-    inline Config& conf() {return p_conf;}
+    inline const Config& conf() const {return p_conf;}
 
     const std::string name; //!< Name of this element (unique in its Machine)
     const size_t index; //!< Index of this element (unique in its Machine)
