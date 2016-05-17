@@ -48,6 +48,7 @@ set(PY_SRC_TEST
   test/jb.py
   test/jb_example.py
   test/jb_chg_str.py
+  test/FrontEnd.lat
 
   test/data/axisData_41.txt
   test/data/axisData_85.txt

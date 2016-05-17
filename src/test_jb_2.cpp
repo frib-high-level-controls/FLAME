@@ -79,32 +79,6 @@ std::vector<double> GetNChg(Config &conf)
 }
 
 
-value_vec GetBaryCenter(Config &conf, const std::string &BCstr)
-{
-
-    const std::vector<double>& BCvec = conf.get<std::vector<double> >(BCstr);
-    value_vec BC(PS_Dim);
-    if (BCvec.size() > BC.data().size())
-        throw std::invalid_argument("Initial state size too big");
-    std::copy(BCvec.begin(), BCvec.end(), BC.data().begin());
-
-    return BC;
-}
-
-
-value_mat GetBeamEnvelope(Config &conf, const std::string &BEstr)
-{
-
-    const std::vector<double>& BEvec = conf.get<std::vector<double> >(BEstr);
-    value_mat BE(PS_Dim, PS_Dim);
-    if (BEvec.size() > BE.data().size())
-        throw std::invalid_argument("Initial state size too big");
-    std::copy(BEvec.begin(), BEvec.end(), BE.data().begin());
-
-    return BE;
-}
-
-
 void prt_initial_cond(std::vector<boost::shared_ptr<Machine> > &sim, std::vector<double> ChgState,
                       std::vector<boost::shared_ptr<StateBase> > &ST)
 {
@@ -269,12 +243,8 @@ int main(int argc, char *argv[])
 //        GLPSPrint(std::cout, *conf);
 //        std::cout<<"\n";
 
-        // register state and element types
-//        registerLinear();
-//        registerMoment();
         registerMoment2();
 
-//        propagate(conf);
 //        propagate(conf);
         propagate1(conf);
 

@@ -431,7 +431,7 @@ struct ElementSource : public Moment2ElementBase
 
 struct ElementMark : public Moment2ElementBase
 {
-    // Transport (identity) matrix for a Marker.
+    // Transport (identity) matrix for Marker.
     typedef Moment2ElementBase     base_t;
     typedef typename base_t::state_t state_t;
 
@@ -442,7 +442,7 @@ struct ElementMark : public Moment2ElementBase
 
 struct ElementBPM : public Moment2ElementBase
 {
-    // Transport (identity) matrix for a BPM.
+    // Transport (identity) matrix for BPM.
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
@@ -455,19 +455,20 @@ struct ElementBPM : public Moment2ElementBase
 
 struct ElementDrift : public Moment2ElementBase
 {
-    // Transport matrix for a Drift.
+    // Transport matrix for Drift.
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementDrift(const Config& c) : base_t(c) {}
     virtual ~ElementDrift() {}
+    virtual const char* type_name() const {return "drift";}
 
     virtual void recompute_matrix(state_t& ST)
     {
         double L = length*MtoMM; // Convert from [m] to [mm].
 
-        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
+        transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
         transfer_raw(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
@@ -475,18 +476,17 @@ struct ElementDrift : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "drift";}
 };
 
 struct ElementOrbTrim : public Moment2ElementBase
 {
-    // Transport matrix for an Orbit Trim.
+    // Transport matrix for Orbit Trim.
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementOrbTrim(const Config& c) : base_t(c) {length = 0e0;}
     virtual ~ElementOrbTrim() {}
+    virtual const char* type_name() const {return "orbtrim";}
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -499,20 +499,17 @@ struct ElementOrbTrim : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "orbtrim";}
 };
 
 struct ElementSBend : public Moment2ElementBase
 {
-    // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
-
-    // *** Add entrance and exit angles.
+    // Transport matrix for Gradient Sector Bend; with edge focusing (cylindrical coordinates).
 
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
     ElementSBend(const Config& c) : base_t(c) {}
     virtual ~ElementSBend() {}
+    virtual const char* type_name() const {return "sbend";}
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -532,9 +529,9 @@ struct ElementSBend : public Moment2ElementBase
         // Edge focusing.
         GetEdgeMatrix(rho, phi1, edge1);
         // Horizontal plane.
-        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, this->transfer_raw);
+        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, transfer_raw);
         // Vertical plane.
-        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer_raw);
+        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, transfer_raw);
 
         // Include dispersion.
         if (Kx == 0e0) {
@@ -548,21 +545,21 @@ struct ElementSBend : public Moment2ElementBase
             sx = sin(sqrt(Kx)*L)/sqrt(Kx);
         }
 
-        this->transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        this->transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        this->transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
-        this->transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
+        transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
+        transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
         // Low beta approximation.
-        this->transfer_raw(state_t::PS_S,  state_t::PS_PS) =
+        transfer_raw(state_t::PS_S,  state_t::PS_PS) =
                 ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK
                 /(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
 
         double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
         // Add dipole terms.
-        this->transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
-        this->transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
-        this->transfer_raw(state_t::PS_S,  6) = -(L-sx)/(Kx*sqr(rho))*ST.ref.SampleIonK*qmrel;
+        transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
+        transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
+        transfer_raw(state_t::PS_S,  6) = -(L-sx)/(Kx*sqr(rho))*ST.ref.SampleIonK*qmrel;
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi2, edge2);
@@ -572,40 +569,39 @@ struct ElementSBend : public Moment2ElementBase
 
         // Longitudinal plane.
         // For total path length.
-//        this->transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
+//        transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
 
         transfer = transfer_raw;
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "sbend";}
 };
 
 struct ElementQuad : public Moment2ElementBase
 {
-    // Transport matrix for a Quadrupole; K = B2/Brho.
+    // Transport matrix for Quadrupole; K = B2/Brho.
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementQuad(const Config& c) : base_t(c) {}
     virtual ~ElementQuad() {}
+    virtual const char* type_name() const {return "quadrupole";}
 
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-        this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K    = conf().get<double>("B2")/Brho/sqr(MtoMM),
                L    = conf().get<double>("L")*MtoMM;
 
         // Horizontal plane.
-        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, this->transfer_raw);
+        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
         // Vertical plane.
-        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, this->transfer_raw);
+        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw);
         // Longitudinal plane.
-//        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+//        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
 
         transfer_raw(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
@@ -614,29 +610,28 @@ struct ElementQuad : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "quadrupole";}
 };
 
 struct ElementSolenoid : public Moment2ElementBase
 {
-    // Transport (identity) matrix for a Solenoid; K = B0/(2 Brho).
+    // Transport (identity) matrix for a Solenoid; K = B/(2 Brho).
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementSolenoid(const Config& c) : base_t(c) {}
     virtual ~ElementSolenoid() {}
+    virtual const char* type_name() const {return "solenoid";}
 
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-        this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K    = conf().get<double>("B")/(2e0*Brho)/MtoMM,
                L    = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
-        GetSolMatrix(L, K, this->transfer_raw);
+        GetSolMatrix(L, K, transfer_raw);
 
         transfer_raw(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
@@ -645,31 +640,89 @@ struct ElementSolenoid : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "solenoid";}
 };
 
 struct ElementEDipole : public Moment2ElementBase
 {
-    // Transport matrix for an Electric Dipole.
+    // Transport matrix for Electrostatic Dipole; with edge focusing.
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
-    ElementEDipole(const Config& c) : base_t(c)
+    ElementEDipole(const Config& c) : base_t(c) {}
+    virtual ~ElementEDipole() {}
+    virtual const char* type_name() const {return "edipole";}
+
+    virtual void recompute_matrix(state_t& ST)
     {
         //double L = c.get<double>("L")*MtoMM;
 
+//        mscpTracker.position=fribnode.position+fribnode.length;
+//        double gamma=(Ek[ii_state]+FRIBPara.ionEs)/FRIBPara.ionEs;
+//        double beta=Math.sqrt(1.0-1.0/(gamma*gamma));
+//        double SampleionK=2*Math.PI/(beta*SampleLamda*1e3); //rad/mm, marking the currut using ionK
+//        double length=fribnode.length; // m
+//        double bangle=fribnode.attribute[1]; // degree
+//        double beta00=fribnode.attribute[2]; // The voltage is set that the particle with beta_EB would be bended ideally
+//        double n1=fribnode.attribute[3]; // 0 is for cylindrical, and 1 is for spherical
+//        int vertical=(int) fribnode.attribute[4]; // 0 for horizontal, 1 is for vertical ebend matrix
+//        double fringeX=fribnode.attribute[5]; // X fringe
+//        double fringeY=fribnode.attribute[6]; // Y fringe
+//        double kappa=(int) fribnode.attribute[7]; // voltage asymetry factor
+//        double gamma0=tlmPara.Gamma_tab.get(lattcnt+1)[1];
+//        double beta0=tlmPara.Beta_tab.get(lattcnt+1)[1];
+//        double h=1.0; // 0 for magnetic and 1 for electrostatic
+//        double rh0=length/(bangle/180*Math.PI);
+
+//        double Fy_temp=TransVector[ii_state].getElem(4);
+//        double dFy_temp=TransVector[ii_state].getElem(4)-Fy_temp;
+//        Fy_abs[ii_state]=Fy_abs[ii_state]+SampleionK*1000*fribnode.length+dFy_temp;
+
     }
+};
 
-    virtual ~ElementEDipole() {}
+struct ElementEQuad : public Moment2ElementBase
+{
+    // Transport matrix for Electrostatic Quadrupole.
+    typedef Moment2ElementBase       base_t;
+    typedef typename base_t::state_t state_t;
 
-    virtual const char* type_name() const {return "edipole";}
+    ElementEQuad(const Config& c) : base_t(c) {}
+    virtual ~ElementEQuad() {}
+    virtual const char* type_name() const {return "equad";}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        // Re-initialize transport matrix.
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+        double Brho   = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
+               V      = conf().get<double>("V"),
+               Radius = conf().get<double>("radius"),
+               bperm  = 2e0*V/(ST.real.beta*C0)/sqr(Radius),
+               K      = bperm*ST.real.IonZ*C0/(ST.real.beta*ST.real.gamma*ST.real.IonEs)/sqr(MtoMM),
+               L      = conf().get<double>("L")*MtoMM;
+
+        // Horizontal plane.
+        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
+        // Vertical plane.
+        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw);
+        // Longitudinal plane.
+//        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+
+        transfer_raw(state_t::PS_S, state_t::PS_PS) =
+                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+
+        transfer = transfer_raw;
+
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+    }
 };
 
 struct ElementGeneric : public Moment2ElementBase
 {
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
+
     ElementGeneric(const Config& c)
         :base_t(c)
     {
@@ -679,7 +732,6 @@ struct ElementGeneric : public Moment2ElementBase
         std::copy(I.begin(), I.end(), this->transfer_raw.data().begin());
     }
     virtual ~ElementGeneric() {}
-
     virtual const char* type_name() const {return "generic";}
 };
 
@@ -710,6 +762,8 @@ void registerMoment2()
     Machine::registerElement<ElementStripper               >("MomentMatrix2",   "stripper");
 
     Machine::registerElement<ElementEDipole                >("MomentMatrix2",   "edipole");
+
+    Machine::registerElement<ElementEDipole                >("MomentMatrix2",   "equad");
 
     Machine::registerElement<ElementGeneric                >("MomentMatrix2",   "generic");
 }

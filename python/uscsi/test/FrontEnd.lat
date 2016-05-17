@@ -1,0 +1,164 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+d0_1: drift, L = 0.0, aper = 0.02;
+q01_2: drift, L = 0.2, aper = 0.02;
+dsb1_3: drift, L = 0.25, aper = 0.02;
+q02_4: drift, L = 0.2, aper = 0.02;
+dsb2_5: drift, L = 0.2, aper = 0.02;
+dips_1: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_2: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_3: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_4: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipe_5: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+d1a_6: drift, L = 0.185, aper = 0.02;
+ch_1: marker;
+cv_2: marker;
+d1b_7: drift, L = 0.1616, aper = 0.02;
+q1h_1: quadrupole, L = 0.1034, B2 = 0.942438547187938, aper = 0.02;
+q1h_2: quadrupole, L = 0.1034, B2 = 0.942438547187938, aper = 0.02;
+d2_8: drift, L = 0.1282, aper = 0.02;
+q2h_3: quadrupole, L = 0.1034, B2 = -1.77270802055033, aper = 0.02;
+q2h_4: quadrupole, L = 0.1034, B2 = -1.77270802055033, aper = 0.02;
+d3_9: drift, L = 0.1282, aper = 0.02;
+q3h_5: quadrupole, L = 0.1034, B2 = 0.853489750615018, aper = 0.02;
+q3h_6: quadrupole, L = 0.1034, B2 = 0.853489750615018, aper = 0.02;
+d4_10: drift, L = 0.1883, aper = 0.02;
+d4_11: drift, L = 0.1883, aper = 0.02;
+d4_12: drift, L = 0.1883, aper = 0.02;
+d4_13: drift, L = 0.1883, aper = 0.02;
+q3h_7: quadrupole, L = 0.1034, B2 = 0.853489750615018, aper = 0.02;
+q3h_8: quadrupole, L = 0.1034, B2 = 0.853489750615018, aper = 0.02;
+d3_14: drift, L = 0.1282, aper = 0.02;
+q2h_9: quadrupole, L = 0.1034, B2 = -1.77270802055033, aper = 0.02;
+q2h_10: quadrupole, L = 0.1034, B2 = -1.77270802055033, aper = 0.02;
+d2_15: drift, L = 0.1282, aper = 0.02;
+q1h_11: quadrupole, L = 0.1034, B2 = 0.942438547187938, aper = 0.02;
+q1h_12: quadrupole, L = 0.1034, B2 = 0.942438547187938, aper = 0.02;
+d1_16: drift, L = 0.3466, aper = 0.02;
+dips_6: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_7: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_8: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_9: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipe_10: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dsb2_17: drift, L = 0.2, aper = 0.02;
+dl0_18: drift, L = 0, aper = 0.02;
+dl1a_19: drift, L = 0.0216, aper = 0.02;
+qe1h_1_0: equad, L = 0.1034, V = -358.5741032517259301, radius = 0.0746, aper = 0.02;
+qe1h_3_0: equad, L = 0.1034, V = -358.5741032517259301, radius = 0.0746, aper = 0.02;
+dl2_20: drift, L = 0.1282, aper = 0.02;
+qe2h_5_0: equad, L = 0.1034, V = 1266.9909207780010885, radius = 0.0746, aper = 0.02;
+qe2h_7_0: equad, L = 0.1034, V = 1266.9909207780010885, radius = 0.0746, aper = 0.02;
+dl3_21: drift, L = 0.3882, aper = 0.02;
+qe3h_9_0: equad, L = 0.1034, V = -2199.819961983544592, radius = 0.0746, aper = 0.02;
+qe3h_11_0: equad, L = 0.1034, V = -2199.819961983544592, radius = 0.0746, aper = 0.02;
+dl2_22: drift, L = 0.1282, aper = 0.02;
+qe4h_13_0: equad, L = 0.1034, V = 1372.0968065382303398, radius = 0.0746, aper = 0.02;
+qe4h_15_0: equad, L = 0.1034, V = 1372.0968065382303398, radius = 0.0746, aper = 0.02;
+dl1b_23: drift, L = 0.4457, aper = 0.02;
+sol0h_1: solenoid, L = 0.16085, B = 0.304028551138697196, aper = 0.02;
+sol0h_2: solenoid, L = 0.16085, B = 0.304028551138697196, aper = 0.02;
+dl4a_24: drift, L = 0.7393, aper = 0.02;
+dl4b_25: drift, L = 0.25, aper = 0.02;
+dl4c_26: drift, L = 0.1642, aper = 0.02;
+colsolh_3: solenoid, L = 0.16085, B = 0.443057824318406346, aper = 0.02;
+colsolh_4: solenoid, L = 0.16085, B = 0.443057824318406346, aper = 0.02;
+dl4c_27: drift, L = 0.1642, aper = 0.02;
+dl4b_28: drift, L = 0.25, aper = 0.02;
+dl4a_29: drift, L = 0.7393, aper = 0.02;
+dl5_30: drift, L = 0.165, aper = 0.02;
+sol1h_5: solenoid, L = 0.16085, B = 0.481683378233344335, aper = 0.02;
+sol1h_6: solenoid, L = 0.16085, B = 0.481683378233344335, aper = 0.02;
+dl7a_31: drift, L = 0.1678, aper = 0.02;
+dl7a_32: drift, L = 0.1678, aper = 0.02;
+dl7a_33: drift, L = 0.1678, aper = 0.02;
+dl7a_34: drift, L = 0.1678, aper = 0.02;
+dl7a_35: drift, L = 0.1678, aper = 0.02;
+eb1_1_0: edipole, L = 1, phi = 90, x_frng = 1, y_frng = 0.0, beta = 0.00506953, spher = 1, asym_fac = 0.0, aper = 0.02;
+dl8a_36: drift, L = 0.5466, aper = 0.02;
+q6h_13: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
+q6h_14: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
+dl8b_37: drift, L = 0.1282, aper = 0.02;
+q7h_15: quadrupole, L = 0.1034, B2 = -1.49959262363040706, aper = 0.02;
+q7h_16: quadrupole, L = 0.1034, B2 = -1.49959262363040706, aper = 0.02;
+dl8c_38: drift, L = 0.1282, aper = 0.02;
+q8h_17: quadrupole, L = 0.1034, B2 = 1.136055017901823529, aper = 0.02;
+q8h_18: quadrupole, L = 0.1034, B2 = 1.136055017901823529, aper = 0.02;
+dl8d_39: drift, L = 1.7712, aper = 0.02;
+q9h_19: quadrupole, L = 0.1034, B2 = -0.92708338006503034, aper = 0.02;
+q9h_20: quadrupole, L = 0.1034, B2 = -0.92708338006503034, aper = 0.02;
+dl9a_40: drift, L = 0.1282, aper = 0.02;
+q10h_21: quadrupole, L = 0.1034, B2 = 1.536475345620288224, aper = 0.02;
+q10h_22: quadrupole, L = 0.1034, B2 = 1.536475345620288224, aper = 0.02;
+dl9b_41: drift, L = 0.1282, aper = 0.02;
+q11h_23: quadrupole, L = 0.1034, B2 = -0.45676445956473701, aper = 0.02;
+q11h_24: quadrupole, L = 0.1034, B2 = -0.45676445956473701, aper = 0.02;
+dl9c_42: drift, L = 0.5776, aper = 0.02;
+dl9c_43: drift, L = 0.5776, aper = 0.02;
+q11h_25: quadrupole, L = 0.1034, B2 = -0.45676445956473701, aper = 0.02;
+q11h_26: quadrupole, L = 0.1034, B2 = -0.45676445956473701, aper = 0.02;
+dl9b_44: drift, L = 0.1282, aper = 0.02;
+q10h_27: quadrupole, L = 0.1034, B2 = 1.536475345620288224, aper = 0.02;
+q10h_28: quadrupole, L = 0.1034, B2 = 1.536475345620288224, aper = 0.02;
+dl9a_45: drift, L = 0.1282, aper = 0.02;
+q9h_29: quadrupole, L = 0.1034, B2 = -0.92708338006503034, aper = 0.02;
+q9h_30: quadrupole, L = 0.1034, B2 = -0.92708338006503034, aper = 0.02;
+dl8d_46: drift, L = 1.7712, aper = 0.02;
+q8h_31: quadrupole, L = 0.1034, B2 = 1.136055017901823529, aper = 0.02;
+q8h_32: quadrupole, L = 0.1034, B2 = 1.136055017901823529, aper = 0.02;
+dl8c_47: drift, L = 0.1282, aper = 0.02;
+q7h_33: quadrupole, L = 0.1034, B2 = -1.49959262363040706, aper = 0.02;
+q7h_34: quadrupole, L = 0.1034, B2 = -1.49959262363040706, aper = 0.02;
+dl8b_48: drift, L = 0.1282, aper = 0.02;
+q6h_35: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
+q6h_36: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
+dl8a_49: drift, L = 0.5466, aper = 0.02;
+eb1_3_0: edipole, L = 1, phi = 90, x_frng = 1, y_frng = 0.0, beta = 0.00506953, spher = 1, asym_fac = 0.0, aper = 0.02;
+dl7a_50: drift, L = 0.1678, aper = 0.02;
+dl7a_51: drift, L = 0.1678, aper = 0.02;
+dl7a_52: drift, L = 0.1678, aper = 0.02;
+dl7a_53: drift, L = 0.1678, aper = 0.02;
+dl7a_54: drift, L = 0.1678, aper = 0.02;
+sol1h_7: solenoid, L = 0.16085, B = 0.481683378233344335, aper = 0.02;
+sol1h_8: solenoid, L = 0.16085, B = 0.481683378233344335, aper = 0.02;
+dl5_55: drift, L = 0.165, aper = 0.02;
+dl4a_56: drift, L = 0.7393, aper = 0.02;
+dl4b_57: drift, L = 0.25, aper = 0.02;
+dl4c_58: drift, L = 0.1642, aper = 0.02;
+colsolh_9: solenoid, L = 0.16085, B = 0.443057824318406346, aper = 0.02;
+colsolh_10: solenoid, L = 0.16085, B = 0.443057824318406346, aper = 0.02;
+dl4c_59: drift, L = 0.1642, aper = 0.02;
+dl4b_60: drift, L = 0.25, aper = 0.02;
+dl4a_61: drift, L = 0.7393, aper = 0.02;
+sol3h_11: solenoid, L = 0.16085, B = 0.696512510638383560, aper = 0.02;
+sol3h_12: solenoid, L = 0.16085, B = 0.696512510638383560, aper = 0.02;
+dl10_62: drift, L = 0.3642, aper = 0.02;
+mhb_63: drift, L = 0, aper = 0.02;
+dl11_64: drift, L = 0.6241, aper = 0.02;
+sol4h_13: solenoid, L = 0.16085, B = 0.781769789480284940, aper = 0.02;
+sol4h_14: solenoid, L = 0.16085, B = 0.781769789480284940, aper = 0.02;
+dl12_65: drift, L = 0.3191, aper = 0.02;
+
+cell: LINE = (
+  d0_1, q01_2, dsb1_3, q02_4, dsb2_5, dips_1, dipm_2, dipm_3, 
+  dipm_4, dipe_5, d1a_6, ch_1, cv_2, d1b_7, q1h_1, q1h_2, 
+  d2_8, q2h_3, q2h_4, d3_9, q3h_5, q3h_6, d4_10, d4_11, 
+  d4_12, d4_13, q3h_7, q3h_8, d3_14, q2h_9, q2h_10, d2_15, 
+  q1h_11, q1h_12, d1_16, dips_6, dipm_7, dipm_8, dipm_9, dipe_10, 
+  dsb2_17, dl0_18, dl1a_19, qe1h_1_0, qe1h_3_0, dl2_20, qe2h_5_0, qe2h_7_0, 
+  dl3_21, qe3h_9_0, qe3h_11_0, dl2_22, qe4h_13_0, qe4h_15_0, dl1b_23, sol0h_1, 
+  sol0h_2, dl4a_24, dl4b_25, dl4c_26, colsolh_3, colsolh_4, dl4c_27, dl4b_28, 
+  dl4a_29, dl5_30, sol1h_5, sol1h_6, dl7a_31, dl7a_32, dl7a_33, dl7a_34, 
+  dl7a_35, eb1_1_0, dl8a_36, q6h_13, q6h_14, dl8b_37, q7h_15, q7h_16, 
+  dl8c_38, q8h_17, q8h_18, dl8d_39, q9h_19, q9h_20, dl9a_40, q10h_21, 
+  q10h_22, dl9b_41, q11h_23, q11h_24, dl9c_42, dl9c_43, q11h_25, q11h_26, 
+  dl9b_44, q10h_27, q10h_28, dl9a_45, q9h_29, q9h_30, dl8d_46, q8h_31, 
+  q8h_32, dl8c_47, q7h_33, q7h_34, dl8b_48, q6h_35, q6h_36, dl8a_49, 
+  eb1_3_0, dl7a_50, dl7a_51, dl7a_52, dl7a_53, dl7a_54, sol1h_7, sol1h_8, 
+  dl5_55, dl4a_56, dl4b_57, dl4c_58, colsolh_9, colsolh_10, dl4c_59, dl4b_60, 
+  dl4a_61, sol3h_11, sol3h_12, dl10_62, mhb_63, dl11_64, sol4h_13, sol4h_14, 
+  dl12_65
+);
+
+USE: cell;
