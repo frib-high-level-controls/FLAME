@@ -37,7 +37,6 @@ typedef Moment2State state_t;
    distribution of stripper thickness variation, 20 is thickness variation in %,  3.0 is foil thickness in um,
    -0.10681 is thickness dependence of E0 after stripper.                                                       */
 
-// Number of charge states.
 const double Stripper_IonZ      = 78.0/238.0,
              Stripper_IonMass   = 238.0,
              Stripper_IonProton = 92.0,
@@ -56,12 +55,13 @@ const double Stripper_IonZ      = 78.0/238.0,
 struct ElementStripper : public Moment2ElementBase
 {
     // Transport (identity) matrix for a Charge Stripper.
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
     ElementStripper(const Config& c)
         :base_t(c)
     {
         // Identity matrix.
+        length = 0e0;
     }
     virtual ~ElementStripper() {}
 

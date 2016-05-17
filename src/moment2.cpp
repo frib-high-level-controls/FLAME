@@ -9,6 +9,7 @@
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
 
+#include "scsi/moment2.h"
 #include "scsi/moment2_sup.h"
 #include "scsi/rf_cavity.h"
 #include "scsi/chg_stripper.h"
@@ -331,6 +332,7 @@ void Moment2ElementBase::show(std::ostream& strm) const
 
 void Moment2ElementBase::advance(StateBase& s)
 {
+    double   phis_temp;
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
@@ -358,9 +360,8 @@ void Moment2ElementBase::advance(StateBase& s)
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
         ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
         ST.real.IonEk  = last_Kenergy_out;
-    }
-
-    double phis_temp = ST.moment0[state_t::PS_S];
+    } else if (t_name == "sbend")
+        phis_temp = ST.moment0[state_t::PS_S];
 
     ST.moment0 = prod(transfer, ST.moment0);
 
@@ -371,7 +372,7 @@ void Moment2ElementBase::advance(StateBase& s)
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
         double dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
-        ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
+         ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
 
         ST.real.IonEk  = last_Kenergy_out;
     }
@@ -402,11 +403,10 @@ namespace {
 
 struct ElementSource : public Moment2ElementBase
 {
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementSource(const Config& c)
-        :base_t(c), istate(c)
-    {}
+
+    ElementSource(const Config& c): base_t(c), istate(c) {}
 
     virtual void advance(StateBase& s)
     {
@@ -432,24 +432,34 @@ struct ElementSource : public Moment2ElementBase
 struct ElementMark : public Moment2ElementBase
 {
     // Transport (identity) matrix for a Marker.
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase     base_t;
     typedef typename base_t::state_t state_t;
-    ElementMark(const Config& c) :base_t(c){
-        length = 0e0;
-    }
+
+    ElementMark(const Config& c): base_t(c) {length = 0e0;}
     virtual ~ElementMark() {}
     virtual const char* type_name() const {return "marker";}
+};
+
+struct ElementBPM : public Moment2ElementBase
+{
+    // Transport (identity) matrix for a BPM.
+    typedef Moment2ElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    Particle state;
+
+    ElementBPM(const Config& c): base_t(c) {length = 0e0;}
+    virtual ~ElementBPM() {}
+    virtual const char* type_name() const {return "bpm";}
 };
 
 struct ElementDrift : public Moment2ElementBase
 {
     // Transport matrix for a Drift.
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementDrift(const Config& c)
-        :base_t(c)
-    {
-    }
+
+    ElementDrift(const Config& c) : base_t(c) {}
     virtual ~ElementDrift() {}
 
     virtual void recompute_matrix(state_t& ST)
@@ -469,18 +479,39 @@ struct ElementDrift : public Moment2ElementBase
     virtual const char* type_name() const {return "drift";}
 };
 
+struct ElementOrbTrim : public Moment2ElementBase
+{
+    // Transport matrix for an Orbit Trim.
+    typedef Moment2ElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    ElementOrbTrim(const Config& c) : base_t(c) {length = 0e0;}
+    virtual ~ElementOrbTrim() {}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        double theta_x = conf().get<double>("theta_x", 0e0),
+               theta_y = conf().get<double>("theta_y", 0e0);
+
+        transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer(state_t::PS_PX, 6) = theta_x*ST.ref.IonZ/ST.real.IonZ;
+        transfer(state_t::PS_PY, 6) = theta_y*ST.ref.IonZ/ST.real.IonZ;
+
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+    }
+
+    virtual const char* type_name() const {return "orbtrim";}
+};
+
 struct ElementSBend : public Moment2ElementBase
 {
     // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
 
     // *** Add entrance and exit angles.
 
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementSBend(const Config& c)
-        :base_t(c)
-    {
-    }
+    ElementSBend(const Config& c) : base_t(c) {}
     virtual ~ElementSBend() {}
 
     virtual void recompute_matrix(state_t& ST)
@@ -531,9 +562,7 @@ struct ElementSBend : public Moment2ElementBase
         // Add dipole terms.
         this->transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
         this->transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
-        // Check expression.
-        this->transfer_raw(state_t::PS_S,  6) =
-                -((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma)+L/sqr(ST.ref.gamma))*ST.ref.SampleIonK*qmrel;
+        this->transfer_raw(state_t::PS_S,  6) = -(L-sx)/(Kx*sqr(rho))*ST.ref.SampleIonK*qmrel;
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi2, edge2);
@@ -556,12 +585,10 @@ struct ElementSBend : public Moment2ElementBase
 struct ElementQuad : public Moment2ElementBase
 {
     // Transport matrix for a Quadrupole; K = B2/Brho.
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementQuad(const Config& c)
-        :base_t(c)
-    {
-    }
+
+    ElementQuad(const Config& c) : base_t(c) {}
     virtual ~ElementQuad() {}
 
     virtual void recompute_matrix(state_t& ST)
@@ -594,13 +621,12 @@ struct ElementQuad : public Moment2ElementBase
 struct ElementSolenoid : public Moment2ElementBase
 {
     // Transport (identity) matrix for a Solenoid; K = B0/(2 Brho).
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementSolenoid(const Config& c)
-        :base_t(c)
-    {
-    }
+
+    ElementSolenoid(const Config& c) : base_t(c) {}
     virtual ~ElementSolenoid() {}
+
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
@@ -626,14 +652,15 @@ struct ElementSolenoid : public Moment2ElementBase
 struct ElementEDipole : public Moment2ElementBase
 {
     // Transport matrix for an Electric Dipole.
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementEDipole(const Config& c)
-        :base_t(c)
+
+    ElementEDipole(const Config& c) : base_t(c)
     {
         //double L = c.get<double>("L")*MtoMM;
 
     }
+
     virtual ~ElementEDipole() {}
 
     virtual const char* type_name() const {return "edipole";}
@@ -641,7 +668,7 @@ struct ElementEDipole : public Moment2ElementBase
 
 struct ElementGeneric : public Moment2ElementBase
 {
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
     ElementGeneric(const Config& c)
         :base_t(c)
@@ -666,7 +693,11 @@ void registerMoment2()
 
     Machine::registerElement<ElementMark                   >("MomentMatrix2",   "marker");
 
+    Machine::registerElement<ElementBPM                    >("MomentMatrix2",   "bpm");
+
     Machine::registerElement<ElementDrift                  >("MomentMatrix2",   "drift");
+
+    Machine::registerElement<ElementOrbTrim                >("MomentMatrix2",   "orbtrim");
 
     Machine::registerElement<ElementSBend                  >("MomentMatrix2",   "sbend");
 

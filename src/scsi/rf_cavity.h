@@ -60,7 +60,7 @@ double GetCavPhase(const int cavi, Particle ref, const double IonFys, const doub
 struct ElementRFCavity : public Moment2ElementBase
 {
     // Transport matrix for an RF Cavity.
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     CavDataType    CavData;
