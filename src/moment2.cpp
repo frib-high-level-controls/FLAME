@@ -693,14 +693,14 @@ struct ElementEQuad : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
+        // V0 [V] electrode voltage and R [m] electrode half-distance.
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        double Brho   = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
-               V      = conf().get<double>("V"),
-               Radius = conf().get<double>("radius"),
-               bperm  = 2e0*V/(ST.real.beta*C0)/sqr(Radius),
-               K      = bperm*ST.real.IonZ*C0/(ST.real.beta*ST.real.gamma*ST.real.IonEs)/sqr(MtoMM),
-               L      = conf().get<double>("L")*MtoMM;
+        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
+               V0   = conf().get<double>("V"),
+               R    = conf().get<double>("radius"),
+               K    = 2e0*V0/(C0*ST.real.beta*sqr(R))/Brho/sqr(MtoMM),
+               L    = conf().get<double>("L")*MtoMM;
 
         // Horizontal plane.
         GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
