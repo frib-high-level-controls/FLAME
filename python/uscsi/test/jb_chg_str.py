@@ -25,7 +25,7 @@ PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
 MeVtoeV = 1e6
 
 
-def sqr(a): return a*a; 
+def sqr(a): return a*a;
 
 
 P = GLPSParser()
@@ -39,11 +39,6 @@ def prt_lat_prms(M):
     print '\nBaryCenter 2:\n', M.conf()['BaryCenter1']
     print '\nBeam Envelope 1:\n', M.conf()['S0']
     print '\nBeam Envelope 2:\n', M.conf()['S1']
-
-
-def prt_lat(M):
-    for elem in M.conf()['elements']:
-        print(elem['name'], elem['type'])
 
 
 def track_chg_state(IonZ_ref, IonZ, m1, m2):
@@ -67,9 +62,6 @@ def track_chg_state(IonZ_ref, IonZ, m1, m2):
     print S
 
 
-# Main program.
-
-# file_name = home_dir+'/uscsi/test/LS1.lat'
 file_name = home_dir+'/uscsi/test/to_strl.lat'
 
 with open(file_name, 'rb') as inf:
@@ -79,25 +71,9 @@ with open(file_name, 'rb') as inf:
     prt_lat_prms(M)
     # prt_lat(M)
 
-    track_chg_state(M.conf()['IonChargeStates'][0],
-          M.conf()['IonChargeStates'][0],
-          M.conf()['BaryCenter1'], M.conf()['S1'])
-
-    # track_chg_state(M.conf()['IonChargeStates'][0],
-    #       M.conf()['IonChargeStates'][1],
-    #       M.conf()['BaryCenter2'], M.conf()['S2'])
-
-    # Change an element.
-    D = M.conf()['elements'][1]
-    print '\n', D
-    D['L'] = 0.071
-    M.reconfigure(1, D)
-    print M.conf()['elements'][1]
+    Stripper_GetMat(conf, sim, ST)
 
     track_chg_state(M.conf()['IonChargeStates'][0],
           M.conf()['IonChargeStates'][0],
           M.conf()['BaryCenter1'], M.conf()['S1'])
 
-    # track_chg_state(M.conf()['IonChargeStates'][0],
-    #       M.conf()['IonChargeStates'][1],
-    #       M.conf()['BaryCenter2'], M.conf()['S2'])

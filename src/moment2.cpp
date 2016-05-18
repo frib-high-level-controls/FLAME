@@ -9,7 +9,10 @@
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
 
+#include "scsi/moment2.h"
+#include "scsi/moment2_sup.h"
 #include "scsi/rf_cavity.h"
+#include "scsi/chg_stripper.h"
 
 #include "scsi/h5loader.h"
 
@@ -341,6 +344,7 @@ void Moment2ElementBase::show(std::ostream& strm) const
 
 void Moment2ElementBase::advance(StateBase& s)
 {
+    double   phis_temp;
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
@@ -364,17 +368,25 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.pos += length;
 
     std::string t_name = type_name(); // C string -> C++ string.
-    if (t_name != "rfcavity") {
+    if ((t_name != "rfcavity") && (t_name != "sbend")) {
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
         ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
         ST.real.IonEk  = last_Kenergy_out;
-    }
+    } else if (t_name == "sbend")
+        phis_temp = ST.moment0[state_t::PS_S];
 
     ST.moment0 = prod(transfer, ST.moment0);
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
         ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
+    } else if (t_name == "sbend") {
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        double dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
+         ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
+
+        ST.real.IonEk  = last_Kenergy_out;
     }
 
     noalias(scratch) = prod(transfer, ST.state);
@@ -401,112 +413,12 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 
 namespace {
 
-void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBase::value_t &M)
-{
-    typedef typename Moment2ElementBase::state_t state_t;
-
-    M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-
-    M(state_t::PS_PX, state_t::PS_X) =  tan(phi)/rho;
-    M(state_t::PS_PY, state_t::PS_Y) = -tan(phi)/rho;
-}
-
-void GetQuadMatrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M)
-{
-    // 2D quadrupole transport matrix.
-    double sqrtK,
-           psi,
-           cs,
-           sn;
-
-    if (K > 0e0) {
-        // Focusing.
-        sqrtK = sqrt(K);
-        psi = sqrtK*L;
-        cs = ::cos(psi);
-        sn = ::sin(psi);
-
-        M(ind, ind) = M(ind+1, ind+1) = cs;
-        if (sqrtK != 0e0)
-            M(ind, ind+1) = sn/sqrtK;
-        else
-            M(ind, ind+1) = L;
-        if (sqrtK != 0e0)
-            M(ind+1, ind) = -sqrtK*sn;
-        else
-            M(ind+1, ind) = 0e0;
-    } else {
-        // Defocusing.
-        sqrtK = sqrt(-K);
-        psi = sqrtK*L;
-        cs = ::cosh(psi);
-        sn = ::sinh(psi);
-
-        M(ind, ind) = M(ind+1, ind+1) = cs;
-        if (sqrtK != 0e0)
-            M(ind, ind+1) = sn/sqrtK;
-        else
-            M(ind, ind+1) = L;
-        if (sqrtK != 0e0)
-            M(ind+1, ind) = sqrtK*sn;
-        else
-            M(ind+1, ind) = 0e0;
-    }
-}
-
-void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::value_t &M)
-{
-    typedef typename Moment2ElementBase::state_t state_t;
-
-    double C = ::cos(K*L),
-           S = ::sin(K*L);
-
-    M(state_t::PS_X, state_t::PS_X)
-            = M(state_t::PS_PX, state_t::PS_PX)
-            = M(state_t::PS_Y, state_t::PS_Y)
-            = M(state_t::PS_PY, state_t::PS_PY)
-            = sqr(C);
-
-    if (K != 0e0)
-        M(state_t::PS_X, state_t::PS_PX) = S*C/K;
-    else
-        M(state_t::PS_X, state_t::PS_PX) = L;
-    M(state_t::PS_X, state_t::PS_Y) = S*C;
-    if (K != 0e0)
-        M(state_t::PS_X, state_t::PS_PY) = sqr(S)/K;
-    else
-        M(state_t::PS_X, state_t::PS_PY) = 0e0;
-
-    M(state_t::PS_PX, state_t::PS_X) = -K*S*C;
-    M(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
-    M(state_t::PS_PX, state_t::PS_PY) = S*C;
-
-    M(state_t::PS_Y, state_t::PS_X) = -S*C;
-    if (K != 0e0)
-        M(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
-    else
-        M(state_t::PS_Y, state_t::PS_PX) = 0e0;
-    if (K != 0e0)
-        M(state_t::PS_Y, state_t::PS_PY) = S*C/K;
-    else
-        M(state_t::PS_Y, state_t::PS_PY) = L;
-
-    M(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
-    M(state_t::PS_PY, state_t::PS_PX) = -S*C;
-    M(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
-
-    // Longitudinal plane.
-    // For total path length.
-//        M(state_t::PS_S, state_t::PS_S) = L;
-}
-
 struct ElementSource : public Moment2ElementBase
 {
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementSource(const Config& c)
-        :base_t(c), istate(c)
-    {}
+
+    ElementSource(const Config& c): base_t(c), istate(c) {}
 
     virtual void advance(StateBase& s)
     {
@@ -531,33 +443,44 @@ struct ElementSource : public Moment2ElementBase
 
 struct ElementMark : public Moment2ElementBase
 {
-    // Transport (identity) matrix for a Marker.
-    typedef Moment2ElementBase base_t;
+    // Transport (identity) matrix for Marker.
+    typedef Moment2ElementBase     base_t;
     typedef typename base_t::state_t state_t;
-    ElementMark(const Config& c) :base_t(c){
-        length = 0e0;
-    }
+
+    ElementMark(const Config& c): base_t(c) {length = 0e0;}
     virtual ~ElementMark() {}
     virtual const char* type_name() const {return "marker";}
 };
 
+struct ElementBPM : public Moment2ElementBase
+{
+    // Transport (identity) matrix for BPM.
+    typedef Moment2ElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    Particle state;
+
+    ElementBPM(const Config& c): base_t(c) {length = 0e0;}
+    virtual ~ElementBPM() {}
+    virtual const char* type_name() const {return "bpm";}
+};
+
 struct ElementDrift : public Moment2ElementBase
 {
-    // Transport matrix for a Drift.
-    typedef Moment2ElementBase base_t;
+    // Transport matrix for Drift.
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementDrift(const Config& c)
-        :base_t(c)
-    {
-    }
+
+    ElementDrift(const Config& c) : base_t(c) {}
     virtual ~ElementDrift() {}
+    virtual const char* type_name() const {return "drift";}
 
     virtual void recompute_matrix(state_t& ST)
     {
         double L = length*MtoMM; // Convert from [m] to [mm].
 
-        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
+        transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
         transfer_raw(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
@@ -565,23 +488,40 @@ struct ElementDrift : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
+};
 
-    virtual const char* type_name() const {return "drift";}
+struct ElementOrbTrim : public Moment2ElementBase
+{
+    // Transport matrix for Orbit Trim.
+    typedef Moment2ElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    ElementOrbTrim(const Config& c) : base_t(c) {length = 0e0;}
+    virtual ~ElementOrbTrim() {}
+    virtual const char* type_name() const {return "orbtrim";}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        double theta_x = conf().get<double>("theta_x", 0e0),
+               theta_y = conf().get<double>("theta_y", 0e0);
+
+        transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer(state_t::PS_PX, 6) = theta_x*ST.ref.IonZ/ST.real.IonZ;
+        transfer(state_t::PS_PY, 6) = theta_y*ST.ref.IonZ/ST.real.IonZ;
+
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+    }
 };
 
 struct ElementSBend : public Moment2ElementBase
 {
-    // Transport matrix for a Gradient Sector Bend (cylindrical coordinates).
+    // Transport matrix for Gradient Sector Bend; with edge focusing (cylindrical coordinates).
 
-    // *** Add entrance and exit angles.
-
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementSBend(const Config& c)
-        :base_t(c)
-    {
-    }
+    ElementSBend(const Config& c) : base_t(c) {}
     virtual ~ElementSBend() {}
+    virtual const char* type_name() const {return "sbend";}
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -601,9 +541,9 @@ struct ElementSBend : public Moment2ElementBase
         // Edge focusing.
         GetEdgeMatrix(rho, phi1, edge1);
         // Horizontal plane.
-        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, this->transfer_raw);
+        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, transfer_raw);
         // Vertical plane.
-        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, this->transfer_raw);
+        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, transfer_raw);
 
         // Include dispersion.
         if (Kx == 0e0) {
@@ -617,23 +557,21 @@ struct ElementSBend : public Moment2ElementBase
             sx = sin(sqrt(Kx)*L)/sqrt(Kx);
         }
 
-        this->transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        this->transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        this->transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
-        this->transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
+        transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
+        transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
         // Low beta approximation.
-        this->transfer_raw(state_t::PS_S,  state_t::PS_PS) =
+        transfer_raw(state_t::PS_S,  state_t::PS_PS) =
                 ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK
                 /(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
 
         double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
         // Add dipole terms.
-        this->transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
-        this->transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
-        // Check expression.
-        this->transfer_raw(state_t::PS_S,  6) =
-                -((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma)+L/sqr(ST.ref.gamma))*ST.ref.SampleIonK*qmrel;
+        transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
+        transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
+        transfer_raw(state_t::PS_S,  6) = -(L-sx)/(Kx*sqr(rho))*ST.ref.SampleIonK*qmrel;
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi2, edge2);
@@ -643,42 +581,39 @@ struct ElementSBend : public Moment2ElementBase
 
         // Longitudinal plane.
         // For total path length.
-//        this->transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
+//        transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
 
         transfer = transfer_raw;
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "sbend";}
 };
 
 struct ElementQuad : public Moment2ElementBase
 {
-    // Transport matrix for a Quadrupole; K = B2/Brho.
-    typedef Moment2ElementBase base_t;
+    // Transport matrix for Quadrupole; K = B2/Brho.
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementQuad(const Config& c)
-        :base_t(c)
-    {
-    }
+
+    ElementQuad(const Config& c) : base_t(c) {}
     virtual ~ElementQuad() {}
+    virtual const char* type_name() const {return "quadrupole";}
 
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-        this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K    = conf().get<double>("B2")/Brho/sqr(MtoMM),
                L    = conf().get<double>("L")*MtoMM;
 
         // Horizontal plane.
-        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, this->transfer_raw);
+        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
         // Vertical plane.
-        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, this->transfer_raw);
+        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw);
         // Longitudinal plane.
-//        this->transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+//        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
 
         transfer_raw(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
@@ -687,30 +622,28 @@ struct ElementQuad : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "quadrupole";}
 };
 
 struct ElementSolenoid : public Moment2ElementBase
 {
-    // Transport (identity) matrix for a Solenoid; K = B0/(2 Brho).
-    typedef Moment2ElementBase base_t;
+    // Transport (identity) matrix for a Solenoid; K = B/(2 Brho).
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementSolenoid(const Config& c)
-        :base_t(c)
-    {
-    }
+
+    ElementSolenoid(const Config& c) : base_t(c) {}
     virtual ~ElementSolenoid() {}
+    virtual const char* type_name() const {return "solenoid";}
+
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-        this->transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K    = conf().get<double>("B")/(2e0*Brho)/MtoMM,
                L    = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
-        GetSolMatrix(L, K, this->transfer_raw);
+        GetSolMatrix(L, K, transfer_raw);
 
         transfer_raw(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
@@ -719,89 +652,44 @@ struct ElementSolenoid : public Moment2ElementBase
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-
-    virtual const char* type_name() const {return "solenoid";}
 };
 
-
-struct ElementRFCavity : public Moment2ElementBase
+struct ElementEDipole : public Moment2ElementBase
 {
-    // Transport matrix for an RF Cavity.
-    typedef Moment2ElementBase base_t;
+    // Transport matrix for Electrostatic Dipole; with edge focusing.
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
-    CavDataType    CavData;
-    std::fstream   inf;
-    CavTLMLineType CavTLMLineTab;
-    double phi_ref;
-
-    ElementRFCavity(const Config& c)
-        :base_t(c)
-        ,phi_ref(std::numeric_limits<double>::quiet_NaN())
-    {
-        std::string cav_type = c.get<std::string>("cavtype");
-        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
-
-        std::string CavType      = conf().get<std::string>("cavtype");
-        std::string Eng_Data_Dir = conf().get<std::string>("Eng_Data_Dir", "");
-
-        if (CavType == "0.041QWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_41.txt");
-            inf.open((Eng_Data_Dir+"/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
-        } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_85.txt");
-            inf.open((Eng_Data_Dir+"/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
-        } else {
-            std::ostringstream strm;
-            strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-            throw std::runtime_error(strm.str());
-        }
-
-        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
-        // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
-    }
-
-    void GetCavMatParams(const int cavi,
-                         const double beta_tab[], const double gamma_tab[], const double IonK[]);
-
-    typedef boost::numeric::ublas::matrix<double> value_mat;
-
-    void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
-                   const double EfieldScl, const double IonFyi_s,
-                   const double IonEk_s, const double fRF, value_mat &M);
-
-    void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
-                   const double beta_tab[], const double gamma_tab[], const double Lambda,
-                   Particle &real, const double IonFys[], const double Rm, value_mat &M);
-
-    void PropagateLongRFCav(const Config &conf, Particle &ref);
-
-    void InitRFCav(const Config &conf, Particle &real, double &accIonW,
-                   double &avebeta, double &avegamma, value_mat &M);
-
-    void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
-                     const double EfieldScl, double &IonFy, double &accIonW);
-
-    virtual ~ElementRFCavity() {}
+    ElementEDipole(const Config& c) : base_t(c) {}
+    virtual ~ElementEDipole() {}
+    virtual const char* type_name() const {return "edipole";}
 
     virtual void recompute_matrix(state_t& ST)
     {
-        transfer = transfer_raw;
+        //double L = c.get<double>("L")*MtoMM;
 
-        last_Kenergy_in = ST.real.IonEk;
+//        mscpTracker.position=fribnode.position+fribnode.length;
+//        double gamma=(Ek[ii_state]+FRIBPara.ionEs)/FRIBPara.ionEs;
+//        double beta=Math.sqrt(1.0-1.0/(gamma*gamma));
+//        double SampleionK=2*Math.PI/(beta*SampleLamda*1e3); //rad/mm, marking the currut using ionK
+//        double length=fribnode.length; // m
+//        double bangle=fribnode.attribute[1]; // degree
+//        double beta00=fribnode.attribute[2]; // The voltage is set that the particle with beta_EB would be bended ideally
+//        double n1=fribnode.attribute[3]; // 0 is for cylindrical, and 1 is for spherical
+//        int vertical=(int) fribnode.attribute[4]; // 0 for horizontal, 1 is for vertical ebend matrix
+//        double fringeX=fribnode.attribute[5]; // X fringe
+//        double fringeY=fribnode.attribute[6]; // Y fringe
+//        double kappa=(int) fribnode.attribute[7]; // voltage asymetry factor
+//        double gamma0=tlmPara.Gamma_tab.get(lattcnt+1)[1];
+//        double beta0=tlmPara.Beta_tab.get(lattcnt+1)[1];
+//        double h=1.0; // 0 for magnetic and 1 for electrostatic
+//        double rh0=length/(bangle/180*Math.PI);
 
-        this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
+//        double Fy_temp=TransVector[ii_state].getElem(4);
+//        double dFy_temp=TransVector[ii_state].getElem(4)-Fy_temp;
+//        Fy_abs[ii_state]=Fy_abs[ii_state]+SampleionK*1000*fribnode.length+dFy_temp;
 
-        last_Kenergy_out = ST.real.IonEk;
-
-        // Define initial conditions.
-        double accIonW, avebeta, avegamma;
-
-        this->ElementRFCavity::InitRFCav(conf(), ST.real, accIonW, avebeta, avegamma, transfer);
-   }
-
+    }
    virtual void assign(const ElementVoid *other)
    {
         throw std::logic_error("assign/reconfigure() not implemented for rf cavity");
@@ -813,605 +701,51 @@ struct ElementRFCavity : public Moment2ElementBase
 //        phi_ref = O->phi_ref;
    }
 
-    virtual const char* type_name() const {return "rfcavity";}
 };
 
-
-void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double IonK[])
+struct ElementEQuad : public Moment2ElementBase
 {
-    // Evaluate time transit factors and acceleration.
-
-    std::string       line, Elem, Name;
-    double            s, Length, Aper, E0, T, S, Accel;
-    std::stringstream str;
-
-    inf.clear();
-    inf.seekg(0, inf.beg);
-
-    CavTLMLineTab.clear();
-
-    s = CavData.s[0];
-    while (getline(inf, line) && !inf.fail()) {
-        T = 0e0, S = 0e0, Accel = 0e0;
-        if (line[0] == '%') {
-            // Comment.
-        } else {
-            str.str(line);
-            str.clear();
-            str >> Elem >> Name >> Length >> Aper;
-
-            s += Length;
-
-            if ((Elem != "drift") && (Elem != "AccGap"))
-                str >> E0;
-            else
-                E0 = 0e0;
-
-            if (Elem == "drift") {
-            } else if (Elem == "EFocus1") {
-                if (s < 0e0) {
-                    // First gap. By reflection 1st Gap EFocus1 is 2nd gap EFocus2.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[0], T, S);
-                    // First gap *1, transverse E field the same.
-                    S = -S;
-                } else {
-                    // Second gap.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[1], T, S);
-                }
-            } else if (Elem == "EFocus2") {
-                if (s < 0e0) {
-                    // First gap.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus1", IonK[0], T, S);
-                    S = -S;
-                } else {
-                    // Second gap.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus2", IonK[1], T, S);
-                }
-            } else if (Elem == "EDipole") {
-                if (MpoleLevel >= 1) {
-                    if (s < 0e0) {
-                        TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[0], T, S);
-                        // First gap *1, transverse E field the same.
-                        S = -S;
-                    } else {
-                        // Second gap.
-                        TransitFacMultipole(cavi, "CaviMlp_EDipole", IonK[1], T, S);
-                    }
-                }
-            } else if (Elem == "EQuad") {
-                if (MpoleLevel >= 2) {
-                    if (s < 0e0) {
-                        // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[0], T, S);
-                        S = -S;
-                    } else {
-                        // Second Gap
-                        TransitFacMultipole(cavi, "CaviMlp_EQuad", IonK[1], T, S);
-                    }
-                }
-            } else if (Elem == "HMono") {
-                if (MpoleLevel >= 2) {
-                    if (s < 0e0) {
-                        // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[0], T, S);
-                        T = -T;
-                    } else {
-                        // Second Gap
-                        TransitFacMultipole(cavi, "CaviMlp_HMono", IonK[1], T, S);
-                    }
-                }
-            } else if (Elem == "HDipole") {
-                if (MpoleLevel >= 1) {
-                    if (s < 0e0) {
-                        // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[0], T, S);
-                        T = -T;
-                    }  else {
-                        // Second gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HDipole", IonK[1], T, S);
-                    }
-                }
-            } else if (Elem == "HQuad") {
-                if (MpoleLevel >= 2) {
-                    if (s < 0e0) {
-                        // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[0], T, S);
-                        T = -T;
-                    } else {
-                        // Second gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HQuad", IonK[1], T, S);
-                    }
-                }
-            } else if (Elem == "AccGap") {
-                if (s < 0e0) {
-                    // First gap.
-                    Accel = (beta_tab[0]*gamma_tab[0])/((beta_tab[1]*gamma_tab[1]));
-                } else {
-                    // Second gap.
-                    Accel = (beta_tab[1]*gamma_tab[1])/((beta_tab[2]*gamma_tab[2]));
-                }
-            } else {
-                std::ostringstream strm;
-                strm << "*** GetCavMatParams: undef. multipole element " << Elem << "\n";
-                throw std::runtime_error(strm.str());
-            }
-
-            CavTLMLineTab.set(s, Elem, E0, T, S, Accel);
-        }
-    }
-
-    if (false) {
-        std::cout << "\n";
-        CavTLMLineTab.show(std::cout);
-    }
-}
-
-
-void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
-                                const double beta_tab[], const double gamma_tab[], const double Lambda,
-                                Particle &real, const double IonFys[], const double Rm, value_mat &M)
-{
-    /* RF cavity model, transverse only defocusing.
-     * 2-gap matrix model.                                            */
-
-    std::string       line, Elem, Name;
-    int               seg, n;
-    double            Length, Aper, Efield, s, k_s[3];
-    double            Ecens[2], Ts[2], Ss[2], V0s[2], ks[2], L1, L2, L3;
-    double            beta, gamma, kfac, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy;
-    value_mat         Idmat, Mlon_L1, Mlon_K1, Mlon_L2;
-    value_mat         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
-    std::stringstream str;
-
-    const double IonA = 1e0;
-
-    using boost::numeric::ublas::prod;
-
-    Idmat = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
-
-    inf.clear();
-    inf.seekg(0, inf.beg);
-
-    k_s[0] = 2e0*M_PI/(beta_tab[0]*Lambda);
-    k_s[1] = 2e0*M_PI/(beta_tab[1]*Lambda);
-    k_s[2] = 2e0*M_PI/(beta_tab[2]*Lambda);
-
-    // Longitudinal model:  Drift-Kick-Drift, dis: total lenghth centered at 0,
-    // Ecens[0] & Ecens[1]: Electric Center position where accel kick applies, Ecens[0] < 0
-    // TTFtab:              2*6 vector, Ecens, T Tp S Sp, V0;
-
-    Ecens[0] = TTF_tab[0];
-    Ts[0]    = TTF_tab[1];
-    Ss[0]    = TTF_tab[3];
-    V0s[0]   = TTF_tab[5];
-    ks[0]    = 0.5*(k_s[0]+k_s[1]);
-    L1       = dis + Ecens[0];       //try change dis/2 to dis 14/12/12
-
-    Mlon_L1 = Idmat;
-    Mlon_K1 = Idmat;
-    // Pay attention, original is -
-    Mlon_L1(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[0]*gamma_tab[0])*MeVtoeV/real.IonEs*L1);
-    // Pay attention, original is -k1-k2
-    Mlon_K1(5, 4) = -real.IonZ*V0s[0]*Ts[0]*sin(IonFys[0]+ks[0]*L1)-real.IonZ*V0s[0]*Ss[0]*cos(IonFys[0]+ks[0]*L1);
-
-    Ecens[1] = TTF_tab[6];
-    Ts[1]    = TTF_tab[7];
-    Ss[1]    = TTF_tab[9];
-    V0s[1]   = TTF_tab[11];
-    ks[1]    = 0.5*(k_s[1]+k_s[2]);
-    L2       = Ecens[1] - Ecens[0];
-
-    Mlon_L2 = Idmat;
-    Mlon_K2 = Idmat;
-
-    Mlon_L2(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[1]*gamma_tab[1])*MeVtoeV/real.IonEs*L2); //Problem is Here!!
-    Mlon_K2(5, 4) = -real.IonZ*V0s[1]*Ts[1]*sin(IonFys[1]+ks[1]*Ecens[1])-real.IonZ*V0s[1]*Ss[1]*cos(IonFys[1]+ks[1]*Ecens[1]);
-
-    L3 = dis - Ecens[1]; //try change dis/2 to dis 14/12/12
-
-    Mlon_L3       = Idmat;
-    Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])*MeVtoeV/real.IonEs*L3);
-
-    Mlon = Idmat;
-    Mlon = prod(Mlon_K1, Mlon_L1);
-    Mlon = prod(Mlon_L2, Mlon);
-    Mlon = prod(Mlon_K2, Mlon);
-    Mlon = prod(Mlon_L3, Mlon);
-
-    // Transverse model
-    // Drift-FD-Drift-LongiKick-Drift-FD-Drift-0-Drift-FD-Drift-LongiKick-Drift-FD-Drift
-
-    seg    = 0;
-
-    Mtrans = Idmat;
-    Mprob  = Idmat;
-
-    beta   = beta_tab[0];
-    gamma  = gamma_tab[0];
-    IonFy  = IonFys[0];
-    kfac   = k_s[0];
-
-    V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
-
-    s = CavData.s[0];
-    n = 0;
-    while (getline(inf, line) && !inf.fail()) {
-        if (line[0] == '%') {
-            // Comment.
-        } else {
-            n++;
-            str.str(line);
-            str.clear();
-            str >> Elem >> Name >> Length >> Aper;
-
-            s += Length;
-
-            if ((Elem != "drift") && (Elem != "AccGap"))
-                str >> Efield;
-            else
-                Efield = 0e0;
-
-            if (false)
-                printf("%9.5f %8s %8s %9.5f %9.5f %9.5f\n",
-                       s, Elem.c_str(), Name.c_str(), Length, Aper, Efield);
-
-            Mprob = Idmat;
-            if (Elem == "drift") {
-                IonFy = IonFy + kfac*Length;
-
-                Mprob(0, 1) = Length;
-                Mprob(2, 3) = Length;
-                Mtrans      = prod(Mprob, Mtrans);
-            } else if (Elem == "EFocus1") {
-                V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab.T[n-1];
-                S    = CavTLMLineTab.S[n-1];
-                kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-                kfdy = kfdx;
-
-                Mprob(1, 0) = kfdx;
-                Mprob(3, 2) = kfdy;
-                Mtrans      = prod(Mprob, Mtrans);
-            } else if (Elem == "EFocus2") {
-                V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
-                T    = CavTLMLineTab.T[n-1];
-                S    = CavTLMLineTab.S[n-1];
-                kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-                kfdy = kfdx;
-
-                Mprob(1, 0) = kfdx;
-                Mprob(3, 2) = kfdy;
-                Mtrans      = prod(Mprob, Mtrans);
-            } else if (Elem == "EDipole") {
-                if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab.E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab.T[n-1];
-                    S   = CavTLMLineTab.S[n-1];
-                    dpy = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
-
-                    Mprob(3, 6) = dpy;
-                    Mtrans      = prod(Mprob, Mtrans);
-                }
-            } else if (Elem == "EQuad") {
-                if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab.T[n-1];
-                    S    = CavTLMLineTab.S[n-1];
-                    kfdx =  real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
-                    kfdy = -kfdx;
-
-                    Mprob(1, 0) = kfdx;
-                    Mprob(3, 2) = kfdy;
-                    Mtrans      = prod(Mprob, Mtrans);
-                }
-            } else if (Elem == "HMono") {
-                if (MpoleLevel >= 2) {
-                    V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab.T[n-1];
-                    S    = CavTLMLineTab.S[n-1];
-                    kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-                    kfdy = kfdx;
-
-                    Mprob(1, 0) = kfdx;
-                    Mprob(3, 2) = kfdy;
-                    Mtrans      = prod(Mprob, Mtrans);
-                }
-            } else if (Elem == "HDipole") {
-                if (MpoleLevel >= 1) {
-                    V0  = CavTLMLineTab.E0[n-1]*EfieldScl;
-                    T   = CavTLMLineTab.T[n-1];
-                    S   = CavTLMLineTab.S[n-1];
-                    dpy = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
-
-                    Mprob(3, 6) = dpy;
-                    Mtrans      = prod(Mprob, Mtrans);
-                }
-            } else if (Elem == "HQuad") {
-                if (MpoleLevel >= 2) {
-                    if (s < 0e0) {
-                        // First gap.
-                        beta  = (beta_tab[0]+beta_tab[1])/2e0;
-                        gamma = (gamma_tab[0]+gamma_tab[1])/2e0;
-                    } else {
-                        beta  = (beta_tab[1]+beta_tab[2])/2e0;
-                        gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
-                    }
-                    V0   = CavTLMLineTab.E0[n-1]*EfieldScl;
-                    T    = CavTLMLineTab.T[n-1];
-                    S    = CavTLMLineTab.S[n-1];
-                    kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
-                    kfdy = -kfdx;
-
-                    Mprob(1, 0) = kfdx;
-                    Mprob(3, 2) = kfdy;
-                    Mtrans      = prod(Mprob, Mtrans);
-                }
-            } else if (Elem == "AccGap") {
-                //IonFy = IonFy + real.IonZ*V0s[0]*kfac*(TTF_tab[2]*sin(IonFy)
-                //        + TTF_tab[4]*cos(IonFy))/2/((gamma-1)*real.IonEs/MeVtoeV); //TTF_tab[2]~Tp
-                seg    = seg + 1;
-                beta   = beta_tab[seg];
-                gamma  = gamma_tab[seg];
-                kfac   = 2e0*M_PI/(beta*Lambda);
-                Accel  = CavTLMLineTab.Accel[n-1];
-
-                Mprob(1, 1) = Accel;
-                Mprob(3, 3) = Accel;
-                Mtrans      = prod(Mprob, Mtrans);
-            } else {
-                std::ostringstream strm;
-                strm << "*** GetCavMat: undef. multipole type " << Elem << "\n";
-                throw std::runtime_error(strm.str());
-            }
-//            std::cout << Elem << "\n";
-//            PrtMat(Mprob);
-        }
-    }
-
-//    inf.close();
-
-    M = Mtrans;
-
-    M(4, 4) = Mlon(4, 4);
-    M(4, 5) = Mlon(4, 5);
-    M(5, 4) = Mlon(5, 4);
-    M(5, 5) = Mlon(5, 5);
-}
-
-
-void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
-                                const double EfieldScl, const double IonFyi_s,
-                                const double IonEk_s, const double fRF, value_mat &M)
-{
-    int    n;
-    double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
-    double dis, IonW_s[3], IonFy_s[3], gamma_s[3], beta_s[3], IonK_s[3];
-    double IonK[2];
-
-    IonLambda  = C0/fRF*MtoMM;
-
-    IonW_s[0]  = IonEk_s + real.IonEs;
-    IonFy_s[0] = IonFyi_s;
-    gamma_s[0] = IonW_s[0]/real.IonEs;
-    beta_s[0]  = sqrt(1e0-1e0/sqr(gamma_s[0]));
-    IonK_s[0]  = 2e0*M_PI/(beta_s[0]*IonLambda);
-
-    n   = CavData.s.size();
-    dis = (CavData.s[n-1]-CavData.s[0])/2e0;
-
-    TransFacts(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
-    EvalGapModel(dis, IonW_s[0], real, IonFy_s[0], IonK_s[0], IonLambda,
-                Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[1], IonFy_s[1]);
-    gamma_s[1] = IonW_s[1]/real.IonEs;
-    beta_s[1]  = sqrt(1e0-1e0/sqr(gamma_s[1]));
-    IonK_s[1]  = 2e0*M_PI/(beta_s[1]*IonLambda);
-
-    TransFacts(cavilabel, beta_s[1], 2, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
-    EvalGapModel(dis, IonW_s[1], real, IonFy_s[1], IonK_s[1], IonLambda,
-                Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[2], IonFy_s[2]);
-    gamma_s[2] = IonW_s[2]/real.IonEs;
-    beta_s[2]  = sqrt(1e0-1e0/sqr(gamma_s[2]));
-    IonK_s[2]  = 2e0*M_PI/(beta_s[2]*IonLambda);
-
-    Ecen[0] = Ecen[0] - dis;
-
-    double TTF_tab[] = {Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0], Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]};
-    IonK[0] = (IonK_s[0]+IonK_s[1])/2e0;
-    IonK[1] = (IonK_s[1]+IonK_s[2])/2e0;
-
-    if (false) {
-        printf("\n GetCavMat:\n");
-        printf("IonK  : %15.10f %15.10f %15.10f\n", IonK_s[0], IonK_s[1], IonK_s[2]);
-        printf("IonK  : %15.10f %15.10f\n", IonK[0], IonK[1]);
-        printf("beta  : %15.10f %15.10f %15.10f\n", beta_s[0], beta_s[1], beta_s[2]);
-        printf("gamma : %15.10f %15.10f %15.10f\n", gamma_s[0], gamma_s[1], gamma_s[2]);
-        printf("Ecen  : %15.10f %15.10f\n", Ecen[0], Ecen[1]);
-        printf("T     : %15.10f %15.10f\n", T[0], T[1]);
-        printf("Tp    : %15.10f %15.10f\n", Tp[0], Tp[1]);
-        printf("S     : %15.10f %15.10f\n", S[0], S[1]);
-        printf("Sp    : %15.10f %15.10f\n", Sp[0], Sp[1]);
-        printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
-    }
-
-    this->ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, IonK);
-    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, real, IonFy_s, Rm, M);
-}
-
-
-void ElementRFCavity::GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
-                                  const double EfieldScl, double &IonFy, double &accIonW)
-{
-    int    n = CavData.s.size(),
-           k;
-
-    double dis = CavData.s[n-1] - CavData.s[0],
-           dz  = dis/(n-1),
-           IonW0, IonLambda, IonK, IonFylast, IonGamma, IonBeta;
-
-    IonLambda = C0/fRF*MtoMM;
-
-
-    IonW0 = state.IonW;
-    IonFy = IonFy0;
-    IonK  = state.SampleIonK;
-    for (k = 0; k < n-1; k++) {
-        IonFylast = IonFy;
-        IonFy += IonK*dz;
-        state.IonW  += state.IonZ*EfieldScl*(CavData.Elong[k]+CavData.Elong[k+1])/2e0
-                       *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
-        IonGamma = state.IonW/state.IonEs;
-        IonBeta  = sqrt(1e0-1e0/sqr(IonGamma));
-        if ((state.IonW-state.IonEs) < 0e0) {
-            state.IonW = state.IonEs;
-            IonBeta = 0e0;
-        }
-        IonK = 2e0*M_PI/(IonBeta*IonLambda);
-    }
-
-    accIonW = state.IonW - IonW0;
-}
-
-
-void ElementRFCavity::PropagateLongRFCav(const Config &conf, Particle &ref)
-{
-    std::string CavType;
-    int         cavi;
-    double      fRF, multip, IonFys, EfieldScl, caviFy, IonFy_i, IonFy_o, accIonW;
-
-    CavType = conf.get<std::string>("cavtype");
-    if (CavType == "0.041QWR") {
-        cavi = 1;
-    } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
-        cavi = 2;
-    } else {
-        std::ostringstream strm;
-        strm << "*** PropagateLongRFCav: undef. cavity type: " << CavType << "\n";
-        throw std::runtime_error(strm.str());
-    }
-
-    fRF       = conf.get<double>("f");
-    multip    = fRF/SampleFreq;
-    IonFys    = conf.get<double>("phi")*M_PI/180e0;  // Synchrotron phase [rad].
-    EfieldScl = conf.get<double>("scl_fac");         // Electric field scale factor.
-
-    caviFy = GetCavPhase(cavi, ref, IonFys, multip);
-
-    IonFy_i = multip*ref.phis + caviFy;
-    phi_ref = caviFy;
-
-    // For the reference particle, evaluate the change of:
-    // kinetic energy, absolute phase, beta, and gamma.
-    this->GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
-
-    ref.IonEk       = ref.IonW - ref.IonEs;
-    ref.recalc();
-    ref.phis       += (IonFy_o-IonFy_i)/multip;
-}
-
-
-void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accIonW,
-                                double &avebeta, double &avegamma, value_mat &M)
-{
-    std::string CavType;
-    int         cavi, cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
-
-    CavType = conf.get<std::string>("cavtype");
-    if (CavType == "0.041QWR") {
-        cavi       = 1;
-        cavilabel  = 41;
-        multip     = 1;
-        Rm         = 17e0;
-    } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
-        cavi       = 2;
-        cavilabel  = 85;
-        multip     = 1;
-        Rm         = 17e0;
-    } else if (conf.get<std::string>("cavtype") == "0.29HWR") {
-        cavi       = 3;
-        cavilabel  = 29;
-        multip     = 4;
-        Rm         = 20e0;
-    } else if (conf.get<std::string>("cavtype") == "0.53HWR") {
-        cavi       = 4;
-        cavilabel  = 53;
-        multip     = 4;
-        Rm         = 20e0;
-    } else if (conf.get<std::string>("cavtype") == "??EL") {
-        // 5 Cell elliptical.
-        cavi       = 5;
-        cavilabel  = 53;
-        multip     = 8;
-        Rm         = 20e0;
-    } else {
-        std::ostringstream strm;
-        strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-        throw std::runtime_error(strm.str());
-    }
-
-    IonFy_i   = multip*real.phis + phi_ref;
-    Ek_i      = real.IonEk;
-    real.IonW = real.IonEk + real.IonEs;
-
-    avebeta   = real.beta;
-    avegamma  = real.gamma;
-    fRF       = conf.get<double>("f");
-    EfieldScl = conf.get<double>("scl_fac");         // Electric field scale factor.
-
-//    J.B.: Note, this was passed:
-//    CaviIonK  = 2e0*M_PI*fRF/(real.beta*C0*MtoMM);
-//    vs.:
-//    double SampleIonK = 2e0*M_PI/(real.beta*C0/SampleFreq*MtoMM);
-
-    ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
-
-    real.IonEk       = real.IonW - real.IonEs;
-    real.recalc();
-    real.phis       += (IonFy_o-IonFy_i)/multip;
-    avebeta         += real.beta;
-    avebeta         /= 2e0;
-    avegamma        += real.gamma;
-    avegamma        /= 2e0;
-
-    this->GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M);
-}
-
-
-struct ElementStripper : public Moment2ElementBase
-{
-    // Transport (identity) matrix for a Charge Stripper.
-    typedef Moment2ElementBase base_t;
+    // Transport matrix for Electrostatic Quadrupole.
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-    ElementStripper(const Config& c)
-        :base_t(c)
+
+    ElementEQuad(const Config& c) : base_t(c) {}
+    virtual ~ElementEQuad() {}
+    virtual const char* type_name() const {return "equad";}
+
+    virtual void recompute_matrix(state_t& ST)
     {
-        // Identity matrix.
+        // Re-initialize transport matrix.
+        // V0 [V] electrode voltage and R [m] electrode half-distance.
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
+               V0   = conf().get<double>("V"),
+               R    = conf().get<double>("radius"),
+               K    = 2e0*V0/(C0*ST.real.beta*sqr(R))/Brho/sqr(MtoMM),
+               L    = conf().get<double>("L")*MtoMM;
+
+        // Horizontal plane.
+        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
+        // Vertical plane.
+        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw);
+        // Longitudinal plane.
+//        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+
+        transfer_raw(state_t::PS_S, state_t::PS_PS) =
+                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+
+        transfer = transfer_raw;
+
+        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
-    virtual ~ElementStripper() {}
-
-    virtual const char* type_name() const {return "stripper";}
-};
-
-struct ElementEDipole : public Moment2ElementBase
-{
-    // Transport matrix for an Electric Dipole.
-    typedef Moment2ElementBase base_t;
-    typedef typename base_t::state_t state_t;
-    ElementEDipole(const Config& c)
-        :base_t(c)
-    {
-        //double L = c.get<double>("L")*MtoMM;
-
-    }
-    virtual ~ElementEDipole() {}
-
-    virtual const char* type_name() const {return "edipole";}
 };
 
 struct ElementGeneric : public Moment2ElementBase
 {
-    typedef Moment2ElementBase base_t;
+    typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
+
     ElementGeneric(const Config& c)
         :base_t(c)
     {
@@ -1421,7 +755,6 @@ struct ElementGeneric : public Moment2ElementBase
         std::copy(I.begin(), I.end(), this->transfer_raw.data().begin());
     }
     virtual ~ElementGeneric() {}
-
     virtual const char* type_name() const {return "generic";}
 };
 
@@ -1435,7 +768,11 @@ void registerMoment2()
 
     Machine::registerElement<ElementMark                   >("MomentMatrix2",   "marker");
 
+    Machine::registerElement<ElementBPM                    >("MomentMatrix2",   "bpm");
+
     Machine::registerElement<ElementDrift                  >("MomentMatrix2",   "drift");
+
+    Machine::registerElement<ElementOrbTrim                >("MomentMatrix2",   "orbtrim");
 
     Machine::registerElement<ElementSBend                  >("MomentMatrix2",   "sbend");
 
@@ -1448,6 +785,8 @@ void registerMoment2()
     Machine::registerElement<ElementStripper               >("MomentMatrix2",   "stripper");
 
     Machine::registerElement<ElementEDipole                >("MomentMatrix2",   "edipole");
+
+    Machine::registerElement<ElementEDipole                >("MomentMatrix2",   "equad");
 
     Machine::registerElement<ElementGeneric                >("MomentMatrix2",   "generic");
 }

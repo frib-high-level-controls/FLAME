@@ -11,6 +11,12 @@
 
 #include "base.h"
 
+
+// Arbitrary size.
+typedef boost::numeric::ublas::vector<double> value_vec;
+typedef boost::numeric::ublas::matrix<double> value_mat;
+
+
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6
 // Sampling distance [m].
