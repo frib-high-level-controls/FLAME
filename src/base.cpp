@@ -72,6 +72,7 @@ void ElementVoid::show(std::ostream& strm) const
 void ElementVoid::assign(const ElementVoid *other)
 {
     p_conf = other->p_conf;
+    length = other->length;
     *const_cast<std::string*>(&name) = other->name;
     *const_cast<size_t*>(&index) = other->index;
 }
