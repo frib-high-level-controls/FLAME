@@ -107,15 +107,13 @@ Moment2State::Moment2State(const Config& c)
 
     ref.IonEs      = c.get<double>("IonEs", 0e0),
     ref.IonEk      = c.get<double>("IonEk", 0e0);
-
-    ref.SampleIonK = (ref.IonEs != 0e0)? 2e0*M_PI/(ref.beta*SampleLambda) : 2e0*M_PI/SampleLambda;
+    ref.recalc();
 
     real           = ref;
 
     real.phis      = moment0[PS_S];
     real.IonEk    += moment0[PS_PS]*MeVtoeV;
 
-    ref.recalc();
     real.recalc();
 
     if(!multistate) {
@@ -395,18 +393,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
 {
-    // Default, for passive elements.
-
+    // Default no-op
     transfer = transfer_raw;
-
-    std::string t_name = type_name(); // C string -> C++ string.
-//    if (t_name != "drift") {
-//        // Scale matrix elements.
-//        for (unsigned k = 0; k < 2; k++) {
-//            transfer(2*k, 2*k+1) *= ST.bg_ref/ST.bg1;
-//            transfer(2*k+1, 2*k) *= ST.bg1/ST.bg_ref;
-//        }
-//    }
 
     last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
 }

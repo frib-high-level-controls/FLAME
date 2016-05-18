@@ -44,19 +44,6 @@ public:
 };
 
 
-void TransitFacMultipole(const int cavi, const std::string &flabel, const double IonK,
-                         double &T, double &S);
-
-void TransFacts(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
-                double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0);
-
-void EvalGapModel(const double dis, const double IonW0, Particle &real, const double IonFy0,
-                  const double k, const double Lambda, const double Ecen,
-                  const double T, const double S, const double Tp, const double Sp, const double V0,
-                  double &IonW_f, double &IonFy_f);
-
-double GetCavPhase(const int cavi, Particle ref, const double IonFys, const double multip);
-
 struct ElementRFCavity : public Moment2ElementBase
 {
     // Transport matrix for an RF Cavity.
@@ -101,16 +88,16 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                    const double EfieldScl, const double IonFyi_s,
-                   const double IonEk_s, const double fRF, value_mat &M);
+                   const double IonEk_s, const double fRF, state_t::matrix_t &M);
 
     void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
-                   Particle &real, const double IonFys[], const double Rm, value_mat &M);
+                   Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M);
 
     void PropagateLongRFCav(const Config &conf, Particle &ref);
 
     void InitRFCav(const Config &conf, Particle &real, double &accIonW,
-                   double &avebeta, double &avegamma, value_mat &M);
+                   double &avebeta, double &avegamma, state_t::matrix_t &M);
 
     void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
                      const double EfieldScl, double &IonFy, double &accIonW);

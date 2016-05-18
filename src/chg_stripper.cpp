@@ -2,7 +2,7 @@
 #include "scsi/moment2.h"
 #include "scsi/chg_stripper.h"
 
-
+static
 void GetCenofChg(const Config &conf, std::vector<boost::shared_ptr<StateBase> > &ST,
                  Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
 {
@@ -45,6 +45,7 @@ void GetCenofChg(const Config &conf, std::vector<boost::shared_ptr<StateBase> > 
 }
 
 
+static
 double Gaussian(double in, const double Q_ave, const double d)
 {
     // Gaussian distribution.
@@ -52,6 +53,7 @@ double Gaussian(double in, const double Q_ave, const double d)
 }
 
 
+static
 void StripperCharge(const double beta, double &Q_ave, double &d)
 {
     // Baron's formula for carbon foil.
@@ -64,9 +66,10 @@ void StripperCharge(const double beta, double &Q_ave, double &d)
 }
 
 
+static
 void ChargeStripper(const double beta, const std::vector<double> ChgState, double chargeAmount_Baron[])
 {
-    int    k;
+    unsigned    k;
     double Q_ave, d;
 
     StripperCharge(beta, Q_ave, d);
@@ -75,6 +78,7 @@ void ChargeStripper(const double beta, const std::vector<double> ChgState, doubl
 }
 
 
+static
 void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector<double> ChgState)
 {
     const int n = ChgState.size();
@@ -97,8 +101,8 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
     // chargeAmount = fribstripper.chargeAmount_Baron;
 }
 
-
-void PrtMat1(const value_mat &M)
+static
+void PrtMat1(const state_t::matrix_t &M)
 {
     for (size_t j = 0; j < M.size1(); j++) {
         for (size_t k = 0; k < M.size2(); k++)
@@ -109,6 +113,7 @@ void PrtMat1(const value_mat &M)
 }
 
 
+static
 std::vector<double> GetStrChgState(const Config &conf)
 {
     return conf.get<std::vector<double> >("Stripper_IonChargeStates");
@@ -118,7 +123,7 @@ std::vector<double> GetStrChgState(const Config &conf)
 void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> > &sim,
                      std::vector<boost::shared_ptr<StateBase> > &ST, std::vector<double> ChgState)
 {
-    int                    k, n;
+    unsigned               k, n;
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
     std::vector<double>    NChg;

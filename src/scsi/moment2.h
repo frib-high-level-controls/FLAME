@@ -12,11 +12,6 @@
 #include "base.h"
 
 
-// Arbitrary size.
-typedef boost::numeric::ublas::vector<double> value_vec;
-typedef boost::numeric::ublas::matrix<double> value_mat;
-
-
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6
 // Sampling distance [m].
@@ -112,9 +107,10 @@ struct Moment2ElementBase : public ElementVoid
 
     virtual void show(std::ostream& strm) const;
 
-    typedef boost::numeric::ublas::matrix<double> value_t;
-
-    double Erest; //!< rest energy of particle species
+    typedef boost::numeric::ublas::matrix<double,
+                    boost::numeric::ublas::row_major,
+                    boost::numeric::ublas::bounded_array<double, state_t::maxsize*state_t::maxsize>
+    > value_t;
 
     double last_Kenergy_in, last_Kenergy_out;
     //! final transfer matrix

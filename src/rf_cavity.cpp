@@ -7,6 +7,23 @@
 
 // RF Cavity beam dynamics functions.
 
+static
+void TransitFacMultipole(const int cavi, const std::string &flabel, const double IonK,
+                         double &T, double &S);
+
+static
+void TransFacts(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
+                double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0);
+
+static
+void EvalGapModel(const double dis, const double IonW0, Particle &real, const double IonFy0,
+                  const double k, const double Lambda, const double Ecen,
+                  const double T, const double S, const double Tp, const double Sp, const double V0,
+                  double &IonW_f, double &IonFy_f);
+
+static
+double GetCavPhase(const int cavi, Particle ref, const double IonFys, const double multip);
+
 
 void CavDataType::RdData(const std::string &FileName)
 {
@@ -92,27 +109,7 @@ void PrtVec(const std::vector<double> &a)
     std::cout << "\n";
 }
 
-
-void PrtVec(const Moment2State::vector_t &a)
-{
-    for (size_t k = 0; k < a.size(); k++)
-        std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << a[k];
-    std::cout << "\n";
-}
-
-
-void PrtMat(const value_mat &M)
-{
-    for (size_t j = 0; j < M.size1(); j++) {
-        for (size_t k = 0; k < M.size2(); k++)
-            std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << M(j, k);
-        std::cout << "\n";
-    }
-}
-
-
+static
 double PwrSeries(const double beta,
                  const double a0, const double a1, const double a2, const double a3,
                  const double a4, const double a5, const double a6, const double a7,
@@ -132,6 +129,7 @@ double PwrSeries(const double beta,
 }
 
 
+static
 void TransFacts(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
                 double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
@@ -227,6 +225,7 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
 }
 
 
+static
 void TransitFacMultipole(const int cavi, const std::string &flabel, const double IonK,
                          double &T, double &S)
 {
@@ -352,6 +351,7 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 }
 
 
+static
 double GetCavPhase(const int cavi, Particle ref, const double IonFys, const double multip)
 {
     /* If the cavity is not at full power, the method gives synchrotron
@@ -387,6 +387,7 @@ double GetCavPhase(const int cavi, Particle ref, const double IonFys, const doub
 }
 
 
+static
 void EvalGapModel(const double dis, const double IonW0, Particle &real, const double IonFy0,
                   const double k, const double Lambda, const double Ecen,
                   const double T, const double S, const double Tp, const double Sp, const double V0,
@@ -536,7 +537,7 @@ void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], c
 
 void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                                 const double beta_tab[], const double gamma_tab[], const double Lambda,
-                                Particle &real, const double IonFys[], const double Rm, value_mat &M)
+                                Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M)
 {
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
@@ -546,8 +547,8 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
     double            Length, Aper, Efield, s, k_s[3];
     double            Ecens[2], Ts[2], Ss[2], V0s[2], ks[2], L1, L2, L3;
     double            beta, gamma, kfac, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy;
-    value_mat         Idmat, Mlon_L1, Mlon_K1, Mlon_L2;
-    value_mat         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
+    state_t::matrix_t         Idmat, Mlon_L1, Mlon_K1, Mlon_L2;
+    state_t::matrix_t         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
     std::stringstream str;
 
     const double IonA = 1e0;
@@ -768,7 +769,7 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
 
 void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                                 const double EfieldScl, const double IonFyi_s,
-                                const double IonEk_s, const double fRF, value_mat &M)
+                                const double IonEk_s, const double fRF, state_t::matrix_t &M)
 {
     int    n;
     double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
@@ -897,7 +898,7 @@ void ElementRFCavity::PropagateLongRFCav(const Config &conf, Particle &ref)
 
 
 void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accIonW,
-                                double &avebeta, double &avegamma, value_mat &M)
+                                double &avebeta, double &avegamma, state_t::matrix_t &M)
 {
     std::string CavType;
     int         cavi, cavilabel, multip;

@@ -17,9 +17,8 @@
 
 
 typedef Moment2State state_t;
-
-typedef boost::numeric::ublas::vector<double> value_vec;
-typedef boost::numeric::ublas::matrix<double> value_mat;
+typedef state_t::vector_t value_vec;
+typedef state_t::matrix_t value_mat;
 
 extern int glps_debug;
 
@@ -55,7 +54,7 @@ void PrtMat(const value_mat &M)
 
 void PrtState(std::vector<state_t*> StatePtr)
 {
-    int k;
+    unsigned k;
 
     for (k = 0; k < StatePtr.size(); k++) {
         std::cout << "\n";
@@ -82,7 +81,7 @@ std::vector<double> GetNChg(Config &conf)
 void prt_initial_cond(std::vector<boost::shared_ptr<Machine> > &sim, std::vector<double> ChgState,
                       std::vector<boost::shared_ptr<StateBase> > &ST)
 {
-    int     k;
+    unsigned     k;
     state_t *StatePtr;
 
     for (k = 0; k < ChgState.size(); k++) {
@@ -146,7 +145,7 @@ void propagate(std::auto_ptr<Config> &conf)
 void propagate1(std::auto_ptr<Config> &conf)
 {
     // Propagate element-by-element for each charge state.
-    int                                        k, nChgStates, elem_no;
+    unsigned                                   k, nChgStates, elem_no;
     std::vector<double>                        ChgState;
     std::vector<boost::shared_ptr<Machine> >   sim;
     std::vector<boost::shared_ptr<StateBase> > state;
