@@ -126,8 +126,7 @@ struct Moment2ElementBase : public ElementVoid
 protected:
     // scratch space to avoid temp. allocation in advance()
     // An Element can't be shared between multiple threads
-    //TODO: non-const advance()
-    mutable state_t::matrix_t scratch;
+    state_t::matrix_t scratch;
 };
 
 #endif // SCSI_MOMENT_H
