@@ -15,6 +15,8 @@
 #include <scsi/state/vector.h>
 #include <scsi/state/matrix.h>
 
+#include <scsi/moment2_sup.h>
+
 
 typedef Moment2State state_t;
 typedef state_t::vector_t value_vec;
@@ -57,7 +59,7 @@ void PrtState(std::vector<state_t*> StatePtr)
     unsigned k;
 
     for (k = 0; k < StatePtr.size(); k++) {
-        std::cout << "\n";
+        std::cout << "\nState: "<<k<<"\n";
         PrtVec(StatePtr[k]->moment0);
         std::cout << "\n";
         PrtMat(StatePtr[k]->state);
@@ -193,6 +195,16 @@ void propagate1(std::auto_ptr<Config> &conf)
         }
     }
 
+    {
+        Moment2State::vector_t cent, rms;
+        GetCenofChg(*conf, state, cent, rms);
+
+        std::cout << "\nCenter: "<<k<<"\n";
+        PrtVec(cent);
+        std::cout << "\nRMS: "<<k<<"\n";
+        PrtVec(rms);
+    }
+
     Stripper_GetMat(*conf, sim, state, ChgState);
 
     StatePtr.clear();
@@ -214,6 +226,16 @@ void propagate1(std::auto_ptr<Config> &conf)
     tStamp[1] = clock();
 
     PrtState(StatePtr);
+
+    {
+        Moment2State::vector_t cent, rms;
+        GetCenofChg(*conf, state, cent, rms, "Stripper_NCharge");
+
+        std::cout << "\nCenter: "<<k<<"\n";
+        PrtVec(cent);
+        std::cout << "\nRMS: "<<k<<"\n";
+        PrtVec(rms);
+    }
 
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";

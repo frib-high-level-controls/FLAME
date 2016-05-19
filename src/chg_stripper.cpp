@@ -1,25 +1,25 @@
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
+#include "scsi/moment2_sup.h"
 #include "scsi/chg_stripper.h"
 
-static
-void GetCenofChg(const Config &conf, std::vector<boost::shared_ptr<StateBase> > &ST,
-                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
+void GetCenofChg(const Config &conf, const std::vector<boost::shared_ptr<StateBase> > &ST,
+                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS,
+                 const char *ncharge_name)
 {
-    int                    i, j, n;
-    double                 Ntot;
-    std::vector<double>    NChg;
-    Moment2State::vector_t BeamVar;
+    size_t i, j;
+
+    if(!ncharge_name)
+        ncharge_name = "NCharge";
+
+    const std::vector<double>& NChg(conf.get<std::vector<double> >(ncharge_name));
+    const size_t n = NChg.size();
 
     CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
     BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-    BeamVar  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
+    Moment2State::vector_t BeamVar(boost::numeric::ublas::zero_vector<double>(PS_Dim));
 
-    n = conf.get<std::vector<double> >("IonChargeStates").size();
-    NChg.resize(n);
-    NChg = conf.get<std::vector<double> >("NCharge");
-
-    Ntot = 0e0;
+    double Ntot = 0e0;
     for (i = 0; i < n; i++) {
         for (j = 0; j < PS_Dim; j++) {
             state_t* StatePtr = dynamic_cast<state_t*>(ST[i].get());
