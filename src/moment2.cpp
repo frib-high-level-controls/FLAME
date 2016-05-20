@@ -478,6 +478,9 @@ struct ElementDrift : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
+        // Re-initialize transport matrix.
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
         double L = length*MtoMM; // Convert from [m] to [mm].
 
         transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
@@ -503,6 +506,9 @@ struct ElementOrbTrim : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
+        // Re-initialize transport matrix.
+        transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
         double theta_x = conf().get<double>("theta_x", 0e0),
                theta_y = conf().get<double>("theta_y", 0e0);
 
@@ -527,6 +533,9 @@ struct ElementSBend : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
+        // Re-initialize transport matrix.
+        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
         double L     = conf().get<double>("L")*MtoMM,
                phi   = conf().get<double>("phi")*M_PI/180e0,
                phi1  = conf().get<double>("phi1")*M_PI/180e0,
@@ -635,28 +644,27 @@ struct ElementEDipole : public Moment2ElementBase
         // Re-initialize transport matrix.
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        //double L = c.get<double>("L")*MtoMM;
+        double L     = conf().get<double>("L")*MtoMM,
+               phi   = conf().get<double>("phi")*M_PI/180e0,
+//               phi1  = conf().get<double>("phi1")*M_PI/180e0,
+//               phi2  = conf().get<double>("phi2")*M_PI/180e0,
+               K     = conf().get<double>("K", 0e0)/sqr(MtoMM),
+               qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
-//        mscpTracker.position=fribnode.position+fribnode.length;
-//        double gamma=(Ek[ii_state]+FRIBPara.ionEs)/FRIBPara.ionEs;
-//        double beta=Math.sqrt(1.0-1.0/(gamma*gamma));
-//        double SampleionK=2*Math.PI/(beta*SampleLamda*1e3); //rad/mm, marking the currut using ionK
-//        double length=fribnode.length; // m
-//        double bangle=fribnode.attribute[1]; // degree
-//        double beta00=fribnode.attribute[2]; // The voltage is set that the particle with beta_EB would be bended ideally
-//        double n1=fribnode.attribute[3]; // 0 is for cylindrical, and 1 is for spherical
-//        int vertical=(int) fribnode.attribute[4]; // 0 for horizontal, 1 is for vertical ebend matrix
-//        double fringeX=fribnode.attribute[5]; // X fringe
-//        double fringeY=fribnode.attribute[6]; // Y fringe
-//        double kappa=(int) fribnode.attribute[7]; // voltage asymetry factor
-//        double gamma0=tlmPara.Gamma_tab.get(lattcnt+1)[1];
-//        double beta0=tlmPara.Beta_tab.get(lattcnt+1)[1];
-//        double h=1.0; // 0 for magnetic and 1 for electrostatic
-//        double rh0=length/(bangle/180*Math.PI);
+        if (!HdipoleFitMode) {
+            double dip_bg    = conf().get<double>("bg"),
+                   // Dipole reference energy.
+                   dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
+                   dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
+                   dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
+                   d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
+                   dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
 
-//        double Fy_temp=TransVector[ii_state].getElem(4);
-//        double dFy_temp=TransVector[ii_state].getElem(4)-Fy_temp;
-//        Fy_abs[ii_state]=Fy_abs[ii_state]+SampleionK*1000*fribnode.length+dFy_temp;
+            GetSBendMatrix(L, phi, 0e0, 0e0, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                           dip_beta, dip_gamma, d, dip_IonK, transfer_raw);
+        } else
+            GetSBendMatrix(L, phi, 0e0, 0e0, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                           ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer_raw);
 
         transfer = transfer_raw;
 

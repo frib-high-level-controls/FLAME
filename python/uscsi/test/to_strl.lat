@@ -1614,7 +1614,7 @@ TO_SBEND: LINE = (
   LS1_WB03, LS1_CB04, LS1_WB04, LS1_CB05, LS1_WB05, LS1_CB06, LS1_WB06, LS1_CB07, LS1_WB07, LS1_CB08, LS1_WB08,
   LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02,
   drift_470, drift_471,  drift_472, drift_473, fs1_css_port_d2160_474, drift_475, drift_476,
-  fs1_css_dh_d2163_2
+  fs1_css_dh_d2163_1, fs1_css_dh_d2163_2, fs1_css_dh_d2163_3, fs1_css_dh_d2163_4, fs1_css_dh_d2163_5
 );
 
 TO_STRL: LINE = (
@@ -1639,6 +1639,6 @@ W_STR: LINE = (
 
 #USE: TO_STRL;
 
-#USE: W_STR;
+USE: W_STR;
 
-USE: cell;
+#USE: cell;
