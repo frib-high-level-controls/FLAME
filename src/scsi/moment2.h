@@ -52,6 +52,8 @@ struct Particle {
     }
 };
 
+std::ostream& operator<<(std::ostream&, const Particle&);
+
 struct Moment2State : public StateBase
 {
     enum {maxsize=7};

@@ -59,11 +59,14 @@ void PrtState(std::vector<state_t*> StatePtr)
     unsigned k;
 
     for (k = 0; k < StatePtr.size(); k++) {
-        std::cout << "\nState: "<<k<<"\n";
+        std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr[k]->pos << "\n"
+                  <<"\n Ref:  "<<StatePtr[k]->ref
+                  <<"\n Real: "<<StatePtr[k]->real
+                  <<"\n moment0\n";
         PrtVec(StatePtr[k]->moment0);
-        std::cout << "\n";
+        std::cout << " moment1\n";
         PrtMat(StatePtr[k]->state);
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr[k]->pos << "\n";
+        std::cout << "\n";
     }
 }
 
@@ -193,6 +196,9 @@ void propagate1(std::auto_ptr<Config> &conf)
             (*it[k])->advance(*state[k]);
             ++it[k];
         }
+
+        std::cout<<"After element "<<elem->index<<"\n";
+        PrtState(StatePtr);
     }
 
     {
@@ -217,10 +223,14 @@ void propagate1(std::auto_ptr<Config> &conf)
     }
 
     while (it[0] != sim[0]->end()) {
+        ElementVoid* elem   = *it[0];
         for (k = 0; k < state.size(); k++) {
             (*it[k])->advance(*state[k]);
             ++it[k];
         }
+
+        std::cout<<"After element "<<elem->index<<"\n";
+        PrtState(StatePtr);
     }
 
     tStamp[1] = clock();

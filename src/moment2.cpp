@@ -38,6 +38,19 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 } // namespace
 
+std::ostream& operator<<(std::ostream& strm, const Particle& P)
+{
+    strm
+      <<"IonZ="<<P.IonZ
+      <<" IonQ="<<P.IonQ
+      <<" IonEs="<<P.IonEs
+      <<" IonEk="<<P.IonEk
+      <<" SampleIonK="<<P.SampleIonK
+      <<" phis="<<P.phis
+      ;
+    return strm;
+}
+
 Moment2State::Moment2State(const Config& c)
     :StateBase(c)
     ,ref()
