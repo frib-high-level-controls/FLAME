@@ -187,10 +187,10 @@ void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> 
     }
 
     // Get new charge states.
-    ChgState.clear();
-    n = GetStrChgState(conf).size();
-    ChgState.resize(n);
     ChgState = GetStrChgState(conf);
+    NChg = conf.get<std::vector<double> >("Stripper_NCharge");
+    n = ChgState.size();
+    assert(NChg.size()==n);
 
     // Propagate reference particle.
     ref = dynamic_cast<state_t*>(ST[0].get())->ref;
@@ -215,6 +215,7 @@ void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> 
         StatePtr->ref        = ref;
 
         StatePtr->real.IonZ  = ChgState[k];
+        StatePtr->real.IonQ  = NChg[k];
         StatePtr->real.IonEs = ref.IonEs;
         StatePtr->real.IonEk = Ek_recomb;
         StatePtr->real.IonW  = StatePtr->real.IonEk + StatePtr->ref.IonEs;
