@@ -8,6 +8,9 @@
 // RF Cavity beam dynamics functions.
 
 
+int MpoleLevel = 2;
+
+
 void CavDataType::RdData(const std::string &FileName)
 {
     std::string       line;

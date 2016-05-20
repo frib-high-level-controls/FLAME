@@ -12,7 +12,7 @@
 // Mpultipole level: 0 only include focusing and defocusing effects,
 //                   1 include dipole terms,
 //                   2 include quadrupole terms.
-const int MpoleLevel = 2;
+extern int MpoleLevel;
 
 
 class CavDataType {

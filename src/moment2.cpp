@@ -527,12 +527,12 @@ struct ElementSBend : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        double L         = conf().get<double>("L")*MtoMM,
-                phi       = conf().get<double>("phi")*M_PI/180e0,
-                phi1      = conf().get<double>("phi1")*M_PI/180e0,
-                phi2      = conf().get<double>("phi2")*M_PI/180e0,
-                K         = conf().get<double>("K", 0e0)/sqr(MtoMM),
-                qmrel     = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
+        double L     = conf().get<double>("L")*MtoMM,
+               phi   = conf().get<double>("phi")*M_PI/180e0,
+               phi1  = conf().get<double>("phi1")*M_PI/180e0,
+               phi2  = conf().get<double>("phi2")*M_PI/180e0,
+               K     = conf().get<double>("K", 0e0)/sqr(MtoMM),
+               qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
         if (!HdipoleFitMode) {
             double dip_bg    = conf().get<double>("bg"),
