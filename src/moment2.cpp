@@ -17,10 +17,6 @@
 #include "scsi/h5loader.h"
 
 
-// HdipoleFitMode = true    dipole strength adjusted to beam energy.
-bool HdipoleFitMode = true;
-
-
 namespace {
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
 // by LU-decomposition.
@@ -532,93 +528,26 @@ struct ElementSBend : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         double L         = conf().get<double>("L")*MtoMM,
-               phi       = conf().get<double>("phi")*M_PI/180e0,
-               phi1      = conf().get<double>("phi1")*M_PI/180e0,
-               phi2      = conf().get<double>("phi2")*M_PI/180e0,
-               rho       = L/phi,
-               K         = conf().get<double>("K", 0e0)/sqr(MtoMM),
-               Kx        = K + 1e0/sqr(rho),
-               Ky        = -K,
-               di_bg     = (!HdipoleFitMode)? conf().get<double>("bg") : ST.ref.beta*ST.ref.gamma,
-               dx        = 0e0,
-               sx        = 0e0;
-
-
-        typename Moment2ElementBase::value_t edge1, edge2;
-
-        // Edge focusing.
-        GetEdgeMatrix(rho, phi1, edge1);
-        // Horizontal plane.
-        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, transfer_raw);
-        // Vertical plane.
-        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, transfer_raw);
-
-        // Include dispersion.
-        if (Kx == 0e0) {
-            dx = sqr(L)/2e0;
-            sx = L;
-        } else if (Kx > 0e0) {
-            dx = (1e0-cos(sqrt(Kx)*L))/Kx;
-            sx = sin(sqrt(Kx)*L)/sqrt(Kx);
-        } else {
-            dx = (1e0-cosh(sqrt(-Kx)*L))/Kx;
-            sx = sin(sqrt(Kx)*L)/sqrt(Kx);
-        }
-
-        double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
-
-        // Dipole reference energy.
-        double Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
-        double gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
-        double beta00    = sqrt(1e0-1e0/sqr(gamma00));
-
-        double d         = (ST.ref.gamma-gamma00)/(sqr(beta00)*gamma00) - qmrel;
+                phi       = conf().get<double>("phi")*M_PI/180e0,
+                phi1      = conf().get<double>("phi1")*M_PI/180e0,
+                phi2      = conf().get<double>("phi2")*M_PI/180e0,
+                K         = conf().get<double>("K", 0e0)/sqr(MtoMM),
+                qmrel     = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
         if (!HdipoleFitMode) {
-            transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(beta00)*gamma00*ST.ref.IonEs/MeVtoeV);
-            transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(beta00)*gamma00*ST.ref.IonEs/MeVtoeV);
+            double dip_bg    = conf().get<double>("bg"),
+                   // Dipole reference energy.
+                   dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
+                   dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
+                   dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
+                   d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
+                   dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
 
-            double IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-
-            transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*IonK_Bend;
-            transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*IonK_Bend;
-
-            // Low beta approximation.
-            transfer_raw(state_t::PS_S,  state_t::PS_PS) =
-                    ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*IonK_Bend
-                    /(sqr(beta00)*gamma00*ST.ref.IonEs/MeVtoeV);
-
-            // Add dipole terms.
-            transfer_raw(state_t::PS_S,  6) = ((L-sx)/(Kx*sqr(rho))*d-L/sqr(ST.ref.gamma)*(d+qmrel))*IonK_Bend;
-        } else {
-            transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-            transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-
-            transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
-            transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
-
-            // Low beta approximation.
-            transfer_raw(state_t::PS_S,  state_t::PS_PS) =
-                    ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK
-                    /(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-
-            // Add dipole terms.
-            transfer_raw(state_t::PS_S,  6) = ((L-sx)/(Kx*sqr(rho))*d-L/sqr(ST.ref.gamma)*(d+qmrel))*ST.ref.SampleIonK;
-        }
-
-        // Add dipole terms.
-        transfer_raw(state_t::PS_X,  6) = dx/rho*d;
-        transfer_raw(state_t::PS_PX, 6) = sx/rho*d;
-
-        // Edge focusing.
-        GetEdgeMatrix(rho, phi2, edge2);
-
-        transfer_raw = prod(transfer_raw, edge1);
-        transfer_raw = prod(edge2, transfer_raw);
-
-        // Longitudinal plane.
-        // For total path length.
-//        transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
+            GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                           dip_beta, dip_gamma, d, dip_IonK, transfer_raw);
+        } else
+            GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                           ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer_raw);
 
         transfer = transfer_raw;
 
