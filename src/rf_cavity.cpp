@@ -232,10 +232,12 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 
     if ((cavi == 1) && (IonK < 0.025 || IonK > 0.055)) {
         std::ostringstream strm;
-        strm << "*** TransitFacMultipole: IonK out of Range" << "\n";
+        strm << "*** TransitFacMultipole: IonK out of Range 1 " << cavi << " " << IonK << "\n";
         throw std::runtime_error(strm.str());
     } else if ((cavi == 2) && (IonK < 0.006 || IonK > 0.035)) {
-        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";
+        std::ostringstream strm;
+        strm << "*** TransitFacMultipole: IonK out of Range 2" << cavi << " " << IonK << "\n";
+        throw std::runtime_error(strm.str());
     }
 
     if (flabel == "CaviMlp_EFocus1") {
@@ -971,6 +973,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::mat
     std::string CavType;
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
+    double accIonW, avebeta, avegamma;
 
 //    std::cout<<"RF recompute start "<<real<<"\n";
 

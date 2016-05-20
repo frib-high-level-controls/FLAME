@@ -958,7 +958,7 @@ drift_511: drift, L = 0.099000, aper = 0.020000;
 drift_512: drift, L = 0.072000, aper = 0.020000;
 drift_513: drift, L = 0.928000, aper = 0.020000;
 #fs1_strl_strip_d2237_164: marker;
-fs1_strl_strip_d2237_164: stripper;
+fs1_strl_strip_d2237_164: stripper, Stripper_IonChargeStates=IonChargeStates, Stripper_NCharge=NCharge;
 drift_514: drift, L = 0.928000, aper = 0.020000;
 drift_515: drift, L = 0.072000, aper = 0.020000;
 drift_516: drift, L = 0.116000, aper = 0.020000;

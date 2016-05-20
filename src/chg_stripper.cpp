@@ -3,17 +3,11 @@
 #include "scsi/moment2_sup.h"
 #include "scsi/chg_stripper.h"
 
-void GetCenofChg(const Config &conf, const std::vector<boost::shared_ptr<StateBase> > &ST,
-                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS,
-                 const char *ncharge_name)
+void GetCenofChg(const Config &conf, const Moment2State &ST,
+                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
 {
     size_t i, j;
-
-    if(!ncharge_name)
-        ncharge_name = "NCharge";
-
-    const std::vector<double>& NChg(conf.get<std::vector<double> >(ncharge_name));
-    const size_t n = NChg.size();
+    const size_t n = ST.real.size(); // # of states
 
     CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
     BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
@@ -21,22 +15,17 @@ void GetCenofChg(const Config &conf, const std::vector<boost::shared_ptr<StateBa
 
     double Ntot = 0e0;
     for (i = 0; i < n; i++) {
-        for (j = 0; j < PS_Dim; j++) {
-            state_t* StatePtr = dynamic_cast<state_t*>(ST[i].get());
-            CenofChg[j] += NChg[i]*StatePtr->moment0[j];
-        }
-        Ntot += NChg[i];
+        CenofChg += ST.moment0[i];
+        Ntot += ST.real[i].IonQ;
     }
 
-    for (j = 0; j < PS_Dim; j++)
-        CenofChg[j] /= Ntot;
+    CenofChg /= Ntot;
 
     for (i = 0; i < n; i++) {
-        for (j = 0; j < PS_Dim; j++) {
-            state_t* StatePtr = dynamic_cast<state_t*>(ST[i].get());
+        for (j = 0; j < Moment2State::maxsize; j++) {
             BeamVar[j]  +=
-                    NChg[i]*(StatePtr->state(j, j)
-                    +(StatePtr->moment0[j]-CenofChg[j])*(StatePtr->moment0[j]-CenofChg[j]));
+                    ST.real[i].IonQ*(ST.moment1[i](j, j)
+                    +(ST.moment0[i][j]-CenofChg[j])*(ST.moment0[i][j]-CenofChg[j]));
         }
     }
 
@@ -120,21 +109,22 @@ std::vector<double> GetStrChgState(const Config &conf)
 }
 
 
-void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> > &sim,
-                     std::vector<boost::shared_ptr<StateBase> > &ST, std::vector<double> ChgState)
+void Stripper_GetMat(const Config &conf,
+                     Moment2State &ST, std::vector<double> ChgState)
 {
     unsigned               k, n;
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
     std::vector<double>    NChg;
     Particle               ref;
-    state_t                *StatePtr;
+    state_t                *StatePtr = &ST;
     Moment2State::vector_t CenofChg, BeamRMS;
     Moment2State::matrix_t tmpmat;
 
     // Evaluate beam parameter recombination.
 
     GetCenofChg(conf, ST, CenofChg, BeamRMS);
+    assert(CenofChg==ST.moment0_env);
 
     n = conf.get<std::vector<double> >("IonChargeStates").size();
     NChg.resize(n);
@@ -145,17 +135,17 @@ void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> 
     Ek_recomb     = 0e0;
     tmpmat        = boost::numeric::ublas::zero_matrix<double>(PS_Dim);
     for (k = 0; k < ST.size(); k++) {
-        StatePtr = dynamic_cast<state_t*>(ST[k].get());
 
         tmptotCharge  += NChg[k];
-        Fy_abs_recomb += NChg[k]*StatePtr->real.phis;
-        Ek_recomb     += NChg[k]*StatePtr->real.IonEk;
+        Fy_abs_recomb += NChg[k]*StatePtr->real[k].phis;
+        Ek_recomb     += NChg[k]*StatePtr->real[k].IonEk;
         tmpmat        +=
-                NChg[k]*(StatePtr->state+outer_prod(StatePtr->moment0-CenofChg, StatePtr->moment0-CenofChg));
+                NChg[k]*(StatePtr->moment1[k]+outer_prod(StatePtr->moment0[k]-CenofChg, StatePtr->moment0[k]-CenofChg));
     }
 
     Fy_abs_recomb /= tmptotCharge;
     Ek_recomb     /= tmptotCharge;
+
     // Stripper model energy straggling.
     Ek_recomb      = (Ek_recomb-Stripper_Para[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
     tmpmat        /= tmptotCharge;
@@ -193,37 +183,32 @@ void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> 
     assert(NChg.size()==n);
 
     // Propagate reference particle.
-    ref = dynamic_cast<state_t*>(ST[0].get())->ref;
+    ref = ST.ref;
     Stripper_Propagate_ref(conf, ref, ChgState);
 
-    StatePtr = dynamic_cast<state_t*>(ST[0].get());
     s = StatePtr->pos;
 
-    sim.clear();
-    ST.clear();
+    ST.real.resize(n);
+    ST.moment0.resize(n);
+    ST.moment1.resize(n);
+
     for (k = 0; k < n; k++) {
-        sim.push_back(boost::shared_ptr<Machine> (new Machine(conf)));
-        ST.push_back(boost::shared_ptr<StateBase> (sim[k]->allocState()));
-
-//        Move iterator to after charge splitter.
-
-        state_t* StatePtr = dynamic_cast<state_t*>(ST[k].get());
 
         // Length is zero.
         StatePtr->pos        = s;
 
         StatePtr->ref        = ref;
 
-        StatePtr->real.IonZ  = ChgState[k];
-        StatePtr->real.IonQ  = NChg[k];
-        StatePtr->real.IonEs = ref.IonEs;
-        StatePtr->real.IonEk = Ek_recomb;
-        StatePtr->real.IonW  = StatePtr->real.IonEk + StatePtr->ref.IonEs;
-        StatePtr->real.gamma = StatePtr->real.IonW/StatePtr->ref.IonEs;
-        StatePtr->real.beta  = sqrt(1e0-1e0/sqr(StatePtr->real.gamma));
-        StatePtr->real.phis  = Fy_abs_recomb;
-        StatePtr->real.IonEk = Ek_recomb;
-        StatePtr->moment0    = CenofChg;
-        StatePtr->state      = tmpmat;
+        StatePtr->real[k].IonZ  = ChgState[k];
+        StatePtr->real[k].IonQ  = NChg[k];
+        StatePtr->real[k].IonEs = ref.IonEs;
+        StatePtr->real[k].IonEk = Ek_recomb;
+        StatePtr->real[k].IonW  = StatePtr->real[k].IonEk + StatePtr->ref.IonEs;
+        StatePtr->real[k].gamma = StatePtr->real[k].IonW/StatePtr->ref.IonEs;
+        StatePtr->real[k].beta  = sqrt(1e0-1e0/sqr(StatePtr->real[k].gamma));
+        StatePtr->real[k].phis  = Fy_abs_recomb;
+        StatePtr->real[k].IonEk = Ek_recomb;
+        StatePtr->moment0[k]    = CenofChg;
+        StatePtr->moment1[k]    = tmpmat;
     }
 }

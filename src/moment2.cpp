@@ -36,6 +36,26 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
     lu_substitute(scratch, pm, out);
 }
 
+template<typename ARR>
+void load_storage(ARR& to, const Config& conf, const std::string& name)
+{
+    try{
+        const std::vector<double>& val(conf.get<std::vector<double> >(name));
+        if(to.size()!=val.size()) {
+            std::ostringstream strm;
+            strm<<"Array "<<name<<" must have "<<to.size()<<" elements, not "<<val.size();
+            throw std::invalid_argument(strm.str());
+        }
+        std::copy(val.begin(), val.end(), to.begin());
+
+    }catch(key_error&){
+        throw std::invalid_argument(name+" not defined");
+        // default to identity
+    }catch(boost::bad_any_cast&){
+        throw std::invalid_argument(name+" has wrong type (must be vector)");
+    }
+}
+
 } // namespace
 
 std::ostream& operator<<(std::ostream& strm, const Particle& P)
@@ -59,85 +79,103 @@ Moment2State::Moment2State(const Config& c)
     :StateBase(c)
     ,ref()
     ,real()
-    ,moment0(maxsize, 0e0)
-    ,state(boost::numeric::ublas::identity_matrix<double>(maxsize))
+    ,moment0_env(maxsize, 0e0)
+    ,moment1_env(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
-    /* check to see if "cstate" is defined.
-     * If "cstate" is defined then we are simulating one of many charge states.
-     * If not take IonZ, moment0, and state directly from config variables.
-     * If so, then
-     *   for IonZ expect the config vector "IonChargeStates" and index with "cstate" (0 index).
-     *   append the value of "cstate" to the vector and matrix variable names.
-     *     eg. cstate=1, vector_variable=S -> looks for variable "S1".
-     */
+    // hack.  getArray() promises that returned pointers will remain valid for our lifetime.
+    // This may not be true if std::vectors are resized.
+    // Reserve for up to 10 states and hope for the best...
+    // either need to provide real limit to max. states, or change getArray() iface
+    real.reserve(10);
+
     double icstate_f = 0.0;
-    bool multistate = c.tryGet<double>("cstate", icstate_f);
+    bool have_cstate = c.tryGet<double>("cstate", icstate_f);
     size_t icstate = (size_t)icstate_f;
 
     std::string vectorname(c.get<std::string>("vector_variable", "moment0"));
     std::string matrixname(c.get<std::string>("matrix_variable", "initial"));
-    std::vector<double> ics;
 
-    if(multistate) {
-        ics = c.get<std::vector<double> >("IonChargeStates");
-        if(ics.empty())
-            throw std::invalid_argument("IonChargeStates w/ length 0");
-        if(icstate>=ics.size())
-            throw std::invalid_argument("IonChargeStates[cstate] is out of bounds");
-        ref.IonZ = ics[icstate];
-
-        std::vector<double> nchg = c.get<std::vector<double> >("NCharge");
-        if(nchg.size()!=ics.size())
-            throw std::invalid_argument("NCharge[] and IonChargeStates[] must have equal length");
-        ref.IonQ = nchg[icstate];
-
-        std::string icstate_s(boost::lexical_cast<std::string>(icstate));
-        vectorname  += icstate_s;
-        matrixname  += icstate_s;
-    }
-
-    try{
-        const std::vector<double>& I = c.get<std::vector<double> >(vectorname);
-        if(I.size()!=moment0.size())
-            throw std::invalid_argument("Initial moment0 size mis-match");
-        std::copy(I.begin(), I.end(), moment0.begin());
-    }catch(key_error&){
-        if(multistate)
-            throw std::invalid_argument(vectorname+" not defined");
-        // default to zeros
-    }catch(boost::bad_any_cast&){
-        throw std::invalid_argument("'initial' has wrong type (must be vector)");
-    }
-
-    try{
-        const std::vector<double>& I = c.get<std::vector<double> >(matrixname);
-        if(I.size()!=state.size1()*state.size2())
-            throw std::invalid_argument("Initial state size mis-match");
-        std::copy(I.begin(), I.end(), state.data().begin());
-    }catch(key_error&){
-        if(multistate)
-            throw std::invalid_argument(matrixname+" not defined");
-        // default to identity
-    }catch(boost::bad_any_cast&){
-        throw std::invalid_argument("'initial' has wrong type (must be vector)");
-    }
+    std::vector<double> ics, nchg;
+    bool have_ics = c.tryGet<std::vector<double> >("IonChargeStates", ics);
 
     ref.IonEs      = c.get<double>("IonEs", 0e0),
     ref.IonEk      = c.get<double>("IonEk", 0e0);
     ref.recalc();
 
-    real           = ref;
+    if(!have_ics) {
+        ref.IonZ = c.get<double>("IonZ", 0e0);
+        ref.IonQ = c.get<double>("IonQ", 1e0);
 
-    real.phis      = moment0[PS_S];
-    real.IonEk    += moment0[PS_PS]*MeVtoeV;
+        ics.push_back(ref.IonZ);
+        nchg.push_back(ref.IonQ);
 
-    real.recalc();
-
-    if(!multistate) {
-        real.IonZ = ref.IonZ       = c.get<double>("IonZ", 0e0);
     } else {
-        ref.IonZ  = ics[0];
-        real.IonZ = ics[icstate];
+        if(ics.empty())
+            throw std::invalid_argument("IonChargeStates w/ length 0");
+        if(icstate>=ics.size())
+            throw std::invalid_argument("IonChargeStates[cstate] is out of bounds");
+
+        nchg = c.get<std::vector<double> >("NCharge");
+        if(nchg.size()!=ics.size())
+            throw std::invalid_argument("NCharge[] and IonChargeStates[] must have equal length");
+
+        ref.IonZ = ics[0];
+        ref.IonQ = nchg[0];
+    }
+
+    /* Possible configurations
+     * 1. Neither 'cstate' nor 'IonChargeStates' defined (empty Config).
+     *    No charge states, must go through source element to be useful
+     * 2. 'IonChargeStates' defined, but not 'cstate'.
+     *    Load all charge states
+     * 3. 'cstate' and 'IonChargeStates' defined.
+     *    Load a single charge state
+     */
+    if(!have_cstate && !have_ics) {
+        // no-op
+    } else if(!have_cstate && have_ics) {
+        // many charge states
+
+    } else if(have_cstate && have_ics) {
+        // single charge state
+
+        // drop other than selected state
+        ics[0]  = ics[icstate];
+        nchg[0] = nchg[icstate];
+        ics.resize(1);
+        nchg.resize(1);
+
+    } else {
+        throw std::invalid_argument("Moment2State: must define IonChargeStates and NCharge when cstate is set");
+    }
+
+    if(have_ics) {
+        real.resize(ics.size());
+        moment0.resize(ics.size());
+        moment1.resize(ics.size());
+
+        for(size_t i=0; i<ics.size(); i++) {
+            std::string num(boost::lexical_cast<std::string>(i));
+
+            moment0[i].resize(maxsize);
+            moment1[i].resize(maxsize, maxsize);
+            moment1[i] = boost::numeric::ublas::identity_matrix<double>(maxsize);
+
+            load_storage(moment0[i].data(), c, vectorname+num);
+            load_storage(moment1[i].data(), c, matrixname+num);
+
+            real[i] = ref;
+
+            real[i].IonZ = ics[i];
+            real[i].IonQ = nchg[i];
+
+            real[i].phis      = moment0[i][PS_S];
+            real[i].IonEk    += moment0[i][PS_PS]*MeVtoeV;
+
+            real[i].recalc();
+        }
+    } else {
+        real.resize(1); // hack, ensure at least one element so getArray() can return some pointer
     }
 }
 
@@ -148,7 +186,9 @@ Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     ,ref(o.ref)
     ,real(o.real)
     ,moment0(o.moment0)
-    ,state(o.state)
+    ,moment1(o.moment1)
+    ,moment0_env(o.moment0_env)
+    ,moment1_env(o.moment1_env)
 {}
 
 void Moment2State::assign(const StateBase& other)
@@ -159,7 +199,9 @@ void Moment2State::assign(const StateBase& other)
     ref     = O->ref;
     real    = O->real;
     moment0 = O->moment0;
-    state   = O->state;
+    moment1 = O->moment1;
+    moment0_env = O->moment0_env;
+    moment1_env = O->moment1_env;
     StateBase::assign(other);
 }
 
@@ -167,15 +209,20 @@ void Moment2State::show(std::ostream& strm) const
 {
     int j, k;
 
+    if(real.empty()) {
+        strm<<"\nState: empty\n";
+        return;
+    }
+
     strm << std::scientific << std::setprecision(8)
-         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real.IonEk << "\n  moment0 =\n    ";
+         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 =\n    ";
     for (k = 0; k < Moment2State::maxsize; k++)
-        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0(k);
+        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0[0](k);
     strm << "\n  state =\n";
     for (j = 0; j < Moment2State::maxsize; j++) {
         strm << "    ";
         for (k = 0; k < Moment2State::maxsize; k++) {
-            strm << std::scientific << std::setprecision(8) << std::setw(16) << state(j, k);
+            strm << std::scientific << std::setprecision(8) << std::setw(16) << moment1[0](j, k);
         }
         if (j < Moment2State::maxsize-1) strm << "\n";
     }
@@ -185,18 +232,18 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
     unsigned I=0;
     if(idx==I++) {
         Info.name = "state";
-        Info.ptr = &state(0,0);
+        Info.ptr = &moment1_env(0,0);
         Info.type = ArrayInfo::Double;
         Info.ndim = 2;
-        Info.dim[0] = state.size1();
-        Info.dim[1] = state.size2();
+        Info.dim[0] = moment1_env.size1();
+        Info.dim[1] = moment1_env.size2();
         return true;
     } else if(idx==I++) {
         Info.name = "moment0";
-        Info.ptr = &moment0(0);
+        Info.ptr = &moment0_env(0);
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
-        Info.dim[0] = moment0.size();
+        Info.dim[0] = moment0_env.size();
         return true;
     } else if(idx==I++) {
         Info.name = "ref_IonZ";
@@ -260,55 +307,55 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         return true;
     } else if(idx==I++) {
         Info.name = "real_IonZ";
-        Info.ptr = &real.IonZ;
+        Info.ptr = &real[0].IonZ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_IonEs";
-        Info.ptr = &real.IonEs;
+        Info.ptr = &real[0].IonEs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_IonW";
-        Info.ptr = &real.IonW;
+        Info.ptr = &real[0].IonW;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_gamma";
-        Info.ptr = &real.gamma;
+        Info.ptr = &real[0].gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_beta";
-        Info.ptr = &real.beta;
+        Info.ptr = &real[0].beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_bg";
-        Info.ptr = &real.bg;
+        Info.ptr = &real[0].bg;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_SampleIonK";
-        Info.ptr = &real.SampleIonK;
+        Info.ptr = &real[0].SampleIonK;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_phis";
-        Info.ptr = &real.phis;
+        Info.ptr = &real[0].phis;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "real_IonEk";
-        Info.ptr = &real.IonEk;
+        Info.ptr = &real[0].IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
@@ -318,17 +365,10 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
-    ,transfer(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
-    ,transfer_raw(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     ,misalign(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
-    ,misalign_inv(state_t::maxsize, state_t::maxsize)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
-
     inverse(misalign_inv, misalign);
-
-    // spoil to force recalculation of energy dependent terms
-    last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
 }
 
 Moment2ElementBase::~Moment2ElementBase() {}
@@ -336,47 +376,64 @@ Moment2ElementBase::~Moment2ElementBase() {}
 void Moment2ElementBase::assign(const ElementVoid *other)
 {
     const Moment2ElementBase *O = static_cast<const Moment2ElementBase*>(other);
-    length = O->length;
+    last_Kenergy_in = O->last_Kenergy_in;
+    last_Kenergy_out = O->last_Kenergy_out;
     transfer = O->transfer;
     transfer_raw = O->transfer_raw;
     misalign = O->misalign;
     misalign_inv = O->misalign_inv;
     ElementVoid::assign(other);
-
-    // spoil to force recalculation of energy dependent terms
-    last_Kenergy_in = last_Kenergy_out = std::numeric_limits<double>::quiet_NaN();
 }
 
 void Moment2ElementBase::show(std::ostream& strm) const
 {
     using namespace boost::numeric::ublas;
     ElementVoid::show(strm);
+    /*
     strm<<"Length "<<length<<"\n"
           "Transfer: "<<transfer<<"\n"
           "Transfer Raw: "<<transfer_raw<<"\n"
           "Mis-align: "<<misalign<<"\n";
+          */
 }
 
 void Moment2ElementBase::advance(StateBase& s)
 {
-    double   phis_temp;
     state_t& ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
     // IonEk is Es + E_state; the latter is set by user.
-    ST.real.recalc();
+    ST.recalc();
 
     std::cout<<"Advance Element "<<index<<" '"<<name<<"'\n";
 
-    if(ST.real.IonEk!=last_Kenergy_in) {
+    bool cache_hit = ST.real.size()==last_Kenergy_in.size();
+    if(cache_hit) {
+        for(size_t n=0; n<ST.real.size(); n++) {
+            if(ST.real[n].IonEk!=last_Kenergy_in[n]) {
+                cache_hit = false;
+                break;
+            }
+        }
+    }
+
+    if(!cache_hit)
+    {
         // need to re-calculate energy dependent terms
+
+        last_Kenergy_in.resize(ST.real.size());
+        last_Kenergy_out.resize(ST.real.size());
+        transfer.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
+        transfer_raw.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-        noalias(scratch)  = prod(misalign, transfer);
-        noalias(transfer) = prod(scratch, misalign_inv);
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            noalias(scratch)  = prod(misalign, transfer[i]);
+            noalias(transfer[i]) = prod(scratch, misalign_inv);
 
-        ST.real.recalc();
+            ST.real[i].recalc();
+        }
     }
 
     // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
@@ -384,43 +441,63 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.pos += length;
 
-    std::string t_name = type_name(); // C string -> C++ string.
-    if ((t_name != "rfcavity") && (t_name != "sbend")) {
-        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
-        ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
-        ST.real.IonEk  = last_Kenergy_out;
-    } else if (t_name == "sbend")
-        phis_temp = ST.moment0[state_t::PS_S];
+    const char * const t_name = type_name();
+    bool isrf  = strcmp(t_name, "rfcavity")==0,
+         isbend= strcmp(t_name, "sbend")==0;
 
-    std::cout<<"moment0 in  "<<ST.moment0
-           <<"\ntransfer    "<<transfer<<"\n";
-
-    ST.moment0 = prod(transfer, ST.moment0);
-
-    std::cout<<"moment0 out "<<ST.moment0<<"\n";
-
-    if (t_name == "rfcavity") {
-        ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
-        ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
-    } else if (t_name == "sbend") {
+    if(!isrf)
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
-        double dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
-         ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
+    std::fill(ST.moment0_env.begin(), ST.moment0_env.end(), 0.0);
+    std::fill(ST.moment1_env.data().begin(), ST.moment1_env.data().end(), 0.0);
+    double totalQ = 0.0;
 
-        ST.real.IonEk  = last_Kenergy_out;
+    for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        if(!isrf && !isbend) {
+            ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM;
+            ST.real[i].IonEk  = last_Kenergy_out[i];
+        }
+
+        double   phis_temp;
+        if(isbend)
+            phis_temp = ST.moment0[i][state_t::PS_S];
+
+        std::cout<<"moment0 in  "<<ST.moment0[i]
+               <<"\ntransfer    "<<transfer[i]<<"\n";
+
+        ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
+
+        std::cout<<"moment0 out "<<ST.moment0[i]<<"\n";
+
+        if(isbend) {
+            ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + ST.moment0[i][state_t::PS_S] - phis_temp;
+
+            ST.real[i].IonEk  = last_Kenergy_out[i];
+
+        }
+
+        noalias(scratch) = prod(transfer[i], ST.moment1[i]);
+        noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+
+        ST.moment0_env += ST.moment0[i]*ST.real[i].IonQ;
+        ST.moment1_env += ST.moment1[i]*ST.real[i].IonQ;
+        totalQ += ST.real[i].IonQ;
     }
 
-    noalias(scratch) = prod(transfer, ST.state);
-    noalias(ST.state) = prod(scratch, trans(transfer));
+    ST.moment0_env /= totalQ;
+    ST.moment1_env /= totalQ;
 }
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
 {
     // Default no-op
-    transfer = transfer_raw;
 
-    last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+    for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        last_Kenergy_out[i] = ST.real[i].IonEk;
+    }
+
+    last_Kenergy_in = last_Kenergy_out; // no energy gain
+    transfer = transfer_raw;
 }
 
 namespace {
@@ -442,7 +519,7 @@ struct ElementSource : public Moment2ElementBase
     virtual void show(std::ostream& strm) const
     {
         ElementVoid::show(strm);
-        strm<<"Initial: "<<istate.state<<"\n";
+        strm<<"Initial: "<<istate.moment0_env<<"\n";
     }
 
     state_t istate;
@@ -491,14 +568,16 @@ struct ElementDrift : public Moment2ElementBase
     {
         double L = length*MtoMM; // Convert from [m] to [mm].
 
-        transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
-        transfer_raw(state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            transfer_raw[i](state_t::PS_X, state_t::PS_PX) = L;
+            transfer_raw[i](state_t::PS_Y, state_t::PS_PY) = L;
+            transfer_raw[i](state_t::PS_S, state_t::PS_PS) =
+                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
-        transfer = transfer_raw;
+            transfer[i] = transfer_raw[i];
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
     }
 };
 
@@ -517,11 +596,13 @@ struct ElementOrbTrim : public Moment2ElementBase
         double theta_x = conf().get<double>("theta_x", 0e0),
                theta_y = conf().get<double>("theta_y", 0e0);
 
-        transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-        transfer(state_t::PS_PX, 6) = theta_x*ST.ref.IonZ/ST.real.IonZ;
-        transfer(state_t::PS_PY, 6) = theta_y*ST.ref.IonZ/ST.real.IonZ;
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            transfer[i](state_t::PS_PX, 6) = theta_x*ST.ref.IonZ/ST.real[i].IonZ;
+            transfer[i](state_t::PS_PY, 6) = theta_y*ST.ref.IonZ/ST.real[i].IonZ;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
     }
 };
 
@@ -537,6 +618,7 @@ struct ElementSBend : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
+        const
         double L    = conf().get<double>("L")*MtoMM,
                phi  = conf().get<double>("phi")*M_PI/180e0,
                phi1 = conf().get<double>("phi1")*M_PI/180e0,
@@ -544,20 +626,19 @@ struct ElementSBend : public Moment2ElementBase
                rho  = L/phi,
                K    = conf().get<double>("K", 0e0)/sqr(MtoMM),
                Kx   = K + 1e0/sqr(rho),
-               Ky   = -K,
-               dx   = 0e0,
-               sx   = 0e0;
+               Ky   = -K;
 
-        typename Moment2ElementBase::value_t edge1, edge2;
+        value_t edge1, edge2, base;
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi1, edge1);
         // Horizontal plane.
-        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, transfer_raw);
+        GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, base);
         // Vertical plane.
-        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, transfer_raw);
+        GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, base);
 
         // Include dispersion.
+        double dx, sx;
         if (Kx == 0e0) {
             dx = sqr(L)/2e0;
             sx = L;
@@ -569,35 +650,39 @@ struct ElementSBend : public Moment2ElementBase
             sx = sin(sqrt(Kx)*L)/sqrt(Kx);
         }
 
-        transfer_raw(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        transfer_raw(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        transfer_raw(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
-        transfer_raw(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
+        base(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        base(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        base(state_t::PS_S,  state_t::PS_X)  = sx/rho*ST.ref.SampleIonK;
+        base(state_t::PS_S,  state_t::PS_PX) = dx/rho*ST.ref.SampleIonK;
         // Low beta approximation.
-        transfer_raw(state_t::PS_S,  state_t::PS_PS) =
+        base(state_t::PS_S,  state_t::PS_PS) =
                 ((L-sx)/(Kx*sqr(rho))-L/sqr(ST.ref.gamma))*ST.ref.SampleIonK
                 /(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
 
-        double qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            double qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
-        // Add dipole terms.
-        transfer_raw(state_t::PS_X,  6) = -dx/rho*qmrel;
-        transfer_raw(state_t::PS_PX, 6) = -sx/rho*qmrel;
-        transfer_raw(state_t::PS_S,  6) = -(L-sx)/(Kx*sqr(rho))*ST.ref.SampleIonK*qmrel;
+            transfer_raw[i] = base;
 
-        // Edge focusing.
-        GetEdgeMatrix(rho, phi2, edge2);
+            // Add dipole terms.
+            transfer_raw[i](state_t::PS_X,  6) = -dx/rho*qmrel;
+            transfer_raw[i](state_t::PS_PX, 6) = -sx/rho*qmrel;
+            transfer_raw[i](state_t::PS_S,  6) = -(L-sx)/(Kx*sqr(rho))*ST.ref.SampleIonK*qmrel;
 
-        transfer_raw = prod(transfer_raw, edge1);
-        transfer_raw = prod(edge2, transfer_raw);
+            // Edge focusing.
+            GetEdgeMatrix(rho, phi2, edge2);
 
-        // Longitudinal plane.
-        // For total path length.
-//        transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
+            transfer_raw[i] = prod(transfer_raw[i], edge1);
+            transfer_raw[i] = prod(edge2, transfer_raw[i]);
 
-        transfer = transfer_raw;
+            // Longitudinal plane.
+            // For total path length.
+    //        transfer_raw(state_t::PS_S,  state_t::PS_S) = L;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+            transfer[i] = transfer_raw[i];
+
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
     }
 };
 
@@ -613,26 +698,30 @@ struct ElementQuad : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        // Re-initialize transport matrix.
-        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        const double B2= conf().get<double>("B2"),
+                     L = conf().get<double>("L")*MtoMM;
 
-        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
-               K    = conf().get<double>("B2")/Brho/sqr(MtoMM),
-               L    = conf().get<double>("L")*MtoMM;
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            // Re-initialize transport matrix.
+            transfer_raw[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        // Horizontal plane.
-        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
-        // Vertical plane.
-        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw);
-        // Longitudinal plane.
-//        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+            double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
+                   K = B2/Brho/sqr(MtoMM);
 
-        transfer_raw(state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+            // Horizontal plane.
+            GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw[i]);
+            // Vertical plane.
+            GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw[i]);
+            // Longitudinal plane.
+    //        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
 
-        transfer = transfer_raw;
+            transfer_raw[i](state_t::PS_S, state_t::PS_PS) =
+                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+            transfer[i] = transfer_raw[i];
+
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
     }
 };
 
@@ -648,21 +737,25 @@ struct ElementSolenoid : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        // Re-initialize transport matrix.
-        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        const double B = conf().get<double>("B"),
+                     L = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
-        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
-               K    = conf().get<double>("B")/(2e0*Brho)/MtoMM,
-               L    = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            // Re-initialize transport matrix.
+            transfer_raw[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        GetSolMatrix(L, K, transfer_raw);
+            double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
+                   K    = B/(2e0*Brho)/MtoMM;
 
-        transfer_raw(state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+            GetSolMatrix(L, K, transfer_raw[i]);
 
-        transfer = transfer_raw;
+            transfer_raw[i](state_t::PS_S, state_t::PS_PS) =
+                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+            transfer[i] = transfer_raw[i];
+
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
     }
 };
 
@@ -727,29 +820,32 @@ struct ElementEQuad : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        // Re-initialize transport matrix.
-        // V0 [V] electrode voltage and R [m] electrode half-distance.
-        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        const double V0   = conf().get<double>("V"),
+                     R    = conf().get<double>("radius"),
+                     L    = conf().get<double>("L")*MtoMM;
 
-        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
-               V0   = conf().get<double>("V"),
-               R    = conf().get<double>("radius"),
-               K    = 2e0*V0/(C0*ST.real.beta*sqr(R))/Brho/sqr(MtoMM),
-               L    = conf().get<double>("L")*MtoMM;
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            // Re-initialize transport matrix.
+            // V0 [V] electrode voltage and R [m] electrode half-distance.
+            transfer_raw[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        // Horizontal plane.
-        GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
-        // Vertical plane.
-        GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw);
-        // Longitudinal plane.
-//        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+            double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
+                   K    = 2e0*V0/(C0*ST.real[i].beta*sqr(R))/Brho/sqr(MtoMM);
 
-        transfer_raw(state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
+            // Horizontal plane.
+            GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw[i]);
+            // Vertical plane.
+            GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer_raw[i]);
+            // Longitudinal plane.
+            //        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
 
-        transfer = transfer_raw;
+            transfer_raw[i](state_t::PS_S, state_t::PS_PS) =
+                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
-        last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
+            transfer[i] = transfer_raw[i];
+
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
     }
 };
 
@@ -758,15 +854,24 @@ struct ElementGeneric : public Moment2ElementBase
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
+    value_t proto;
+
     ElementGeneric(const Config& c)
         :base_t(c)
     {
-        std::vector<double> I = c.get<std::vector<double> >("transfer");
-        if(I.size()>this->transfer_raw.data().size())
-            throw std::invalid_argument("Initial transfer size too big");
-        std::copy(I.begin(), I.end(), this->transfer_raw.data().begin());
+        load_storage(proto.data(), c, "transfer");
     }
     virtual ~ElementGeneric() {}
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            transfer[i] = proto;
+
+            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
+        }
+    }
+
     virtual const char* type_name() const {return "generic";}
 };
 

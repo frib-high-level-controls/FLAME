@@ -5,6 +5,7 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include "moment2.h"
 
 // Phase space dimension; including vector for orbit/1st moment.
 # define PS_Dim Moment2State::maxsize // Set to 7; to include orbit.
@@ -87,15 +88,22 @@ struct ElementRFCavity : public Moment2ElementBase
     {
         std::cout<<"Recompute Element "<<index<<" '"<<name<<"' ref: "<<ST.ref<<"\n";
 
-        transfer = transfer_raw;
+        double L             = conf().get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
-        last_Kenergy_in = ST.real.IonEk;
 
-        this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            // TODO: 'transfer' is overwritten in InitRFCav()?
+            transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            transfer[i](state_t::PS_X, state_t::PS_PX) = L;
+            transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
 
-        last_Kenergy_out = ST.real.IonEk;
+            last_Kenergy_in[i] = ST.real[i].IonEk;
 
-        this->ElementRFCavity::InitRFCav(conf(), ST.real, transfer);
+            this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
+
+            last_Kenergy_out[i] = ST.real[i].IonEk;
+            this->ElementRFCavity::InitRFCav(conf(), ST.real[i], transfer[i]);
+        }
    }
 
     virtual const char* type_name() const {return "rfcavity";}

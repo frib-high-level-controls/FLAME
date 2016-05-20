@@ -78,10 +78,15 @@ struct Moment2State : public StateBase
 
     virtual void show(std::ostream& strm) const;
 
-    Particle ref, real;
+    Particle ref;
 
-    vector_t moment0;
-    matrix_t state; // TODO: better name
+    // all three must have the same length, which is the # of charge states
+    std::vector<Particle> real;
+    std::vector<vector_t> moment0;
+    std::vector<matrix_t> moment1;
+
+    vector_t moment0_env;
+    matrix_t moment1_env;
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
@@ -89,12 +94,18 @@ struct Moment2State : public StateBase
         return new Moment2State(*this, clone_tag());
     }
 
+    void recalc() {
+        for(size_t i=0; i<real.size(); i++) real[i].recalc();
+    }
+
+    inline size_t size() const { return real.size(); } // # of charge states
+
 protected:
     Moment2State(const Moment2State& o, clone_tag);
 };
 
 /** @brief An Element which propagates the statistical moments of a bunch
- *
+ *transfer_raw
  */
 struct Moment2ElementBase : public ElementVoid
 {
@@ -114,10 +125,10 @@ struct Moment2ElementBase : public ElementVoid
                     boost::numeric::ublas::bounded_array<double, state_t::maxsize*state_t::maxsize>
     > value_t;
 
-    double last_Kenergy_in, last_Kenergy_out;
+    std::vector<double> last_Kenergy_in, last_Kenergy_out;
     //! final transfer matrix
-    value_t transfer;
-    value_t transfer_raw, misalign, misalign_inv;
+    std::vector<value_t> transfer, transfer_raw;
+    value_t misalign, misalign_inv;
 
     virtual void assign(const ElementVoid *other);
 

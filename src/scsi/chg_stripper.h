@@ -1,10 +1,9 @@
 #ifndef CHG_STRIPPER_H
 #define CHG_STRIPPER_H
 
-#endif // CHG_STRIPPER_H
-
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include "moment2.h"
 
 typedef Moment2State state_t;
 
@@ -36,7 +35,7 @@ typedef Moment2State state_t;
    std_s is E1Para, std_f is sqrt(1/3)*20/100*3.0*abs(-0.10681), sqrt(1/3) is introduced by assuming uniform
    distribution of stripper thickness variation, 20 is thickness variation in %,  3.0 is foil thickness in um,
    -0.10681 is thickness dependence of E0 after stripper.                                                       */
-
+static
 const double Stripper_IonZ      = 78.0/238.0,
              Stripper_IonMass   = 238.0,
              Stripper_IonProton = 92.0,
@@ -69,5 +68,8 @@ struct ElementStripper : public Moment2ElementBase
 };
 
 
-void Stripper_GetMat(const Config &conf, std::vector<boost::shared_ptr<Machine> > &sim,
-                     std::vector<boost::shared_ptr<StateBase> > &ST, std::vector<double> ChgState);
+void Stripper_GetMat(const Config &conf,
+                     Moment2State &ST, std::vector<double> ChgState);
+
+
+#endif // CHG_STRIPPER_H

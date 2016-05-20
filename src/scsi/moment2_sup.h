@@ -5,9 +5,8 @@
 #include "base.h"
 #include "moment2.h"
 
-void GetCenofChg(const Config &conf, const std::vector<boost::shared_ptr<StateBase> > &ST,
-                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS,
-                 const char *ncharge_name=0);
+void GetCenofChg(const Config &conf, const Moment2State &ST,
+                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS);
 
 void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBase::value_t &M);
 
