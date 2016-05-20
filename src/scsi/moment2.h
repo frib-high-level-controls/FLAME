@@ -34,7 +34,7 @@ struct Particle {
            beta,        // Beta for ion.
            bg,          // Beta*gamma;
            SampleIonK,
-           phis,        // Synchrotron phase.
+           phis,        // Absolute synchrotron phase [rad].
            IonEk;       // Kinetic energy.
 
     Particle() {

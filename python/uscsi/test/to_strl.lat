@@ -1511,7 +1511,7 @@ LS1_CH02: LINE = (
 FS1_CSS1: LINE = (
   drift_470, drift_471, 
   drift_472, drift_473, fs1_css_port_d2160_474, drift_475, drift_476, fs1_css_dh_d2163_1, fs1_css_dh_d2163_2, fs1_css_dh_d2163_3, 
-  fs1_css_dh_d2163_4, fs1_css_dh_d2163_5, drift_477, fs1_css_dh_d2169_6, fs1_css_dh_d2169_7, fs1_css_dh_d2169_8, fs1_css_dh_d2169_9, fs1_css_dh_d2169_10, 
+  fs1_css_dh_d2163_4, fs1_css_dh_d2163_5, drift_477, fs1_css_dh_d2169_6, fs1_css_dh_d2169_7, fs1_css_dh_d2169_8, fs1_css_dh_d2169_9, fs1_css_dh_d2169_10,
   drift_478, drift_479, drift_480, fs1_css_dh_d2174_11, fs1_css_dh_d2174_12, fs1_css_dh_d2174_13, fs1_css_dh_d2174_14, fs1_css_dh_d2174_15, 
   drift_481, fs1_css_dh_d2180_16, fs1_css_dh_d2180_17, fs1_css_dh_d2180_18, fs1_css_dh_d2180_19, fs1_css_dh_d2180_20, drift_482, drift_483, 
   drift_484, fs1_css_port_d2186_485, drift_486, drift_487, drift_488, fs1_css_dch_d2189_156, fs1_css_dcv_d2189_157, drift_489, 
@@ -1608,6 +1608,15 @@ LS1: LINE = (
   LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02
 );
 
+TO_SBEND: LINE = (
+  S,
+  LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
+  LS1_WB03, LS1_CB04, LS1_WB04, LS1_CB05, LS1_WB05, LS1_CB06, LS1_WB06, LS1_CB07, LS1_WB07, LS1_CB08, LS1_WB08,
+  LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02,
+  drift_470, drift_471,  drift_472, drift_473, fs1_css_port_d2160_474, drift_475, drift_476,
+  fs1_css_dh_d2163_2
+);
+
 TO_STRL: LINE = (
   S,
   LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
@@ -1625,6 +1634,8 @@ W_STR: LINE = (
 );
 
 #USE: LS1;
+
+#USE: TO_SBEND;
 
 #USE: TO_STRL;
 
