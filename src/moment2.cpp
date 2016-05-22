@@ -314,7 +314,7 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
-    ,transfer(state_t::maxsize, state_t::maxsize)
+    ,transfer(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     ,transfer_raw(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     ,misalign(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     ,misalign_inv(state_t::maxsize, state_t::maxsize)
