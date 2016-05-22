@@ -429,8 +429,9 @@ void Moment2ElementBase::advance(StateBase& s)
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
-            noalias(scratch)  = prod(misalign, transfer[i]);
-            noalias(transfer[i]) = prod(scratch, misalign_inv);
+            // TODO: broken somehow?
+            //noalias(scratch)  = prod(misalign, transfer[i]);
+            //noalias(transfer[i]) = prod(scratch, misalign_inv);
 
             ST.real[i].recalc();
         }
@@ -569,6 +570,7 @@ struct ElementDrift : public Moment2ElementBase
         double L = length*MtoMM; // Convert from [m] to [mm].
 
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            transfer_raw[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
             transfer_raw[i](state_t::PS_X, state_t::PS_PX) = L;
             transfer_raw[i](state_t::PS_Y, state_t::PS_PY) = L;
             transfer_raw[i](state_t::PS_S, state_t::PS_PS) =
