@@ -101,8 +101,9 @@ struct ElementRFCavity : public Moment2ElementBase
 
             this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
 
-            last_Kenergy_out[i] = ST.real[i].IonEk;
             this->ElementRFCavity::InitRFCav(conf(), ST.real[i], transfer[i]);
+
+            last_Kenergy_out[i] = ST.real[i].IonEk;
         }
    }
 
