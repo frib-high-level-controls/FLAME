@@ -96,11 +96,10 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void PropagateLongRFCav(const Config &conf, Particle &ref);
 
-    void InitRFCav(const Config &conf, Particle &real, double &accIonW,
-                   double &avebeta, double &avegamma, state_t::matrix_t &M);
+    void InitRFCav(const Config &conf, Particle &real, state_t::matrix_t &M);
 
     void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
-                     const double EfieldScl, double &IonFy, double &accIonW);
+                     const double EfieldScl, double &IonFy);
 
     virtual ~ElementRFCavity() {}
 
@@ -114,10 +113,7 @@ struct ElementRFCavity : public Moment2ElementBase
 
         last_Kenergy_out = ST.real.IonEk;
 
-        // Define initial conditions.
-        double accIonW, avebeta, avegamma;
-
-        this->ElementRFCavity::InitRFCav(conf(), ST.real, accIonW, avebeta, avegamma, transfer);
+        this->ElementRFCavity::InitRFCav(conf(), ST.real, transfer);
    }
 
     virtual const char* type_name() const {return "rfcavity";}
