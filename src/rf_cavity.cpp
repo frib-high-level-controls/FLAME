@@ -22,7 +22,7 @@ void EvalGapModel(const double dis, const double IonW0, Particle &real, const do
                   double &IonW_f, double &IonFy_f);
 
 static
-double GetCavPhase(const int cavi, Particle ref, const double IonFys, const double multip);
+double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip);
 
 
 void CavDataType::RdData(const std::string &FileName)
@@ -352,7 +352,7 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
 
 
 static
-double GetCavPhase(const int cavi, Particle ref, const double IonFys, const double multip)
+double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip)
 {
     /* If the cavity is not at full power, the method gives synchrotron
      * phase slightly different from the nominal value.                 */
