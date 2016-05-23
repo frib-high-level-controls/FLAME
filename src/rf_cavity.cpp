@@ -953,7 +953,15 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::mat
     real.recalc();
     real.phis       += (IonFy_o-IonFy_i)/multip;
 
-    std::cout<<"RF recompute before "<<real<<"\n";
+    std::cout<<"RF recompute before "<<real
+             <<" cavi="<<cavi
+             <<" cavilabel="<<cavilabel
+             <<" Rm="<<Rm
+             <<" EfieldScl="<<EfieldScl
+             <<" IonFy_i="<<IonFy_i
+             <<" Ek_i="<<Ek_i
+             <<" fRF="<<fRF
+             <<"\n";
 
     this->GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M);
 
