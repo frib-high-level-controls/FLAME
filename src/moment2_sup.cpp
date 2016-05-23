@@ -76,16 +76,19 @@ void GetEEdgeMatrix(const double fringe, const double kappa, typename Moment2Ele
 }
 
 
-void GetSBendMatrix(const double L, const double phi, const double phi1, const double phi2, const double Kx, const double Ky,
-                    const double IonEs, const double ref_gamma, const double qmrel, const double dip_beta,
-                    const double dip_gamma, const double d, const double dip_IonK, typename Moment2ElementBase::value_t &M)
+void GetSBendMatrix(const double L, const double phi, const double phi1, const double phi2, const double K,
+                    const double IonEs, const double ref_gamma, const double qmrel,
+                    const double dip_beta, const double dip_gamma, const double d, const double dip_IonK, typename Moment2ElementBase::value_t &M)
 {
     typedef typename Moment2ElementBase::state_t state_t;
 
-    double  rho    = L/phi,
-            dx     = 0e0,
-            sx     = 0e0,
-            dip_bg = dip_beta*dip_gamma;
+    value_mat edge1, edge2, R;
+
+    double  rho = L/phi,
+            Kx  = K + 1e0/sqr(rho),
+            Ky  = -K,
+            dx  = 0e0,
+            sx  = 0e0;
 
     // Horizontal plane.
     GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, M);
@@ -109,7 +112,6 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
 
     M(state_t::PS_S,  state_t::PS_X)  = sx/rho*dip_IonK;
     M(state_t::PS_S,  state_t::PS_PX) = dx/rho*dip_IonK;
-
     // Low beta approximation.
     M(state_t::PS_S,  state_t::PS_PS) =
             ((L-sx)/(Kx*sqr(rho))-L/sqr(ref_gamma))*dip_IonK
@@ -117,10 +119,15 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
 
     // Add dipole terms.
     M(state_t::PS_S,  6) = ((L-sx)/(Kx*sqr(rho))*d-L/sqr(ref_gamma)*(d+qmrel))*dip_IonK;
-
-    // Add dipole terms.
     M(state_t::PS_X,  6) = dx/rho*d;
     M(state_t::PS_PX, 6) = sx/rho*d;
+
+    // Edge focusing.
+    GetEdgeMatrix(rho, phi1, edge1);
+    GetEdgeMatrix(rho, phi2, edge2);
+
+    M = prod(M, edge1);
+    M = prod(edge2, M);
 
     // Longitudinal plane.
     // For total path length.
@@ -151,11 +158,11 @@ void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::v
     else
         M(state_t::PS_X, state_t::PS_PY) = 0e0;
 
-    M(state_t::PS_PX, state_t::PS_X) = -K*S*C;
-    M(state_t::PS_PX, state_t::PS_Y) = -K*sqr(S);
+    M(state_t::PS_PX, state_t::PS_X)  = -K*S*C;
+    M(state_t::PS_PX, state_t::PS_Y)  = -K*sqr(S);
     M(state_t::PS_PX, state_t::PS_PY) = S*C;
 
-    M(state_t::PS_Y, state_t::PS_X) = -S*C;
+    M(state_t::PS_Y, state_t::PS_X)   = -S*C;
     if (K != 0e0)
         M(state_t::PS_Y, state_t::PS_PX) = -sqr(S)/K;
     else
@@ -165,11 +172,74 @@ void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::v
     else
         M(state_t::PS_Y, state_t::PS_PY) = L;
 
-    M(state_t::PS_PY, state_t::PS_X) = K*sqr(S);
+    M(state_t::PS_PY, state_t::PS_X)  = K*sqr(S);
     M(state_t::PS_PY, state_t::PS_PX) = -S*C;
-    M(state_t::PS_PY, state_t::PS_Y) = -K*S*C;
+    M(state_t::PS_PY, state_t::PS_Y)  = -K*S*C;
 
     // Longitudinal plane.
     // For total path length.
 //        M(state_t::PS_S, state_t::PS_S) = L;
+}
+
+
+void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa, const double Kx, const double Ky,
+                    const double IonEs, const double ref_beta, const double ref_gamma, const double eta0, const double h,
+                    const double dip_beta, const double dip_gamma, const double delta_KZ, const double SampleIonK, typename Moment2ElementBase::value_t &M)
+{
+    typedef typename Moment2ElementBase::state_t state_t;
+
+    value_mat edge1, edge2, R;
+
+    double  rho = L/phi,
+            dx  = 0e0,
+            sx  = 0e0;
+
+    // Horizontal plane.
+    GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, M);
+    // Vertical plane.
+    GetQuadMatrix(L, Ky, (unsigned)state_t::PS_Y, M);
+
+    // Include dispersion.
+    if (Kx == 0e0) {
+        dx = 0e0;
+        sx = 0e0;
+    } else if (Kx > 0e0) {
+        dx = (1e0-cos(sqrt(Kx)*L))/(rho*Kx);
+        sx = sin(sqrt(Kx)*L)/sqrt(Kx);
+    } else {
+        dx = (1e0-cosh(sqrt(-Kx)*L))/(rho*Kx);
+        sx = sin(sqrt(Kx)*L)/sqrt(Kx);
+    }
+
+    double Nk   = (sqr(1e0+2e0*eta0)+h)/(2e0*(1e0+eta0)*(1e0+2e0*eta0)),
+           Nt   = 1e0 + h/sqr(1e0+2e0*eta0),
+           CorT = -ref_gamma/(1e0+ref_gamma),
+           tx   = sx/rho*Nt*CorT,
+           txp  = dx*Nt*CorT,
+           tzp  = (-L/(2e0*(1e0+eta0)*(1e0+2e0*eta0))+((L-sx)/sqr(Kx*rho))*Nk*Nt)*CorT;
+
+    M(state_t::PS_X,  state_t::PS_PS) = dx*Nk;
+    M(state_t::PS_PX, state_t::PS_PS) = sx/rho*Nk;
+
+    M(state_t::PS_S,  state_t::PS_X)  = tx*SampleIonK;
+    M(state_t::PS_S,  state_t::PS_PX) = txp*SampleIonK;
+    // Low beta approximation.
+    M(state_t::PS_S,  state_t::PS_PS) = tzp*SampleIonK;
+
+    // Add dipole terms.
+    double delta_K = sqr(ref_beta/dip_beta) - 1e0;
+
+    M(state_t::PS_X,  6) = dx*Nk*(delta_K+delta_KZ);
+    M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
+
+    // Edge focusing.
+    GetEEdgeMatrix(fringe_x, kappa, edge1);
+    GetEEdgeMatrix(fringe_y, kappa, edge2);
+
+    M = prod(M, edge1);
+    M = prod(edge2, M);
+
+    // Longitudinal plane.
+    // For total path length.
+    //        M(state_t::PS_S,  state_t::PS_S) = L;
 }
