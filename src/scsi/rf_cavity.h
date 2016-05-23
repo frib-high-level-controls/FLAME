@@ -117,7 +117,8 @@ struct ElementRFCavity : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        transfer = transfer_raw;
+        // Re-initialize transport matrix.
+        transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         last_Kenergy_in = ST.real.IonEk;
 

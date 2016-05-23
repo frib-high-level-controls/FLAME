@@ -62,23 +62,31 @@ void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBa
 }
 
 
-void GetSBendMatrix(const double L, const double phi, const double phi1, const double phi2, const double K,
+void GetEEdgeMatrix(const double fringe, const double kappa, typename Moment2ElementBase::value_t &M)
+{
+    // Edge focusing for electrostatic dipole.
+    typedef typename Moment2ElementBase::state_t state_t;
+
+    M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+    M(state_t::PS_PX, state_t::PS_X)  = fringe;
+    M(state_t::PS_PX, state_t::PS_X)  = sqrt(1e0+kappa);
+    M(state_t::PS_PY, state_t::PS_Y)  = fringe;
+    M(state_t::PS_PY, state_t::PS_PY) = sqrt(1e0+kappa);
+}
+
+
+void GetSBendMatrix(const double L, const double phi, const double phi1, const double phi2, const double Kx, const double Ky,
                     const double IonEs, const double ref_gamma, const double qmrel, const double dip_beta,
                     const double dip_gamma, const double d, const double dip_IonK, typename Moment2ElementBase::value_t &M)
 {
     typedef typename Moment2ElementBase::state_t state_t;
 
     double  rho    = L/phi,
-            Kx     = K + 1e0/sqr(rho),
-            Ky     = -K,
             dx     = 0e0,
             sx     = 0e0,
             dip_bg = dip_beta*dip_gamma;
 
-    typename Moment2ElementBase::value_t edge1, edge2;
-
-    // Edge focusing.
-    GetEdgeMatrix(rho, phi1, edge1);
     // Horizontal plane.
     GetQuadMatrix(L, Kx, (unsigned)state_t::PS_X, M);
     // Vertical plane.
@@ -113,12 +121,6 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
     // Add dipole terms.
     M(state_t::PS_X,  6) = dx/rho*d;
     M(state_t::PS_PX, 6) = sx/rho*d;
-
-    // Edge focusing.
-    GetEdgeMatrix(rho, phi2, edge2);
-
-    M = prod(M, edge1);
-    M = prod(edge2, M);
 
     // Longitudinal plane.
     // For total path length.

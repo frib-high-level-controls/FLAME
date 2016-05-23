@@ -167,8 +167,7 @@ ls1_wa03_port_d1224_60: drift, L = 0.000000, aper = 0.020000;
 drift_61: drift, L = 0.099000, aper = 0.020000;
 drift_62: drift, L = 0.072000, aper = 0.020000;
 drift_63: drift, L = 0.175312, aper = 0.020000;
-ls1_cb01_cav1_d1229: rfcavity, cavtype = "0.085QWR", L = 0.300000,
-  f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+ls1_cb01_cav1_d1229: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
 drift_64: drift, L = 0.095595, aper = 0.020000;
 ls1_cb01_bpm_d1231_23: bpm;
 drift_65: drift, L = 0.055880, aper = 0.020000;
@@ -1639,6 +1638,6 @@ W_STR: LINE = (
 
 #USE: TO_STRL;
 
-USE: W_STR;
+#USE: W_STR;
 
-#USE: cell;
+USE: cell;

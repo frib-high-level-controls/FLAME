@@ -32,8 +32,8 @@ struct Particle {
            IonW,        // Total energy.
            gamma,       // Gamma for ion.
            beta,        // Beta for ion.
-           bg,          // Beta*gamma;
-           SampleIonK,
+           bg,          // Beta*gamma.
+           SampleIonK,  // Sample rate; different RF Cavity due to RF frequenies.
            phis,        // Absolute synchrotron phase [rad].
            IonEk;       // Kinetic energy.
 

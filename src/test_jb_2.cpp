@@ -208,6 +208,13 @@ void propagate1(std::auto_ptr<Config> &conf)
     while (it[0] != sim[0]->end()) {
         for (k = 0; k < state.size(); k++) {
             (*it[k])->advance(*state[k]);
+
+//            if (k == 0)
+//                std::cout << std::fixed << std::setprecision(5)
+//                          << std::setw(10) << StatePtr[k]->pos
+//                          << std::scientific << std::setprecision(10)
+//                          << std::setw(18) << StatePtr[k]->ref.phis << std::setw(18) << StatePtr[k]->real.phis << "\n";
+
             ++it[k];
         }
     }

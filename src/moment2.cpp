@@ -330,6 +330,7 @@ void Moment2ElementBase::show(std::ostream& strm) const
           "Mis-align: "<<misalign<<"\n";
 }
 
+
 void Moment2ElementBase::advance(StateBase& s)
 {
     double   phis_temp, di_bg, Ek00, beta00, gamma00, IonK_Bend, dphis_temp;
@@ -363,7 +364,15 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
-    ST.moment0 = prod(transfer, ST.moment0);
+    // Apparently, dipole terms are not being included after Charge Stripper.
+    if ((t_name == "rfcavity") && (ST.pos > 118.0)) {
+        std::cout << "\ncavity: " << name << "\n";
+        scratch = transfer;
+        scratch(2, 6) = 0e0;
+        scratch(3, 6) = 0e0;
+        ST.moment0 = prod(scratch, ST.moment0);
+    } else
+        ST.moment0 = prod(transfer, ST.moment0);
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
@@ -534,6 +543,8 @@ struct ElementSBend : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
+        typename Moment2ElementBase::value_t edge1, edge2;
+
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double L     = conf().get<double>("L")*MtoMM,
@@ -541,6 +552,9 @@ struct ElementSBend : public Moment2ElementBase
                phi1  = conf().get<double>("phi1")*M_PI/180e0,
                phi2  = conf().get<double>("phi2")*M_PI/180e0,
                K     = conf().get<double>("K", 0e0)/sqr(MtoMM),
+               rho   = L/phi,
+               Kx    = K + 1e0/sqr(rho),
+               Ky    = -K,
                qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
         if (!HdipoleFitMode) {
@@ -552,11 +566,18 @@ struct ElementSBend : public Moment2ElementBase
                    d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
                    dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
 
-            GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+            GetSBendMatrix(L, phi, phi1, phi2, Kx, Ky, ST.ref.IonEs, ST.ref.gamma, qmrel,
                            dip_beta, dip_gamma, d, dip_IonK, transfer_raw);
         } else
-            GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+            GetSBendMatrix(L, phi, phi1, phi2, Kx, Ky, ST.ref.IonEs, ST.ref.gamma, qmrel,
                            ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer_raw);
+
+        // Edge focusing.
+        GetEdgeMatrix(rho, phi1, edge1);
+        GetEdgeMatrix(rho, phi2, edge2);
+
+        transfer_raw = prod(transfer_raw, edge1);
+        transfer_raw = prod(edge2, transfer_raw);
 
         transfer = transfer_raw;
 
@@ -642,29 +663,51 @@ struct ElementEDipole : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
+        value_mat edge1, edge2, R;
+
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
+        bool   ver   = conf().get<std::string>("ver") == "v";
         double L     = conf().get<double>("L")*MtoMM,
                phi   = conf().get<double>("phi")*M_PI/180e0,
-//               phi1  = conf().get<double>("phi1")*M_PI/180e0,
-//               phi2  = conf().get<double>("phi2")*M_PI/180e0,
-               K     = conf().get<double>("K", 0e0)/sqr(MtoMM),
+               phi1  = conf().get<double>("fringe_x", 0e0),
+               phi2  = conf().get<double>("fringe_y", 0e0),
+               rho   = L/phi,
+               eta0  = (ST.ref.gamma-1e0)/2e0,
+               Kx    = sqr(1e0+2e0*eta0)/sqr(rho),
+               Ky    = 1e0/sqr(rho),
                qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
-        if (!HdipoleFitMode) {
-            double dip_bg    = conf().get<double>("bg"),
-                   // Dipole reference energy.
-                   dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
-                   dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
-                   dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
-                   d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
-                   dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
+        double dip_beta  = conf().get<double>("beta"),
+                dip_gamma = 1e0/sqrt(1e0-sqr(dip_beta)),
+                d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
+                dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
 
-            GetSBendMatrix(L, phi, 0e0, 0e0, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
-                           dip_beta, dip_gamma, d, dip_IonK, transfer_raw);
-        } else
-            GetSBendMatrix(L, phi, 0e0, 0e0, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
-                           ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer_raw);
+        GetSBendMatrix(L, phi, 0e0, 0e0, Kx, Ky, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                       dip_beta, dip_gamma, d, dip_IonK, transfer_raw);
+
+        // Edge focusing.
+        GetEEdgeMatrix(rho, phi1, edge1);
+        GetEEdgeMatrix(rho, phi2, edge2);
+
+        transfer_raw = prod(transfer_raw, edge1);
+        transfer_raw = prod(edge2, transfer_raw);
+
+        if (ver) {
+            // Rotate transport matrix by 90 degrees.
+            R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            R(state_t::PS_X,  state_t::PS_X)   =  0e0;
+            R(state_t::PS_PX, state_t::PS_PX)  =  0e0;
+            R(state_t::PS_Y,  state_t::PS_Y)   =  0e0;
+            R(state_t::PS_PY, state_t::PS_PY)  =  0e0;
+            R(state_t::PS_X,  state_t::PS_Y)   = -1e0;
+            R(state_t::PS_PX, state_t::PS_PY)  = -1e0;
+            R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
+            R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
+
+            scratch = prod(R, transfer_raw);
+            transfer_raw = prod(scratch, trans(R));
+        }
 
         transfer = transfer_raw;
 
