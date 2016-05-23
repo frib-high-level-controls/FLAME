@@ -40,13 +40,17 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 std::ostream& operator<<(std::ostream& strm, const Particle& P)
 {
-    strm
+    strm <<std::setprecision(8)<<std::setw(14)
       <<"IonZ="<<P.IonZ
       <<" IonQ="<<P.IonQ
       <<" IonEs="<<P.IonEs
       <<" IonEk="<<P.IonEk
       <<" SampleIonK="<<P.SampleIonK
       <<" phis="<<P.phis
+      <<" IonW="<<P.IonW
+      <<" gamma="<<P.gamma
+      <<" beta="<<P.beta
+      <<" bg="<<P.bg
       ;
     return strm;
 }

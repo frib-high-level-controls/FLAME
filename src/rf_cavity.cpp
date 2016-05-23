@@ -904,6 +904,8 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
 
+    std::cout<<"RF recompute start "<<real<<"\n";
+
     CavType = conf.get<std::string>("cavtype");
     if (CavType == "0.041QWR") {
         cavi       = 1;
@@ -961,5 +963,11 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, double &accI
     avegamma        += real.gamma;
     avegamma        /= 2e0;
 
+    std::cout<<"RF recompute before "<<real<<"\n";
+
     this->GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M);
+
+    std::cout<<"RF recompute after  "<<real<<"\n"
+             <<" YY "<<M<<"\n"
+             ;
 }
