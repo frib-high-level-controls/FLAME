@@ -185,6 +185,23 @@ void propagate1(std::auto_ptr<Config> &conf)
             elem_no = it[0] - sim[0]->begin();
             std::cout << "\nElement no: " << elem_no << "\n";
             std::cout << conf->get<Config::vector_t>("elements")[elem_no] << "\n";
+            Stripper_GetMat(*conf, sim, state, ChgState);
+
+            StatePtr.clear();
+            it.clear();
+            for (k = 0; k < state.size(); k++) {
+                StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
+                if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+
+                it.push_back(sim[k]->begin()+elem_no+1);
+            }
+
+            while (it[0] != sim[0]->end()) {
+                for (k = 0; k < state.size(); k++) {
+                    (*it[k])->advance(*state[k]);
+                }
+            }
+
             break;
         }
 
@@ -194,6 +211,7 @@ void propagate1(std::auto_ptr<Config> &conf)
         }
     }
 
+    /*
     Stripper_GetMat(*conf, sim, state, ChgState);
 
     StatePtr.clear();
@@ -218,7 +236,8 @@ void propagate1(std::auto_ptr<Config> &conf)
             ++it[k];
         }
     }
-
+    */
+    
     tStamp[1] = clock();
 
     PrtState(StatePtr);

@@ -364,15 +364,20 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
+    /*
     // Apparently, dipole terms are not being included after Charge Stripper.
     if ((t_name == "rfcavity") && (ST.pos > 118.0)) {
-        std::cout << "\ncavity: " << name << "\n";
+        //std::cout << "\ncavity: " << name << "\n";
         scratch = transfer;
         scratch(2, 6) = 0e0;
         scratch(3, 6) = 0e0;
         ST.moment0 = prod(scratch, ST.moment0);
     } else
         ST.moment0 = prod(transfer, ST.moment0);
+    */
+
+    ST.moment0 = prod(transfer, ST.moment0);
+
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
@@ -657,16 +662,17 @@ struct ElementEDipole : public Moment2ElementBase
 
         value_mat R;
 
-        bool   ver         = conf().get<std::string>("ver") == "v";
+        bool   ver         = conf().get<double>("ver") == 1.0;
         double L           = conf().get<double>("L")*MtoMM,
                phi         = conf().get<double>("phi")*M_PI/180e0,
-               fringe_x    = conf().get<double>("fringe_x", 0e0),
-               fringe_y    = conf().get<double>("fringe_y", 0e0),
+               // fit to TLM unit.            
+               fringe_x    = conf().get<double>("fringe_x", 0e0)/MtoMM,
+               fringe_y    = conf().get<double>("fringe_y", 0e0)/MtoMM,
                kappa       = conf().get<double>("asym_fac", 0e0),
                // spher: cylindrical - 0, spherical - 1.
                spher       = conf().get<double>("spher"),
                rho         = L/phi,
-               eta0        = (ST.ref.gamma-1e0)/2e0,
+               eta0        = (ST.real.gamma-1e0)/2e0,
                // magnetic - 0, electrostatic - 1.
                h           = 1e0,
                Kx          = (1e0-spher+sqr(1e0+2e0*eta0))/sqr(rho),
@@ -674,9 +680,9 @@ struct ElementEDipole : public Moment2ElementBase
                dip_beta    = conf().get<double>("beta"),
                dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta)),
                delta_KZ    = ST.ref.IonZ/ST.real.IonZ - 1e0,
-               SampleIonK  = 2e0*M_PI/(dip_beta*SampleLambda);
+               SampleIonK  = 2e0*M_PI/(ST.real.beta*SampleLambda);
 
-        GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.ref.gamma,
+        GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real.gamma,
                        eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer_raw);
 
         if (ver) {

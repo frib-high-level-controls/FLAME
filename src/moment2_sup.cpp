@@ -62,17 +62,17 @@ void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBa
 }
 
 
-void GetEEdgeMatrix(const double fringe, const double kappa, typename Moment2ElementBase::value_t &M)
+void GetEEdgeMatrix(const double fringe_x, const double fringe_y, const double kappa, typename Moment2ElementBase::value_t &M)
 {
     // Edge focusing for electrostatic dipole.
     typedef typename Moment2ElementBase::state_t state_t;
 
     M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-    M(state_t::PS_PX, state_t::PS_X)  = fringe;
-    M(state_t::PS_PX, state_t::PS_X)  = sqrt(1e0+kappa);
-    M(state_t::PS_PY, state_t::PS_Y)  = fringe;
-    M(state_t::PS_PY, state_t::PS_PY) = sqrt(1e0+kappa);
+    M(state_t::PS_PX, state_t::PS_X)  = fringe_x;
+    M(state_t::PS_PX, state_t::PS_PX)  = sqrt(1e0+kappa);
+    M(state_t::PS_PY, state_t::PS_Y)  = fringe_y;
+    M(state_t::PS_PS, state_t::PS_PS) = 1e0+kappa;
 }
 
 
@@ -183,14 +183,15 @@ void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::v
 
 
 void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa, const double Kx, const double Ky,
-                    const double IonEs, const double ref_beta, const double ref_gamma, const double eta0, const double h,
+                    const double IonEs, const double ref_beta, const double real_gamma, const double eta0, const double h,
                     const double dip_beta, const double dip_gamma, const double delta_KZ, const double SampleIonK, typename Moment2ElementBase::value_t &M)
 {
     typedef typename Moment2ElementBase::state_t state_t;
 
-    value_mat edge1, edge2, R;
+    value_mat edge;
 
     double  rho = L/phi,
+            scl = (real_gamma - 1e0)*IonEs/MeVtoeV,
             dx  = 0e0,
             sx  = 0e0;
 
@@ -213,18 +214,18 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
 
     double Nk   = (sqr(1e0+2e0*eta0)+h)/(2e0*(1e0+eta0)*(1e0+2e0*eta0)),
            Nt   = 1e0 + h/sqr(1e0+2e0*eta0),
-           CorT = -ref_gamma/(1e0+ref_gamma),
+           CorT = -real_gamma/(1e0+real_gamma),
            tx   = sx/rho*Nt*CorT,
            txp  = dx*Nt*CorT,
-           tzp  = (-L/(2e0*(1e0+eta0)*(1e0+2e0*eta0))+((L-sx)/sqr(Kx*rho))*Nk*Nt)*CorT;
+           tzp  = (-L/(2e0*(1e0+eta0)*(1e0+2e0*eta0))+((L-sx)/Kx/sqr(rho))*Nk*Nt)*CorT;
 
-    M(state_t::PS_X,  state_t::PS_PS) = dx*Nk;
-    M(state_t::PS_PX, state_t::PS_PS) = sx/rho*Nk;
+    M(state_t::PS_X,  state_t::PS_PS) = dx*Nk/scl;
+    M(state_t::PS_PX, state_t::PS_PS) = sx/rho*Nk/scl;
 
-    M(state_t::PS_S,  state_t::PS_X)  = tx*SampleIonK;
-    M(state_t::PS_S,  state_t::PS_PX) = txp*SampleIonK;
+    M(state_t::PS_S,  state_t::PS_X)  = -tx*SampleIonK;
+    M(state_t::PS_S,  state_t::PS_PX) = -txp*SampleIonK;
     // Low beta approximation.
-    M(state_t::PS_S,  state_t::PS_PS) = tzp*SampleIonK;
+    M(state_t::PS_S,  state_t::PS_PS) = -tzp*SampleIonK/scl;
 
     // Add dipole terms.
     double delta_K = sqr(ref_beta/dip_beta) - 1e0;
@@ -233,11 +234,10 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
     M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
 
     // Edge focusing.
-    GetEEdgeMatrix(fringe_x, kappa, edge1);
-    GetEEdgeMatrix(fringe_y, kappa, edge2);
+    GetEEdgeMatrix(fringe_x, fringe_y ,kappa, edge);
 
-    M = prod(M, edge1);
-    M = prod(edge2, M);
+    M = prod(M, edge);
+    M = prod(edge, M);
 
     // Longitudinal plane.
     // For total path length.
