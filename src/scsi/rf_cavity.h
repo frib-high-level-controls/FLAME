@@ -82,6 +82,12 @@ struct ElementRFCavity : public Moment2ElementBase
         } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
             CavData.RdData(Eng_Data_Dir+"/axisData_85.txt");
             inf.open((Eng_Data_Dir+"/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
+        } else if (conf().get<std::string>("cavtype") == "0.29HWR") {
+            CavData.RdData(Eng_Data_Dir+"/axisData_29.txt");
+            inf.open((Eng_Data_Dir+"/Multipole29/thinlenlon_29.txt").c_str(), std::ifstream::in);
+        } else if (conf().get<std::string>("cavtype") == "0.53HWR") {
+            CavData.RdData(Eng_Data_Dir+"/axisData_53.txt");
+            inf.open((Eng_Data_Dir+"/Multipole53/thinlenlon_53.txt").c_str(), std::ifstream::in);
         } else {
             std::ostringstream strm;
             strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";

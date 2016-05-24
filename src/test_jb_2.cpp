@@ -199,6 +199,7 @@ void propagate1(std::auto_ptr<Config> &conf)
             while (it[0] != sim[0]->end()) {
                 for (k = 0; k < state.size(); k++) {
                     (*it[k])->advance(*state[k]);
+                    ++it[k];
                 }
             }
 

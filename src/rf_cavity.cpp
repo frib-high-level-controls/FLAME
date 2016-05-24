@@ -220,6 +220,80 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             throw std::runtime_error(strm.str());
         }
         break;
+    case 29:
+        if (beta < 0.15 || beta > 0.4) {
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: beta out of range " << beta << "\n";
+            throw std::runtime_error(strm.str());
+        }
+        switch (gaplabel) {
+          case 0:
+            Ecen = 150.0; // [mm].
+            T    = 0.0;
+            Tp   = 0.0;
+            S    = PwrSeries(beta, -4.285, 58.08, -248, 486, -405.6, 76.54, 0.0, 0.0, 0.0, 0.0);
+            Sp   = PwrSeries(beta, 888, -2.043e4, 1.854e5, -9.127e5, 2.695e6, -4.791e6, 4.751e6, -2.025e6, 0.0, 0.0);
+            V0   = 2.485036*EfieldScl;
+            break;
+        case 1:
+            Ecen = 0.01163*pow(beta, -2.001) + 91.77;
+            T    = 0.02166*pow(beta, -1.618) - 1.022;
+            Tp   = PwrSeries(beta, -11.25, 534.7, -3917, 1.313e4, -2.147e4, 1.389e4, 0.0, 0.0, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = PwrSeries(beta, -0.8283, -4.409, 78.77, -343.9, 645.1, -454.4, 0.0, 0.0, 0.0, 0.0);
+            V0   = 1.242518*EfieldScl;
+            break;
+        case 2:
+            Ecen =-0.01163*pow(beta, -2.001) + 58.23;
+            T    =-0.02166*pow(beta, -1.618) + 1.022;
+            Tp   = PwrSeries(beta,  11.25, -534.7,  3917, -1.313e4, 2.147e4, -1.389e4, 0.0, 0.0, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = PwrSeries(beta, -0.8283, -4.409, 78.77, -343.9, 645.1, -454.4, 0.0, 0.0, 0.0, 0.0);
+            V0   = 1.242518*EfieldScl;
+            break;
+        default:
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
+            throw std::runtime_error(strm.str());
+        }
+        break;
+    case 53:
+        if (beta < 0.3 || beta > 0.6) {
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: beta out of range " << beta << "\n";
+            throw std::runtime_error(strm.str());
+        }
+        switch (gaplabel) {
+          case 0:
+            Ecen = 250.0; // [mm].
+            T    = 0.0;
+            Tp   = 0.0;
+            S    = PwrSeries(beta, -4.222, 26.64, -38.49, -17.73, 84.12, -52.93, 0.0, 0.0, 0.0, 0.0);
+            Sp   = PwrSeries(beta, -1261, -1.413e4, 5.702e4, -1.111e5, 1.075e5, -4.167e4, 0.0, 0.0 , 0.0, 0.0);
+            V0   = 4.25756986*EfieldScl;
+            break;
+        case 1:
+            Ecen = 0.01219*pow(beta, -2.348) + 137.8;
+            T    = 0.04856*pow(beta, -1.68) - 1.018;
+            Tp   = PwrSeries(beta, -3.612, 422.8, -1973, 4081, -4109, 1641, 0.0, 0.0, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = -0.03969*pow(beta, -1.775) +0.009034;
+            V0   = 2.12878493*EfieldScl;
+            break;
+        case 2:
+            Ecen = -0.01219*pow(beta, -2.348) + 112.2;
+            T    = -0.04856*pow(beta, -1.68) + 1.018;
+            Tp   = PwrSeries(beta, 3.612, -422.8, 1973, -4081, 4109, -1641, 0.0, 0.0, 0.0, 0.0);
+            S    = 0.0;
+            Sp   = -0.03969*pow(beta, -1.775) +0.009034;
+            V0   = 2.12878493*EfieldScl;
+            break;
+        default:
+            std::ostringstream strm;
+            strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
+            throw std::runtime_error(strm.str());
+        }
+        break;
     default:
         std::ostringstream strm;
         strm << "*** GetTransitFac: undef. cavity type" << "\n";
@@ -241,6 +315,10 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
         throw std::runtime_error(strm.str());
     } else if ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) {
         std::cerr << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+    } else if ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) {
+        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";    
+    } else if ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954)) {
+        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";    
     }
 
     if (flabel == "CaviMlp_EFocus1") {
@@ -257,6 +335,19 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             S = PwrSeries(CaviIonK, 9.928055e-02, -5.545119e+01, 1.280168e+04, -1.636888e+06, 1.279801e+08, -6.379800e+09,
                           2.036575e+11, -4.029152e+12, 4.496323e+13, -2.161712e+14);
             break;
+        case 3:
+            T = PwrSeries(CaviIonK, -1.000000e+00, 2.778823e-07, 6.820327e+01, 4.235106e-03, -1.926935e+03, 1.083516e+01,
+                          2.996807e+04, 6.108642e+03, -3.864554e+05, 6.094390e+05);
+            S = PwrSeries(CaviIonK, -4.530303e-10, 1.625011e-07, -2.583224e-05, 2.478684e+01, -1.431967e-01, -1.545412e+03,
+                          -1.569820e+02, 3.856713e+04, -3.159828e+04, -2.700076e+05);
+
+            break;
+        case 4:
+            T = PwrSeries(CaviIonK, -1.000000e+00, -2.406447e-07, 9.480040e+01, -7.659927e-03, -4.926996e+03, -3.504383e+01,
+                          1.712590e+05, -1.964643e+04, -4.142976e+06, 6.085390e+06);
+            S = PwrSeries(CaviIonK, 3.958048e-11, -2.496811e-08, 7.027794e-06, -8.662787e+01, 1.246098e-01, 9.462491e+03,
+                          4.481784e+02, -4.552412e+05, 3.026543e+05, 8.798256e+06);
+            break; 
         }
     } else if (flabel == "CaviMlp_EFocus2") {
         switch (cavi) {
@@ -271,6 +362,19 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
                           -5.677804e+09, 1.265012e+11, -1.584238e+12, 8.533351e+12);
             S = PwrSeries(CaviIonK, -3.040839e-03, 2.016667e+00, -4.313590e+02, 5.855139e+04, -4.873584e+06, 2.605444e+08,
                           -8.968899e+09, 1.923697e+11, -2.339920e+12, 1.233014e+13);
+            break;
+        case 3:
+            T = PwrSeries(CaviIonK, 1.000000e+00, -4.410575e-06, -8.884752e+01, -7.927594e-02, 4.663277e+03, -2.515405e+02,
+                         -1.797134e+05, -1.904305e+05, 8.999378e+06, -2.951362e+07);
+            S = PwrSeries(CaviIonK, 6.387813e-08, -2.300899e-05, 3.676251e-03, -1.703282e+02, 2.066461e+01, 1.704569e+04,
+                          2.316653e+04, -1.328926e+06, 4.853676e+06, 1.132796e+06);
+
+            break;
+        case 4:
+            T = PwrSeries(CaviIonK, 1.000000e+00, -5.025186e-06, -1.468976e+02, -2.520376e-01,2.048799e+04, -2.224267e+03,
+                          -2.532091e+06, -4.613480e+06, 3.611911e+08, -1.891951e+09);
+            S = PwrSeries(CaviIonK, -1.801149e-08, 1.123280e-05, -3.126902e-03, 4.655245e+02, -5.431878e+01, -1.477730e+05,
+                          -1.922110e+05, 2.795761e+07, -1.290046e+08, -4.656951e+08);
             break;
         }
     } else if (flabel == "CaviMlp_EDipole") {
@@ -287,6 +391,11 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             S = PwrSeries(CaviIonK, 2.108581e-04, -3.700608e-01, 2.851611e+01, -3.502994e+03, 2.983061e+05, -1.522679e+07,
                           4.958029e+08, -1.002040e+10, 1.142835e+11, -5.617061e+11);
             break;
+        default:
+            std::ostringstream strm;
+            strm << "*** 0.29 HWR and 0.53HWR havr no dipole term\n";
+            throw std::runtime_error(strm.str());
+            break;
         }
     } else if (flabel == "CaviMlp_EQuad") {
         switch (cavi) {
@@ -301,6 +410,18 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
                           -1.236263e+07, 3.128128e+08, -4.385795e+09, 2.594631e+10);
             S = PwrSeries(CaviIonK, -1.756250e-05, 2.603597e-01, -2.551122e+00, -4.840638e+01, -2.870201e+04, 1.552398e+06,
                           -5.135200e+07, 1.075958e+09, -1.277425e+10, 6.540748e+10);
+            break;
+        case 3:
+            T = PwrSeries(CaviIonK, 1.000000e+00, 6.239107e-06, -1.697479e+02, 3.444883e-02, 1.225241e+04, -1.663533e+02,
+                          -5.526645e+05, -3.593353e+05, 2.749580e+07, -9.689870e+07);
+            S = PwrSeries(CaviIonK, 2.128708e-07, -7.985618e-05, 1.240259e-02, -3.211339e+02, 7.098731e+01, 3.474652e+04,
+                          8.187145e+04, -3.731688e+06, 1.802053e+07, -1.819958e+07);
+            break;
+        case 4:
+            T = PwrSeries(CaviIonK, 9.998746e-01, -2.431292e-05, -5.019138e+02, -1.176338e+00, 1.006054e+05, -9.908805e+03,
+                          -1.148028e+07, -1.922707e+07, 1.432258e+09, -7.054482e+09);
+            S = PwrSeries(CaviIonK, 6.003340e-08, -1.482633e-02, 1.037590e-02, -2.235440e+03, 1.790006e+02, 6.456882e+05,
+                          6.261020e+05, -1.055477e+08, 4.110502e+08, 2.241301e+09);
             break;
         }
     } else if (flabel == "CaviMlp_HMono") {
@@ -317,6 +438,18 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             S = PwrSeries(CaviIonK, -1.581533e-03, 1.277444e+00, -2.742508e+02, 3.966879e+04, -3.513478e+06, 1.962939e+08,
                           -6.991916e+09, 1.539708e+11, -1.910236e+12, 1.021016e+13);
             break;
+        case 3:
+            T = PwrSeries(CaviIonK, 9.999990e-01, 3.477993e-04, -2.717994e+02, 4.554376e+00, 3.083481e+04, 8.441315e+03,
+                          -2.439843e+06, 1.322379e+06, 1.501750e+08, -6.822135e+08);
+            S = PwrSeries(CaviIonK, 1.709084e-06, -6.240506e-04, 1.013278e-01, -2.649338e+02, 5.944163e+02,
+                          4.588900e+04, 7.110518e+05, -2.226574e+07, 1.658524e+08, -3.976459e+08);
+            break;
+        case 4:
+            T = PwrSeries(CaviIonK, 1.000000e+00, -4.358956e-05, -7.923870e+02, -2.472669e+00, 2.241378e+05, -2.539286e+04,
+                          -3.385480e+07, -6.375134e+07, 5.652166e+09, -3.355877e+10);
+            S = PwrSeries(CaviIonK, 1.163146e-07, -7.302018e-05, 2.048587e-02, -3.689694e+02, 3.632907e+02, 1.757838e+05,
+                          1.327057e+06, -9.520645e+07, 9.406709e+08, -2.139562e+09);
+            break;
         }
     } else if (flabel == "CaviMlp_HDipole") {
         switch (cavi) {
@@ -331,6 +464,11 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
                           3.821029e+10, -8.140248e+11, 9.839613e+12, -5.154137e+13);
             S = PwrSeries(CaviIonK, -4.688714e-03, 3.299051e+00, -8.101936e+02, 1.163814e+05, -1.017331e+07, 5.607330e+08,
                           -1.967300e+10, 4.261388e+11, -5.194592e+12, 2.725370e+13);
+            break;
+        default:
+            std::ostringstream strm;
+            strm << "*** 0.29 HWR and 0.53HWR havr no dipole term\n";
+            throw std::runtime_error(strm.str());
             break;
         }
     } else if (flabel == "CaviMlp_HQuad") {
@@ -347,6 +485,18 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             S = PwrSeries(CaviIonK, 3.119419e-04, -4.540868e-01, 5.433028e+01, -7.571946e+03, 6.792565e+05, -3.728390e+07,
                           1.299263e+09, -2.793705e+10, 3.377097e+11, -1.755126e+12);
             break;
+        case 3:
+            T = PwrSeries(CaviIonK, -9.999997e-01, -1.049624e-04, 2.445420e+02, -1.288731e+00, -2.401575e+04, -1.972894e+03,
+                          1.494708e+06, 2.898145e+05, -8.782506e+07, 3.566907e+08);
+            S = PwrSeries(CaviIonK, -7.925695e-07, 2.884963e-04, -4.667266e-02, 2.950936e+02, -2.712131e+02, -4.260259e+04,
+                          -3.199682e+05, 1.103376e+07, -7.304474e+07, 1.479036e+08);
+            break;
+        case 4:
+            T = PwrSeries(CaviIonK, -1.000000e+00, 4.357777e-05, 7.605879e+02, 2.285787e+00, -2.009415e+05, 2.149581e+04,
+                         2.773856e+07, 4.886782e+07, -4.127019e+09, 2.299278e+10);
+            S = PwrSeries(CaviIonK, -1.483304e-07, 9.278457e-05, -2.592071e-02, 1.690272e+03, -4.545599e+02, -6.192487e+05,
+                          -1.632321e+06, 1.664856e+08, -1.124066e+09, -3.121299e+08);
+            break;            
         }
     } else {
         std::ostringstream strm;
@@ -875,6 +1025,10 @@ void ElementRFCavity::PropagateLongRFCav(Config &conf, Particle &ref)
         cavi = 1;
     } else if (conf.get<std::string>("cavtype") == "0.085QWR") {
         cavi = 2;
+    } else if (conf.get<std::string>("cavtype") == "0.29HWR") {
+        cavi = 3;
+    } else if (conf.get<std::string>("cavtype") == "0.53HWR") {
+        cavi = 4;
     } else {
         std::ostringstream strm;
         strm << "*** PropagateLongRFCav: undef. cavity type: " << CavType << "\n";
