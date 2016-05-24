@@ -194,7 +194,7 @@ void propagate1(std::auto_ptr<Config> &conf)
 
         for (k = 0; k < nChgStates; k++) {
             Moment2ElementBase *melem = static_cast<Moment2ElementBase*>(*it[k]);
-            std::cout<<"Element "<<elem->index<<" State "<<k<<" Transfer\n";
+            std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
             (*it[k])->advance(*state[k]);
             PrtMat(melem->transfer);
             ++it[k];
@@ -228,6 +228,7 @@ void propagate1(std::auto_ptr<Config> &conf)
     while (it[0] != sim[0]->end()) {
         ElementVoid* elem   = *it[0];
         for (k = 0; k < state.size(); k++) {
+            std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
             (*it[k])->advance(*state[k]);
             ++it[k];
         }
