@@ -50,41 +50,21 @@ struct ElementRFCavity : public Moment2ElementBase
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
+    struct RawParams {
+        std::string name, type;
+        double length, aperature, E0;
+    };
+    std::vector<RawParams> lattice;
+
     CavDataType    CavData;
-    std::fstream   inf;
     CavTLMLineType CavTLMLineTab;
     double phi_ref;
 
-    ElementRFCavity(const Config& c)
-        :base_t(c)
-        ,phi_ref(std::numeric_limits<double>::quiet_NaN())
-    {
-        std::string cav_type = c.get<std::string>("cavtype");
-        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
-
-        std::string CavType      = conf().get<std::string>("cavtype");
-        std::string Eng_Data_Dir = conf().get<std::string>("Eng_Data_Dir", "");
-
-        if (CavType == "0.041QWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_41.txt");
-            inf.open((Eng_Data_Dir+"/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
-        } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_85.txt");
-            inf.open((Eng_Data_Dir+"/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
-        } else {
-            std::ostringstream strm;
-            strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-            throw std::runtime_error(strm.str());
-        }
-
-        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
-        // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
-    }
+    ElementRFCavity(const Config& c);
 
     void GetCavMatParams(const int cavi,
-                         const double beta_tab[], const double gamma_tab[], const double IonK[]);
+                         const double beta_tab[], const double gamma_tab[], const double IonK[],
+                         CavTLMLineType& lineref) const;
 
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                    const double EfieldScl, const double IonFyi_s,
