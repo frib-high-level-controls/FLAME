@@ -95,6 +95,8 @@ struct ElementRFCavity : public Moment2ElementBase
 
         CavTLMLineTab.resize(last_Kenergy_in.size());
 
+        this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
+
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
@@ -102,8 +104,6 @@ struct ElementRFCavity : public Moment2ElementBase
             transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
 
             last_Kenergy_in[i] = ST.real[i].IonEk;
-
-            this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
 
             this->ElementRFCavity::InitRFCav(conf(), ST.real[i], transfer[i], CavTLMLineTab[i]);
 
