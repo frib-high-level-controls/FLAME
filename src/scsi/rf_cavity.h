@@ -58,7 +58,7 @@ struct ElementRFCavity : public Moment2ElementBase
     std::vector<RawParams> lattice;
 
     CavDataType    CavData;
-    CavTLMLineType CavTLMLineTab;
+    std::vector<CavTLMLineType> CavTLMLineTab;
     double phi_ref;
 
     ElementRFCavity(const Config& c);
@@ -69,15 +69,17 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                    const double EfieldScl, const double IonFyi_s,
-                   const double IonEk_s, const double fRF, state_t::matrix_t &M);
+                   const double IonEk_s, const double fRF, state_t::matrix_t &M,
+                   CavTLMLineType &linetab);
 
     void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
-                   Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M);
+                   Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M,
+                   const CavTLMLineType& linetab) const;
 
     void PropagateLongRFCav(const Config &conf, Particle &ref);
 
-    void InitRFCav(const Config &conf, Particle &real, state_t::matrix_t &M);
+    void InitRFCav(const Config &conf, Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab);
 
     void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
                      const double EfieldScl, double &IonFy);
@@ -91,6 +93,8 @@ struct ElementRFCavity : public Moment2ElementBase
         double L             = conf().get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
 
+        CavTLMLineTab.resize(last_Kenergy_in.size());
+
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
@@ -101,7 +105,7 @@ struct ElementRFCavity : public Moment2ElementBase
 
             this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
 
-            this->ElementRFCavity::InitRFCav(conf(), ST.real[i], transfer[i]);
+            this->ElementRFCavity::InitRFCav(conf(), ST.real[i], transfer[i], CavTLMLineTab[i]);
 
             last_Kenergy_out[i] = ST.real[i].IonEk;
         }

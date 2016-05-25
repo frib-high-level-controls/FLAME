@@ -60,7 +60,7 @@ static
 void PrtElement(Moment2ElementBase *elem)
 {
     for(unsigned k = 0; k<elem->transfer.size(); k++) {
-        std::cout<<"Element "<<elem->index<<" State "<<k<<" Transfer\n";
+        std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
         PrtMat(elem->transfer[k]);
     }
 }
@@ -214,7 +214,7 @@ void propagate1(const Config &conf)
     for(; it!=sim.end(); ++it) {
         ElementVoid* elem = *it;
         elem->advance(*state);
-            std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
+        std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
 
         std::cout<<"After element "<<elem->index<<"\n";
         PrtState(StatePtr);

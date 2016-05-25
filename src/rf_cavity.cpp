@@ -588,7 +588,8 @@ void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], c
 
 void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                                 const double beta_tab[], const double gamma_tab[], const double Lambda,
-                                Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M)
+                                Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M,
+                                const CavTLMLineType& linetab) const
 {
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
@@ -692,22 +693,22 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
             Mprob(2, 3) = P.length;
             Mtrans      = prod(Mprob, Mtrans);
         } else if (P.type == "EFocus1") {
-            V0   = CavTLMLineTab.E0[n]*EfieldScl;
-            T    = CavTLMLineTab.T[n];
-            S    = CavTLMLineTab.S[n];
+            V0   = linetab.E0[n]*EfieldScl;
+            T    = linetab.T[n];
+            S    = linetab.S[n];
             kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             kfdy = kfdx;
 //                std::cout<<" X EFocus1 kfdx="<<kfdx<<"\n";
-//                std::cout<<" Y "<<CavTLMLineTab.E0[n]<<" "<<EfieldScl<<" "<<beta
+//                std::cout<<" Y "<<linetab.E0[n]<<" "<<EfieldScl<<" "<<beta
 //                         <<" "<<gamma<<" "<<IonFy<<" "<<Rm<<"\n Z "<<T<<" "<<S<<"\n";
 
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
             Mtrans      = prod(Mprob, Mtrans);
         } else if (P.type == "EFocus2") {
-            V0   = CavTLMLineTab.E0[n]*EfieldScl;
-            T    = CavTLMLineTab.T[n];
-            S    = CavTLMLineTab.S[n];
+            V0   = linetab.E0[n]*EfieldScl;
+            T    = linetab.T[n];
+            S    = linetab.S[n];
             kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             kfdy = kfdx;
 //                std::cout<<" X EFocus2 kfdx="<<kfdx<<"\n";
@@ -717,9 +718,9 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
             Mtrans      = prod(Mprob, Mtrans);
         } else if (P.type == "EDipole") {
             if (MpoleLevel >= 1) {
-                V0  = CavTLMLineTab.E0[n]*EfieldScl;
-                T   = CavTLMLineTab.T[n];
-                S   = CavTLMLineTab.S[n];
+                V0  = linetab.E0[n]*EfieldScl;
+                T   = linetab.T[n];
+                S   = linetab.S[n];
                 dpy = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
 //                    std::cout<<" X EDipole dpy="<<dpy<<"\n";
 
@@ -728,9 +729,9 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
             }
         } else if (P.type == "EQuad") {
             if (MpoleLevel >= 2) {
-                V0   = CavTLMLineTab.E0[n]*EfieldScl;
-                T    = CavTLMLineTab.T[n];
-                S    = CavTLMLineTab.S[n];
+                V0   = linetab.E0[n]*EfieldScl;
+                T    = linetab.T[n];
+                S    = linetab.S[n];
                 kfdx =  real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = -kfdx;
 //                    std::cout<<" X EQuad kfdx="<<kfdx<<"\n";
@@ -741,9 +742,9 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
             }
         } else if (P.type == "HMono") {
             if (MpoleLevel >= 2) {
-                V0   = CavTLMLineTab.E0[n]*EfieldScl;
-                T    = CavTLMLineTab.T[n];
-                S    = CavTLMLineTab.S[n];
+                V0   = linetab.E0[n]*EfieldScl;
+                T    = linetab.T[n];
+                S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = kfdx;
 //                    std::cout<<" X HMono kfdx="<<kfdx<<"\n";
@@ -754,9 +755,9 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
             }
         } else if (P.type == "HDipole") {
             if (MpoleLevel >= 1) {
-                V0  = CavTLMLineTab.E0[n]*EfieldScl;
-                T   = CavTLMLineTab.T[n];
-                S   = CavTLMLineTab.S[n];
+                V0  = linetab.E0[n]*EfieldScl;
+                T   = linetab.T[n];
+                S   = linetab.S[n];
                 dpy = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
 //                    std::cout<<" X HDipole dpy="<<dpy<<"\n";
 
@@ -773,9 +774,9 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
                     beta  = (beta_tab[1]+beta_tab[2])/2e0;
                     gamma = (gamma_tab[1]+gamma_tab[2])/2e0;
                 }
-                V0   = CavTLMLineTab.E0[n]*EfieldScl;
-                T    = CavTLMLineTab.T[n];
-                S    = CavTLMLineTab.S[n];
+                V0   = linetab.E0[n]*EfieldScl;
+                T    = linetab.T[n];
+                S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = -kfdx;
 //                    std::cout<<" X HQuad kfdx="<<kfdx<<"\n";
@@ -791,7 +792,7 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
             beta   = beta_tab[seg];
             gamma  = gamma_tab[seg];
             kfac   = 2e0*M_PI/(beta*Lambda);
-            Accel  = CavTLMLineTab.Accel[n];
+            Accel  = linetab.Accel[n];
 //                std::cout<<" X AccGap Accel="<<Accel<<"\n";
 
             Mprob(1, 1) = Accel;
@@ -821,7 +822,8 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
 
 void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                                 const double EfieldScl, const double IonFyi_s,
-                                const double IonEk_s, const double fRF, state_t::matrix_t &M)
+                                const double IonEk_s, const double fRF, state_t::matrix_t &M,
+                                CavTLMLineType &linetab)
 {
     int    n;
     double IonLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
@@ -873,8 +875,8 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
         printf("V0    : %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    this->ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, IonK, CavTLMLineTab);
-    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, real, IonFy_s, Rm, M);
+    this->ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, IonK, linetab);
+    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, IonLambda, real, IonFy_s, Rm, M, linetab);
 }
 
 
@@ -883,6 +885,8 @@ void ElementRFCavity::GetCavBoost(const CavDataType &CavData, Particle &state, c
 {
     int    n = CavData.s.size(),
            k;
+
+    assert(n>1);
 
     double dis = CavData.s[n-1] - CavData.s[0],
            dz  = dis/(n-1),
@@ -960,7 +964,7 @@ void ElementRFCavity::PropagateLongRFCav(const Config &conf, Particle &ref)
 }
 
 
-void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::matrix_t &M)
+void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
     std::string CavType;
     int         cavi, cavilabel, multip;
@@ -1013,7 +1017,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::mat
 //    vs.:
 //    double SampleIonK = 2e0*M_PI/(real.beta*C0/SampleFreq*MtoMM);
 
-    ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o);
+    ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o); // updates IonW
 
     real.IonEk       = real.IonW - real.IonEs;
     real.recalc();
@@ -1029,7 +1033,7 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::mat
 //             <<" fRF="<<fRF
 //             <<"\n";
 
-    this->GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M);
+    this->GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M, linetab);
 
 //    std::cout<<"RF recompute after  "<<real<<"\n"
 //             <<" YY "<<M<<"\n"
