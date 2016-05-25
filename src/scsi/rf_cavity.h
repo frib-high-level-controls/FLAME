@@ -85,6 +85,8 @@ struct ElementRFCavity : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
+        std::cout<<"Recompute Element "<<index<<" '"<<name<<"' ref: "<<ST.ref<<"\n";
+
         transfer = transfer_raw;
 
         last_Kenergy_in = ST.real.IonEk;

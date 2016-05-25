@@ -366,6 +366,8 @@ void Moment2ElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.real.recalc();
 
+    std::cout<<"Advance Element "<<index<<" '"<<name<<"'\n";
+
     if(ST.real.IonEk!=last_Kenergy_in) {
         // need to re-calculate energy dependent terms
 

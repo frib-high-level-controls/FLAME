@@ -896,6 +896,12 @@ void ElementRFCavity::GetCavBoost(const CavDataType &CavData, Particle &state, c
 
     IonLambda = C0/fRF*MtoMM;
 
+    std::cout<<__FUNCTION__
+             <<" IonFy0="<<IonFy0
+             <<" fRF="<<fRF
+             <<" EfieldScl="<<EfieldScl
+             <<" state="<<state
+             <<"\n";
 
     IonFy = IonFy0;
     IonK  = state.SampleIonK;
@@ -911,6 +917,7 @@ void ElementRFCavity::GetCavBoost(const CavDataType &CavData, Particle &state, c
             IonBeta = 0e0;
         }
         IonK = 2e0*M_PI/(IonBeta*IonLambda);
+        std::cout<<" "<<k<<" IonK="<<IonK<<" IonW="<<state.IonW<<"\n";
     }
 }
 
@@ -941,6 +948,13 @@ void ElementRFCavity::PropagateLongRFCav(const Config &conf, Particle &ref)
 
     IonFy_i = multip*ref.phis + caviFy;
     phi_ref = caviFy;
+    std::cout<<"RF long phase"
+               " caviFy="<<caviFy
+             <<" multip="<<multip
+             <<" phis="<<ref.phis
+             <<" IonFy_i="<<IonFy_i
+             <<" EfieldScl="<<EfieldScl
+             <<"\n";
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
