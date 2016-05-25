@@ -410,9 +410,6 @@ ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
 {
-    std::string cav_type = c.get<std::string>("cavtype");
-    double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
-
     std::string CavType      = conf().get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", ""));
 
@@ -470,11 +467,6 @@ ElementRFCavity::ElementRFCavity(const Config& c)
             throw std::runtime_error(strm.str());
         }
     }
-
-    this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-    this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
-    // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
 }
 
 void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double IonK[],
@@ -973,7 +965,6 @@ void ElementRFCavity::InitRFCav(const Config &conf, Particle &real, state_t::mat
     std::string CavType;
     int         cavi, cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
-    double accIonW, avebeta, avegamma;
 
 //    std::cout<<"RF recompute start "<<real<<"\n";
 
