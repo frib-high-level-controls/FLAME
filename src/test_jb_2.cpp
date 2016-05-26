@@ -164,7 +164,7 @@ static
 void propagate1(const Config &conf)
 {
     // Propagate element-by-element for each charge state.
-    unsigned                                   k, elem_no;
+    unsigned                                   elem_no;
     std::vector<double>                        ChgState;
 
     Machine sim(conf);
@@ -202,9 +202,9 @@ void propagate1(const Config &conf)
         Moment2State::vector_t cent, rms;
         GetCenofChg(conf, *StatePtr, cent, rms);
 
-        std::cout << "\nCenter: "<<k<<"\n";
+        std::cout << "\nCenter: 2\n";
         PrtVec(cent);
-        std::cout << "\nRMS: "<<k<<"\n";
+        std::cout << "\nRMS: 2\n";
         PrtVec(rms);
     }
 
@@ -214,7 +214,7 @@ void propagate1(const Config &conf)
     for(; it!=sim.end(); ++it) {
         ElementVoid* elem = *it;
         elem->advance(*state);
-        std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
+        std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" Transfer\n";
 
         std::cout<<"After element "<<elem->index<<"\n";
         PrtState(StatePtr);
@@ -228,9 +228,9 @@ void propagate1(const Config &conf)
         Moment2State::vector_t cent, rms;
         GetCenofChg(conf, *StatePtr, cent, rms);
 
-        std::cout << "\nCenter: "<<k<<"\n";
+        std::cout << "\nCenter: 0\n";
         PrtVec(cent);
-        std::cout << "\nRMS: "<<k<<"\n";
+        std::cout << "\nRMS: 0\n";
         PrtVec(rms);
     }
 

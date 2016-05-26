@@ -15,7 +15,7 @@ void GetCenofChg(const Config &conf, const Moment2State &ST,
 
     double Ntot = 0e0;
     for (i = 0; i < n; i++) {
-        CenofChg += ST.moment0[i];
+        CenofChg += ST.moment0[i]*ST.real[i].IonQ;
         Ntot += ST.real[i].IonQ;
     }
 
