@@ -488,3 +488,63 @@ class testBasic(unittest.TestCase):
             [-1.6658632146e-04, 8.0035719827e-08, -2.0736703233e-04, 7.0098541878e-08, 3.9605913591e-04, 2.0888918966e-04, 0.0000000000e+00],
             [0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00],
         ], decimal=8)
+
+  def test_LS1_cs01(self):
+    "Propagate charge states 0 and 1 through LS1."
+    PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
+
+    MeVtoeV = 1e6
+
+    def sqr(a): return a*a;
+
+    P = GLPSParser()
+
+    file_name = 'LS1.lat'
+
+    with open(os.path.join(datadir, file_name), 'rb') as inf:
+      M = Machine(inf)
+
+      S = M.allocState({})
+      M.propagate(S, 0, 1)
+
+      self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
+      self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
+
+      self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 14)
+      self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 14)
+      self.assertAlmostEqual(S.ref_IonEk, 500000.0, 14)
+
+      def checkConsist(self, S, P='real'):
+          self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'))
+          self.assertEqual(getattr(S, P+'_gamma')   , getattr(S, P+'_IonW')/getattr(S, P+'_IonEs'))
+          self.assertEqual(getattr(S, P+'_beta')    , math.sqrt(1e0-1e0/sqr(getattr(S, P+'_gamma'))))
+          self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'))
+
+      checkConsist(self, S, 'real')
+      checkConsist(self, S, 'ref')
+      self.assertAlmostEqual(S.ref_phis,  0.0, 14)
+
+      assert_aequal(S.moment0,
+        [-7.8860000000e-04, 1.0837100000e-05, 1.3373430000e-02, 6.6785340000e-06, -1.8477290000e-04, 3.0999500000e-04, 1.0000000000e+00],
+      decimal=8)
+
+      M.propagate(S, 1, len(M))
+
+      self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 12)
+      self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
+
+      self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 12)
+      self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
+
+      checkConsist(self, S, 'real')
+      self.assertAlmostEqual(S.real_phis,  1532.1994551432952, 14)
+      self.assertAlmostEqual(S.real_IonEk,  17089939.45941341, 14)
+
+      checkConsist(self, S, 'ref')
+      self.assertAlmostEqual(S.ref_bg,  0.19243502172784563, 14)
+      self.assertAlmostEqual(S.ref_phis,  1532.2018533339335, 14)
+      self.assertAlmostEqual(S.ref_IonEk,  17090412.218117952, 14)
+
+      assert_aequal(S.moment0,
+        [-1.3148719756e+00, -6.1411622635e-04, -7.3168243907e-01, -7.4661842889e-04, -2.3981900170e-03, -4.7275870454e-04, 1.0000000000e+00],
+        decimal=8)
