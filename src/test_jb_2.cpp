@@ -184,6 +184,16 @@ void propagate1(const Config &conf)
     {
         ElementVoid* elem   = *it;
 
+        if(elem->index==0) {
+            Moment2State::vector_t cent, rms;
+            GetCenofChg(conf, *StatePtr, cent, rms);
+
+            std::cout << "\nAfter source\nCenter: 2\n";
+            PrtVec(cent);
+            std::cout << "\nRMS: 2\n";
+            PrtVec(rms);
+        }
+
         if(strcmp(elem->type_name(), "stripper")==0) {
             elem_no = elem->index;
             std::cout << "\nElement no: " << elem_no << "\n";
