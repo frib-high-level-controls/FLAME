@@ -135,6 +135,7 @@ Moment2State::Moment2State(const Config& c)
         // no-op
     } else if(!have_cstate && have_ics) {
         // many charge states
+        icstate = 0;
 
     } else if(have_cstate && have_ics) {
         // single charge state
@@ -156,7 +157,7 @@ Moment2State::Moment2State(const Config& c)
 
         double totalQ = 0.0;
         for(size_t i=0; i<ics.size(); i++) {
-            std::string num(boost::lexical_cast<std::string>(i));
+            std::string num(boost::lexical_cast<std::string>(icstate+i));
 
             moment0[i].resize(maxsize);
             moment1[i].resize(maxsize, maxsize);
