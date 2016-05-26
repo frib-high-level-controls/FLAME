@@ -39,7 +39,7 @@ struct StateBase : public boost::noncopyable
 
     virtual void assign(const StateBase& other) =0;
 
-    virtual void show(std::ostream&) const {}
+    virtual void show(std::ostream&, int level =0) const {}
 
     struct ArrayInfo {
         ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
@@ -77,7 +77,7 @@ protected:
 inline
 std::ostream& operator<<(std::ostream& strm, const StateBase& s)
 {
-    s.show(strm);
+    s.show(strm, 0);
     return strm;
 }
 
@@ -111,7 +111,7 @@ struct ElementVoid : public boost::noncopyable
      */
     void set_observer(Observer *o) { p_observe = o; }
 
-    virtual void show(std::ostream&) const;
+    virtual void show(std::ostream&, int level) const;
 
     //! @internal
     //! Used by Machine::reconfigure()

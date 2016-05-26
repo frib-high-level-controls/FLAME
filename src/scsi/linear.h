@@ -32,9 +32,9 @@ struct LinearElementBase : public ElementVoid
         advanceT(ST);
     }
 
-    virtual void show(std::ostream& strm) const
+    virtual void show(std::ostream& strm, int level) const
     {
-        ElementVoid::show(strm);
+        ElementVoid::show(strm, level);
         strm<<"Transfer: "<<transfer<<"\n";
     }
 

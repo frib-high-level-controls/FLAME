@@ -49,7 +49,7 @@ void MatrixState::assign(const StateBase& other)
     StateBase::assign(other);
 }
 
-void MatrixState::show(std::ostream& strm) const
+void MatrixState::show(std::ostream& strm, int level) const
 {
     strm<<"State: "<<state<<"\n";
 }
@@ -176,9 +176,9 @@ struct ElementSource : public Base
         ST.assign(istate);
     }
 
-    virtual void show(std::ostream& strm) const
+    virtual void show(std::ostream& strm, int level) const
     {
-        ElementVoid::show(strm);
+        ElementVoid::show(strm, level);
         strm<<"Initial: "<<istate.state<<"\n";
     }
 

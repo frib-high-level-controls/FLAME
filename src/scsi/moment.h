@@ -32,7 +32,7 @@ struct MomentState : public StateBase
 
     void assign(const StateBase& other);
 
-    virtual void show(std::ostream& strm) const;
+    virtual void show(std::ostream& strm, int level) const;
 
     double IonZ,
            IonEs,
@@ -64,7 +64,7 @@ struct MomentElementBase : public ElementVoid
 
     virtual void advance(StateBase& s);
 
-    virtual void show(std::ostream& strm) const;
+    virtual void show(std::ostream& strm, int level) const;
 
     typedef boost::numeric::ublas::matrix<double> value_t;
 

@@ -27,7 +27,7 @@ struct MatrixState : public StateBase
                     boost::numeric::ublas::bounded_array<double, maxsize*maxsize>
     > value_t;
 
-    virtual void show(std::ostream& strm) const;
+    virtual void show(std::ostream& strm, int level) const;
 
     value_t state;
 

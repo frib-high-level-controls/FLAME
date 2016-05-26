@@ -232,7 +232,7 @@ void Moment2State::assign(const StateBase& other)
     StateBase::assign(other);
 }
 
-void Moment2State::show(std::ostream& strm) const
+void Moment2State::show(std::ostream& strm, int level) const
 {
     int j, k;
 
@@ -412,10 +412,10 @@ void Moment2ElementBase::assign(const ElementVoid *other)
     ElementVoid::assign(other);
 }
 
-void Moment2ElementBase::show(std::ostream& strm) const
+void Moment2ElementBase::show(std::ostream& strm, int level) const
 {
     using namespace boost::numeric::ublas;
-    ElementVoid::show(strm);
+    ElementVoid::show(strm, level);
     /*
     strm<<"Length "<<length<<"\n"
           "Transfer: "<<transfer<<"\n"
@@ -542,9 +542,9 @@ struct ElementSource : public Moment2ElementBase
         ST.assign(istate);
     }
 
-    virtual void show(std::ostream& strm) const
+    virtual void show(std::ostream& strm, int level) const
     {
-        ElementVoid::show(strm);
+        ElementVoid::show(strm, level);
         strm<<"Initial: "<<istate.moment0_env<<"\n";
     }
 

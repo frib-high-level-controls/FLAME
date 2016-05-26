@@ -76,7 +76,7 @@ struct Moment2State : public StateBase
 
     virtual void assign(const StateBase& other);
 
-    virtual void show(std::ostream& strm) const;
+    virtual void show(std::ostream& strm, int level) const;
 
     Particle ref;
 
@@ -118,7 +118,7 @@ struct Moment2ElementBase : public ElementVoid
 
     virtual void recompute_matrix(state_t&);
 
-    virtual void show(std::ostream& strm) const;
+    virtual void show(std::ostream& strm, int level) const;
 
     typedef boost::numeric::ublas::matrix<double,
                     boost::numeric::ublas::row_major,

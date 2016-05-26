@@ -167,7 +167,7 @@ PyObject* PyState_str(PyObject *raw)
 {
     TRY {
         std::ostringstream strm;
-        state->state->show(strm);
+        state->state->show(strm, 0);
         return PyString_FromString(strm.str().c_str());
     } CATCH()
 }

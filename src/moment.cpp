@@ -64,7 +64,7 @@ void MomentState::assign(const StateBase& other)
     StateBase::assign(other);
 }
 
-void MomentState::show(std::ostream& strm) const
+void MomentState::show(std::ostream& strm, int level) const
 {
     strm<<"State: moment0="<<moment0<<" state="<<state<<"\n";
 }
@@ -122,10 +122,10 @@ MomentElementBase::MomentElementBase(const Config& c)
 
 MomentElementBase::~MomentElementBase() {}
 
-void MomentElementBase::show(std::ostream& strm) const
+void MomentElementBase::show(std::ostream& strm, int level) const
 {
     using namespace boost::numeric::ublas;
-    ElementVoid::show(strm);
+    ElementVoid::show(strm, level);
     strm<<"Transfer: "<<transfer<<"\n";
     strm<<"TransferT: "<<trans(transfer)<<"\n";
 }

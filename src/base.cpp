@@ -64,7 +64,7 @@ ElementVoid::~ElementVoid()
     delete p_observe;
 }
 
-void ElementVoid::show(std::ostream& strm) const
+void ElementVoid::show(std::ostream& strm, int level) const
 {
     strm<<"Element "<<index<<": "<<name<<" ("<<type_name()<<")\n";
 }
@@ -259,7 +259,7 @@ std::ostream& operator<<(std::ostream& strm, const Machine& m)
     for(Machine::p_elements_t::const_iterator it=m.p_elements.begin(),
         end=m.p_elements.end(); it!=end; ++it)
     {
-        (*it)->show(strm);
+        (*it)->show(strm, 0);
     }
     return strm;
 }
