@@ -392,7 +392,12 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
+    std::cout<<"moment0 in  "<<ST.moment0
+           <<"\ntransfer    "<<transfer<<"\n";
+
     ST.moment0 = prod(transfer, ST.moment0);
+
+    std::cout<<"moment0 out "<<ST.moment0<<"\n";
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
