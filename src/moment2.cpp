@@ -470,7 +470,11 @@ void Moment2ElementBase::advance(StateBase& s)
 
         std::cout<<"moment0 out "<<ST.moment0[i]<<"\n";
 
-        if(isbend) {
+        if(isrf) {
+            ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
+            ST.moment0[i][state_t::PS_PS] = (ST.real[i].IonEk-ST.ref.IonEk)/MeVtoeV;
+
+        } else if(isbend) {
             ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + ST.moment0[i][state_t::PS_S] - phis_temp;
 
             ST.real[i].IonEk  = last_Kenergy_out[i];
