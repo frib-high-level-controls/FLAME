@@ -865,6 +865,7 @@ struct ElementGeneric : public Moment2ElementBase
 
     ElementGeneric(const Config& c)
         :base_t(c)
+        ,proto(state_t::maxsize, state_t::maxsize)
     {
         load_storage(proto.data(), c, "transfer");
     }
