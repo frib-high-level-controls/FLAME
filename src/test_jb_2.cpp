@@ -70,6 +70,10 @@ void PrtState(state_t* StatePtr)
 {
     unsigned k;
 
+    state_t::vector_t cent;
+
+    double totalQ = 0.0;
+
     for (k = 0; k < StatePtr->size(); k++) {
         std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr->pos << "\n"
                   <<"\n Ref:  "<<StatePtr->ref
@@ -79,7 +83,17 @@ void PrtState(state_t* StatePtr)
         std::cout << " moment1\n";
         PrtMat(StatePtr->moment1[k]);
         std::cout << "\n";
+
+        totalQ += StatePtr->real[k].IonQ;
+        if(k==0)
+            cent  = StatePtr->moment0[k]*StatePtr->real[k].IonQ;
+        else
+            cent += StatePtr->moment0[k]*StatePtr->real[k].IonQ;
     }
+
+    cent /= totalQ;
+
+    std::cout<<"Center: "<<cent<<"\n";
 }
 
 static

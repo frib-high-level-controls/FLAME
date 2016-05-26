@@ -327,6 +327,8 @@ try {
         std::cout << "\n# Final " << *state << "\n";
     }
 
+    Machine::registeryCleanup();
+
     return 0;
 }catch(std::exception& e){
     std::cerr<<"Error "<<typeid(e).name()<<" : "<<e.what()<<"\n";

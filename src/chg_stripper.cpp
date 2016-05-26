@@ -211,4 +211,6 @@ void Stripper_GetMat(const Config &conf,
         StatePtr->moment0[k]    = CenofChg;
         StatePtr->moment1[k]    = tmpmat;
     }
+
+    assert(CenofChg==StatePtr->moment0_env);
 }

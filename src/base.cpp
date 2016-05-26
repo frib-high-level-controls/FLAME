@@ -176,7 +176,7 @@ Machine::propagate(StateBase* S, size_t start, size_t max) const
         if(E->p_observe)
             E->p_observe->view(E, S);
         if(p_trace)
-            (*p_trace) << "After "<< n<< " " << *S;
+            (*p_trace) << "After "<< n<< " " << *S << "\n";
     }
 }
 
