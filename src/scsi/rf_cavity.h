@@ -88,8 +88,6 @@ struct ElementRFCavity : public Moment2ElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        std::cout<<"Recompute Element "<<index<<" '"<<name<<"' ref: "<<ST.ref<<"\n";
-
         double L             = conf().get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
 

@@ -412,8 +412,6 @@ void Moment2ElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    std::cout<<"Advance Element "<<index<<" '"<<name<<"'\n";
-
     bool cache_hit = ST.real.size()==last_Kenergy_in.size();
     if(cache_hit) {
         for(size_t n=0; n<ST.real.size(); n++) {
@@ -470,12 +468,7 @@ void Moment2ElementBase::advance(StateBase& s)
         if(isbend)
             phis_temp = ST.moment0[i][state_t::PS_S];
 
-        std::cout<<"moment0 in  "<<ST.moment0[i]
-               <<"\ntransfer    "<<transfer[i]<<"\n";
-
         ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
-
-        std::cout<<"moment0 out "<<ST.moment0[i]<<"\n";
 
         if(isrf) {
             ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
