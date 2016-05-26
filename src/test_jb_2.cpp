@@ -164,7 +164,7 @@ static
 void propagate1(const Config &conf)
 {
     // Propagate element-by-element for each charge state.
-    unsigned                                   elem_no;
+    size_t                                     elem_no = (size_t)-1;
     std::vector<double>                        ChgState;
 
     Machine sim(conf);
@@ -208,30 +208,34 @@ void propagate1(const Config &conf)
         PrtVec(rms);
     }
 
-    Stripper_GetMat(conf, *StatePtr, ChgState);
+    if(elem_no!=(size_t)-1) {
+        Stripper_GetMat(conf, *StatePtr, ChgState);
 
 
-    for(; it!=sim.end(); ++it) {
-        ElementVoid* elem = *it;
-        elem->advance(*state);
-        std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" Transfer\n";
+        for(; it!=sim.end(); ++it) {
+            ElementVoid* elem = *it;
+            elem->advance(*state);
+            std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" Transfer\n";
 
-        std::cout<<"After element "<<elem->index<<"\n";
+            std::cout<<"After element "<<elem->index<<"\n";
+            PrtState(StatePtr);
+        }
+
+        tStamp[1] = clock();
+
         PrtState(StatePtr);
-    }
 
-    tStamp[1] = clock();
+        {
+            Moment2State::vector_t cent, rms;
+            GetCenofChg(conf, *StatePtr, cent, rms);
 
-    PrtState(StatePtr);
-
-    {
-        Moment2State::vector_t cent, rms;
-        GetCenofChg(conf, *StatePtr, cent, rms);
-
-        std::cout << "\nCenter: 0\n";
-        PrtVec(cent);
-        std::cout << "\nRMS: 0\n";
-        PrtVec(rms);
+            std::cout << "\nCenter: 0\n";
+            PrtVec(cent);
+            std::cout << "\nRMS: 0\n";
+            PrtVec(rms);
+        }
+    } else {
+        tStamp[1] = clock();
     }
 
     std::cout << std::fixed << std::setprecision(5)
