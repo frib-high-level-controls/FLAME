@@ -115,6 +115,8 @@ foo : LINE = (elem0, elem1);
 
         ##S.moment0[:] = self.expect0
         self.assertEqual(S.pos, 0.0)
+        self.assertEqual(S.ref_IonEs, C['IonEs'])
+        self.assertEqual(S.real_IonEs, C['IonEs'])
         self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
         self.assertEqual(S.real_IonEk, C['IonEk'])
         self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
@@ -151,6 +153,7 @@ foo : LINE = (elem0, elem1);
         self.M.propagate(S, max=1) # propagate through source element
 
         self.assertEqual(S.pos, 0.0)
+        self.assertEqual(S.real_IonEs, C['IonEs'])
         self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
         self.assertEqual(S.real_IonEk, C['IonEk'])
         self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])

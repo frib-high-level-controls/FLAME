@@ -37,7 +37,7 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 }
 
 template<typename ARR>
-void load_storage(ARR& to, const Config& conf, const std::string& name)
+bool load_storage(ARR& to, const Config& conf, const std::string& name, bool T=true)
 {
     try{
         const std::vector<double>& val(conf.get<std::vector<double> >(name));
@@ -48,11 +48,18 @@ void load_storage(ARR& to, const Config& conf, const std::string& name)
         }
         std::copy(val.begin(), val.end(), to.begin());
 
+        return true;
     }catch(key_error&){
-        throw std::invalid_argument(name+" not defined");
+        if(T)
+            throw std::invalid_argument(name+" not defined");
+        else
+            return false;
         // default to identity
     }catch(boost::bad_any_cast&){
-        throw std::invalid_argument(name+" has wrong type (must be vector)");
+        if(T)
+            throw std::invalid_argument(name+" has wrong type (must be vector)");
+        else
+            return false;
     }
 }
 
@@ -181,8 +188,21 @@ Moment2State::Moment2State(const Config& c)
         }
 
         moment0_env /= totalQ;
+        moment1_env = moment1[0];
     } else {
         real.resize(1); // hack, ensure at least one element so getArray() can return some pointer
+        real[0] = ref;
+
+        moment0.resize(1);
+        moment1.resize(1);
+        moment0[0].resize(maxsize);
+        moment1[0].resize(maxsize, maxsize);
+
+        load_storage(moment0[0].data(), c, vectorname, false);
+        load_storage(moment1[0].data(), c, matrixname, false);
+
+        moment0_env = moment0[0];
+        moment1_env = moment1[0];
     }
 }
 
@@ -454,8 +474,6 @@ void Moment2ElementBase::advance(StateBase& s)
     if(!isrf)
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
-    std::fill(ST.moment0_env.begin(), ST.moment0_env.end(), 0.0);
-    std::fill(ST.moment1_env.data().begin(), ST.moment1_env.data().end(), 0.0);
     double totalQ = 0.0;
 
     for(size_t i=0; i<last_Kenergy_in.size(); i++) {
@@ -484,13 +502,16 @@ void Moment2ElementBase::advance(StateBase& s)
         noalias(scratch) = prod(transfer[i], ST.moment1[i]);
         noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
 
-        ST.moment0_env += ST.moment0[i]*ST.real[i].IonQ;
-        ST.moment1_env += ST.moment1[i]*ST.real[i].IonQ;
+        if(i==0)
+            ST.moment0_env  = ST.moment0[i]*ST.real[i].IonQ;
+        else
+            ST.moment0_env += ST.moment0[i]*ST.real[i].IonQ;
+
         totalQ += ST.real[i].IonQ;
     }
 
     ST.moment0_env /= totalQ;
-    ST.moment1_env /= totalQ;
+    ST.moment1_env = ST.moment1[0];
 }
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
