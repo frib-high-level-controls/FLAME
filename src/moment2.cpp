@@ -634,7 +634,8 @@ struct ElementSBend : public Moment2ElementBase
                Kx   = K + 1e0/sqr(rho),
                Ky   = -K;
 
-        value_t edge1, edge2, base;
+        value_t edge1(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize)),
+                edge2(edge1), base(edge2);
 
         // Edge focusing.
         GetEdgeMatrix(rho, phi1, edge1);
