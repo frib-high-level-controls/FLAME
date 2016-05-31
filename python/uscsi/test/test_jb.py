@@ -590,15 +590,15 @@ class testBasic(unittest.TestCase):
 
         M.propagate(S, 1, len(M))
 
-        self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 12)
+        self.assertAlmostEqual(S.real_IonZ, 0.31932773109243695, 12)
         self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
 
         self.assertAlmostEqual(S.ref_IonZ, 0.3277310924369748, 12)
         self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
 
         checkConsist(self, S, 'real')
-        self.assertAlmostEqual(S.real_phis,  2046.7073410319867, 14)
-        self.assertAlmostEqual(S.real_IonEk,  16696914.103564978, 14)
+        self.assertAlmostEqual(S.real_phis,  2023.6419076508123, 14)
+        self.assertAlmostEqual(S.real_IonEk,  16830050.68639791, 14)
 
         checkConsist(self, S, 'ref')
         self.assertAlmostEqual(S.ref_bg,  0.1908753688656783, 14)
