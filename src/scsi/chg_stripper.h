@@ -64,12 +64,14 @@ struct ElementStripper : public Moment2ElementBase
     }
     virtual ~ElementStripper() {}
 
+    virtual void advance(StateBase &s);
+
     virtual const char* type_name() const {return "stripper";}
 };
 
 
 void Stripper_GetMat(const Config &conf,
-                     Moment2State &ST, std::vector<double> ChgState);
+                     Moment2State &ST);
 
 
 #endif // CHG_STRIPPER_H

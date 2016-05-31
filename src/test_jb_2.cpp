@@ -233,7 +233,7 @@ void propagate1(const Config &conf)
     }
 
     if(elem_no!=(size_t)-1) {
-        Stripper_GetMat(conf, *StatePtr, ChgState);
+        //Stripper_GetMat(conf, *StatePtr, ChgState);
 
 
         for(; it!=sim.end(); ++it) {

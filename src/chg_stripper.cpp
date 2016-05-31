@@ -110,12 +110,11 @@ std::vector<double> GetStrChgState(const Config &conf)
 
 
 void Stripper_GetMat(const Config &conf,
-                     Moment2State &ST, std::vector<double> ChgState)
+                     Moment2State &ST)
 {
     unsigned               k, n;
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
-    std::vector<double>    NChg;
     Particle               ref;
     state_t                *StatePtr = &ST;
     Moment2State::vector_t CenofChg, BeamRMS;
@@ -128,21 +127,17 @@ void Stripper_GetMat(const Config &conf,
 
     std::cout<<"In "<<__FUNCTION__<<"\n";
 
-    n = conf.get<std::vector<double> >("IonChargeStates").size();
-    NChg.resize(n);
-    NChg = conf.get<std::vector<double> >("NCharge");
-
     tmptotCharge  = 0e0;
     Fy_abs_recomb = 0e0;
     Ek_recomb     = 0e0;
     tmpmat        = boost::numeric::ublas::zero_matrix<double>(PS_Dim);
     for (k = 0; k < ST.size(); k++) {
-
-        tmptotCharge  += NChg[k];
-        Fy_abs_recomb += NChg[k]*StatePtr->real[k].phis;
-        Ek_recomb     += NChg[k]*StatePtr->real[k].IonEk;
+        const double Q = ST.real[k].IonQ;
+        tmptotCharge  += Q;
+        Fy_abs_recomb += Q*StatePtr->real[k].phis;
+        Ek_recomb     += Q*StatePtr->real[k].IonEk;
         tmpmat        +=
-                NChg[k]*(StatePtr->moment1[k]+outer_prod(StatePtr->moment0[k]-CenofChg, StatePtr->moment0[k]-CenofChg));
+                Q*(StatePtr->moment1[k]+outer_prod(StatePtr->moment0[k]-CenofChg, StatePtr->moment0[k]-CenofChg));
     }
 
     Fy_abs_recomb /= tmptotCharge;
@@ -179,8 +174,8 @@ void Stripper_GetMat(const Config &conf,
     }
 
     // Get new charge states.
-    ChgState = GetStrChgState(conf);
-    NChg = conf.get<std::vector<double> >("Stripper_NCharge");
+    const std::vector<double>& ChgState = conf.get<std::vector<double> >("IonChargeStates");
+    const std::vector<double>& NChg = conf.get<std::vector<double> >("NCharge");
     n = ChgState.size();
     assert(NChg.size()==n);
 
@@ -205,14 +200,18 @@ void Stripper_GetMat(const Config &conf,
         StatePtr->real[k].IonQ  = NChg[k];
         StatePtr->real[k].IonEs = ref.IonEs;
         StatePtr->real[k].IonEk = Ek_recomb;
-        StatePtr->real[k].IonW  = StatePtr->real[k].IonEk + StatePtr->ref.IonEs;
-        StatePtr->real[k].gamma = StatePtr->real[k].IonW/StatePtr->ref.IonEs;
-        StatePtr->real[k].beta  = sqrt(1e0-1e0/sqr(StatePtr->real[k].gamma));
+        StatePtr->real[k].recalc();
         StatePtr->real[k].phis  = Fy_abs_recomb;
-        StatePtr->real[k].IonEk = Ek_recomb;
         StatePtr->moment0[k]    = CenofChg;
         StatePtr->moment1[k]    = tmpmat;
     }
 
     assert(CenofChg==StatePtr->moment0_env);
+}
+
+void ElementStripper::advance(StateBase &s)
+{
+    state_t& ST = static_cast<state_t&>(s);
+
+    Stripper_GetMat(conf(), ST);
 }

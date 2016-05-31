@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <ostream>
 #include <stdexcept>
 
 #include <boost/call_traits.hpp>
@@ -57,5 +58,19 @@ public:
     value_proxy_iterator  operator+(size_t i) const { return value_proxy_iterator(orig+i); }
     value_proxy_iterator  operator-(size_t i) const { return value_proxy_iterator(orig-i); }
 };
+
+template<typename M>
+std::ostream& show_mat(std::ostream& strm, const M& m)
+{
+    strm<<"("<<m.size1()<<","<<m.size2()<<") [";
+    for(size_t r=0, rl=m.size1(); r<rl; r++) {
+        strm<<"[";
+        for(size_t c=0, cl=m.size2(); c<cl; c++) {
+            strm<<m(r,c);
+        }
+    }
+    strm<<"]";
+    return strm;
+}
 
 #endif // UTIL_H
