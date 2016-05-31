@@ -90,25 +90,6 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
     // chargeAmount = fribstripper.chargeAmount_Baron;
 }
 
-static
-void PrtMat1(const state_t::matrix_t &M)
-{
-    for (size_t j = 0; j < M.size1(); j++) {
-        for (size_t k = 0; k < M.size2(); k++)
-            std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << M(j, k);
-        std::cout << "\n";
-    }
-}
-
-
-static
-std::vector<double> GetStrChgState(const Config &conf)
-{
-    return conf.get<std::vector<double> >("Stripper_IonChargeStates");
-}
-
-
 void Stripper_GetMat(const Config &conf,
                      Moment2State &ST)
 {
@@ -117,13 +98,9 @@ void Stripper_GetMat(const Config &conf,
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
     Particle               ref;
     state_t                *StatePtr = &ST;
-    Moment2State::vector_t CenofChg, BeamRMS;
     Moment2State::matrix_t tmpmat;
 
     // Evaluate beam parameter recombination.
-
-    GetCenofChg(conf, ST, CenofChg, BeamRMS);
-    assert(CenofChg==ST.moment0_env);
 
     std::cout<<"In "<<__FUNCTION__<<"\n";
 
@@ -137,7 +114,7 @@ void Stripper_GetMat(const Config &conf,
         Fy_abs_recomb += Q*StatePtr->real[k].phis;
         Ek_recomb     += Q*StatePtr->real[k].IonEk;
         tmpmat        +=
-                Q*(StatePtr->moment1[k]+outer_prod(StatePtr->moment0[k]-CenofChg, StatePtr->moment0[k]-CenofChg));
+                Q*(StatePtr->moment1[k]+outer_prod(StatePtr->moment0[k]-ST.moment0_env, StatePtr->moment0[k]-ST.moment0_env));
     }
 
     Fy_abs_recomb /= tmptotCharge;
@@ -202,11 +179,11 @@ void Stripper_GetMat(const Config &conf,
         StatePtr->real[k].IonEk = Ek_recomb;
         StatePtr->real[k].recalc();
         StatePtr->real[k].phis  = Fy_abs_recomb;
-        StatePtr->moment0[k]    = CenofChg;
+        StatePtr->moment0[k]    = ST.moment0_env;
         StatePtr->moment1[k]    = tmpmat;
     }
 
-    assert(CenofChg==StatePtr->moment0_env);
+    assert(ST.moment0_env==StatePtr->moment0_env);
 }
 
 void ElementStripper::advance(StateBase &s)
