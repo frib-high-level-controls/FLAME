@@ -24,11 +24,22 @@ import sys
 #   type           name          length [m]  aper [m]     f [MHz]  scl fact   phi [deg]
 # rfcavity  LS1_CA01:CAV1_D1127   0.240000   0.017000  80.500000   0.640000  -35.000000
 #
-#   type           name          length [m]  aper [m]  phi [deg]     beta     cyl(0)/spher(1)  hor(0)/ver(1)  X fringe Y fringe  voltage asym fact
-#  ebend            EB1             1.0        0.02      90.0     0.00506953       1                1           0.0     0.0            0.0
+#   type           name          length [m]  aper [m]  phi [deg]     beta     cyl(0)/spher(1)  hor(0)/ver(1)...
+#  ebend            EB1             1.0        0.02      90.0     0.00506953       1                1...
+#   X fringe Y fringe  voltage asym fact
+#     0.0      0.0           0.0
 #
 #   type           name          length [m]  aper [m]  voltage [V]  electrode radius [m]
 #  equad           QE1H            0.1034      0.02     -358.574          0.0746
+#
+# Mis-alignment:
+#
+#   dx [m]  dy [m]  pitch [rad]  yaw [rad]  tilt [rad]
+
+
+def get_misalign(tokens, ind):
+    return '  dx = %s, dy = %s, pitch = %s, yaw = %s, tilt = %s;' \
+        % (tokens[ind], tokens[ind+1], tokens[ind+2], tokens[ind+3], tokens[ind+4]) 
 
 
 def get_index(tokens, token):
@@ -37,70 +48,81 @@ def get_index(tokens, token):
 
 def marker(line, tokens):
     global beam_line, n_marker, add_ind
-    if float(tokens[3]) != 0:
+    if float(tokens[2]) != 0:
         print '*** marker with non zero length: '
         exit(1)
-    if add_ind: n_marker += 1; tokens[2] += '_%d' % (n_marker)
-    beam_line.append(tokens[2])
-    return '%s: marker;' % (tokens[2])
+    if add_ind: n_marker += 1; tokens[1] += '_%d' % (n_marker)
+    beam_line.append(tokens[1])
+    return '%s: marker;' % (tokens[1])
 
 def drift(line, tokens):
     global beam_line, n_drift
-    if add_ind: n_drift += 1; tokens[2] += '_%d' % (n_drift)
-    beam_line.append(tokens[2])
-    return '%s: drift, L = %s, aper = %s;' % (tokens[2], tokens[3], tokens[4])
+    if add_ind: n_drift += 1; tokens[1] += '_%d' % (n_drift)
+    beam_line.append(tokens[1])
+    return '%s: drift, L = %s, aper = %s;' % (tokens[1], tokens[2], tokens[3])
 
 def sbend(line, tokens):
     global beam_line, n_sbend, add_ind
-    if add_ind: n_sbend += 1; tokens[2] += '_%d' % (n_sbend)
-    beam_line.append(tokens[2])
+    if add_ind: n_sbend += 1; tokens[1] += '_%d' % (n_sbend)
+    beam_line.append(tokens[1])
     str = '%s: sbend, L = %s, phi = %s, phi1 = %s, phi2 = %s, bg = %s, aper = %s;' \
-          % (tokens[2], tokens[3], tokens[5], tokens[8], tokens[9], tokens[6], tokens[4])
+          % (tokens[1], tokens[2], tokens[4], tokens[7], tokens[8], tokens[5], tokens[3])
+#    str += get_misalign(tokens, 9)
     return str
 
 def solenoid(line, tokens):
     global beam_line, n_solenoid, add_ind
-    if add_ind: n_solenoid += 1; tokens[2] += '_%d' % (n_solenoid)
-    beam_line.append(tokens[2])
-    return '%s: solenoid, L = %s, B = %s, aper = %s;' \
-        % (tokens[2], tokens[3], tokens[5], tokens[4])
+    if add_ind: n_solenoid += 1; tokens[1] += '_%d' % (n_solenoid)
+    beam_line.append(tokens[1])
+    str = '%s: solenoid, L = %s, B = %s, aper = %s,\n' \
+        % (tokens[1], tokens[2], tokens[4], tokens[3])
+    str += get_misalign(tokens, 5)
+    return str
 
 def quadrupole(line, tokens):
     global beam_line, n_quad, add_ind
-    if add_ind: n_quad += 1; tokens[2] += '_%d' % (n_quad)
-    beam_line.append(tokens[2])
-    return '%s: quadrupole, L = %s, B2 = %s, aper = %s;' \
-        % (tokens[2], tokens[3], tokens[5], tokens[4])
+    if add_ind: n_quad += 1; tokens[1] += '_%d' % (n_quad)
+    beam_line.append(tokens[1])
+    str = '%s: quadrupole, L = %s, B2 = %s, aper = %s,\n' \
+        % (tokens[1], tokens[2], tokens[4], tokens[3])
+    str += get_misalign(tokens, 5)
+    return str
 
 def rfcavity(line, tokens):
     global beam_line, n_cavity, add_ind
-    if add_ind: n_cavity += 1; tokens[2] += '_%d' % (n_cavity)
-    beam_line.append(tokens[2])
-    str = '%s: rfcavity, cavtype = \"0.041QWR\", L = %s, f = %se6, phi = %s, scl_fac = %s,' \
-          ' aper = %s;' \
-          % (tokens[2], tokens[3], tokens[5], tokens[7], tokens[6], tokens[4])
+    if add_ind: n_cavity += 1; tokens[1] += '_%d' % (n_cavity)
+    beam_line.append(tokens[1])
+    str = '%s: rfcavity, cavtype = \"0.041QWR\", L = %s, f = %se6, phi = %s,\n  scl_fac = %s,' \
+          ' aper = %s,\n' \
+          % (tokens[1], tokens[2], tokens[4], tokens[6], tokens[5], tokens[3])
+    str += get_misalign(tokens, 7)
     return str
 
 def edipole(line, tokens):
     global beam_line, n_edipole
-    n_edipole += 1; tokens[2] += '_%d' % (n_edipole)
-    if add_ind: n_edipole += 1; tokens[2] += '_%d' % (n_cavity)
-    beam_line.append(tokens[2])
-    return '%s: edipole, L = %s, phi = %s, x_frng = %s, y_frng = %s, beta = %s, spher = %s, asym_fac = %s, aper = %s;' \
-        % (tokens[2], tokens[3], tokens[5], tokens[8], tokens[9], tokens[6], tokens[7], tokens[10], tokens[4])
+    n_edipole += 1; tokens[1] += '_%d' % (n_edipole)
+    if add_ind: n_edipole += 1; tokens[1] += '_%d' % (n_ecavity)
+    beam_line.append(tokens[1])
+    return '%s: edipole, L = %s, phi = %s, x_frng = %s, y_frng = %s, beta = %s,' \
+        ' spher = %s, asym_fac = %s, aper = %s;' \
+        % (tokens[1], tokens[2], tokens[4], tokens[7], tokens[8],
+           tokens[5], tokens[6], tokens[9], tokens[3])
+#    str += get_misalign(tokens, 10)
+    return str
 
 
 def equad(line, tokens):
     global beam_line, n_equad
-    n_equad += 1; tokens[2] += '_%d' % (n_equad)
-    if add_ind: n_equad += 1; tokens[2] += '_%d' % (n_cavity)
-    beam_line.append(tokens[2])
+    n_equad += 1; tokens[1] += '_%d' % (n_equad)
+    if add_ind: n_equad += 1; tokens[1] += '_%d' % (n_equad)
+    beam_line.append(tokens[1])
     return '%s: equad, L = %s, V = %s, radius = %s, aper = %s;' \
-        % (tokens[2], tokens[3], tokens[5], tokens[6], tokens[4])
+        % (tokens[1], tokens[2], tokens[4], tokens[5], tokens[3])
+#    str += get_misalign(tokens, 7)
+    return str
 
 
-# TLM -> Tracy-2,3 dictionary.
-tlm2tracy = {
+tlm_dict = {
     'mark'     : marker,
     'drift'    : drift,
     'solenoid' : solenoid,
@@ -121,9 +143,9 @@ def parse_definition(line, tokens):
         if not tokens[k].startswith('"'):
             tokens[k] = re.sub('[\s]', '', tokens[k])
     try:
-        str = tlm2tracy[tokens[1]](line, tokens)
+        str = tlm_dict[tokens[0]](line, tokens)
     except KeyError:
-        print '\n*** undefined token!'
+        print '\n*** undefined token: ', tokens[0]
         print line
         print tokens
         exit(1)
@@ -143,13 +165,13 @@ def parse_line(line, outf):
 #        tokens = re.split(r'[ ]', line_lc)
         tokens = re.split(r'\s+', line_lc)
         # Replace ':' with '_' in name.
-        tokens[2] = tokens[2].replace(':', '_', 1)
+        tokens[1] = tokens[1].replace(':', '_', 1)
         outf.write('%s\n' % (parse_definition(line_lc, tokens)))
 
 
 def prt_decl(outf):
     outf.write('# Beam envelope simulation.\n')
-    outf.write('\nsim_type = "MomentMatrix";\n\n')
+    outf.write('\nsim_type = "MomentMatrix2";\n\n')
 
 
 def transl_file(file_name):
@@ -167,7 +189,7 @@ def transl_file(file_name):
             line += (inf.readline()).strip('\r\n')
         parse_line(line, outf)
         line = inf.readline()
-    outf.write('\ncell: LINE = (\n')
+    outf.write('\ncell: LINE = (\n  S,\n')
     n = len(beam_line); n_max = 8;
     outf.write('  ')
     for k in range(n):
@@ -182,7 +204,7 @@ def transl_file(file_name):
 home_dir = ''
 
 n_marker = 0; n_drift = 0; n_sbend = 0; n_solenoid = 0
-n_quad = 0; n_cavity = 0; n_edipole = 0; n_equad = 0
+n_quad = 0; n_cavity = 0; n_ecavity = 0; n_edipole = 0; n_equad = 0
 
 add_ind = True
 
