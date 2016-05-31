@@ -126,6 +126,8 @@ void Stripper_GetMat(const Config &conf,
     GetCenofChg(conf, ST, CenofChg, BeamRMS);
     assert(CenofChg==ST.moment0_env);
 
+    std::cout<<"In "<<__FUNCTION__<<"\n";
+
     n = conf.get<std::vector<double> >("IonChargeStates").size();
     NChg.resize(n);
     NChg = conf.get<std::vector<double> >("NCharge");
