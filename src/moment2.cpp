@@ -244,7 +244,7 @@ void Moment2State::show(std::ostream& strm, int level) const
     strm << std::scientific << std::setprecision(8)
          << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 =\n    ";
     for (k = 0; k < Moment2State::maxsize; k++)
-        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0[0](k);
+        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_env(k);
     strm << "\n  state =\n";
     for (j = 0; j < Moment2State::maxsize; j++) {
         strm << "    ";
