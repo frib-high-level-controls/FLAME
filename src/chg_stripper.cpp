@@ -10,8 +10,7 @@ void GetCenofChg(const Config &conf, const Moment2State &ST,
     const size_t n = ST.real.size(); // # of states
 
     CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-    BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-    Moment2State::vector_t BeamVar(boost::numeric::ublas::zero_vector<double>(PS_Dim));
+    BeamRMS.resize(PS_Dim);
 
     double Ntot = 0e0;
     for (i = 0; i < n; i++) {
@@ -21,16 +20,15 @@ void GetCenofChg(const Config &conf, const Moment2State &ST,
 
     CenofChg /= Ntot;
 
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < Moment2State::maxsize; j++) {
-            BeamVar[j]  +=
-                    ST.real[i].IonQ*(ST.moment1[i](j, j)
-                    +(ST.moment0[i][j]-CenofChg[j])*(ST.moment0[i][j]-CenofChg[j]));
+    for (j = 0; j < Moment2State::maxsize; j++) {
+        double BeamVar = 0.0;
+        for (i = 0; i < n; i++) {
+            const double temp = ST.moment0[i][j]-CenofChg[j];
+            BeamVar  += ST.real[i].IonQ*(ST.moment1[i](j, j)
+                                         + sqr(temp));
         }
+        BeamRMS[j] = sqrt(BeamVar/Ntot);
     }
-
-    for (j = 0; j < PS_Dim; j++)
-        BeamRMS[j] = sqrt(BeamVar[j]/Ntot);
 }
 
 

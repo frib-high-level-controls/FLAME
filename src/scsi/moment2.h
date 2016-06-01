@@ -85,7 +85,7 @@ struct Moment2State : public StateBase
     std::vector<vector_t> moment0;
     std::vector<matrix_t> moment1;
 
-    vector_t moment0_env;
+    vector_t moment0_env, moment0_rms;
     matrix_t moment1_env;
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
@@ -97,6 +97,8 @@ struct Moment2State : public StateBase
     void recalc() {
         for(size_t i=0; i<real.size(); i++) real[i].recalc();
     }
+
+    void calc_rms();
 
     inline size_t size() const { return real.size(); } // # of charge states
 

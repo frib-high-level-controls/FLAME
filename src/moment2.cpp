@@ -87,6 +87,7 @@ Moment2State::Moment2State(const Config& c)
     ,ref()
     ,real()
     ,moment0_env(maxsize, 0e0)
+    ,moment0_rms(maxsize, 0e0)
     ,moment1_env(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
     // hack.  getArray() promises that returned pointers will remain valid for our lifetime.
@@ -204,9 +205,34 @@ Moment2State::Moment2State(const Config& c)
         moment0_env = moment0[0];
         moment1_env = moment1[0];
     }
+
+    calc_rms();
 }
 
 Moment2State::~Moment2State() {}
+
+void Moment2State::calc_rms()
+{
+    // moment0_env already updated
+
+    //TODO: avoid recalc of total charge
+    double totQ = 0.0;
+    for(size_t n=0; n<real.size(); n++) {
+        totQ += real[n].IonQ;
+    }
+
+    for(size_t j=0; j<maxsize; j++) {
+        double variance = 0.0;
+        for(size_t n=0; n<moment0.size(); n++) {
+            const double Q = real[n].IonQ;
+            const double diff = moment0[n][j]-moment0_env[j];
+
+            variance += Q*(moment1[n](j,j) + diff*diff); // Q * (sum squares + square of the sum)
+        }
+
+        moment0_rms[j] = sqrt(variance/totQ);
+    }
+}
 
 Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     :StateBase(o, t)
@@ -215,6 +241,7 @@ Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     ,moment0(o.moment0)
     ,moment1(o.moment1)
     ,moment0_env(o.moment0_env)
+    ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
 {}
 
@@ -228,6 +255,7 @@ void Moment2State::assign(const StateBase& other)
     moment0 = O->moment0;
     moment1 = O->moment1;
     moment0_env = O->moment0_env;
+    moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
     StateBase::assign(other);
 }
@@ -242,9 +270,13 @@ void Moment2State::show(std::ostream& strm, int level) const
     }
 
     strm << std::scientific << std::setprecision(8)
-         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 =\n    ";
+         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 mean =\n    ";
     for (k = 0; k < Moment2State::maxsize; k++)
         strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_env(k);
+    strm << std::scientific << std::setprecision(8)
+         << "\nmoment0 rms =\n    ";
+    for (k = 0; k < Moment2State::maxsize; k++)
+        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_rms(k);
     strm << "\n  state =\n";
     for (j = 0; j < Moment2State::maxsize; j++) {
         strm << "    ";
@@ -271,6 +303,13 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = moment0_env.size();
+        return true;
+    } else if(idx==I++) {
+        Info.name = "moment0_rms";
+        Info.ptr = &moment0_rms(0);
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim[0] = moment0_rms.size();
         return true;
     } else if(idx==I++) {
         Info.name = "ref_IonZ";
@@ -512,6 +551,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.moment0_env /= totalQ;
     ST.moment1_env = ST.moment1[0];
+
+    ST.calc_rms();
 }
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
