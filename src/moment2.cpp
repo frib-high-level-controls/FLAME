@@ -432,9 +432,9 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
     ,misalign(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
+    ,misalign_inv(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
-    inverse(misalign_inv, misalign);
 }
 
 Moment2ElementBase::~Moment2ElementBase() {}
@@ -493,9 +493,8 @@ void Moment2ElementBase::advance(StateBase& s)
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
-            // TODO: broken somehow?
-            //noalias(scratch)  = prod(misalign, transfer[i]);
-            //noalias(transfer[i]) = prod(scratch, misalign_inv);
+            noalias(scratch)  = prod(misalign, transfer[i]);
+            noalias(transfer[i]) = prod(scratch, misalign_inv);
 
             ST.real[i].recalc();
         }
