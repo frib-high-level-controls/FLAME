@@ -4,6 +4,11 @@ sim_type = "MomentMatrix2";
 
 # Global parameters.
 
+# Mpultipole level: 0 only include focusing and defocusing effects,
+#                   1 include dipole terms,
+#                   2 include quadrupole terms.
+MpoleLevel = "2";
+
 # Dipole strength adjusted to beam energy.
 HdipoleFitMode = "1";
 
@@ -1722,7 +1727,8 @@ cell: LINE = (
 
 test: LINE = (
   S,
-  dt0000_1, dt0000_2, dt0000_3, mrk000_1, dt0000_4, dt0000_5, sol000_1
+#  dt0000_1, dt0000_2, cvy000_1, dt0000_3, mrk000_1, dt0000_4, dt0000_5, sol000_1,
+  dt0000_1, dt0000_2, dt0000_3, mrk000_1, dt0000_4, dt0000_5, sol000_1,
 );
 
 

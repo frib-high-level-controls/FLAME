@@ -9,11 +9,6 @@
 // Phase space dimension; including vector for orbit/1st moment.
 # define PS_Dim Moment2State::maxsize // Set to 7; to include orbit.
 
-// Mpultipole level: 0 only include focusing and defocusing effects,
-//                   1 include dipole terms,
-//                   2 include quadrupole terms.
-extern int MpoleLevel;
-
 
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
@@ -111,9 +106,9 @@ struct ElementRFCavity : public Moment2ElementBase
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
                    Particle &real, const double IonFys[], const double Rm, value_mat &M);
 
-    void PropagateLongRFCav(Config &conf, Particle &ref);
+    void PropagateLongRFCav(Particle &ref);
 
-    void InitRFCav(const Config &conf, Particle &real, double &accIonW,
+    void InitRFCav(Particle &real, double &accIonW,
                    double &avebeta, double &avegamma, value_mat &M);
 
     void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
@@ -134,14 +129,14 @@ struct ElementRFCavity : public Moment2ElementBase
 
         last_Kenergy_in = ST.real.IonEk;
 
-        this->ElementRFCavity::PropagateLongRFCav(conf(), ST.ref);
+        this->ElementRFCavity::PropagateLongRFCav(ST.ref);
 
         last_Kenergy_out = ST.real.IonEk;
 
         // Define initial conditions.
         double accIonW, avebeta, avegamma;
 
-        this->ElementRFCavity::InitRFCav(conf(), ST.real, accIonW, avebeta, avegamma, transfer);
+        this->ElementRFCavity::InitRFCav(ST.real, accIonW, avebeta, avegamma, transfer);
 
         RotMat(dx, dy, pitch, yaw, tilt, misalign);
         inverse(misalign_inv, misalign);
