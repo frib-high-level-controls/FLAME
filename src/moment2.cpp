@@ -626,28 +626,16 @@ struct ElementSolenoid : public Moment2ElementBase
 
         transfer = transfer_raw;
 
-        RotMat(dx, dy, pitch, yaw, tilt, misalign);
+        RotMat(0*dx, 0*dy, pitch, yaw, tilt, misalign);
 
         scl = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-        scl(state_t::PS_S, state_t::PS_S)   /= -ST.real.SampleIonK*MtoMM;
+        scl(state_t::PS_S, state_t::PS_S)   /= -ST.real.SampleIonK;
         scl(state_t::PS_PS, state_t::PS_PS) /= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
 
         scl_inv = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-        scl_inv(state_t::PS_S, state_t::PS_S)   *= -ST.real.SampleIonK*MtoMM;
-        scl_inv(state_t::PS_PS, state_t::PS_PS) *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
-
-//        std::cout << "\n";
-//        PrtMat1(scl);
-//        std::cout << "\n";
-//        PrtMat1(misalign);
-
-//        inverse(scl_inv, scl);
+        inverse(scl_inv, scl);
         misalign = prod(misalign, scl);
         misalign = prod(scl_inv, misalign);
-
-//        std::cout << "\n";
-//        PrtMat1(prod(misalign, trans(misalign)));
-//        exit(0);
 
         inverse(misalign_inv, misalign);
 
