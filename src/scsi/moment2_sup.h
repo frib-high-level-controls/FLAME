@@ -4,8 +4,13 @@
 #endif // MOMENT2_SUP_H
 
 
-extern bool HdipoleFitMode;
+void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in);
 
+void PrtMat1(const value_mat &M);
+
+void RotMat(const double dx, const double dy,
+            const double theta_x, const double theta_y, const double theta_z,
+            typename Moment2ElementBase::value_t &R);
 
 void GetQuadMatrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M);
 

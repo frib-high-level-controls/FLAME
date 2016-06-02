@@ -1,10 +1,85 @@
 
+#include <boost/numeric/ublas/lu.hpp>
+
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
 
 
-// HdipoleFitMode = true    dipole strength adjusted to beam energy.
-bool HdipoleFitMode = true;
+// http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+// by LU-decomposition.
+void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in)
+{
+    using boost::numeric::ublas::permutation_matrix;
+    using boost::numeric::ublas::lu_factorize;
+    using boost::numeric::ublas::lu_substitute;
+    using boost::numeric::ublas::identity_matrix;
+
+    Moment2ElementBase::value_t scratch(in); // copy
+    permutation_matrix<size_t> pm(scratch.size1());
+    if(lu_factorize(scratch, pm)!=0)
+        throw std::runtime_error("Failed to invert matrix");
+    out.assign(identity_matrix<double>(scratch.size1()));
+    //out = identity_matrix<double>(scratch.size1());
+    lu_substitute(scratch, pm, out);
+}
+
+
+void PrtMat1(const value_mat &M)
+{
+    for (size_t j = 0; j < M.size1(); j++) {
+        for (size_t k = 0; k < M.size2(); k++)
+            std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << M(j, k);
+        std::cout << "\n";
+    }
+}
+
+
+void RotMat(const double dx, const double dy,
+            const double theta_x, const double theta_y, const double theta_z,
+            typename Moment2ElementBase::value_t &R)
+{
+    typedef typename Moment2ElementBase::state_t state_t;
+
+    value_mat Rx, Ry, Rz;
+
+    Rx = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+    Ry = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+    Rz = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+    Rx(2, 2) =  cos(theta_x);
+    Rx(3, 3) =  cos(theta_x);
+    Rx(4, 4) =  cos(theta_x);
+    Rx(5, 5) =  cos(theta_x);
+    Rx(2, 4) =  sin(theta_x);
+    Rx(3, 5) =  sin(theta_x);
+    Rx(4, 2) = -sin(theta_x);
+    Rx(5, 3) = -sin(theta_x);
+
+    Ry(0, 0) =  cos(theta_y);
+    Ry(1, 1) =  cos(theta_y);
+    Ry(4, 4) =  cos(theta_y);
+    Ry(5, 5) =  cos(theta_y);
+    Ry(0, 4) =  sin(theta_y);
+    Ry(1, 5) =  sin(theta_y);
+    Ry(4, 0) = -sin(theta_y);
+    Ry(5, 1) = -sin(theta_y);
+
+    Rz(0, 0) =  cos(theta_z);
+    Rz(1, 1) =  cos(theta_z);
+    Rz(2, 2) =  cos(theta_z);
+    Rz(3, 3) =  cos(theta_z);
+    Rz(0, 2) =  sin(theta_z);
+    Rz(1, 3) =  sin(theta_z);
+    Rz(2, 0) = -sin(theta_z);
+    Rz(2, 1) = -sin(theta_z);
+
+    R = prod(Ry, Rx);
+    R = prod(Rz, R);
+
+//    R(0, 6) = -dx;
+//    R(2, 6) = -dy;
+}
 
 
 void GetQuadMatrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M)
@@ -70,7 +145,7 @@ void GetEEdgeMatrix(const double fringe_x, const double fringe_y, const double k
     M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
     M(state_t::PS_PX, state_t::PS_X)  = fringe_x;
-    M(state_t::PS_PX, state_t::PS_PX)  = sqrt(1e0+kappa);
+    M(state_t::PS_PX, state_t::PS_PX) = sqrt(1e0+kappa);
     M(state_t::PS_PY, state_t::PS_Y)  = fringe_y;
     M(state_t::PS_PS, state_t::PS_PS) = 1e0+kappa;
 }

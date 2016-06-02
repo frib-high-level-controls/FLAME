@@ -98,17 +98,6 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
 }
 
 
-void PrtMat1(const value_mat &M)
-{
-    for (size_t j = 0; j < M.size1(); j++) {
-        for (size_t k = 0; k < M.size2(); k++)
-            std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << M(j, k);
-        std::cout << "\n";
-    }
-}
-
-
 std::vector<double> GetStrChgState(const Config &conf)
 {
     return conf.get<std::vector<double> >("Stripper_IonChargeStates");

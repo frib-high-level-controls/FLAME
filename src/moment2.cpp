@@ -3,7 +3,6 @@
 
 #include <limits>
 
-#include <boost/numeric/ublas/lu.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "scsi/constants.h"
@@ -18,23 +17,6 @@
 
 
 namespace {
-// http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
-// by LU-decomposition.
-void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in)
-{
-    using boost::numeric::ublas::permutation_matrix;
-    using boost::numeric::ublas::lu_factorize;
-    using boost::numeric::ublas::lu_substitute;
-    using boost::numeric::ublas::identity_matrix;
-
-    Moment2ElementBase::value_t scratch(in); // copy
-    permutation_matrix<size_t> pm(scratch.size1());
-    if(lu_factorize(scratch, pm)!=0)
-        throw std::runtime_error("Failed to invert matrix");
-    out.assign(identity_matrix<double>(scratch.size1()));
-    //out = identity_matrix<double>(scratch.size1());
-    lu_substitute(scratch, pm, out);
-}
 
 } // namespace
 
@@ -345,8 +327,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-        noalias(scratch)  = prod(misalign, transfer);
-        noalias(transfer) = prod(scratch, misalign_inv);
+        noalias(scratch)  = prod(transfer, misalign);
+        noalias(transfer) = prod(misalign_inv, scratch);
 
         ST.real.recalc();
     }
@@ -364,20 +346,7 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
-    /*
-    // Apparently, dipole terms are not being included after Charge Stripper.
-    if ((t_name == "rfcavity") && (ST.pos > 118.0)) {
-        //std::cout << "\ncavity: " << name << "\n";
-        scratch = transfer;
-        scratch(2, 6) = 0e0;
-        scratch(3, 6) = 0e0;
-        ST.moment0 = prod(scratch, ST.moment0);
-    } else
-        ST.moment0 = prod(transfer, ST.moment0);
-    */
-
     ST.moment0 = prod(transfer, ST.moment0);
-
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
@@ -387,7 +356,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
         dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
 
-        if (!HdipoleFitMode) {
+        std::string HdipoleFitMode = conf().get<std::string>("HdipoleFitMode", "1");
+        if (HdipoleFitMode != "1") {
             di_bg     = conf().get<double>("bg");
             // Dipole reference energy.
             Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
@@ -558,7 +528,8 @@ struct ElementSBend : public Moment2ElementBase
                K     = conf().get<double>("K", 0e0)/sqr(MtoMM),
                qmrel = (ST.real.IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
-        if (!HdipoleFitMode) {
+        std::string HdipoleFitMode = conf().get<std::string>("HdipoleFitMode", "1");
+        if (HdipoleFitMode != "1") {
             double dip_bg    = conf().get<double>("bg"),
                    // Dipole reference energy.
                    dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
@@ -594,9 +565,14 @@ struct ElementQuad : public Moment2ElementBase
         // Re-initialize transport matrix.
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
-               K    = conf().get<double>("B2")/Brho/sqr(MtoMM),
-               L    = conf().get<double>("L")*MtoMM;
+        double Brho  = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
+               K     = conf().get<double>("B2")/Brho/sqr(MtoMM),
+               L     = conf().get<double>("L")*MtoMM,
+               dx    = conf().get<double>("dx", 0e0)*MtoMM,
+               dy    = conf().get<double>("dy", 0e0)*MtoMM,
+               pitch = conf().get<double>("pitch", 0e0),
+               yaw   = conf().get<double>("yaw", 0e0),
+               tilt  = conf().get<double>("tilt", 0e0);
 
         // Horizontal plane.
         GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer_raw);
@@ -609,6 +585,9 @@ struct ElementQuad : public Moment2ElementBase
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
         transfer = transfer_raw;
+
+        RotMat(dx, dy, pitch, yaw, tilt, misalign);
+        inverse(misalign_inv, misalign);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
@@ -627,11 +606,18 @@ struct ElementSolenoid : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
+        value_mat scl, scl_inv;
+
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        double Brho = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
-               K    = conf().get<double>("B")/(2e0*Brho)/MtoMM,
-               L    = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
+        double Brho  = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
+               K     = conf().get<double>("B")/(2e0*Brho)/MtoMM,
+               L     = conf().get<double>("L")*MtoMM,      // Convert from [m] to [mm].
+               dx    = conf().get<double>("dx", 0e0)*MtoMM,
+               dy    = conf().get<double>("dy", 0e0)*MtoMM,
+               pitch = conf().get<double>("pitch", 0e0),
+               yaw   = conf().get<double>("yaw", 0e0),
+               tilt  = conf().get<double>("tilt", 0e0);
 
         GetSolMatrix(L, K, transfer_raw);
 
@@ -639,6 +625,31 @@ struct ElementSolenoid : public Moment2ElementBase
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
         transfer = transfer_raw;
+
+        RotMat(dx, dy, pitch, yaw, tilt, misalign);
+
+        scl = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        scl(state_t::PS_S, state_t::PS_S)   /= -ST.real.SampleIonK*MtoMM;
+        scl(state_t::PS_PS, state_t::PS_PS) /= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
+
+        scl_inv = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        scl_inv(state_t::PS_S, state_t::PS_S)   *= -ST.real.SampleIonK*MtoMM;
+        scl_inv(state_t::PS_PS, state_t::PS_PS) *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
+
+//        std::cout << "\n";
+//        PrtMat1(scl);
+//        std::cout << "\n";
+//        PrtMat1(misalign);
+
+//        inverse(scl_inv, scl);
+        misalign = prod(misalign, scl);
+        misalign = prod(scl_inv, misalign);
+
+//        std::cout << "\n";
+//        PrtMat1(prod(misalign, trans(misalign)));
+//        exit(0);
+
+        inverse(misalign_inv, misalign);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }

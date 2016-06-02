@@ -4,6 +4,9 @@ sim_type = "MomentMatrix2";
 
 # Global parameters.
 
+# Dipole strength adjusted to beam energy.
+HdipoleFitMode = "1";
+
 AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
 
 IonZ  = 33.0/238.0;    # Charge state for U_238.
@@ -1717,4 +1720,12 @@ cell: LINE = (
   dt0000_729, dt0000_730, dt0000_731, dt0000_732
 );
 
-USE: cell;
+test: LINE = (
+  S,
+  dt0000_1, dt0000_2, dt0000_3, mrk000_1, dt0000_4, dt0000_5, sol000_1
+);
+
+
+USE: test;
+
+#USE: cell;
