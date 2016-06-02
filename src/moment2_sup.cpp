@@ -83,11 +83,13 @@ void RotMat(const double dx, const double dy,
     Rz(2, 0) = -sin(theta_z);
     Rz(2, 1) = -sin(theta_z);
 
-    R = prod(Ry, Rx);
-    R = prod(Rz, R);
+    R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+    R(0, 6) = -dx;
+    R(2, 6) = -dy;
 
-//    R(0, 6) = -dx;
-//    R(2, 6) = -dy;
+    R = prod(Rx, R);
+    R = prod(Ry, R);
+    R = prod(Rz, R);
 }
 
 

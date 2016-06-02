@@ -662,12 +662,12 @@ struct ElementSolenoid : public Moment2ElementBase
         scl_inv = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
         inverse(scl_inv, scl);
 
-        RotMat(0*dx, 0*dy, pitch, yaw, tilt, R);
+        RotMat(dx, dy, pitch, yaw, tilt, R);
         misalign = prod(R, scl);
         misalign = prod(scl_inv, misalign);
 
         // Can not use inverse or transpose of R.
-        RotMat(0*dx, 0*dy, -pitch, -yaw, -tilt, R_inv);
+        RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
         misalign_inv = prod(R_inv, scl);
         misalign_inv = prod(scl_inv, misalign_inv);
 
