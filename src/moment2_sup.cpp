@@ -24,6 +24,15 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 }
 
 
+void PrtVec1(const Moment2State::vector_t &a)
+{
+    for (size_t k = 0; k < a.size(); k++)
+        std::cout << std::scientific << std::setprecision(10)
+                      << std::setw(18) << a[k];
+    std::cout << "\n";
+}
+
+
 void PrtMat1(const value_mat &M)
 {
     for (size_t j = 0; j < M.size1(); j++) {

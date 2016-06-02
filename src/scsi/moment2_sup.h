@@ -6,6 +6,8 @@
 
 void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in);
 
+void PrtVec1(const Moment2State::vector_t &a);
+
 void PrtMat1(const value_mat &M);
 
 void RotMat(const double dx, const double dy,

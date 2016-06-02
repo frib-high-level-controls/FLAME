@@ -327,8 +327,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+//        noalias(scratch)  = prod(transfer, misalign);
+//        noalias(transfer) = prod(misalign_inv, scratch);
 
         ST.real.recalc();
     }
@@ -346,7 +346,30 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
+    value_vec a, b, c;
+    a = boost::numeric::ublas::zero_vector<double>(state_t::maxsize);
+
+    a[state_t::PS_S]  = -length/2e0*MtoMM;
+    a[state_t::PS_PS] = 1e0;
+
+    a[state_t::PS_S]  *= -ST.real.SampleIonK;
+    a[state_t::PS_PS] *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
+
+    b = prod(misalign, a) - a;
+
+    a[state_t::PS_S]  = length/2e0*MtoMM;
+    a[state_t::PS_PS] = 1e0;
+
+    a[state_t::PS_S]  *= -ST.real.SampleIonK;
+    a[state_t::PS_PS] *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
+
+    c = prod(misalign_inv, a) - a;
+
+    ST.moment0 = prod(misalign, ST.moment0);
+    ST.moment0 += b;
     ST.moment0 = prod(transfer, ST.moment0);
+    ST.moment0 = prod(misalign_inv, ST.moment0);
+    ST.moment0 += c;
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
@@ -374,8 +397,14 @@ void Moment2ElementBase::advance(StateBase& s)
         ST.real.IonEk  = last_Kenergy_out;
     }
 
+    ST.state = prod(misalign, ST.state);
+    ST.state = prod(ST.state, trans(misalign));
+
     noalias(scratch) = prod(transfer, ST.state);
     noalias(ST.state) = prod(scratch, trans(transfer));
+
+    ST.state = prod(misalign_inv, ST.state);
+    ST.state = prod(ST.state, trans(misalign_inv));
 }
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
@@ -606,7 +635,7 @@ struct ElementSolenoid : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-        value_mat scl, scl_inv;
+        value_mat R, R_inv, scl, scl_inv;
 
         transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -626,18 +655,21 @@ struct ElementSolenoid : public Moment2ElementBase
 
         transfer = transfer_raw;
 
-        RotMat(0*dx, 0*dy, pitch, yaw, tilt, misalign);
-
         scl = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
         scl(state_t::PS_S, state_t::PS_S)   /= -ST.real.SampleIonK;
         scl(state_t::PS_PS, state_t::PS_PS) /= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
 
         scl_inv = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
         inverse(scl_inv, scl);
-        misalign = prod(misalign, scl);
+
+        RotMat(0*dx, 0*dy, pitch, yaw, tilt, R);
+        misalign = prod(R, scl);
         misalign = prod(scl_inv, misalign);
 
-        inverse(misalign_inv, misalign);
+        // Can not use inverse or transpose of R.
+        RotMat(0*dx, 0*dy, -pitch, -yaw, -tilt, R_inv);
+        misalign_inv = prod(R_inv, scl);
+        misalign_inv = prod(scl_inv, misalign_inv);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
