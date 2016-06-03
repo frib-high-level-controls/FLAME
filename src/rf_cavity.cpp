@@ -35,7 +35,7 @@ void CavDataType::RdData(const std::string &FileName)
     if (false) {
         std::cout << "\n";
         for (size_t k = 0; k < this->s.size(); k++)
-            this->show(std::cout, k);
+            show(std::cout, k);
     }
 }
 
@@ -43,21 +43,21 @@ void CavDataType::RdData(const std::string &FileName)
 void CavDataType::show(std::ostream& strm, const int k) const
 {
     strm << std::scientific << std::setprecision(5)
-         << std::setw(13) << this->s[k] << std::setw(13) << this->Elong[k] << "\n";
+         << std::setw(13) << s[k] << std::setw(13) << Elong[k] << "\n";
 }
 
 
 void CavDataType::show(std::ostream& strm) const
 {
-    for (unsigned int k = 0; k < this->s.size(); k++)
-        this->show(strm, k);
+    for (unsigned int k = 0; k < s.size(); k++)
+        show(strm, k);
 }
 
 
 void CavTLMLineType::clear(void)
 {
-    this->s.clear(); this->Elem.clear(); this->E0.clear();
-    this->T.clear(); this->S.clear(); this->Accel.clear();
+    s.clear(); Elem.clear(); E0.clear();
+    T.clear(); S.clear(); Accel.clear();
 }
 
 
@@ -72,17 +72,17 @@ void CavTLMLineType::set(const double s, const std::string &Elem, const double E
 void CavTLMLineType::show(std::ostream& strm, const int k) const
 {
     strm << std::fixed << std::setprecision(5)
-         << std::setw(9) << this->s[k] << std::setw(10) << this->Elem[k]
+         << std::setw(9) << s[k] << std::setw(10) << Elem[k]
          << std::scientific << std::setprecision(10)
-         << std::setw(18) << this->T[k] << std::setw(18) << this->S[k]
-         << std::setw(18) << this->Accel[k] << "\n";
+         << std::setw(18) << T[k] << std::setw(18) << S[k]
+         << std::setw(18) << Accel[k] << "\n";
 }
 
 
 void CavTLMLineType::show(std::ostream& strm) const
 {
-    for (unsigned int k = 0; k < this->s.size(); k++)
-        this->show(strm, k);
+    for (unsigned int k = 0; k < s.size(); k++)
+        show(strm, k);
 }
 
 
@@ -995,8 +995,8 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
         printf("V0:       %15.10f %15.10f\n", V0[0], V0[1]);
     }
 
-    this->ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, CaviIonK);
-    this->ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, CaviLambda, real, IonFy_s, Rm, M);
+    ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, CaviIonK);
+    ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, CaviLambda, real, IonFy_s, Rm, M);
 }
 
 
@@ -1068,7 +1068,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    this->GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
+    GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
 
     ref.IonEk       = ref.IonW - ref.IonEs;
     ref.recalc();
@@ -1135,5 +1135,5 @@ void ElementRFCavity::InitRFCav(Particle &real, double &accIonW,
     avegamma        += real.gamma;
     avegamma        /= 2e0;
 
-    this->GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M);
+    GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M);
 }

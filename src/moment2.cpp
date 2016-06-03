@@ -356,9 +356,6 @@ void Moment2ElementBase::get_misalign(state_t& ST)
     misalign_inv = prod(R_inv, misalign_inv);
     misalign_inv = prod(T_inv, misalign_inv);
     misalign_inv = prod(scl_inv, misalign_inv);
-
-    noalias(scratch)  = prod(transfer, misalign);
-    noalias(transfer) = prod(misalign_inv, scratch);
 }
 
 void Moment2ElementBase::advance(StateBase& s)
@@ -666,6 +663,9 @@ struct ElementSolenoid : public Moment2ElementBase
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
         get_misalign(ST);
+
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }

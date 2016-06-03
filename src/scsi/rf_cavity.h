@@ -89,10 +89,10 @@ struct ElementRFCavity : public Moment2ElementBase
             throw std::runtime_error(strm.str());
         }
 
-        this->transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
+        transfer_raw(state_t::PS_X, state_t::PS_PX) = L;
+        transfer_raw(state_t::PS_Y, state_t::PS_PY) = L;
         // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
+//        transfer(state_t::PS_S, state_t::PS_S)  = L;
     }
 
     void GetCavMatParams(const int cavi,
@@ -121,25 +121,21 @@ struct ElementRFCavity : public Moment2ElementBase
         // Re-initialize transport matrix.
         transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        double dx    = conf().get<double>("dx", 0e0)*MtoMM,
-               dy    = conf().get<double>("dy", 0e0)*MtoMM,
-               pitch = conf().get<double>("pitch", 0e0),
-               yaw   = conf().get<double>("yaw", 0e0),
-               tilt  = conf().get<double>("tilt", 0e0);
-
         last_Kenergy_in = ST.real.IonEk;
 
-        this->ElementRFCavity::PropagateLongRFCav(ST.ref);
+        ElementRFCavity::PropagateLongRFCav(ST.ref);
 
         last_Kenergy_out = ST.real.IonEk;
 
         // Define initial conditions.
         double accIonW, avebeta, avegamma;
 
-        this->ElementRFCavity::InitRFCav(ST.real, accIonW, avebeta, avegamma, transfer);
+        get_misalign(ST);
 
-        RotMat(dx, dy, pitch, yaw, tilt, misalign);
-        inverse(misalign_inv, misalign);
+        ElementRFCavity::InitRFCav(ST.real, accIonW, avebeta, avegamma, transfer);
+
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
    }
 
     virtual const char* type_name() const {return "rfcavity";}
