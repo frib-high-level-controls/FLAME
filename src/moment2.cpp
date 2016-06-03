@@ -327,8 +327,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-//        noalias(scratch)  = prod(transfer, misalign);
-//        noalias(transfer) = prod(misalign_inv, scratch);
+        noalias(scratch)  = prod(transfer, misalign);
+        noalias(transfer) = prod(misalign_inv, scratch);
 
         ST.real.recalc();
     }
@@ -346,9 +346,7 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
-    ST.moment0 = prod(misalign, ST.moment0);
     ST.moment0 = prod(transfer, ST.moment0);
-    ST.moment0 = prod(misalign_inv, ST.moment0);
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
@@ -376,14 +374,8 @@ void Moment2ElementBase::advance(StateBase& s)
         ST.real.IonEk  = last_Kenergy_out;
     }
 
-    ST.state = prod(misalign, ST.state);
-    ST.state = prod(ST.state, trans(misalign));
-
-    noalias(scratch) = prod(transfer, ST.state);
+    noalias(scratch)  = prod(transfer, ST.state);
     noalias(ST.state) = prod(scratch, trans(transfer));
-
-    ST.state = prod(misalign_inv, ST.state);
-    ST.state = prod(ST.state, trans(misalign_inv));
 }
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
