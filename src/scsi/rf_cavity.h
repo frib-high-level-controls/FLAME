@@ -129,6 +129,8 @@ struct ElementRFCavity : public Moment2ElementBase
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
+            get_misalign(ST);
+
             ST.real.recalc();
         }
 
@@ -138,14 +140,7 @@ struct ElementRFCavity : public Moment2ElementBase
         ST.pos += length;
 
         ST.moment0 = prod(misalign, ST.moment0);
-
-        // J.B. Bug in TLM.
-        ST.moment0[6] = 0e0;
-
         ST.moment0 = prod(transfer, ST.moment0);
-
-        // J.B. Bug in TLM.
-        ST.moment0[6] = 1e0;
 
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
         ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
@@ -181,9 +176,8 @@ struct ElementRFCavity : public Moment2ElementBase
 
         ElementRFCavity::InitRFCav(ST.real, accIonW, avebeta, avegamma, transfer);
 
+        // J.B. Bug in TLM.
         ST.real.SampleIonK = SampleIonK;
-
-        get_misalign(ST);
    }
 
     virtual const char* type_name() const {return "rfcavity";}

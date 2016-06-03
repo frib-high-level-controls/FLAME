@@ -371,6 +371,11 @@ void Moment2ElementBase::advance(StateBase& s)
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
+        get_misalign(ST);
+
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
+
         ST.real.recalc();
     }
 
@@ -541,6 +546,11 @@ struct ElementSBend : public Moment2ElementBase
             // need to re-calculate energy dependent terms
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+            get_misalign(ST);
+
+            scratch  = prod(transfer, misalign);
+            transfer = prod(misalign_inv, scratch);
 
             ST.real.recalc();
         }
