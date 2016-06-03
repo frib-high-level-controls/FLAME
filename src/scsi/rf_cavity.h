@@ -137,13 +137,29 @@ struct ElementRFCavity : public Moment2ElementBase
 
         ST.pos += length;
 
+        ST.moment0 = prod(misalign, ST.moment0);
+
+        // J.B. Bug in TLM.
+        ST.moment0[6] = 0e0;
+
         ST.moment0 = prod(transfer, ST.moment0);
+
+        // J.B. Bug in TLM.
+        ST.moment0[6] = 1e0;
 
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
         ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
 
-        noalias(scratch)  = prod(transfer, ST.state);
-        noalias(ST.state) = prod(scratch, trans(transfer));
+        ST.moment0 = prod(misalign_inv, ST.moment0);
+
+        scratch  = prod(misalign, ST.state);
+        ST.state = prod(scratch, trans(misalign));
+
+        scratch  = prod(transfer, ST.state);
+        ST.state = prod(scratch, trans(transfer));
+
+        scratch  = prod(misalign_inv, ST.state);
+        ST.state = prod(scratch, trans(misalign_inv));
     }
 
     virtual void recompute_matrix(state_t& ST)
@@ -153,6 +169,9 @@ struct ElementRFCavity : public Moment2ElementBase
 
         last_Kenergy_in = ST.real.IonEk;
 
+        // J.B. Bug in TLM.
+        double SampleIonK = ST.real.SampleIonK;
+
         ElementRFCavity::PropagateLongRFCav(ST.ref);
 
         last_Kenergy_out = ST.real.IonEk;
@@ -160,12 +179,11 @@ struct ElementRFCavity : public Moment2ElementBase
         // Define initial conditions.
         double accIonW, avebeta, avegamma;
 
-        get_misalign(ST);
-
         ElementRFCavity::InitRFCav(ST.real, accIonW, avebeta, avegamma, transfer);
 
-        scratch  = prod(transfer, misalign);
-        transfer = prod(misalign_inv, scratch);
+        ST.real.SampleIonK = SampleIonK;
+
+        get_misalign(ST);
    }
 
     virtual const char* type_name() const {return "rfcavity";}
