@@ -315,8 +315,9 @@ void Moment2ElementBase::show(std::ostream& strm) const
 
 void Moment2ElementBase::advance(StateBase& s)
 {
-    double   phis_temp, di_bg, Ek00, beta00, gamma00, IonK_Bend, dphis_temp;
-    state_t& ST = static_cast<state_t&>(s);
+    double    phis_temp, di_bg, Ek00, beta00, gamma00, IonK_Bend, dphis_temp;
+    state_t&  ST = static_cast<state_t&>(s);
+    value_vec dz;
     using namespace boost::numeric::ublas;
 
     // IonEk is Es + E_state; the latter is set by user.
@@ -346,30 +347,20 @@ void Moment2ElementBase::advance(StateBase& s)
     } else if (t_name == "sbend")
         phis_temp = ST.moment0[state_t::PS_S];
 
-    value_vec a, b, c;
-    a = boost::numeric::ublas::zero_vector<double>(state_t::maxsize);
+    dz = boost::numeric::ublas::zero_vector<double>(state_t::maxsize);
+    dz[state_t::PS_S]  = -length/2e0*MtoMM;
+    dz[state_t::PS_PS] = 1e0;
+    dz[state_t::PS_S]  *= -ST.real.SampleIonK;
+    dz[state_t::PS_PS] *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
 
-    a[state_t::PS_S]  = -length/2e0*MtoMM;
-    a[state_t::PS_PS] = 1e0;
-
-    a[state_t::PS_S]  *= -ST.real.SampleIonK;
-    a[state_t::PS_PS] *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
-
-    b = prod(misalign, a) - a;
-
-    a[state_t::PS_S]  = length/2e0*MtoMM;
-    a[state_t::PS_PS] = 1e0;
-
-    a[state_t::PS_S]  *= -ST.real.SampleIonK;
-    a[state_t::PS_PS] *= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
-
-    c = prod(misalign_inv, a) - a;
-
+    ST.moment0 += dz;
     ST.moment0 = prod(misalign, ST.moment0);
-    ST.moment0 += b;
+    ST.moment0 -= dz;
     ST.moment0 = prod(transfer, ST.moment0);
+    dz[state_t::PS_S] = -dz[state_t::PS_S];
+    ST.moment0 += dz;
     ST.moment0 = prod(misalign_inv, ST.moment0);
-    ST.moment0 += c;
+    ST.moment0 -= dz;
 
     if (t_name == "rfcavity") {
         ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
