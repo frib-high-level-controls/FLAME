@@ -360,7 +360,6 @@ void Moment2ElementBase::get_misalign(state_t& ST)
 
 void Moment2ElementBase::advance(StateBase& s)
 {
-    double    phis_temp, di_bg, Ek00, beta00, gamma00, IonK_Bend, dphis_temp;
     state_t&  ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
 
@@ -380,41 +379,11 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.pos += length;
 
-    std::string t_name = type_name(); // C string -> C++ string.
-    if ((t_name != "rfcavity") && (t_name != "sbend")) {
-        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
-        ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
-        ST.real.IonEk  = last_Kenergy_out;
-    } else if (t_name == "sbend")
-        phis_temp = ST.moment0[state_t::PS_S];
+    ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+    ST.real.phis  += ST.real.SampleIonK*length*MtoMM;
+    ST.real.IonEk  = last_Kenergy_out;
 
     ST.moment0 = prod(transfer, ST.moment0);
-
-    if (t_name == "rfcavity") {
-        ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
-        ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
-    } else if (t_name == "sbend") {
-        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
-
-        dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
-
-        std::string HdipoleFitMode = conf().get<std::string>("HdipoleFitMode", "1");
-        if (HdipoleFitMode != "1") {
-            di_bg     = conf().get<double>("bg");
-            // Dipole reference energy.
-            Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
-            gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
-            beta00    = sqrt(1e0-1e0/sqr(gamma00));
-            IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-
-            // J.B.: this is odd.
-//            ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
-            ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
-        } else
-            ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
-
-        ST.real.IonEk  = last_Kenergy_out;
-    }
 
     noalias(scratch)  = prod(transfer, ST.state);
     noalias(ST.state) = prod(scratch, trans(transfer));
@@ -558,6 +527,57 @@ struct ElementSBend : public Moment2ElementBase
     ElementSBend(const Config& c) : base_t(c) {}
     virtual ~ElementSBend() {}
     virtual const char* type_name() const {return "sbend";}
+
+    virtual void advance(StateBase& s)
+    {
+        double    phis_temp, di_bg, Ek00, beta00, gamma00, IonK_Bend, dphis_temp;
+        state_t&  ST = static_cast<state_t&>(s);
+        using namespace boost::numeric::ublas;
+
+        // IonEk is Es + E_state; the latter is set by user.
+        ST.real.recalc();
+
+        if(ST.real.IonEk!=last_Kenergy_in) {
+            // need to re-calculate energy dependent terms
+
+            recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+            ST.real.recalc();
+        }
+
+        // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
+        // Matrix elements are scaled with particle energy.
+
+        ST.pos += length;
+
+        phis_temp = ST.moment0[state_t::PS_S];
+
+        ST.moment0 = prod(transfer, ST.moment0);
+
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        dphis_temp = ST.moment0[state_t::PS_S] - phis_temp;
+
+        std::string HdipoleFitMode = conf().get<std::string>("HdipoleFitMode", "1");
+        if (HdipoleFitMode != "1") {
+            di_bg     = conf().get<double>("bg");
+            // Dipole reference energy.
+            Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
+            gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
+            beta00    = sqrt(1e0-1e0/sqr(gamma00));
+            IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
+
+            // J.B.: this is odd.
+//            ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
+            ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
+        } else
+            ST.real.phis  += ST.real.SampleIonK*length*MtoMM + dphis_temp;
+
+        ST.real.IonEk  = last_Kenergy_out;
+
+        noalias(scratch)  = prod(transfer, ST.state);
+        noalias(ST.state) = prod(scratch, trans(transfer));
+    }
 
     virtual void recompute_matrix(state_t& ST)
     {

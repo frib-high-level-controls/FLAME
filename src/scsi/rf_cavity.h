@@ -116,6 +116,36 @@ struct ElementRFCavity : public Moment2ElementBase
 
     virtual ~ElementRFCavity() {}
 
+    virtual void advance(StateBase& s)
+    {
+        state_t&  ST = static_cast<state_t&>(s);
+        using namespace boost::numeric::ublas;
+
+        // IonEk is Es + E_state; the latter is set by user.
+        ST.real.recalc();
+
+        if(ST.real.IonEk!=last_Kenergy_in) {
+            // need to re-calculate energy dependent terms
+
+            recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+            ST.real.recalc();
+        }
+
+        // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
+        // Matrix elements are scaled with particle energy.
+
+        ST.pos += length;
+
+        ST.moment0 = prod(transfer, ST.moment0);
+
+        ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
+        ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
+
+        noalias(scratch)  = prod(transfer, ST.state);
+        noalias(ST.state) = prod(scratch, trans(transfer));
+    }
+
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
