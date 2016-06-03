@@ -692,11 +692,6 @@ struct ElementSolenoid : public Moment2ElementBase
         transfer(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
-        get_misalign(ST);
-
-        scratch  = prod(transfer, misalign);
-        transfer = prod(misalign_inv, scratch);
-
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
 };
