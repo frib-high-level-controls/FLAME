@@ -312,6 +312,54 @@ void Moment2ElementBase::show(std::ostream& strm) const
           "Mis-align: "<<misalign<<"\n";
 }
 
+void Moment2ElementBase::get_misalign(state_t& ST)
+{
+    value_mat R,
+              R_inv,
+              scl     = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
+              scl_inv = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
+              T       = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
+              T_inv   = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+    double dx    = conf().get<double>("dx",    0e0)*MtoMM,
+           dy    = conf().get<double>("dy",    0e0)*MtoMM,
+           pitch = conf().get<double>("pitch", 0e0),
+           yaw   = conf().get<double>("yaw",   0e0),
+           tilt  = conf().get<double>("tilt",  0e0);
+
+    scl(state_t::PS_S, state_t::PS_S)   /= -ST.real.SampleIonK;
+    scl(state_t::PS_PS, state_t::PS_PS) /= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
+
+    inverse(scl_inv, scl);
+
+    // Translate to center of element.
+    T(state_t::PS_S,  6) = -length/2e0*MtoMM;
+    T(state_t::PS_PS, 6) = 1e0;
+    inverse(T_inv, T);
+
+    RotMat(dx, dy, pitch, yaw, tilt, R);
+
+    misalign = prod(T, scl);
+    misalign = prod(R, misalign);
+    misalign = prod(T_inv, misalign);
+    misalign = prod(scl_inv, misalign);
+
+    // Can not use inverse or transpose of R.
+    RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
+
+    // Translate to center of element.
+    T(state_t::PS_S,  6) = length/2e0*MtoMM;
+    T(state_t::PS_PS, 6) = 1e0;
+    inverse(T_inv, T);
+
+    misalign_inv = prod(T, scl);
+    misalign_inv = prod(R_inv, misalign_inv);
+    misalign_inv = prod(T_inv, misalign_inv);
+    misalign_inv = prod(scl_inv, misalign_inv);
+
+    noalias(scratch)  = prod(transfer, misalign);
+    noalias(transfer) = prod(misalign_inv, scratch);
+}
 
 void Moment2ElementBase::advance(StateBase& s)
 {
@@ -326,9 +374,6 @@ void Moment2ElementBase::advance(StateBase& s)
         // need to re-calculate energy dependent terms
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
-
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
 
         ST.real.recalc();
     }
@@ -404,6 +449,8 @@ struct ElementSource : public Moment2ElementBase
     typedef typename base_t::state_t state_t;
 
     ElementSource(const Config& c): base_t(c), istate(c) {}
+
+    void misalign1(state_t& ST);
 
     virtual void advance(StateBase& s)
     {
@@ -606,58 +653,19 @@ struct ElementSolenoid : public Moment2ElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-        value_mat R,
-                  R_inv,
-                  scl     = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-                  scl_inv = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-                  T       = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-                  T_inv   = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-        transfer_raw = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        transfer = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         double Brho  = ST.real.beta*(ST.real.IonEk+ST.real.IonEs)/(C0*ST.real.IonZ),
                K     = conf().get<double>("B")/(2e0*Brho)/MtoMM,
-               L     = conf().get<double>("L")*MtoMM,      // Convert from [m] to [mm].
-               dx    = conf().get<double>("dx", 0e0)*MtoMM,
-               dy    = conf().get<double>("dy", 0e0)*MtoMM,
-               pitch = conf().get<double>("pitch", 0e0),
-               yaw   = conf().get<double>("yaw", 0e0),
-               tilt  = conf().get<double>("tilt", 0e0);
+               L     = conf().get<double>("L")*MtoMM;
 
-        GetSolMatrix(L, K, transfer_raw);
+        GetSolMatrix(L, K, transfer);
 
-        transfer_raw(state_t::PS_S, state_t::PS_PS) =
+        transfer(state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real.IonEs/MeVtoeV*cube(ST.real.bg))*L;
 
-        transfer = transfer_raw;
-
-        scl(state_t::PS_S, state_t::PS_S)   /= -ST.real.SampleIonK;
-        scl(state_t::PS_PS, state_t::PS_PS) /= sqr(ST.real.beta)*ST.real.gamma*ST.ref.IonEs/MeVtoeV;
-
-        inverse(scl_inv, scl);
-
-        T(state_t::PS_S,  6) = -length/2e0*MtoMM;
-        T(state_t::PS_PS, 6) = 1e0;
-        inverse(T_inv, T);
-
-        RotMat(dx, dy, pitch, yaw, tilt, R);
-
-        misalign = prod(T, scl);
-        misalign = prod(R, misalign);
-        misalign = prod(T_inv, misalign);
-        misalign = prod(scl_inv, misalign);
-
-        // Can not use inverse or transpose of R.
-        RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
-
-        T(state_t::PS_S,  6) = length/2e0*MtoMM;
-        T(state_t::PS_PS, 6) = 1e0;
-        inverse(T_inv, T);
-
-        misalign_inv = prod(T, scl);
-        misalign_inv = prod(R_inv, misalign_inv);
-        misalign_inv = prod(T_inv, misalign_inv);
-        misalign_inv = prod(scl_inv, misalign_inv);
+        get_misalign(ST);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }

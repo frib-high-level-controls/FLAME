@@ -105,6 +105,8 @@ struct Moment2ElementBase : public ElementVoid
     Moment2ElementBase(const Config& c);
     virtual ~Moment2ElementBase();
 
+    void get_misalign(state_t& ST);
+
     virtual void advance(StateBase& s);
 
     virtual void recompute_matrix(state_t&);
