@@ -147,14 +147,14 @@ struct ElementRFCavity : public Moment2ElementBase
 
         ST.moment0 = prod(misalign_inv, ST.moment0);
 
-        noalias(scratch)  = prod(misalign, ST.state);
-        noalias(ST.state) = prod(scratch, trans(misalign));
+        scratch  = prod(misalign, ST.state);
+        ST.state = prod(scratch, trans(misalign));
 
-        noalias(scratch)  = prod(transfer, ST.state);
-        noalias(ST.state) = prod(scratch, trans(transfer));
+        scratch  = prod(transfer, ST.state);
+        ST.state = prod(scratch, trans(transfer));
 
-        noalias(scratch)  = prod(misalign_inv, ST.state);
-        noalias(ST.state) = prod(scratch, trans(misalign_inv));
+        scratch  = prod(misalign_inv, ST.state);
+        ST.state = prod(scratch, trans(misalign_inv));
     }
 
     virtual void recompute_matrix(state_t& ST)

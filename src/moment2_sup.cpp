@@ -103,14 +103,14 @@ void RotMat(const double dx, const double dy,
     // J.B. Bug in TLM: should be Rz(3, 1) vs. Rz(2, 1).
     Rz(2, 1) = -sin(theta_z), Rz(3, 3) =  cos(theta_z);
 
-    noalias(R) = prod(Ry, Rx);
-    noalias(R) = prod(Rz, R);
+    R = prod(Ry, Rx);
+    R = prod(Rz, R);
 
 #endif
 
     T(0, 6) = -dx, T(2, 6) = -dy;
 
-    noalias(R) = prod(R, T);
+    R = prod(R, T);
 }
 
 

@@ -339,10 +339,10 @@ void Moment2ElementBase::get_misalign(state_t& ST)
 
     RotMat(dx, dy, pitch, yaw, tilt, R);
 
-    noalias(misalign) = prod(T, scl);
-    noalias(misalign) = prod(R, misalign);
-    noalias(misalign) = prod(T_inv, misalign);
-    noalias(misalign) = prod(scl_inv, misalign);
+    misalign = prod(T, scl);
+    misalign = prod(R, misalign);
+    misalign = prod(T_inv, misalign);
+    misalign = prod(scl_inv, misalign);
 
     // Can not use inverse or transpose of R.
     RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
@@ -352,10 +352,10 @@ void Moment2ElementBase::get_misalign(state_t& ST)
     T(state_t::PS_PS, 6) = 1e0;
     inverse(T_inv, T);
 
-    noalias(misalign_inv) = prod(T, scl);
-    noalias(misalign_inv) = prod(R_inv, misalign_inv);
-    noalias(misalign_inv) = prod(T_inv, misalign_inv);
-    noalias(misalign_inv) = prod(scl_inv, misalign_inv);
+    misalign_inv = prod(T, scl);
+    misalign_inv = prod(R_inv, misalign_inv);
+    misalign_inv = prod(T_inv, misalign_inv);
+    misalign_inv = prod(scl_inv, misalign_inv);
 }
 
 void Moment2ElementBase::advance(StateBase& s)
@@ -385,8 +385,8 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.moment0 = prod(transfer, ST.moment0);
 
-    noalias(scratch)  = prod(transfer, ST.state);
-    noalias(ST.state) = prod(scratch, trans(transfer));
+    scratch  = prod(transfer, ST.state);
+    ST.state = prod(scratch, trans(transfer));
 }
 
 void Moment2ElementBase::recompute_matrix(state_t& ST)
@@ -511,8 +511,8 @@ struct ElementOrbTrim : public Moment2ElementBase
 
         get_misalign(ST);
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
@@ -576,8 +576,8 @@ struct ElementSBend : public Moment2ElementBase
 
         ST.real.IonEk  = last_Kenergy_out;
 
-        noalias(scratch)  = prod(transfer, ST.state);
-        noalias(ST.state) = prod(scratch, trans(transfer));
+        scratch  = prod(transfer, ST.state);
+        ST.state = prod(scratch, trans(transfer));
     }
 
     virtual void recompute_matrix(state_t& ST)
@@ -611,8 +611,8 @@ struct ElementSBend : public Moment2ElementBase
 
         get_misalign(ST);
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
@@ -649,8 +649,8 @@ struct ElementQuad : public Moment2ElementBase
 
         get_misalign(ST);
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
@@ -683,8 +683,8 @@ struct ElementSolenoid : public Moment2ElementBase
 
         get_misalign(ST);
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
@@ -743,16 +743,16 @@ struct ElementEDipole : public Moment2ElementBase
             R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
             R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
 
-            noalias(scratch)  = prod(transfer, misalign);
-            noalias(transfer) = prod(misalign_inv, scratch);
+            scratch  = prod(transfer, misalign);
+            transfer = prod(misalign_inv, scratch);
         }
 
         transfer = transfer_raw;
 
         get_misalign(ST);
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
@@ -792,8 +792,8 @@ struct ElementEQuad : public Moment2ElementBase
 
         get_misalign(ST);
 
-        noalias(scratch)  = prod(transfer, misalign);
-        noalias(transfer) = prod(misalign_inv, scratch);
+        scratch  = prod(transfer, misalign);
+        transfer = prod(misalign_inv, scratch);
 
         last_Kenergy_in = last_Kenergy_out = ST.real.IonEk; // no energy gain
     }
