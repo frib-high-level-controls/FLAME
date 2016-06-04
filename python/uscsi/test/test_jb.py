@@ -409,6 +409,7 @@ class testBasic(unittest.TestCase):
         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
       ], decimal=8)
 
+
   def test_LS1_cs1(self):
       "Propagate charge state 1 through LS1."
       PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
@@ -488,3 +489,84 @@ class testBasic(unittest.TestCase):
             [-1.6658632146e-04, 8.0035719827e-08, -2.0736703233e-04, 7.0098541878e-08, 3.9605913591e-04, 2.0888918966e-04, 0.0000000000e+00],
             [0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00, 0.0000000000e+00],
         ], decimal=8)
+
+
+  def test_to_chg_str_cs0(self):
+    "Propagate charge state 0 through up to Charge Stripper with mis-alignments."
+    PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
+
+    MeVtoeV = 1e6
+
+    def sqr(a): return a*a;
+
+    P = GLPSParser()
+
+    file_name = 'to_chg_str_err.lat'
+
+    with open(os.path.join(datadir, file_name), 'rb') as inf:
+      M = Machine(inf, extra={'cstate':0})
+
+      S = M.allocState({})
+      M.propagate(S, 0, 1)
+
+      self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
+      self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
+
+      self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 14)
+      self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 14)
+      self.assertAlmostEqual(S.ref_IonEk, 500000.0, 14)
+
+      def checkConsist(self, S, P='real'):
+        self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'))
+        self.assertEqual(getattr(S, P+'_gamma')   , getattr(S, P+'_IonW')/getattr(S, P+'_IonEs'))
+        self.assertEqual(getattr(S, P+'_beta')    , math.sqrt(1e0-1e0/sqr(getattr(S, P+'_gamma'))))
+        self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'))
+
+      checkConsist(self, S, 'real')
+      checkConsist(self, S, 'ref')
+      self.assertAlmostEqual(S.ref_phis,  0.0, 14)
+
+      assert_aequal(S.moment0,
+        [-7.88600000e-04, 1.08371000e-05, 1.33734300e-02, 6.67853400e-06, -1.84772900e-04, 3.09995000e-04, 1.00000000e+00],
+      decimal=8)
+
+      assert_aequal(S.state, [
+        [ 2.76309450e+00, -4.28247337e-04,  1.58178569e-02,  2.15594191e-05,  1.86380506e-04, -2.99394487e-05,  0.00000000e+00],
+        [-4.28247337e-04,  3.84946607e-06, -1.38385440e-06, -1.85409878e-08,  1.06777952e-07,  5.28564016e-09,  0.00000000e+00],
+        [ 1.58178569e-02, -1.38385440e-06,  2.36251226e+00, -6.69320460e-04, -5.80099939e-04,  6.71651534e-06,  0.00000000e+00],
+        [ 2.15594191e-05, -1.85409878e-08, -6.69320460e-04,  4.89711389e-06, -5.01614882e-07,  5.57484222e-08,  0.00000000e+00],
+        [ 1.86380506e-04,  1.06777952e-07, -5.80099939e-04, -5.01614882e-07,  6.71687185e-04, -1.23223342e-05,  0.00000000e+00],
+        [-2.99394487e-05,  5.28564016e-09,  6.71651534e-06,  5.57484222e-08, -1.23223342e-05,  1.99524669e-06,  0.00000000e+00],
+        [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
+      ], decimal=8)
+
+      M.propagate(S, 1, len(M))
+
+      self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 12)
+      self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
+
+      self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 12)
+      self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
+
+      checkConsist(self, S, 'real')
+      self.assertAlmostEqual(S.real_phis,  1602.4717408629808, 14)
+      self.assertAlmostEqual(S.real_IonEk,  17089939.459636927, 14)
+
+      checkConsist(self, S, 'ref')
+      self.assertAlmostEqual(S.ref_bg,  0.19243502172784563, 14)
+      self.assertAlmostEqual(S.ref_phis,  1602.4730487563952, 14)
+      self.assertAlmostEqual(S.ref_IonEk,  17090412.218117952, 14)
+
+      assert_aequal(S.moment0,
+         [ 2.90434086e+00,  1.19171594e-03, -3.88357134e+00, -1.49883368e-03, -1.58920581e-03, -3.94313801e-04,  1.00000000e+00],
+        decimal=8)
+
+      assert_aequal(S.state, [
+         [ 8.91033527e-02, -9.67351585e-05,  3.19930426e-02,  1.46443418e-05, -1.15621071e-06, -1.10724626e-04,  0.00000000e+00],
+         [-9.67351585e-05,  3.70578399e-06, -1.70784631e-04, -4.34728844e-07,  5.03306187e-08, -7.24623758e-07,  0.00000000e+00],
+         [ 3.19930426e-02, -1.70784631e-04,  4.41132936e-01,  6.32587731e-04, -2.65947638e-04,  2.59042891e-04,  0.00000000e+00],
+         [ 1.46443418e-05, -4.34728844e-07,  6.32587731e-04,  1.65571086e-06, -4.49804549e-07,  2.96003425e-07,  0.00000000e+00],
+         [-1.15621071e-06,  5.03306187e-08, -2.65947638e-04, -4.49804549e-07,  3.57440825e-05,  2.54131690e-05,  0.00000000e+00],
+         [-1.10724626e-04, -7.24623758e-07,  2.59042891e-04,  2.96003425e-07,  2.54131690e-05,  5.23153894e-05,  0.00000000e+00],
+         [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
+      ], decimal=8)
