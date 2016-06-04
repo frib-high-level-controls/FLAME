@@ -339,10 +339,10 @@ void Moment2ElementBase::get_misalign(state_t& ST)
 
     RotMat(dx, dy, pitch, yaw, tilt, R);
 
-    misalign = prod(T, scl);
-    misalign = prod(R, misalign);
-    misalign = prod(T_inv, misalign);
-    misalign = prod(scl_inv, misalign);
+    noalias(misalign) = prod(T, scl);
+    noalias(misalign) = prod(R, misalign);
+    noalias(misalign) = prod(T_inv, misalign);
+    noalias(misalign) = prod(scl_inv, misalign);
 
     // Can not use inverse or transpose of R.
     RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
@@ -352,10 +352,10 @@ void Moment2ElementBase::get_misalign(state_t& ST)
     T(state_t::PS_PS, 6) = 1e0;
     inverse(T_inv, T);
 
-    misalign_inv = prod(T, scl);
-    misalign_inv = prod(R_inv, misalign_inv);
-    misalign_inv = prod(T_inv, misalign_inv);
-    misalign_inv = prod(scl_inv, misalign_inv);
+    noalias(misalign_inv) = prod(T, scl);
+    noalias(misalign_inv) = prod(R_inv, misalign_inv);
+    noalias(misalign_inv) = prod(T_inv, misalign_inv);
+    noalias(misalign_inv) = prod(scl_inv, misalign_inv);
 }
 
 void Moment2ElementBase::advance(StateBase& s)
@@ -415,8 +415,6 @@ struct ElementSource : public Moment2ElementBase
     typedef typename base_t::state_t state_t;
 
     ElementSource(const Config& c): base_t(c), istate(c) {}
-
-    void misalign1(state_t& ST);
 
     virtual void advance(StateBase& s)
     {
