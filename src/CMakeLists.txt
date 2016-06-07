@@ -44,6 +44,7 @@ set(inst_HEADERS
   scsi/moment.h
   scsi/moment2.h
   scsi/moment2_sup.h
+  scsi/cav_ttf.h
   scsi/rf_cavity.h
   scsi/chg_stripper.h
 
@@ -65,6 +66,8 @@ add_library(uscsi_core SHARED
   moment2.cpp
 
   moment2_sup.cpp
+
+  cav_ttf.cpp
 
   rf_cavity.cpp
 

@@ -4,6 +4,7 @@
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
 #include "scsi/moment2_sup.h"
+#include "scsi/cav_ttf.h"
 #include "scsi/rf_cavity.h"
 
 // RF Cavity beam dynamics functions.
@@ -134,18 +135,18 @@ double PwrSeries(const double beta,
 }
 
 
-void TransFacts(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
+void TransFacts(const int cavilabel, double beta, const double CaviIonK, const int gaplabel, const double EfieldScl,
                 double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
     // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
+    std::ostringstream  strm;
     std::vector<double> vec;
 
     switch (cavilabel) {
     case 41:
         if (beta < 0.025 || beta > 0.08) {
-            std::ostringstream strm;
-            strm << "*** GetTransitFac: beta out of Range " << beta << "\n";
-            throw std::runtime_error(strm.str());
+            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
+            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
         }
         switch (gaplabel) {
         case 0:
@@ -176,16 +177,14 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             V0   = 0.492385*EfieldScl;
             break;
         default:
-            std::ostringstream strm;
             strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             throw std::runtime_error(strm.str());
         }
         break;
     case 85:
         if (beta < 0.05 || beta > 0.25) {
-            std::ostringstream strm;
-            strm << "*** GetTransitFac: beta out of range " << beta << "\n";
-            throw std::runtime_error(strm.str());
+            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
+            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
         }
         switch (gaplabel) {
           case 0:
@@ -213,16 +212,14 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             V0   = 0.9838574*EfieldScl;
             break;
         default:
-            std::ostringstream strm;
             strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             throw std::runtime_error(strm.str());
         }
         break;
     case 29:
         if (beta < 0.15 || beta > 0.4) {
-            std::ostringstream strm;
-            strm << "*** GetTransitFac: beta out of range " << beta << "\n";
-            throw std::runtime_error(strm.str());
+            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
+            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
         }
         switch (gaplabel) {
           case 0:
@@ -250,16 +247,14 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             V0   = 1.242518*EfieldScl;
             break;
         default:
-            std::ostringstream strm;
             strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             throw std::runtime_error(strm.str());
         }
         break;
     case 53:
         if (beta < 0.3 || beta > 0.6) {
-            std::ostringstream strm;
-            strm << "*** GetTransitFac: beta out of range " << beta << "\n";
-            throw std::runtime_error(strm.str());
+            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
+            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
         }
         switch (gaplabel) {
           case 0:
@@ -287,13 +282,11 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
             V0   = 2.12878493*EfieldScl;
             break;
         default:
-            std::ostringstream strm;
             strm << "*** GetTransitFac: undef. number of gaps " << gaplabel << "\n";
             throw std::runtime_error(strm.str());
         }
         break;
     default:
-        std::ostringstream strm;
         strm << "*** GetTransitFac: undef. cavity type" << "\n";
         throw std::runtime_error(strm.str());
     }
@@ -306,17 +299,20 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
 void TransitFacMultipole(const int cavi, const std::string &flabel, const double CaviIonK,
                          double &T, double &S)
 {
+    double Ecen, Tp, Sp, V0;
 
     if ((cavi == 1) && (CaviIonK < 0.025 || CaviIonK > 0.055)) {
-        std::ostringstream strm;
-        strm << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
-        throw std::runtime_error(strm.str());
+        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
     } else if ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) {
-        std::cerr << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
     } else if ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) {
-        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";    
+        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
     } else if ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954)) {
-        std::cerr << "*** TransitFacMultipole: IonK out of Range" << "\n";    
+        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
     }
 
     if (flabel == "CaviMlp_EFocus1") {
@@ -961,14 +957,14 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
     n   = CavData.s.size();
     dis = (CavData.s[n-1]-CavData.s[0])/2e0;
 
-    TransFacts(cavilabel, beta_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
+    TransFacts(cavilabel, beta_s[0], CaviIonK_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
     EvalGapModel(dis, IonW_s[0], real, IonFy_s[0], CaviIonK_s[0], CaviLambda,
                  Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[1], IonFy_s[1]);
     gamma_s[1]     = IonW_s[1]/real.IonEs;
     beta_s[1]      = sqrt(1e0-1e0/sqr(gamma_s[1]));
     CaviIonK_s[1]  = 2e0*M_PI/(beta_s[1]*CaviLambda);
 
-    TransFacts(cavilabel, beta_s[1], 2, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
+    TransFacts(cavilabel, beta_s[1], CaviIonK_s[1], 2, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
     EvalGapModel(dis, IonW_s[1], real, IonFy_s[1], CaviIonK_s[1], CaviLambda,
                 Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[2], IonFy_s[2]);
     gamma_s[2]    = IonW_s[2]/real.IonEs;
