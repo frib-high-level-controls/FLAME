@@ -253,7 +253,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     std::ostringstream  strm;
 
     // For debugging of TTF function.
-    if (false) {
+    if (true) {
         calTransfac(inf2, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
         V0 *= EfieldScl;
         printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
@@ -328,7 +328,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
         case 2:
             Ecen = -0.0002838*pow(beta, -2.13) + 73.5;
             T    = -0.0009467*pow(beta, -1.855) + 1.002;
-            Tp   = PwrSeries(beta,  24.44, 334,  2468, 1.017e4, -2.195e4, 1.928e4, 0.0, 0.0, 0.0, 0.0);
+            Tp   = PwrSeries(beta, -24.44, 334, -2468, 1.017e4, -2.195e4, 1.928e4, 0.0, 0.0, 0.0, 0.0);
             S    = 0.0;
             Sp   = -0.0009751*pow(beta, -1.898) + 0.001568;
             V0   = 0.9838574*EfieldScl;
@@ -420,7 +420,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     // Convert from [mm] to [m].
 //    Ecen /= MtoMM;
 
-//    printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+    printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
 }
 
 
