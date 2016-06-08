@@ -344,7 +344,7 @@ void Moment2ElementBase::get_misalign(state_t& ST)
     misalign = prod(T_inv, misalign);
     misalign = prod(scl_inv, misalign);
 
-    // Can not use inverse or transpose of R.
+    // J.B. Bug in TLM: should be inverse.
     RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
 
     // Translate to center of element.

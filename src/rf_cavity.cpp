@@ -4,25 +4,17 @@
 #include "scsi/constants.h"
 #include "scsi/moment2.h"
 #include "scsi/moment2_sup.h"
-#include "scsi/cav_ttf.h"
 #include "scsi/rf_cavity.h"
 
 // RF Cavity beam dynamics functions.
 
 
-void CavDataType::RdData(const std::string &FileName)
+void CavDataType::RdData(std::fstream &inf)
 {
     std::string       line;
     double            s, Elong;
     std::stringstream str;
-    std::fstream      inf;
 
-    inf.open(FileName.c_str(), std::ifstream::in);
-    if (!inf.is_open()) {
-        std::ostringstream strm;
-        strm << "*** RdData: failed to open " << FileName << "\n";
-        throw std::runtime_error(strm.str());
-    }
     while (getline(inf, line) && !inf.fail()) {
         str.str(line);
         str.clear();
@@ -116,6 +108,116 @@ void PrtMat(const value_mat &M)
 }
 
 
+void rd_data(std::fstream &inf, const int column_no, std::vector<double> &Z, std::vector<double> &EM)
+{
+    std::string       line;
+    std::stringstream str;
+    double            z, em;
+
+    std::cout << "rd_data\n";
+
+    inf.clear();
+    inf.seekg(0, inf.beg);
+
+    while (getline(inf, line) && !inf.fail()) {
+        str.str(line);
+        str.clear();
+        str >> z >> em;
+        Z.push_back(z), EM.push_back(em);
+    }
+    inf.close();
+}
+
+
+void prt_data(std::vector<double> &Z, std::vector<double> &EM)
+{
+    int k, n;
+
+    n = Z.size();
+    std::cout << "\nn = " << n << "\n";
+    for (k = 0; k < n; k++)
+        std::cout << std::fixed << std::setprecision(5)
+                  << std::setw(10) << Z[k] << std::setw(15) << EM[k] << "\n";
+}
+
+
+int get_column(const std::string &str)
+{
+    int column;
+
+    if (str == "CaviMlp_EFocus1")
+        column = 3;
+    else if (str == "CaviMlp_EFocus2")
+        column = 4;
+    else if (str == "CaviMlp_EDipole")
+        column = 2;
+    else if (str == "CaviMlp_EQuad")
+        column = 5;
+    else if (str == "CaviMlp_HMono")
+        column = 7;
+    else if (str == "CaviMlp_HDipole")
+        column = 6;
+    else if (str == "CaviMlp_HQuad")
+        column = 8;
+    else {
+        std::cout << "get_column: undef. column: " << str << "\n";
+        exit(1);
+    }
+
+    return column;
+}
+
+
+void calTransfac(std::fstream &inf,  int column_no, const double IonK,
+                 double &Ecenter, double &T, double &Tp, double &S, double &Sp, double &V0)
+{
+    // Compute electric center, amplitude, and transit time factors [T, Tp, S, Sp] for RF cavity mode.
+    int                 n, k;
+    double              eml, em_mom;
+    std::vector<double> z, EM;
+
+    rd_data(inf, column_no, z, EM);
+
+//    prt_data(z, EM);
+
+    n = z.size();
+
+    // Start at zero.
+    for (k = 0; k < n; k++)
+        z[k] -= z[0];
+
+    eml = 0e0, em_mom = 0e0;
+    for (k = 0; k < n-1; k++) {
+        eml    += (fabs(EM[k])+fabs(EM[k+1]))/2e0*(z[k+1]-z[k]);
+        em_mom += (z[k]+z[k+1])/2e0*(fabs(EM[k])+fabs(EM[k+1]))/2e0*(z[k+1]-z[k]);
+    }
+    Ecenter = em_mom/eml;
+
+    T = 0;
+    for (k = 0; k < n-1; k++)
+        T += (EM[k]+EM[k+1])/2e0*cos(IonK*(z[k]+z[k+1])/2e0)*(z[k+1]-z[k]);
+    T /= eml;
+
+    Tp = 0;
+    for (k = 0; k < n-1; k++)
+        Tp -= ((z[k]+z[k+1])/2e0)*(EM[k]+EM[k+1])/2e0*sin(IonK*(z[k]+z[k+1])/2e0)*(z[k+1]-z[k]);
+    Tp /= eml;
+
+    S = 0e0;
+    for (k = 0; k < n-1; k++)
+        S += (EM[k]+EM[k+1])/2e0*sin(k*(z[k]+z[k+1])/2e0)*(z[k+1]-z[k]);
+    S /= eml;
+
+    Sp = 0e0;
+    for (k = 0; k < n-1; k++) {
+        Sp += (z[k]+z[k+1])/2e0*(EM[k]+EM[k+1])/2e0*cos(IonK*(z[k]+z[k+1])/2e0)*(z[k+1]-z[k]);
+    }
+    Sp /= eml;
+
+    V0 = eml/MeVtoeV/MtoMM;
+}
+
+
 double PwrSeries(const double beta,
                  const double a0, const double a1, const double a2, const double a3,
                  const double a4, const double a5, const double a6, const double a7,
@@ -135,18 +237,22 @@ double PwrSeries(const double beta,
 }
 
 
-void TransFacts(const int cavilabel, double beta, const double CaviIonK, const int gaplabel, const double EfieldScl,
-                double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
+void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double CaviIonK, const int gaplabel, const double EfieldScl,
+                                 double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
     // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
     std::ostringstream  strm;
-    std::vector<double> vec;
+
+    if (false) {
+        calTransfac(inf2, 2, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        return;
+    }
 
     switch (cavilabel) {
     case 41:
         if (beta < 0.025 || beta > 0.08) {
-            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
-            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            calTransfac(inf2, 2, CaviIonK, Ecen, T, Tp, S, Sp, V0);
             return;
         }
         switch (gaplabel) {
@@ -184,8 +290,8 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         break;
     case 85:
         if (beta < 0.05 || beta > 0.25) {
-            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
-            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            calTransfac(inf2, 2, CaviIonK, Ecen, T, Tp, S, Sp, V0);
             return;
         }
         switch (gaplabel) {
@@ -220,8 +326,8 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         break;
     case 29:
         if (beta < 0.15 || beta > 0.4) {
-            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
-            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            calTransfac(inf2, 2, CaviIonK, Ecen, T, Tp, S, Sp, V0);
             return;
         }
         switch (gaplabel) {
@@ -256,8 +362,8 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         break;
     case 53:
         if (beta < 0.3 || beta > 0.6) {
-            std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
-            calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            calTransfac(inf2, 2, CaviIonK, Ecen, T, Tp, S, Sp, V0);
             return;
         }
         switch (gaplabel) {
@@ -300,26 +406,17 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
 }
 
 
-void TransitFacMultipole(const int cavi, const std::string &flabel, const double CaviIonK,
-                         double &T, double &S)
+void ElementRFCavity::TransitFacMultipole(const int cavi, const std::string &flabel, const double CaviIonK,
+                                          double &T, double &S)
 {
     double Ecen, Tp, Sp, V0;
 
-    if ((cavi == 1) && (CaviIonK < 0.025 || CaviIonK > 0.055)) {
+    if (((cavi == 1) && (CaviIonK < 0.025 || CaviIonK > 0.055)) ||
+        ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) ||
+        ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) ||
+        ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954))) {
         std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
-        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
-        return;
-    } else if ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) {
-        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
-        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
-        return;
-    } else if ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) {
-        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
-        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
-        return;
-    } else if ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954)) {
-        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
-        calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        calTransfac(inf3, get_column(flabel), CaviIonK, Ecen, T, Tp, S, Sp, V0);
         return;
     }
 
@@ -561,7 +658,8 @@ void EvalGapModel(const double dis, const double IonW0, Particle &real, const do
 
 int get_MpoleLevel(const Config &conf)
 {
-    int         MpoleLevel;
+    int MpoleLevel = 0;
+
     std::string str = conf.get<std::string>("MpoleLevel", "2");
     if (str == "0")
         MpoleLevel = 0;
@@ -578,7 +676,7 @@ int get_MpoleLevel(const Config &conf)
 }
 
 
-void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double CaviIonK[])
+void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double CaviIonK[])
 {
     // Evaluate time transit factors and acceleration.
 
@@ -589,13 +687,13 @@ void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], c
 
     MpoleLevel = get_MpoleLevel(conf());
 
-    inf.clear();
-    inf.seekg(0, inf.beg);
+    inf1.clear();
+    inf1.seekg(0, inf1.beg);
 
     CavTLMLineTab.clear();
 
     s = CavData.s[0];
-    while (getline(inf, line) && !inf.fail()) {
+    while (getline(inf1, line) && !inf1.fail()) {
         T = 0e0, S = 0e0, Accel = 0e0;
         if (line[0] == '%') {
             // Comment.
@@ -615,75 +713,75 @@ void ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], c
             } else if (Elem == "EFocus1") {
                 if (s < 0e0) {
                     // First gap. By reflection 1st Gap EFocus1 is 2nd gap EFocus2.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus2", CaviIonK[0], T, S);
+                    ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EFocus2", CaviIonK[0], T, S);
                     // First gap *1, transverse E field the same.
                     S = -S;
                 } else {
                     // Second gap.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus1", CaviIonK[1], T, S);
+                    ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EFocus1", CaviIonK[1], T, S);
                 }
             } else if (Elem == "EFocus2") {
                 if (s < 0e0) {
                     // First gap.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus1", CaviIonK[0], T, S);
+                    ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EFocus1", CaviIonK[0], T, S);
                     S = -S;
                 } else {
                     // Second gap.
-                    TransitFacMultipole(cavi, "CaviMlp_EFocus2", CaviIonK[1], T, S);
+                    ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EFocus2", CaviIonK[1], T, S);
                 }
             } else if (Elem == "EDipole") {
                 if (MpoleLevel >= 1) {
                     if (s < 0e0) {
-                        TransitFacMultipole(cavi, "CaviMlp_EDipole", CaviIonK[0], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EDipole", CaviIonK[0], T, S);
                         // First gap *1, transverse E field the same.
                         S = -S;
                     } else {
                         // Second gap.
-                        TransitFacMultipole(cavi, "CaviMlp_EDipole", CaviIonK[1], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EDipole", CaviIonK[1], T, S);
                     }
                 }
             } else if (Elem == "EQuad") {
                 if (MpoleLevel >= 2) {
                     if (s < 0e0) {
                         // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_EQuad", CaviIonK[0], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EQuad", CaviIonK[0], T, S);
                         S = -S;
                     } else {
                         // Second Gap
-                        TransitFacMultipole(cavi, "CaviMlp_EQuad", CaviIonK[1], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_EQuad", CaviIonK[1], T, S);
                     }
                 }
             } else if (Elem == "HMono") {
                 if (MpoleLevel >= 2) {
                     if (s < 0e0) {
                         // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HMono", CaviIonK[0], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_HMono", CaviIonK[0], T, S);
                         T = -T;
                     } else {
                         // Second Gap
-                        TransitFacMultipole(cavi, "CaviMlp_HMono", CaviIonK[1], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_HMono", CaviIonK[1], T, S);
                     }
                 }
             } else if (Elem == "HDipole") {
                 if (MpoleLevel >= 1) {
                     if (s < 0e0) {
                         // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HDipole", CaviIonK[0], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_HDipole", CaviIonK[0], T, S);
                         T = -T;
                     }  else {
                         // Second gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HDipole", CaviIonK[1], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_HDipole", CaviIonK[1], T, S);
                     }
                 }
             } else if (Elem == "HQuad") {
                 if (MpoleLevel >= 2) {
                     if (s < 0e0) {
                         // First gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HQuad", CaviIonK[0], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_HQuad", CaviIonK[0], T, S);
                         T = -T;
                     } else {
                         // Second gap.
-                        TransitFacMultipole(cavi, "CaviMlp_HQuad", CaviIonK[1], T, S);
+                        ElementRFCavity::TransitFacMultipole(cavi, "CaviMlp_HQuad", CaviIonK[1], T, S);
                     }
                 }
             } else if (Elem == "AccGap") {
@@ -735,8 +833,8 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
 
     MpoleLevel = get_MpoleLevel(conf());
 
-    inf.clear();
-    inf.seekg(0, inf.beg);
+    inf1.clear();
+    inf1.seekg(0, inf1.beg);
 
     k_s[0] = 2e0*M_PI/(beta_tab[0]*Lambda);
     k_s[1] = 2e0*M_PI/(beta_tab[1]*Lambda);
@@ -801,7 +899,7 @@ void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double E
 
     s = CavData.s[0];
     n = 0;
-    while (getline(inf, line) && !inf.fail()) {
+    while (getline(inf1, line) && !inf1.fail()) {
         if (line[0] == '%') {
             // Comment.
         } else {
@@ -965,14 +1063,16 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
     n   = CavData.s.size();
     dis = (CavData.s[n-1]-CavData.s[0])/2e0;
 
-    TransFacts(cavilabel, beta_s[0], CaviIonK_s[0], 1, EfieldScl, Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
+    ElementRFCavity::TransFacts(cavilabel, beta_s[0], CaviIonK_s[0], 1, EfieldScl,
+            Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
     EvalGapModel(dis, IonW_s[0], real, IonFy_s[0], CaviIonK_s[0], CaviLambda,
                  Ecen[0], T[0], S[0], Tp[0], Sp[0], V0[0], IonW_s[1], IonFy_s[1]);
     gamma_s[1]     = IonW_s[1]/real.IonEs;
     beta_s[1]      = sqrt(1e0-1e0/sqr(gamma_s[1]));
     CaviIonK_s[1]  = 2e0*M_PI/(beta_s[1]*CaviLambda);
 
-    TransFacts(cavilabel, beta_s[1], CaviIonK_s[1], 2, EfieldScl, Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
+    ElementRFCavity::TransFacts(cavilabel, beta_s[1], CaviIonK_s[1], 2, EfieldScl,
+            Ecen[1], T[1], Tp[1], S[1], Sp[1], V0[1]);
     EvalGapModel(dis, IonW_s[1], real, IonFy_s[1], CaviIonK_s[1], CaviLambda,
                 Ecen[1], T[1], S[1], Tp[1], Sp[1], V0[1], IonW_s[2], IonFy_s[2]);
     gamma_s[2]    = IonW_s[2]/real.IonEs;

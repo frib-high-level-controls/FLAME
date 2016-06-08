@@ -16,7 +16,7 @@ public:
     std::vector<double> s,     // s coordinate [m]
                         Elong; // Longitudinal Electric field [V/m].
 
-    void RdData(const std::string&);
+    void RdData(std::fstream &inf);
     void show(std::ostream&, const int) const;
     void show(std::ostream&) const;
 };
@@ -59,7 +59,7 @@ struct ElementRFCavity : public Moment2ElementBase
     typedef typename base_t::state_t state_t;
 
     CavDataType    CavData;
-    std::fstream   inf;
+    std::fstream   inf1, inf2, inf3;
     CavTLMLineType CavTLMLineTab;
 
     ElementRFCavity(const Config& c)
@@ -72,17 +72,73 @@ struct ElementRFCavity : public Moment2ElementBase
         std::string Eng_Data_Dir = conf().get<std::string>("Eng_Data_Dir", "");
 
         if (CavType == "0.041QWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_41.txt");
-            inf.open((Eng_Data_Dir+"/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
+            inf1.open((Eng_Data_Dir+"/Multipole41/thinlenlon_41.txt").c_str(), std::ifstream::in);
+            if (!inf1.is_open()) {
+                std::cout << "ElementRFCavity: could not open thinlenlon_41.txt\n";
+                exit(1);
+            }
+            inf2.open((Eng_Data_Dir+"/axisData_41.txt").c_str(), std::ifstream::in);
+            if (!inf2.is_open()) {
+                std::cout << "ElementRFCavity: could not open axisData_41.txt\n";
+                exit(1);
+            }
+            CavData.RdData(inf2);
+            inf3.open((Eng_Data_Dir+"/Multipole41/CaviMlp_41.txt").c_str(), std::ifstream::in);
+            if (!inf3.is_open()) {
+                std::cout << "ElementRFCavity: could not open CaviMlp_41.txt\n";
+                exit(1);
+            }
         } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_85.txt");
-            inf.open((Eng_Data_Dir+"/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
+            inf1.open((Eng_Data_Dir+"/Multipole85/thinlenlon_85.txt").c_str(), std::ifstream::in);
+            if (!inf1.is_open()) {
+                std::cout << "ElementRFCavity: could not open thinlenlon_85.txt\n";
+                exit(1);
+            }
+            inf2.open((Eng_Data_Dir+"/axisData_85.txt").c_str(), std::ifstream::in);
+            if (!inf2.is_open()) {
+                std::cout << "ElementRFCavity: could not open axisData_85.txt\n";
+                exit(1);
+            }
+            CavData.RdData(inf2);
+            inf3.open((Eng_Data_Dir+"/Multipole85/CaviMlp_85.txt").c_str(), std::ifstream::in);
+            if (!inf3.is_open()) {
+                std::cout << "ElementRFCavity: could not open CaviMlp_85.txt\n";
+                exit(1);
+            }
         } else if (conf().get<std::string>("cavtype") == "0.29HWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_29.txt");
-            inf.open((Eng_Data_Dir+"/Multipole29/thinlenlon_29.txt").c_str(), std::ifstream::in);
+            inf1.open((Eng_Data_Dir+"/Multipole29/thinlenlon_29.txt").c_str(), std::ifstream::in);
+            if (!inf1.is_open()) {
+                std::cout << "ElementRFCavity: could not open thinlenlon_29.txt\n";
+                exit(1);
+            }
+            inf2.open((Eng_Data_Dir+"/axisData_29.txt").c_str(), std::ifstream::in);
+            if (!inf2.is_open()) {
+                std::cout << "ElementRFCavity: could not open axisData_29.txt\n";
+                exit(1);
+            }
+            CavData.RdData(inf2);
+            inf3.open((Eng_Data_Dir+"/Multipole29/CaviMlp_29.txt").c_str(), std::ifstream::in);
+            if (!inf3.is_open()) {
+                std::cout << "ElementRFCavity: could not open CaviMlp_29.txt\n";
+                exit(1);
+            }
         } else if (conf().get<std::string>("cavtype") == "0.53HWR") {
-            CavData.RdData(Eng_Data_Dir+"/axisData_53.txt");
-            inf.open((Eng_Data_Dir+"/Multipole53/thinlenlon_53.txt").c_str(), std::ifstream::in);
+            inf1.open((Eng_Data_Dir+"/Multipole53/thinlenlon_53.txt").c_str(), std::ifstream::in);
+            if (!inf1.is_open()) {
+                std::cout << "ElementRFCavity: could not open thinlenlon_53.txt\n";
+                exit(1);
+            }
+            inf2.open((Eng_Data_Dir+"/axisData_53.txt").c_str(), std::ifstream::in);
+            if (!inf2.is_open()) {
+                std::cout << "ElementRFCavity: could not open axisData_53.txt\n";
+                exit(1);
+            }
+            CavData.RdData(inf2);
+            inf3.open((Eng_Data_Dir+"/Multipole53/CaviMlp_53.txt").c_str(), std::ifstream::in);
+            if (!inf3.is_open()) {
+                std::cout << "ElementRFCavity: could not open CaviMlp_53.txt\n";
+                exit(1);
+            }
         } else {
             std::ostringstream strm;
             strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
@@ -113,6 +169,12 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
                      const double EfieldScl, double &IonFy, double &accIonW);
+
+    void TransFacts(const int cavilabel, double beta, const double CaviIonK, const int gaplabel, const double EfieldScl,
+                    double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0);
+
+    void TransitFacMultipole(const int cavi, const std::string &flabel, const double CaviIonK,
+                             double &T, double &S);
 
     virtual ~ElementRFCavity() {}
 

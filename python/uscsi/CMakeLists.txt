@@ -56,6 +56,8 @@ set(PY_SRC_TEST
   test/data/axisData_85.txt
   test/data/Multipole41/thinlenlon_41.txt
   test/data/Multipole85/thinlenlon_85.txt
+  test/data/Multipole41/CaviMlp_41.txt
+  test/data/Multipole85/CaviMlp_85.txt
 )
 
 set(PY_SRC_DATA
