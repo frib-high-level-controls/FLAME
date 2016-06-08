@@ -147,6 +147,7 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         if (beta < 0.025 || beta > 0.08) {
             std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
             calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            return;
         }
         switch (gaplabel) {
         case 0:
@@ -185,6 +186,7 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         if (beta < 0.05 || beta > 0.25) {
             std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
             calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            return;
         }
         switch (gaplabel) {
           case 0:
@@ -220,6 +222,7 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         if (beta < 0.15 || beta > 0.4) {
             std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
             calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            return;
         }
         switch (gaplabel) {
           case 0:
@@ -255,6 +258,7 @@ void TransFacts(const int cavilabel, double beta, const double CaviIonK, const i
         if (beta < 0.3 || beta > 0.6) {
             std::cout << "*** TransFacts: CaviIonK out of Range" << "\n";
             calTransfac(cavilabel, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+            return;
         }
         switch (gaplabel) {
           case 0:
@@ -304,15 +308,19 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
     if ((cavi == 1) && (CaviIonK < 0.025 || CaviIonK > 0.055)) {
         std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
         calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        return;
     } else if ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) {
         std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
         calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        return;
     } else if ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) {
         std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
         calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        return;
     } else if ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954)) {
         std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
         calTransfac(cavi, CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        return;
     }
 
     if (flabel == "CaviMlp_EFocus1") {
@@ -461,7 +469,7 @@ void TransitFacMultipole(const int cavi, const std::string &flabel, const double
             break;
         default:
             std::ostringstream strm;
-            strm << "*** 0.29 HWR and 0.53HWR havr no dipole term\n";
+            strm << "*** 0.29 HWR and 0.53HWR have no dipole term\n";
             throw std::runtime_error(strm.str());
             break;
         }
