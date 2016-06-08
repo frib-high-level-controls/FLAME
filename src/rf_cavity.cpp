@@ -256,7 +256,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     if (true) {
         calTransfac(inf2, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
         V0 *= EfieldScl;
-        printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+//        printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
 //        return;
     }
 
@@ -420,7 +420,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     // Convert from [mm] to [m].
 //    Ecen /= MtoMM;
 
-    printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+//    printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
 }
 
 
