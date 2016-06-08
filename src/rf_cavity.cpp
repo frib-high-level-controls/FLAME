@@ -112,20 +112,24 @@ void rd_data(std::fstream &inf, const int column_no, std::vector<double> &Z, std
 {
     std::string       line;
     std::stringstream str;
-    double            z, em;
-
-    std::cout << "rd_data\n";
+    double            c[8];
 
     inf.clear();
     inf.seekg(0, inf.beg);
 
     while (getline(inf, line) && !inf.fail()) {
-        str.str(line);
-        str.clear();
-        str >> z >> em;
-        Z.push_back(z), EM.push_back(em);
+        if (line[0] == '%') {
+            // Comment.
+        } else {
+            str.str(line);
+            str.clear();
+            str >> c[0] >> c[1]>> c[2]>> c[3]>> c[4]>> c[5]>> c[6]>> c[7];
+            if (false)
+                std::cout << std::scientific << std::setprecision(5)
+                          << std::setw(13) << c[0] << std::setw(13) << c[column_no-1] << "\n";
+            Z.push_back(c[0]), EM.push_back(c[column_no-1]);
+        }
     }
-    inf.close();
 }
 
 
@@ -183,8 +187,8 @@ void calTransfac(std::fstream &inf,  int column_no, const double IonK,
     n = z.size();
 
     // Start at zero.
-    for (k = 0; k < n; k++)
-        z[k] -= z[0];
+//    for (k = 0; k < n; k++)
+//        z[k] -= z[0];
 
     eml = 0e0, em_mom = 0e0;
     for (k = 0; k < n-1; k++) {
@@ -192,6 +196,9 @@ void calTransfac(std::fstream &inf,  int column_no, const double IonK,
         em_mom += (z[k]+z[k+1])/2e0*(fabs(EM[k])+fabs(EM[k+1]))/2e0*(z[k+1]-z[k]);
     }
     Ecenter = em_mom/eml;
+
+    for (k = 0; k < n; k++)
+        z[k] -= Ecenter;
 
     T = 0;
     for (k = 0; k < n-1; k++)
@@ -205,7 +212,7 @@ void calTransfac(std::fstream &inf,  int column_no, const double IonK,
 
     S = 0e0;
     for (k = 0; k < n-1; k++)
-        S += (EM[k]+EM[k+1])/2e0*sin(k*(z[k]+z[k+1])/2e0)*(z[k+1]-z[k]);
+        S += (EM[k]+EM[k+1])/2e0*sin(IonK*(z[k]+z[k+1])/2e0)*(z[k+1]-z[k]);
     S /= eml;
 
     Sp = 0e0;
@@ -243,6 +250,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     // Evaluate Electric field center, transit factors [T, T', S, S'] and cavity field.
     std::ostringstream  strm;
 
+    // For debugging of TTF function.
     if (false) {
         calTransfac(inf2, 2, CaviIonK, Ecen, T, Tp, S, Sp, V0);
         return;
@@ -410,6 +418,12 @@ void ElementRFCavity::TransitFacMultipole(const int cavi, const std::string &fla
                                           double &T, double &S)
 {
     double Ecen, Tp, Sp, V0;
+
+    // For debugging of TTF function.
+    if (false) {
+        calTransfac(inf3, get_column(flabel), CaviIonK, Ecen, T, Tp, S, Sp, V0);
+        return;
+    }
 
     if (((cavi == 1) && (CaviIonK < 0.025 || CaviIonK > 0.055)) ||
         ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) ||
