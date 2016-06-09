@@ -12,7 +12,7 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 void PrtVec1(const Moment2State::vector_t &a);
 
-void PrtMat1(const value_mat &M);
+void PrtMat1(const Moment2State::matrix_t &M);
 
 void RotMat(const double dx, const double dy,
             const double theta_x, const double theta_y, const double theta_z,

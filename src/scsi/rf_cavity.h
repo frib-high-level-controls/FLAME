@@ -17,7 +17,7 @@ public:
     std::vector<double> s,     // s coordinate [m]
                         Elong; // Longitudinal Electric field [V/m].
 
-    void RdData(std::fstream &inf);
+    void RdData(std::istream &inf);
     void show(std::ostream&, const int) const;
     void show(std::ostream&) const;
 };
@@ -39,6 +39,16 @@ public:
     void show(std::ostream& strm) const;
 };
 
+struct MLPtable {
+    typedef Moment2State::matrix_t value_t;
+
+    typedef std::map<std::string, size_t> colnames_t;
+    colnames_t colnames;
+
+    value_t table;
+
+    void read(const std::string&);
+};
 
 struct ElementRFCavity : public Moment2ElementBase
 {
@@ -50,11 +60,13 @@ struct ElementRFCavity : public Moment2ElementBase
         std::string name, type;
         double length, aperature, E0;
     };
-    std::vector<RawParams> lattice;
+    std::vector<RawParams> lattice; // from axisData_*.txt
 
-    CavDataType    CavData;
-    std::vector<CavTLMLineType> CavTLMLineTab;
+    CavDataType    CavData; // from thinlenlon_*.txt
+    std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
     double phi_ref;
+
+    MLPtable mlptable;
 
     ElementRFCavity(const Config& c);
 
@@ -74,9 +86,7 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void PropagateLongRFCav(Particle &ref);
 
-    void InitRFCav(Particle &real, double &accIonW,
-                   double &avebeta, double &avegamma, value_mat &M,
-                   state_t::matrix_t &M, CavTLMLineType &linetab);
+    void InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab);
 
     void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
                      const double EfieldScl, double &IonFy);
@@ -95,16 +105,17 @@ struct ElementRFCavity : public Moment2ElementBase
         using namespace boost::numeric::ublas;
 
         // IonEk is Es + E_state; the latter is set by user.
-        ST.real.recalc();
+        ST.recalc();
 
-        if(ST.real.IonEk!=last_Kenergy_in) {
+        if(!check_cache(ST)) {
             // need to re-calculate energy dependent terms
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-            get_misalign(ST);
+            for(size_t i=0; i<last_Kenergy_in.size(); i++)
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
-            ST.real.recalc();
+            ST.recalc();
         }
 
         // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
@@ -112,22 +123,24 @@ struct ElementRFCavity : public Moment2ElementBase
 
         ST.pos += length;
 
-        ST.moment0 = prod(misalign, ST.moment0);
-        ST.moment0 = prod(transfer, ST.moment0);
+        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+            ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
+            ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
 
-        ST.moment0[state_t::PS_S]  = ST.real.phis - ST.ref.phis;
-        ST.moment0[state_t::PS_PS] = (ST.real.IonEk-ST.ref.IonEk)/MeVtoeV;
+            ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
+            ST.moment0[i][state_t::PS_PS] = (ST.real[i].IonEk-ST.ref.IonEk)/MeVtoeV;
 
-        ST.moment0 = prod(misalign_inv, ST.moment0);
+            ST.moment0[i] = prod(misalign_inv[i], ST.moment0[i]);
 
-        scratch  = prod(misalign, ST.state);
-        ST.state = prod(scratch, trans(misalign));
+            scratch  = prod(misalign[i], ST.moment1[i]);
+            ST.moment1[i] = prod(scratch, trans(misalign[i]));
 
-        scratch  = prod(transfer, ST.state);
-        ST.state = prod(scratch, trans(transfer));
+            scratch  = prod(transfer[i], ST.moment1[i]);
+            ST.moment1[i] = prod(scratch, trans(transfer[i]));
 
-        scratch  = prod(misalign_inv, ST.state);
-        ST.state = prod(scratch, trans(misalign_inv));
+            scratch  = prod(misalign_inv[i], ST.moment1[i]);
+            ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
+        }
     }
 
     virtual void recompute_matrix(state_t& ST)
@@ -142,15 +155,15 @@ struct ElementRFCavity : public Moment2ElementBase
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-            transfer[i](state_t::PS_X, state_t::PS_PX) = L;
-            transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
+            transfer[i](state_t::PS_X, state_t::PS_PX) = length;
+            transfer[i](state_t::PS_Y, state_t::PS_PY) = length;
 
             last_Kenergy_in[i] = ST.real[i].IonEk;
             // J.B. Bug in TLM.
             double SampleIonK = ST.real[i].SampleIonK;
 
 
-            ElementRFCavity::InitRFCav(ST.real, accIonW, avebeta, avegamma, transfer[i], CavTLMLineTab[i]);
+            ElementRFCavity::InitRFCav(ST.real[i], transfer[i], CavTLMLineTab[i]);
 
             // J.B. Bug in TLM.
             ST.real[i].SampleIonK = SampleIonK;

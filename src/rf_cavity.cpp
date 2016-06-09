@@ -26,7 +26,7 @@ static
 double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip);
 
 
-void CavDataType::RdData(std::fstream &inf)
+void CavDataType::RdData(std::istream &inf)
 {
     std::string       line;
     double            s, Elong;
@@ -703,19 +703,38 @@ ElementRFCavity::ElementRFCavity(const Config& c)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
 {
     std::string CavType      = conf().get<std::string>("cavtype");
-    std::string cavfile(c.get<std::string>("Eng_Data_Dir", ""));
+    std::string cavfile(c.get<std::string>("Eng_Data_Dir", "")),
+                fldmap(cavfile),
+                mlpfile(cavfile);
 
     if (CavType == "0.041QWR") {
-        CavData.RdData(cavfile+"/axisData_41.txt");
+        fldmap  += "/axisData_41.txt";
         cavfile += "/Multipole41/thinlenlon_41.txt";
-    } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-        CavData.RdData(cavfile+"/axisData_85.txt");
+        mlpfile += "/Multipole41/CaviMlp_41.txt";
+    } else if (CavType == "0.085QWR") {
+        fldmap  += "/axisData_85.txt";
         cavfile += "/Multipole85/thinlenlon_85.txt";
+        mlpfile += "/Multipole85/CaviMlp_85.txt";
+    } else if (CavType == "0.029HWR") {
+        fldmap  += "/axisData_29.txt";
+        cavfile += "/Multipole29/thinlenlon_29.txt";
+        mlpfile += "/Multipole29/CaviMlp_29.txt";
+    } else if (CavType == "0.053HWR") {
+        fldmap  += "/axisData_53.txt";
+        cavfile += "/Multipole53/thinlenlon_53.txt";
+        mlpfile += "/Multipole53/CaviMlp_53.txt";
     } else {
         std::ostringstream strm;
         strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
         throw std::runtime_error(strm.str());
     }
+
+    {
+        std::ifstream fstrm(fldmap.c_str());
+        CavData.RdData(fstrm);
+    }
+
+    mlptable.read(mlpfile);
 
     {
         std::ifstream fstrm(cavfile.c_str());
@@ -1273,7 +1292,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o, accIonW);
+    GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o);
 
     ref.IonEk       = ref.IonW - ref.IonEs;
     ref.recalc();
@@ -1281,9 +1300,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 }
 
 
-void ElementRFCavity::InitRFCav(Particle &real, double &accIonW,
-                                double &avebeta, double &avegamma, value_mat &M,
-                                state_t::matrix_t &M, CavTLMLineType &linetab)
+void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
     std::string CavType;
     int         cavi, cavilabel, multip;

@@ -113,26 +113,26 @@ struct Moment2ElementBase : public ElementVoid
 {
     typedef Moment2State state_t;
 
+    typedef state_t::matrix_t value_t;
+
     Moment2ElementBase(const Config& c);
     virtual ~Moment2ElementBase();
 
-    void get_misalign(state_t& ST);
+    void get_misalign(const state_t& ST, const Particle& real, value_t& M, value_t& IM) const;
 
     virtual void advance(StateBase& s);
+
+    virtual bool check_cache(const state_t& S) const;
+    bool resize_cache(const state_t& S);
 
     virtual void recompute_matrix(state_t&);
 
     virtual void show(std::ostream& strm, int level) const;
 
-    typedef boost::numeric::ublas::matrix<double,
-                    boost::numeric::ublas::row_major,
-                    boost::numeric::ublas::bounded_array<double, state_t::maxsize*state_t::maxsize>
-    > value_t;
-
     std::vector<double> last_Kenergy_in, last_Kenergy_out;
     //! final transfer matrix
     std::vector<value_t> transfer, transfer_raw;
-    value_t misalign, misalign_inv;
+    std::vector<value_t> misalign, misalign_inv;
 
     virtual void assign(const ElementVoid *other);
 

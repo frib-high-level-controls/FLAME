@@ -33,7 +33,7 @@ void PrtVec1(const Moment2State::vector_t &a)
 }
 
 
-void PrtMat1(const value_mat &M)
+void PrtMat1(const Moment2State::matrix_t &M)
 {
     for (size_t j = 0; j < M.size1(); j++) {
         for (size_t k = 0; k < M.size2(); k++)
@@ -50,7 +50,7 @@ void RotMat(const double dx, const double dy,
 {
     typedef typename Moment2ElementBase::state_t state_t;
 
-    value_mat T = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+    Moment2State::matrix_t T = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
     R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -80,9 +80,9 @@ void RotMat(const double dx, const double dy,
 
 #else
 
-    value_mat Rx = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-              Ry = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-              Rz = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+    Moment2State::matrix_t Rx = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
+            Ry = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
+            Rz = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
     Rx(2, 2) =  cos(theta_x), Rx(2, 4) =  sin(theta_x);
     Rx(4, 2) = -sin(theta_x), Rx(4, 4) =  cos(theta_x);
@@ -189,7 +189,7 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
 {
     typedef typename Moment2ElementBase::state_t state_t;
 
-    value_mat edge1, edge2, R;
+    Moment2State::matrix_t edge1, edge2, R;
 
     double  rho = L/phi,
             Kx  = K + 1e0/sqr(rho),
@@ -295,7 +295,7 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
 {
     typedef typename Moment2ElementBase::state_t state_t;
 
-    value_mat edge;
+    Moment2State::matrix_t edge;
 
     double  rho = L/phi,
             scl = (real_gamma - 1e0)*IonEs/MeVtoeV,
