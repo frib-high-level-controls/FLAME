@@ -1,6 +1,52 @@
 # Beam envelope simulation.
 
-sim_type = "MomentMatrix";
+sim_type = "MomentMatrix2";
+
+# Global parameters.
+
+AMU   = 931.49432e6;         # Atomic mass unit [eV/c^2].
+
+IonZ  = 33.0/238.0;          # Charge state for U_238.
+IonEs = AMU;                 # Nucleon mass [eV/u].
+IonEk = 0.011969995341581e6; # Kinetic energy at LS1 entrance [eV/u].
+IonW  = IonEs + IonEk;       # Total energy [eV/u].
+
+# Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]
+
+IonChargeStates = [33.0/238.0, 34.0/238.0];
+NCharge         = [10111.0, 10531.0];
+
+#cstate = 0;
+
+BaryCenter0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+BaryCenter1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+# Define beam envelope parameters.
+
+S0 = [
+  368.8,   0.025,        0.0,   0.0,        0.0, 0.0, 0.0,
+    0.025, 2.88097e-5,   0.0,   0.0,        0.0, 0.0, 0.0,
+    0.0,   0.0,        368.8,   0.025,      0.0, 0.0, 0.0,
+    0.0,   0.0,          0.025, 2.88097e-5, 0.0, 0.0, 0.0,
+    0.0,   0.0,          0.0,   0.0,        0.0, 0.0, 0.0,
+    0.0,   0.0,          0.0,   0.0,        0.0, 0.0, 0.0,
+    0.0,   0.0,          0.0,   0.0,        0.0, 0.0, 0.0
+];
+
+S1 = [
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+];
+
+S: source, vector_variable="BaryCenter", matrix_variable = "S";
+
+Eng_Data_Dir = dir("data");
 
 d0_1: drift, L = 0.0, aper = 0.02;
 q01_2: drift, L = 0.2, aper = 0.02;
@@ -37,10 +83,10 @@ d2_15: drift, L = 0.1282, aper = 0.02;
 q1h_11: quadrupole, L = 0.1034, B2 = 0.942438547187938, aper = 0.02;
 q1h_12: quadrupole, L = 0.1034, B2 = 0.942438547187938, aper = 0.02;
 d1_16: drift, L = 0.3466, aper = 0.02;
-dips_6: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
-dipm_7: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
-dipm_8: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
-dipm_9: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dips_6:  sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_7:  sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_8:  sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
+dipm_9:  sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
 dipe_10: sbend, L = 0.2, phi = 18.00000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.005069595145057, aper = 0.02;
 dsb2_17: drift, L = 0.2, aper = 0.02;
 dl0_18: drift, L = 0, aper = 0.02;
@@ -75,7 +121,7 @@ dl7a_32: drift, L = 0.1678, aper = 0.02;
 dl7a_33: drift, L = 0.1678, aper = 0.02;
 dl7a_34: drift, L = 0.1678, aper = 0.02;
 dl7a_35: drift, L = 0.1678, aper = 0.02;
-eb1_1_0: edipole, L = 1, phi = 90, x_frng = 1, y_frng = 0.0, beta = 0.00506953, spher = 1, asym_fac = 0.0, aper = 0.02;
+eb1_1_0: edipole, L = 1, phi = 90, fringe_x = 0.0, fringe_y = 0.0, ver = v, beta = 0.00506953, spher = 1.0, asym_fac = 0.0, aper = 0.02;
 dl8a_36: drift, L = 0.5466, aper = 0.02;
 q6h_13: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
 q6h_14: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
@@ -114,7 +160,7 @@ dl8b_48: drift, L = 0.1282, aper = 0.02;
 q6h_35: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
 q6h_36: quadrupole, L = 0.1034, B2 = 0.738435761636185294, aper = 0.02;
 dl8a_49: drift, L = 0.5466, aper = 0.02;
-eb1_3_0: edipole, L = 1, phi = 90, x_frng = 1, y_frng = 0.0, beta = 0.00506953, spher = 1, asym_fac = 0.0, aper = 0.02;
+eb1_3_0: edipole, L = 1, phi = 90, fringe_x = 0.0, fringe_y = 0.0, ver = v, beta = 0.00506953, spher = 1.0, asym_fac = 0.0, aper = 0.02;
 dl7a_50: drift, L = 0.1678, aper = 0.02;
 dl7a_51: drift, L = 0.1678, aper = 0.02;
 dl7a_52: drift, L = 0.1678, aper = 0.02;
@@ -141,6 +187,7 @@ sol4h_14: solenoid, L = 0.16085, B = 0.781769789480284940, aper = 0.02;
 dl12_65: drift, L = 0.3191, aper = 0.02;
 
 cell: LINE = (
+  S,
   d0_1, q01_2, dsb1_3, q02_4, dsb2_5, dips_1, dipm_2, dipm_3, 
   dipm_4, dipe_5, d1a_6, ch_1, cv_2, d1b_7, q1h_1, q1h_2, 
   d2_8, q2h_3, q2h_4, d3_9, q3h_5, q3h_6, d4_10, d4_11, 
@@ -161,4 +208,13 @@ cell: LINE = (
   dl12_65
 );
 
-USE: cell;
+cell1: LINE = (
+  S,
+  d0_1, q01_2, dsb1_3, q02_4, dsb2_5, dips_1, dipm_2, dipm_3,
+  dipm_4, dipe_5, d1a_6, ch_1, cv_2, d1b_7, q1h_1, q1h_2,
+  d2_8, q2h_3, q2h_4, d3_9, q3h_5, q3h_6, d4_10, d4_11,
+  d4_12, d4_13, q3h_7, q3h_8, d3_14, q2h_9, q2h_10, d2_15,
+  q1h_11, q1h_12, d1_16, dips_6, dipm_7, dipm_8, dipm_9, dipe_10
+);
+
+USE: cell1;

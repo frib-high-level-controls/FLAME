@@ -6,6 +6,14 @@ sim_type = "MomentMatrix2";
 
 # Global parameters.
 
+# Mpultipole level: 0 only include focusing and defocusing effects,
+#                   1 include dipole terms,
+#                   2 include quadrupole terms.
+MpoleLevel = "2";
+
+# Dipole strength adjusted to beam energy.
+HdipoleFitMode = "1";
+
 AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
 
 IonZ  = 33.0/238.0;    # Charge state for U_238.
@@ -18,7 +26,7 @@ Stripper_IonChargeStates = [76.0/238.0, 77.0/238.0, 78.0/238.0, 79.0/238.0, 80.0
 Stripper_NCharge         = [2660.0, 4360.0, 5300.0, 5090.0, 3230.0];
 
 # Define Initial Conditions for the Charge States.
-# Units are: [mm, rad, mm, rad, rad, MeV/u]
+# Units are: [mm, rad, mm, rad, rad, MeV/u]. Note, units for mis-alignments are: [m] and [rad].
 
 IonChargeStates = [33.0/238.0, 34.0/238.0];
 NCharge         = [10111.0, 10531.0];
@@ -167,8 +175,7 @@ ls1_wa03_port_d1224_60: drift, L = 0.000000, aper = 0.020000;
 drift_61: drift, L = 0.099000, aper = 0.020000;
 drift_62: drift, L = 0.072000, aper = 0.020000;
 drift_63: drift, L = 0.175312, aper = 0.020000;
-ls1_cb01_cav1_d1229: rfcavity, cavtype = "0.085QWR", L = 0.300000,
-  f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
+ls1_cb01_cav1_d1229: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -40.000000, scl_fac = 1.000000, aper = 0.017000;
 drift_64: drift, L = 0.095595, aper = 0.020000;
 ls1_cb01_bpm_d1231_23: bpm;
 drift_65: drift, L = 0.055880, aper = 0.020000;
@@ -888,31 +895,31 @@ drift_473: drift, L = 0.091000, aper = 0.020000;
 fs1_css_port_d2160_474: drift, L = 0.000000, aper = 0.020000;
 drift_475: drift, L = 0.099000, aper = 0.020000;
 drift_476: drift, L = 0.098800, aper = 0.020000;
-fs1_css_dh_d2163_1: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2163_2: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2163_3: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2163_4: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2163_5: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = -5.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2163_1: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2163_2: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2163_3: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2163_4: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2163_5: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.190370, aper = 0.020000;
 drift_477: drift, L = 0.250000, aper = 0.020000;
 fs1_css_dh_d2169_6:  sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2169_7:  sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2169_8:  sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2169_9:  sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2169_10: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2169_10: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 drift_478: drift, L = 0.091402, aper = 0.020000;
 drift_479: drift, L = 0.067196, aper = 0.020000;
 drift_480: drift, L = 0.091402, aper = 0.020000;
-fs1_css_dh_d2174_11: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2174_11: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2174_12: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2174_13: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2174_14: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 fs1_css_dh_d2174_15: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.190370, aper = 0.020000;
 drift_481: drift, L = 0.250000, aper = 0.020000;
-fs1_css_dh_d2180_16: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2180_17: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2180_18: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2180_19: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.190370, aper = 0.020000;
-fs1_css_dh_d2180_20: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = -5.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2180_16: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2180_17: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2180_18: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2180_19: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
+fs1_css_dh_d2180_20: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.190370, aper = 0.020000;
 drift_482: drift, L = 0.060000, aper = 0.020000;
 drift_483: drift, L = 0.150334, aper = 0.020000;
 drift_484: drift, L = 0.100000, aper = 0.020000;
@@ -1002,30 +1009,30 @@ drift_542: drift, L = 0.280000, aper = 0.025000;
 fs1_css_port_d2286_543: drift, L = 0.430000, aper = 0.025000;
 drift_544: drift, L = 0.100000, aper = 0.025000;
 drift_545: drift, L = 0.185000, aper = 0.025000;
-fs1_css_dh_d2293_21: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_22: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_23: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_24: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_25: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_21: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_22: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_23: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_24: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_25: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
 drift_546: drift, L = 0.250000, aper = 0.020000;
 fs1_css_dh_d2298_26: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2298_27: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2298_28: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2298_29: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2298_30: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2298_30: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 drift_547: drift, L = 0.100000, aper = 0.020000;
 drift_548: drift, L = 0.250000, aper = 0.020000;
-fs1_css_dh_d2305_31: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2305_31: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_32: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_33: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_34: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_35: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.188787, aper = 0.020000;
 drift_549: drift, L = 0.250000, aper = 0.020000;
-fs1_css_dh_d2310_36: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_37: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_38: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_39: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_40: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_36: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_37: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_38: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_39: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_40: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 drift_550: drift, L = 0.015530, aper = 0.020000;
 drift_551: drift, L = 0.116000, aper = 0.020000;
 fs1_css_bpm_d2313_172: bpm;
@@ -1511,7 +1518,7 @@ LS1_CH02: LINE = (
 FS1_CSS1: LINE = (
   drift_470, drift_471, 
   drift_472, drift_473, fs1_css_port_d2160_474, drift_475, drift_476, fs1_css_dh_d2163_1, fs1_css_dh_d2163_2, fs1_css_dh_d2163_3, 
-  fs1_css_dh_d2163_4, fs1_css_dh_d2163_5, drift_477, fs1_css_dh_d2169_6, fs1_css_dh_d2169_7, fs1_css_dh_d2169_8, fs1_css_dh_d2169_9, fs1_css_dh_d2169_10, 
+  fs1_css_dh_d2163_4, fs1_css_dh_d2163_5, drift_477, fs1_css_dh_d2169_6, fs1_css_dh_d2169_7, fs1_css_dh_d2169_8, fs1_css_dh_d2169_9, fs1_css_dh_d2169_10,
   drift_478, drift_479, drift_480, fs1_css_dh_d2174_11, fs1_css_dh_d2174_12, fs1_css_dh_d2174_13, fs1_css_dh_d2174_14, fs1_css_dh_d2174_15, 
   drift_481, fs1_css_dh_d2180_16, fs1_css_dh_d2180_17, fs1_css_dh_d2180_18, fs1_css_dh_d2180_19, fs1_css_dh_d2180_20, drift_482, drift_483, 
   drift_484, fs1_css_port_d2186_485, drift_486, drift_487, drift_488, fs1_css_dch_d2189_156, fs1_css_dcv_d2189_157, drift_489, 
@@ -1608,6 +1615,15 @@ LS1: LINE = (
   LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02
 );
 
+TO_SBEND: LINE = (
+  S,
+  LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
+  LS1_WB03, LS1_CB04, LS1_WB04, LS1_CB05, LS1_WB05, LS1_CB06, LS1_WB06, LS1_CB07, LS1_WB07, LS1_CB08, LS1_WB08,
+  LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02,
+  drift_470, drift_471,  drift_472, drift_473, fs1_css_port_d2160_474, drift_475, drift_476,
+  fs1_css_dh_d2163_1, fs1_css_dh_d2163_2, fs1_css_dh_d2163_3, fs1_css_dh_d2163_4, fs1_css_dh_d2163_5
+);
+
 TO_STRL: LINE = (
   S,
   LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
@@ -1625,6 +1641,8 @@ W_STR: LINE = (
 );
 
 #USE: LS1;
+
+#USE: TO_SBEND;
 
 #USE: TO_STRL;
 

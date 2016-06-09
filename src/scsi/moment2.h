@@ -28,9 +28,9 @@ struct Particle {
            IonW,        // Total energy.
            gamma,       // Gamma for ion.
            beta,        // Beta for ion.
-           bg,          // Beta*gamma;
-           SampleIonK,
-           phis,        // Synchrotron phase.
+           bg,          // Beta*gamma.
+           SampleIonK,  // Sample rate; different RF Cavity due to RF frequenies.
+           phis,        // Absolute synchrotron phase [rad].
            IonEk;       // Kinetic energy.
 
     Particle() {
@@ -115,6 +115,8 @@ struct Moment2ElementBase : public ElementVoid
 
     Moment2ElementBase(const Config& c);
     virtual ~Moment2ElementBase();
+
+    void get_misalign(state_t& ST);
 
     virtual void advance(StateBase& s);
 

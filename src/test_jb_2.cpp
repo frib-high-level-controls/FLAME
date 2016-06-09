@@ -57,46 +57,80 @@ void PrtMat(const value_mat &M)
 }
 
 static
-void PrtElement(Moment2ElementBase *elem)
+void GetCenofChgx(const Config &conf, std::vector<state_t*> &ST,
+                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
 {
-    for(unsigned k = 0; k<elem->transfer.size(); k++) {
-        std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" State "<<k<<" Transfer\n";
-        PrtMat(elem->transfer[k]);
+    Moment2State::vector_t BeamVar;
+
+    CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
+    BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
+    BeamVar  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
+
+    double Ntot = 0e0;
+    for (size_t i = 0; i < ST.size(); i++) {
+        state_t* StatePtr = ST[i];
+        for (size_t j = 0; j < PS_Dim; j++) {
+            CenofChg[j] += StatePtr->real.IonQ*StatePtr->moment0[j];
+        }
+        Ntot += StatePtr->real.IonQ;
     }
+
+    for (size_t j = 0; j < PS_Dim; j++)
+        CenofChg[j] /= Ntot;
+
+    for (size_t i = 0; i < ST.size(); i++) {
+        for (size_t j = 0; j < PS_Dim; j++) {
+            state_t* StatePtr = ST[i];
+            BeamVar[j]  +=
+                    StatePtr->real.IonQ*(StatePtr->state(j, j)
+                    +(StatePtr->moment0[j]-CenofChg[j])*(StatePtr->moment0[j]-CenofChg[j]));
+        }
+    }
+
+    for (size_t j = 0; j < PS_Dim; j++)
+        BeamRMS[j] = sqrt(BeamVar[j]/Ntot);
 }
 
-static
-void PrtState(state_t* StatePtr)
+std::ostream& operator<<(std::ostream& strm, const Particle& P)
 {
-    unsigned k;
+    strm <<std::setprecision(8)<<std::setw(14)
+      <<"IonZ="<<P.IonZ
+      <<" IonQ="<<P.IonQ
+      <<" IonEs="<<P.IonEs
+      <<" IonEk="<<P.IonEk
+      <<" SampleIonK="<<P.SampleIonK
+      <<" phis="<<P.phis
+      <<" IonW="<<P.IonW
+      <<" gamma="<<P.gamma
+      <<" beta="<<P.beta
+      <<" bg="<<P.bg
+      ;
+    return strm;
+}
 
-    state_t::vector_t cent;
+void PrtState(const Config &conf, std::vector<state_t*> StatePtr)
+{
+    size_t k;
 
-    double totalQ = 0.0;
-
-    for (k = 0; k < StatePtr->size(); k++) {
-        std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr->pos << "\n"
-                  <<"\n Ref:  "<<StatePtr->ref
-                  <<"\n Real: "<<StatePtr->real[k]
-                  <<"\n moment0\n";
-        PrtVec(StatePtr->moment0[k]);
+    for (k = 0; k < StatePtr.size(); k++) {
+        std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr[k]->pos << "\n"
+                          <<"\n Ref:  "<<StatePtr[k]->ref
+                          <<"\n Real: "<<StatePtr[k]->real
+                          <<"\n moment0\n";
+        PrtVec(StatePtr[k]->moment0);
         std::cout << " moment1\n";
-        PrtMat(StatePtr->moment1[k]);
+        PrtMat(StatePtr[k]->state);
         std::cout << "\n";
-
-        totalQ += StatePtr->real[k].IonQ;
-        if(k==0)
-            cent  = StatePtr->moment0[k]*StatePtr->real[k].IonQ;
-        else
-            cent += StatePtr->moment0[k]*StatePtr->real[k].IonQ;
     }
 
-    cent /= totalQ;
+    Moment2State::vector_t cent, rms;
 
-    std::cout<<"Center: "<<cent<<"\n";
+    GetCenofChgx(conf, StatePtr, cent, rms);
+
+    std::cout<<"Center: "<< std::scientific << std::setprecision(10)
+             << std::setw(18)<<cent<<"\n\n";
 }
 
-static
 std::vector<double> GetChgState(Config &conf)
 {
     return conf.get<std::vector<double> >("IonChargeStates");
@@ -114,14 +148,16 @@ static
 void prt_initial_cond(Machine &sim,
                       state_t &ST)
 {
-    unsigned     k;
-
-    // Propagate through first element (beam initial conditions).
-    sim.propagate(&ST, 0, 1);
+    size_t  k;
+    state_t *StatePtr;
 
     for (k = 0; k < ST.size(); k++) {
         std::cout << "\nIon charge state:\n"
-                  << "\nIonZ = " << std::fixed << std::setprecision(5) << std::setw(9) << ST.real[k].IonZ << "\n";
+                  << "\nIonZ = " << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k] << "\n";
+        // Propagate through first element (beam initial conditions).
+        sim[k]->propagate(ST[k].get(), 0, 1);
+
+        StatePtr = dynamic_cast<state_t*>(ST[k].get());
 
         std::cout << "\nBarycenter:\n";
         PrtVec(ST.moment0[k]);
@@ -168,8 +204,9 @@ void propagate(std::auto_ptr<Config> &conf)
 
         std::cout << std::fixed << std::setprecision(5)
                   << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
+    }
 
-        PrtState(StatePtr);
+    PrtState(StatePtr);
     }
 }
 
@@ -192,75 +229,63 @@ void propagate1(const Config &conf)
 
     tStamp[0] = clock();
 
-    Machine::iterator it;
+    prt_initial_cond(sim, ChgState, state);
 
-    for(it = sim.begin(); it!=sim.end(); ++it)
-    {
-        ElementVoid* elem   = *it;
+    clock_t tStamp[2];
 
-        if(elem->index==0) {
-            Moment2State::vector_t cent, rms;
-            GetCenofChg(conf, *StatePtr, cent, rms);
+    tStamp[0] = clock();
 
-            std::cout << "\nAfter source\nCenter: 2\n";
-            PrtVec(cent);
-            std::cout << "\nRMS: 2\n";
-            PrtVec(rms);
-        }
+    while (it[0] != sim[0]->end()) {
+        ElementVoid* elem   = *it[0];
+        std::string  t_name = elem->type_name(); // C string -> C++ string.
+        std::cout<<"At element "<<elem->index<<" "<<elem->name<<"\n";
 
-        if(strcmp(elem->type_name(), "stripper")==0) {
-            elem_no = elem->index;
+        if (t_name == "stripper") {
+            elem_no = it[0] - sim[0]->begin();
             std::cout << "\nElement no: " << elem_no << "\n";
-            std::cout << elem->conf() << "\n";
+            std::cout << conf->get<Config::vector_t>("elements")[elem_no] << "\n";
+            Stripper_GetMat(*conf, sim, state, ChgState);
+
+            StatePtr.clear();
+            it.clear();
+            for (k = 0; k < state.size(); k++) {
+                StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
+                if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+
+                it.push_back(sim[k]->begin()+elem_no+1);
+            }
+
+            while (it[0] != sim[0]->end()) {
+                unsigned idx = (*it[0])->index;
+                std::cout<<"At element "<<(*it[0])->index<<" "<<(*it[0])->name<<"\n";
+
+                for (k = 0; k < state.size(); k++) {
+                    (*it[k])->advance(*state[k]);
+                    std::cout<<"Transfer "<<k<<"\n";
+                    PrtMat(static_cast<Moment2ElementBase*>(*it[k])->transfer);
+                    ++it[k];
+                }
+                std::cout<<"After element "<<idx<<"\n";
+                PrtState(*conf, StatePtr);
+            }
+
             break;
         }
 
-        elem->advance(*state);
-        PrtElement(static_cast<Moment2ElementBase*>(elem));
-
-        std::cout<<"After element "<<elem->index<<"\n";
-        PrtState(StatePtr);
-    }
-
-    {
-        Moment2State::vector_t cent, rms;
-        GetCenofChg(conf, *StatePtr, cent, rms);
-
-        std::cout << "\nCenter: 2\n";
-        PrtVec(cent);
-        std::cout << "\nRMS: 2\n";
-        PrtVec(rms);
-    }
-
-    if(elem_no!=(size_t)-1) {
-        //Stripper_GetMat(conf, *StatePtr, ChgState);
-
-
-        for(; it!=sim.end(); ++it) {
-            ElementVoid* elem = *it;
-            elem->advance(*state);
-            std::cout<<"Element "<<elem->index<<" \""<<elem->name<<"\" Transfer\n";
-
-            std::cout<<"After element "<<elem->index<<"\n";
-            PrtState(StatePtr);
+        unsigned idx = (*it[0])->index;
+        for (k = 0; k < nChgStates; k++) {
+            (*it[k])->advance(*state[k]);
+            std::cout<<"Transfer "<<k<<"\n";
+            PrtMat(static_cast<Moment2ElementBase*>(*it[k])->transfer);
+            ++it[k];
         }
-
-        tStamp[1] = clock();
-
-        PrtState(StatePtr);
-
-        {
-            Moment2State::vector_t cent, rms;
-            GetCenofChg(conf, *StatePtr, cent, rms);
-
-            std::cout << "\nCenter: 0\n";
-            PrtVec(cent);
-            std::cout << "\nRMS: 0\n";
-            PrtVec(rms);
-        }
-    } else {
-        tStamp[1] = clock();
+        std::cout<<"After element "<<idx<<"\n\n";
+        PrtState(*conf, StatePtr);
     }
+
+    tStamp[1] = clock();
+
+    PrtState(*conf, StatePtr);
 
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
