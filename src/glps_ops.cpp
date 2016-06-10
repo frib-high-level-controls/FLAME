@@ -1,9 +1,5 @@
 
-#if __cplusplus >= 201103L
 #  include <cmath>
-#else
-#  include <math.h>
-#endif
 
 #include <sstream>
 #include <limits>
@@ -14,9 +10,7 @@
 
 # define M_PI 3.14159265358979323846
 
-#if __cplusplus >= 201103L
 using std::isfinite;
-#endif
 namespace {
 // Numeric operations
 
