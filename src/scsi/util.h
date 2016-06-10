@@ -1,10 +1,12 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <map>
 #include <ostream>
 #include <stdexcept>
 
 #include <boost/call_traits.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 
 struct key_error : public std::runtime_error
 {
@@ -72,5 +74,20 @@ std::ostream& show_mat(std::ostream& strm, const M& m)
     strm<<"]";
     return strm;
 }
+
+/** Parse a file containing a single table of numeric values w/ optional column headers
+ */
+struct numeric_table {
+    typedef boost::numeric::ublas::matrix<double,
+        boost::numeric::ublas::row_major
+    > value_t;
+
+    typedef std::map<std::string, size_t> colnames_t;
+    colnames_t colnames;
+
+    value_t table;
+
+    void read(std::istream&);
+};
 
 #endif // UTIL_H

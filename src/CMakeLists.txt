@@ -59,21 +59,18 @@ add_library(uscsi_core SHARED
   config.cpp
 
   linear.cpp
-
   moment.cpp
-
   moment2.cpp
-
   moment2_sup.cpp
-
   rf_cavity.cpp
-
   chg_stripper.cpp
 
   glps_parser.cpp glps_parser.h
   glps_ops.cpp
   glps.par.c glps.par.h
   glps.tab.c glps.tab.h
+
+  util.cpp
 
   h5loader.cpp
   h5writer.cpp
@@ -131,6 +128,16 @@ add_executable(test_config
 add_test(config test_config)
 target_link_libraries(test_config
   uscsi_core
+  ${Boost_PRG_EXEC_MONITOR_LIBRARY}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+
+add_executable(test_util
+  test_util.cpp
+  util.cpp
+)
+add_test(util test_util)
+target_link_libraries(test_util
   ${Boost_PRG_EXEC_MONITOR_LIBRARY}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
