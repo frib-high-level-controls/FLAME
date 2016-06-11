@@ -570,3 +570,83 @@ class testBasic(unittest.TestCase):
          [-1.10724626e-04, -7.24623758e-07,  2.59042891e-04,  2.96003425e-07,  2.54131690e-05,  5.23153894e-05,  0.00000000e+00],
          [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00]
       ], decimal=8)
+
+  def test_through_stripper(self):
+      "Propagate charge states 0-1 to Charge Stripper, and 0-4 afterwards"
+      PS_X = 0; PS_PX = 1; PS_Y = 2; PS_PY = 3; PS_S = 4; PS_PS = 5
+
+      MeVtoeV = 1e6
+
+      def sqr(a): return a*a;
+
+      P = GLPSParser()
+
+      file_name = 'to_strl.lat'
+
+      with open(os.path.join(datadir, file_name), 'rb') as inf:
+        M = Machine(inf)
+
+        S = M.allocState({})
+        M.propagate(S, 0, 1)
+
+        self.assertAlmostEqual(S.real_IonZ, 0.13865546218487396, 14)
+        self.assertAlmostEqual(S.real_IonEs, 931494320.0, 14)
+        self.assertAlmostEqual(S.real_IonEk, 500309.99500000, 14)
+
+        self.assertAlmostEqual(S.ref_IonZ, 0.13865546218487396, 14)
+        self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 14)
+        self.assertAlmostEqual(S.ref_IonEk, 500000.0, 14)
+
+        def checkConsist(self, S, P='real'):
+          self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'))
+          self.assertEqual(getattr(S, P+'_gamma')   , getattr(S, P+'_IonW')/getattr(S, P+'_IonEs'))
+          self.assertEqual(getattr(S, P+'_beta')    , math.sqrt(1e0-1e0/sqr(getattr(S, P+'_gamma'))))
+          self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'))
+
+        checkConsist(self, S, 'real')
+        checkConsist(self, S, 'ref')
+        self.assertAlmostEqual(S.ref_phis,  0.0, 14)
+
+        assert_aequal(S.moment0,
+          [3.3444511955e-03,1.2841341839e-05,8.3106826155e-03,-5.0277881002e-07,1.1632697213e-02,1.2028520756e-03,1.0000000000e+00],
+        decimal=8)
+
+        assert_aequal(S.state, [
+          [ 2.7630945017e+00, -4.2824733660e-04,  1.5817856917e-02,  2.1559419100e-05,  1.8638050602e-04, -2.9939448697e-05,  0.0000000000e+00],
+          [-4.2824733660e-04,  3.8494660679e-06, -1.3838544007e-06, -1.8540987783e-08,  1.0677795224e-07,  5.2856401597e-09,  0.0000000000e+00],
+          [ 1.5817856917e-02, -1.3838544007e-06,  2.3625122600e+00, -6.6932045998e-04, -5.8009993858e-04,  6.7165153406e-06,  0.0000000000e+00],
+          [ 2.1559419100e-05, -1.8540987783e-08, -6.6932045998e-04,  4.8971138918e-06, -5.0161488223e-07,  5.5748422180e-08,  0.0000000000e+00],
+          [ 1.8638050602e-04,  1.0677795224e-07, -5.8009993858e-04, -5.0161488223e-07,  6.7168718453e-04, -1.2322334153e-05,  0.0000000000e+00],
+          [-2.9939448697e-05,  5.2856401597e-09,  6.7165153406e-06,  5.5748422180e-08, -1.2322334153e-05,  1.9952466899e-06,  0.0000000000e+00],
+          [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00],
+        ], decimal=8)
+
+        M.propagate(S, 1, len(M))
+
+        self.assertAlmostEqual(S.real_IonZ, 0.31932773109243695, 12)
+        self.assertAlmostEqual(S.real_IonEs, 931494320.0, 12)
+
+        self.assertAlmostEqual(S.ref_IonZ, 0.3277310924369748, 12)
+        self.assertAlmostEqual(S.ref_IonEs, 931494320.0, 12)
+
+        checkConsist(self, S, 'real')
+        self.assertAlmostEqual(S.real_phis,  2023.6417753279932, 14)
+        self.assertAlmostEqual(S.real_IonEk,  16829746.76773572, 14)
+
+        checkConsist(self, S, 'ref')
+        self.assertAlmostEqual(S.ref_phis,  2023.6512871901991, 14)
+        self.assertAlmostEqual(S.ref_IonEk,  16816951.191958785, 14)
+
+        assert_aequal(S.moment0,
+           [1.1399399086e+00,3.5332829960e-04,1.6963530125e+00,1.2840348237e-05,-1.6985609790e-02,-1.7053590681e-03,1.0000000000e+00],
+          decimal=8)
+
+        assert_aequal(S.state, [
+           [ 7.0396111546e+00,  1.3709748090e-03,  2.4726060938e+00,  5.3836235891e-04, -2.6978106127e-02, -2.8202076912e-03,  0.0000000000e+00],
+           [ 1.3709748090e-03,  4.2097906741e-07,  8.1254342143e-04,  1.5694672658e-07, -7.9468596201e-06, -7.7463374819e-07,  0.0000000000e+00],
+           [ 2.4726060938e+00,  8.1254342143e-04,  8.2548117957e+00,  1.7136763992e-03, -2.1293668678e-02, -1.6963607990e-03,  0.0000000000e+00],
+           [ 5.3836235891e-04,  1.5694672658e-07,  1.7136763992e-03,  4.2042730013e-07, -3.7254663157e-06, -1.6626440501e-07,  0.0000000000e+00],
+           [-2.6978106127e-02, -7.9468596201e-06, -2.1293668678e-02, -3.7254663157e-06,  6.7055780102e-04,  7.1873589536e-04,  0.0000000000e+00],
+           [-2.8202076912e-03, -7.7463374819e-07, -1.6963607990e-03, -1.6626440501e-07,  7.1873589536e-04,  1.3310946586e-03,  0.0000000000e+00],
+           [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00],
+        ], decimal=8)
