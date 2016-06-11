@@ -514,15 +514,28 @@ void Moment2ElementBase::advance(StateBase& s)
 
     ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
+    double totalQ = 0.0;
     for(size_t k=0; k<last_Kenergy_in.size(); k++) {
         ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
         ST.real[k].IonEk  = last_Kenergy_out[k];
 
         ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 
+        if(k==0)
+            ST.moment0_env  = ST.moment0[k]*ST.real[k].IonQ;
+        else
+            ST.moment0_env += ST.moment0[k]*ST.real[k].IonQ;
+        totalQ += ST.real[k].IonQ;
+
         scratch  = prod(transfer[k], ST.moment1[k]);
         ST.moment1[k] = prod(scratch, trans(transfer[k]));
     }
+
+    ST.moment0_env /= totalQ;
+
+    ST.calc_rms();
+
+    ST.moment1_env = ST.moment1[0];
 }
 
 bool Moment2ElementBase::check_cache(const state_t& ST) const
