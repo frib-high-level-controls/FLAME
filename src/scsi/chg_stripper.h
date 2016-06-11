@@ -61,6 +61,11 @@ struct ElementStripper : public Moment2ElementBase
     {
         // Identity matrix.
         length = 0e0;
+
+        const std::vector<double>& ChgState = c.get<std::vector<double> >("IonChargeStates");
+        const std::vector<double>& NChg = c.get<std::vector<double> >("NCharge");
+        if(ChgState.size()!=NChg.size())
+            throw std::runtime_error("charge stripper requires that IonChargeStates[] and NCharge[] have the same length");
     }
     virtual ~ElementStripper() {}
 

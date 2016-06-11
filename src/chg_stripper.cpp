@@ -54,7 +54,7 @@ void StripperCharge(const double beta, double &Q_ave, double &d)
 
 
 static
-void ChargeStripper(const double beta, const std::vector<double> ChgState, double chargeAmount_Baron[])
+void ChargeStripper(const double beta, const std::vector<double> ChgState, Moment2State::vector_t& chargeAmount_Baron)
 {
     unsigned    k;
     double Q_ave, d;
@@ -70,7 +70,7 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
 {
     const int n = ChgState.size();
 
-    double chargeAmount_Baron[n];
+    Moment2State::vector_t chargeAmount_Baron(n);
 
     // Change reference particle charge state.
     ref.IonZ = Stripper_IonZ;
@@ -164,12 +164,12 @@ void Stripper_GetMat(const Config &conf,
     ST.moment0.resize(n);
     ST.moment1.resize(n);
 
+    // Length is zero.
+    StatePtr->pos        = s;
+
+    StatePtr->ref        = ref;
+
     for (k = 0; k < n; k++) {
-
-        // Length is zero.
-        StatePtr->pos        = s;
-
-        StatePtr->ref        = ref;
 
         StatePtr->real[k].IonZ  = ChgState[k];
         StatePtr->real[k].IonQ  = NChg[k];
@@ -181,7 +181,7 @@ void Stripper_GetMat(const Config &conf,
         StatePtr->moment1[k]    = tmpmat;
     }
 
-    assert(ST.moment0_env==StatePtr->moment0_env);
+    ST.recalc(); // necessary?
 }
 
 void ElementStripper::advance(StateBase &s)
