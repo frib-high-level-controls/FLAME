@@ -918,8 +918,8 @@ void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], 
         }
     }
 
-    if (false) {
-        std::cout << "\n";
+    if (true) {
+        std::cout << "\nCavTLMLineTab\n";
         lineref.show(std::cout);
     }
 }
@@ -1037,9 +1037,9 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             S    = linetab.S[n];
             kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             kfdy = kfdx;
-//                std::cout<<" X EFocus1 kfdx="<<kfdx<<"\n";
-//                std::cout<<" Y "<<linetab.E0[n]<<" "<<EfieldScl<<" "<<beta
-//                         <<" "<<gamma<<" "<<IonFy<<" "<<Rm<<"\n Z "<<T<<" "<<S<<"\n";
+                std::cout<<" X EFocus1 kfdx="<<kfdx<<"\n";
+                std::cout<<" Y "<<linetab.E0[n]<<" "<<EfieldScl<<" "<<beta
+                         <<" "<<gamma<<" "<<IonFy<<" "<<Rm<<"\n Z "<<T<<" "<<S<<"\n";
 
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -1050,7 +1050,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             S    = linetab.S[n];
             kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             kfdy = kfdx;
-//                std::cout<<" X EFocus2 kfdx="<<kfdx<<"\n";
+                std::cout<<" X EFocus2 kfdx="<<kfdx<<"\n";
 
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -1061,7 +1061,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 T   = linetab.T[n];
                 S   = linetab.S[n];
                 dpy = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
-//                    std::cout<<" X EDipole dpy="<<dpy<<"\n";
+                    std::cout<<" X EDipole dpy="<<dpy<<"\n";
 
                 Mprob(3, 6) = dpy;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1073,7 +1073,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx =  real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = -kfdx;
-//                    std::cout<<" X EQuad kfdx="<<kfdx<<"\n";
+                    std::cout<<" X EQuad kfdx="<<kfdx<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
@@ -1086,7 +1086,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = kfdx;
-//                    std::cout<<" X HMono kfdx="<<kfdx<<"\n";
+                    std::cout<<" X HMono kfdx="<<kfdx<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
@@ -1098,7 +1098,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 T   = linetab.T[n];
                 S   = linetab.S[n];
                 dpy = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
-//                    std::cout<<" X HDipole dpy="<<dpy<<"\n";
+                    std::cout<<" X HDipole dpy="<<dpy<<"\n";
 
                 Mprob(3, 6) = dpy;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1118,7 +1118,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = -kfdx;
-//                    std::cout<<" X HQuad kfdx="<<kfdx<<"\n";
+                    std::cout<<" X HQuad kfdx="<<kfdx<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
@@ -1132,7 +1132,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             gamma  = gamma_tab[seg];
             kfac   = 2e0*M_PI/(beta*Lambda);
             Accel  = linetab.Accel[n];
-//                std::cout<<" X AccGap Accel="<<Accel<<"\n";
+                std::cout<<" X AccGap Accel="<<Accel<<"\n";
 
             Mprob(1, 1) = Accel;
             Mprob(3, 3) = Accel;
@@ -1145,7 +1145,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
         //            std::cout << Elem << "\n";
         //            PrtMat(Mprob);
 
-//            std::cout<<"Elem "<<P.name<<":"<<P.type<<"\n Mtrans "<<Mtrans<<"\nMprob "<<Mprob<<"\n";
+            std::cout<<"Elem "<<P.name<<":"<<P.type<<"\n Mtrans "<<Mtrans<<"\nMprob "<<Mprob<<"\n";
     }
 
     M = Mtrans;
