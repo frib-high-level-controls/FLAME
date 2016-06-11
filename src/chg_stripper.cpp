@@ -100,7 +100,7 @@ void Stripper_GetMat(const Config &conf,
 
     // Evaluate beam parameter recombination.
 
-    std::cout<<"In "<<__FUNCTION__<<"\n";
+    //std::cout<<"In "<<__FUNCTION__<<"\n";
 
     tmptotCharge  = 0e0;
     Fy_abs_recomb = 0e0;
