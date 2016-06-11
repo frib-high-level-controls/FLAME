@@ -814,16 +814,16 @@ void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], 
     lineref.clear();
 
     size_t i;
-    double s;
-    for(i=0, s=lattice[i].length; i<lattice.size(); i++, s+=lattice[i].length) {
+    double s=CavData.table(0,0);
+    for(i=0; i<lattice.size(); i++) {
         const RawParams& P = lattice[i];
         {
-            double      E0, T, S, Accel;
+            double      E0=0.0, T=0.0, S=0.0, Accel=0.0;
 
             if ((P.type != "drift") && (P.type != "AccGap"))
                 E0 = P.E0;
-            else
-                E0 = 0e0;
+
+            s+=lattice[i].length;
 
             if (P.type == "drift") {
             } else if (P.type == "EFocus1") {
@@ -1011,14 +1011,16 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
 
     V0 = 0e0, T = 0e0, S = 0e0, kfdx = 0e0, kfdy = 0e0, dpy = 0e0;
     size_t n;
-    double s;
-    for(n=0, s=lattice[n].length; n<lattice.size(); n++, s+=lattice[n].length) {
+    double s=CavData.table(0,0);
+    for(n=0; n<lattice.size(); n++) {
         const RawParams& P = lattice[n];
 
         if ((P.type != "drift") && (P.type != "AccGap"))
             str >> Efield;
         else
             Efield = 0e0;
+
+        s+=lattice[n].length;
 
         if (false)
             printf("%9.5f %8s %8s %9.5f %9.5f %9.5f\n",
