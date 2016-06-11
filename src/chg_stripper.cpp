@@ -78,7 +78,10 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
     ChargeStripper(ref.beta, ChgState, chargeAmount_Baron);
 
     // Evaluate change in reference particle energy due to stripper model energy straggling.
+    std::cout<<std::setprecision(8)<<std::setw(14)
+             <<" CS "<<ref.IonEk<<" -> ";
     ref.IonEk      = (ref.IonEk-Stripper_Para[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
+    std::cout<<ref.IonEk<<"\n";
 
     ref.IonW       = ref.IonEk + ref.IonEs;
     ref.gamma      = ref.IonW/ref.IonEs;
