@@ -1120,7 +1120,8 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = -kfdx;
-                    std::cout<<" X HQuad kfdx="<<kfdx<<"\n";
+                    std::cout<<" X HQuad kfdx="<<kfdx<<"\n Y "<<real.IonZ<<" "<<V0<<" "<<T<<" "<<S
+                            <<"\n Z "<<s<<" "<<beta<<" "<<gamma<<" "<<IonFy<<" "<<Rm<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
