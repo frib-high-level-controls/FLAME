@@ -90,4 +90,12 @@ struct numeric_table {
     void read(std::istream&);
 };
 
+struct SB {
+    std::ostringstream strm;
+    SB() {}
+    operator std::string() const { return strm.str(); }
+    template<typename T>
+    SB& operator<<(T i) { strm<<i; return *this; }
+};
+
 #endif // UTIL_H
