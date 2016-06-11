@@ -57,10 +57,11 @@ void PrtMat(const value_mat &M)
 }
 
 static
-void GetCenofChgx(const Config &conf, std::vector<state_t*> &ST,
+void GetCenofChgx(const Config &conf, const state_t &ST,
                  Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
 {
     Moment2State::vector_t BeamVar;
+    const state_t* StatePtr = &ST;
 
     CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
     BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
@@ -68,11 +69,10 @@ void GetCenofChgx(const Config &conf, std::vector<state_t*> &ST,
 
     double Ntot = 0e0;
     for (size_t i = 0; i < ST.size(); i++) {
-        state_t* StatePtr = ST[i];
         for (size_t j = 0; j < PS_Dim; j++) {
-            CenofChg[j] += StatePtr->real.IonQ*StatePtr->moment0[j];
+            CenofChg[j] += StatePtr->real[i].IonQ*StatePtr->moment0[i][j];
         }
-        Ntot += StatePtr->real.IonQ;
+        Ntot += StatePtr->real[i].IonQ;
     }
 
     for (size_t j = 0; j < PS_Dim; j++)
@@ -80,10 +80,9 @@ void GetCenofChgx(const Config &conf, std::vector<state_t*> &ST,
 
     for (size_t i = 0; i < ST.size(); i++) {
         for (size_t j = 0; j < PS_Dim; j++) {
-            state_t* StatePtr = ST[i];
             BeamVar[j]  +=
-                    StatePtr->real.IonQ*(StatePtr->state(j, j)
-                    +(StatePtr->moment0[j]-CenofChg[j])*(StatePtr->moment0[j]-CenofChg[j]));
+                    StatePtr->real[i].IonQ*(StatePtr->moment1[i](j, j)
+                    +(StatePtr->moment0[i][j]-CenofChg[j])*(StatePtr->moment0[i][j]-CenofChg[j]));
         }
     }
 
@@ -108,18 +107,18 @@ std::ostream& operator<<(std::ostream& strm, const Particle& P)
     return strm;
 }
 
-void PrtState(const Config &conf, std::vector<state_t*> StatePtr)
+void PrtState(const Config &conf, const state_t& StatePtr)
 {
     size_t k;
 
     for (k = 0; k < StatePtr.size(); k++) {
-        std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr[k]->pos << "\n"
-                          <<"\n Ref:  "<<StatePtr[k]->ref
-                          <<"\n Real: "<<StatePtr[k]->real
+        std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr.pos << "\n"
+                          <<"\n Ref:  "<<StatePtr.ref
+                          <<"\n Real: "<<StatePtr.real[k]
                           <<"\n moment0\n";
-        PrtVec(StatePtr[k]->moment0);
+        PrtVec(StatePtr.moment0[k]);
         std::cout << " moment1\n";
-        PrtMat(StatePtr[k]->state);
+        PrtMat(StatePtr.moment1[k]);
         std::cout << "\n";
     }
 
@@ -153,11 +152,9 @@ void prt_initial_cond(Machine &sim,
 
     for (k = 0; k < ST.size(); k++) {
         std::cout << "\nIon charge state:\n"
-                  << "\nIonZ = " << std::fixed << std::setprecision(5) << std::setw(9) << ChgState[k] << "\n";
+                  << "\nIonZ = " << std::fixed << std::setprecision(5) << std::setw(9) << ST.real[k].IonZ << "\n";
         // Propagate through first element (beam initial conditions).
-        sim[k]->propagate(ST[k].get(), 0, 1);
-
-        StatePtr = dynamic_cast<state_t*>(ST[k].get());
+        sim.propagate(&ST, 0, 1);
 
         std::cout << "\nBarycenter:\n";
         PrtVec(ST.moment0[k]);
@@ -167,49 +164,6 @@ void prt_initial_cond(Machine &sim,
         std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << ST.pos << "\n";
     }
 }
-
-
-static
-void propagate(std::auto_ptr<Config> &conf)
-{
-    int                        k, nChgStates;
-    boost::shared_ptr<Machine> sim;
-    std::vector<double>        ChgState;
-    std::auto_ptr<state_t>     StatePtr;
-
-    nChgStates = GetChgState(*conf).size();
-    ChgState.resize(nChgStates);
-    ChgState = GetChgState(*conf);
-
-    for (k = 0; k < nChgStates; k++) {
-        conf->set<double>("cstate", k);
-
-        sim = boost::shared_ptr<Machine> (new Machine(*conf));
-        sim->set_trace(NULL);
-
-        std::auto_ptr<StateBase> state(sim->allocState());
-
-        state_t* StatePtr(dynamic_cast<state_t*>(state.get()));
-        if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
-
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << StatePtr->pos << "\n";
-
-        // Propagate through first element (beam initial conditions).
-        sim->propagate(state.get(), 0, 1);
-
-        clock_t tStamp[2];
-        tStamp[0] = clock();
-        sim->propagate(state.get(), 1);
-        tStamp[1] = clock();
-
-        std::cout << std::fixed << std::setprecision(5)
-                  << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
-    }
-
-    PrtState(StatePtr);
-    }
-}
-
 
 static
 void propagate1(const Config &conf)
@@ -229,63 +183,52 @@ void propagate1(const Config &conf)
 
     tStamp[0] = clock();
 
-    prt_initial_cond(sim, ChgState, state);
+    prt_initial_cond(sim, *StatePtr);
 
-    clock_t tStamp[2];
-
-    tStamp[0] = clock();
-
-    while (it[0] != sim[0]->end()) {
-        ElementVoid* elem   = *it[0];
+    Machine::iterator it = sim.begin()+1;
+    while (it != sim.end()) {
+        ElementVoid* elem   = *it;
+        unsigned idx = elem->index;
         std::string  t_name = elem->type_name(); // C string -> C++ string.
-        std::cout<<"At element "<<elem->index<<" "<<elem->name<<"\n";
+        std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
 
         if (t_name == "stripper") {
-            elem_no = it[0] - sim[0]->begin();
+            elem_no = elem->index;
             std::cout << "\nElement no: " << elem_no << "\n";
-            std::cout << conf->get<Config::vector_t>("elements")[elem_no] << "\n";
-            Stripper_GetMat(*conf, sim, state, ChgState);
+            std::cout << elem->conf() << "\n";
+            Stripper_GetMat(conf, *StatePtr);
 
-            StatePtr.clear();
-            it.clear();
-            for (k = 0; k < state.size(); k++) {
-                StatePtr.push_back(dynamic_cast<state_t*>(state[k].get()));
-                if(!StatePtr[k]) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+            while (it != sim.end()) {
+                elem   = *it;
+                unsigned idx = elem->index;
+                std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
 
-                it.push_back(sim[k]->begin()+elem_no+1);
-            }
-
-            while (it[0] != sim[0]->end()) {
-                unsigned idx = (*it[0])->index;
-                std::cout<<"At element "<<(*it[0])->index<<" "<<(*it[0])->name<<"\n";
-
-                for (k = 0; k < state.size(); k++) {
-                    (*it[k])->advance(*state[k]);
+                elem->advance(*state);
+                for (size_t k = 0; k < StatePtr->size(); k++) {
                     std::cout<<"Transfer "<<k<<"\n";
-                    PrtMat(static_cast<Moment2ElementBase*>(*it[k])->transfer);
-                    ++it[k];
+                    PrtMat(static_cast<Moment2ElementBase*>(elem)->transfer[k]);
                 }
+                ++it;
                 std::cout<<"After element "<<idx<<"\n";
-                PrtState(*conf, StatePtr);
+                PrtState(conf, *StatePtr);
             }
 
             break;
         }
 
-        unsigned idx = (*it[0])->index;
-        for (k = 0; k < nChgStates; k++) {
-            (*it[k])->advance(*state[k]);
+        elem->advance(*state);
+        for (size_t k = 0; k < StatePtr->size(); k++) {
             std::cout<<"Transfer "<<k<<"\n";
-            PrtMat(static_cast<Moment2ElementBase*>(*it[k])->transfer);
-            ++it[k];
+            PrtMat(static_cast<Moment2ElementBase*>(elem)->transfer[k]);
         }
+        ++it;
         std::cout<<"After element "<<idx<<"\n\n";
-        PrtState(*conf, StatePtr);
+        PrtState(conf, *StatePtr);
     }
 
     tStamp[1] = clock();
 
-    PrtState(*conf, StatePtr);
+    PrtState(conf, *StatePtr);
 
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";

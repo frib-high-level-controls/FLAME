@@ -123,7 +123,7 @@ struct Moment2ElementBase : public ElementVoid
     virtual void advance(StateBase& s);
 
     virtual bool check_cache(const state_t& S) const;
-    bool resize_cache(const state_t& S);
+    void resize_cache(const state_t& S);
 
     virtual void recompute_matrix(state_t&);
 

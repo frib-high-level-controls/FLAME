@@ -6,6 +6,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 
 #include "moment2.h"
+#include "util.h"
 
 // Phase space dimension; including vector for orbit/1st moment.
 # define PS_Dim Moment2State::maxsize // Set to 7; to include orbit.
@@ -39,17 +40,6 @@ public:
     void show(std::ostream& strm) const;
 };
 
-struct MLPtable {
-    typedef Moment2State::matrix_t value_t;
-
-    typedef std::map<std::string, size_t> colnames_t;
-    colnames_t colnames;
-
-    value_t table;
-
-    void read(const std::string&);
-};
-
 struct ElementRFCavity : public Moment2ElementBase
 {
     // Transport matrix for an RF Cavity.
@@ -62,11 +52,11 @@ struct ElementRFCavity : public Moment2ElementBase
     };
     std::vector<RawParams> lattice; // from axisData_*.txt
 
-    CavDataType    CavData; // from thinlenlon_*.txt
+    numeric_table mlptable, // from CaviMlp_*.txt
+                  CavData; // from thinlenlon_*.txt
+
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
     double phi_ref;
-
-    MLPtable mlptable;
 
     ElementRFCavity(const Config& c);
 
@@ -77,7 +67,7 @@ struct ElementRFCavity : public Moment2ElementBase
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                    const double EfieldScl, const double IonFyi_s,
                    const double IonEk_s, const double fRF, state_t::matrix_t &M,
-                   CavTLMLineType &linetab);
+                   CavTLMLineType &linetab) const;
 
     void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
@@ -88,14 +78,14 @@ struct ElementRFCavity : public Moment2ElementBase
 
     void InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab);
 
-    void GetCavBoost(const CavDataType &CavData, Particle &state, const double IonFy0, const double fRF,
-                     const double EfieldScl, double &IonFy);
+    void GetCavBoost(const numeric_table &CavData, Particle &state, const double IonFy0, const double fRF,
+                     const double EfieldScl, double &IonFy) const;
 
     void TransFacts(const int cavilabel, double beta, const double CaviIonK, const int gaplabel, const double EfieldScl,
-                    double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0);
+                    double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0) const;
 
     void TransitFacMultipole(const int cavi, const std::string &flabel, const double CaviIonK,
-                             double &T, double &S);
+                             double &T, double &S) const;
 
     virtual ~ElementRFCavity() {}
 

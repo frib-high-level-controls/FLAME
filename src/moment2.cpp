@@ -413,9 +413,6 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
-    ,misalign(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
-    ,misalign_inv(boost::numeric::ublas::identity_matrix<double>(state_t::maxsize))
-    ,scratch(state_t::maxsize, state_t::maxsize)
 {
 }
 
@@ -537,7 +534,7 @@ bool Moment2ElementBase::check_cache(const state_t& ST) const
     return true;
 }
 
-bool Moment2ElementBase::resize_cache(const state_t& ST)
+void Moment2ElementBase::resize_cache(const state_t& ST)
 {
     last_Kenergy_in.resize(ST.real.size());
     last_Kenergy_out.resize(ST.real.size());
@@ -666,7 +663,7 @@ struct ElementOrbTrim : public Moment2ElementBase
             get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
             noalias(scratch)  = prod(transfer[i], misalign[i]);
-            noalias(transfer) = prod(misalign_inv[i], scratch);
+            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
         }
     }
 };
@@ -693,7 +690,6 @@ struct ElementSBend : public Moment2ElementBase
 
     virtual void advance(StateBase& s)
     {
-        double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
         state_t&  ST = static_cast<state_t&>(s);
         using namespace boost::numeric::ublas;
 
@@ -724,6 +720,7 @@ struct ElementSBend : public Moment2ElementBase
             double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
             if (HdipoleFitMode != 1) {
+                double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
                 di_bg     = conf().get<double>("bg");
                 // Dipole reference energy.
                 Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
