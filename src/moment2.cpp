@@ -262,10 +262,10 @@ void Moment2State::show(std::ostream& strm, int level) const
     for (k = 0; k < Moment2State::maxsize; k++)
         strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_env(k);
     strm << std::scientific << std::setprecision(8)
-         << "\nmoment0 rms =\n    ";
+         << "\n  moment0 rms =\n    ";
     for (k = 0; k < Moment2State::maxsize; k++)
         strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_rms(k);
-    strm << "\n  state =\n";
+    strm << "\n  moment1 =\n";
     for (j = 0; j < Moment2State::maxsize; j++) {
         strm << "    ";
         for (k = 0; k < Moment2State::maxsize; k++) {

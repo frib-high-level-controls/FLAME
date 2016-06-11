@@ -62,6 +62,7 @@ void getargs(int argc, char *argv[], po::variables_map& args)
             ("select-all,A", "Select all elements for output")
             ("select-type,T", po::value<std::string>()->value_name("ETYPE"),
                 "Select all elements of the given type for output")
+            ("select-last,L", "Select last element for output")
             ;
 
     po::positional_options_description pos;
@@ -307,6 +308,14 @@ try {
                     elem->set_observer(ofact->observe(sim, elem));
                 }
             }
+        }
+    }
+    if(args.count("select-last") && sim.size()>0) {
+        ElementVoid *elem = sim[sim.size()-1];
+
+        if(elem->observer()==NULL) {
+            // don't replace existing Observer
+            elem->set_observer(ofact->observe(sim, elem));
         }
     }
 
