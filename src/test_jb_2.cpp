@@ -196,7 +196,7 @@ void propagate1(const Config &conf)
             elem_no = elem->index;
             std::cout << "\nElement no: " << elem_no << "\n";
             std::cout << elem->conf() << "\n";
-            Stripper_GetMat(conf, *StatePtr);
+            //Stripper_GetMat(conf, *StatePtr);
 
             while (it != sim.end()) {
                 elem   = *it;
