@@ -69,7 +69,7 @@ struct ElementRFCavity : public Moment2ElementBase
                    const double IonEk_s, const double fRF, state_t::matrix_t &M,
                    CavTLMLineType &linetab) const;
 
-    void GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
+    void GenCavMat2(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
                    Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M,
                    const CavTLMLineType& linetab) const;
@@ -98,6 +98,7 @@ struct ElementRFCavity : public Moment2ElementBase
         ST.recalc();
 
         if(!check_cache(ST)) {
+            resize_cache(ST);
             // need to re-calculate energy dependent terms
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out

@@ -148,7 +148,6 @@ void prt_initial_cond(Machine &sim,
                       state_t &ST)
 {
     size_t  k;
-    state_t *StatePtr;
 
     for (k = 0; k < ST.size(); k++) {
         std::cout << "\nIon charge state:\n"
@@ -188,6 +187,7 @@ void propagate1(const Config &conf)
     Machine::iterator it = sim.begin()+1;
     while (it != sim.end()) {
         ElementVoid* elem   = *it;
+        Moment2ElementBase* ELEM = static_cast<Moment2ElementBase*>(elem);
         unsigned idx = elem->index;
         std::string  t_name = elem->type_name(); // C string -> C++ string.
         std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
@@ -200,13 +200,14 @@ void propagate1(const Config &conf)
 
             while (it != sim.end()) {
                 elem   = *it;
+                ELEM = static_cast<Moment2ElementBase*>(elem);
                 unsigned idx = elem->index;
                 std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
 
                 elem->advance(*state);
-                for (size_t k = 0; k < StatePtr->size(); k++) {
+                for (size_t k = 0; k < ELEM->transfer.size(); k++) {
                     std::cout<<"Transfer "<<k<<"\n";
-                    PrtMat(static_cast<Moment2ElementBase*>(elem)->transfer[k]);
+                    PrtMat(ELEM->transfer[k]);
                 }
                 ++it;
                 std::cout<<"After element "<<idx<<"\n";
@@ -217,9 +218,9 @@ void propagate1(const Config &conf)
         }
 
         elem->advance(*state);
-        for (size_t k = 0; k < StatePtr->size(); k++) {
+        for (size_t k = 0; k < ELEM->transfer.size(); k++) {
             std::cout<<"Transfer "<<k<<"\n";
-            PrtMat(static_cast<Moment2ElementBase*>(elem)->transfer[k]);
+            PrtMat(ELEM->transfer[k]);
         }
         ++it;
         std::cout<<"After element "<<idx<<"\n\n";

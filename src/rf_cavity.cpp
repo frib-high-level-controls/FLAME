@@ -17,7 +17,7 @@ void TransFacts(const int cavilabel, double beta, const int gaplabel, const doub
                 double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0);
 
 static
-void EvalGapModel(const double dis, const double IonW0, Particle &real, const double IonFy0,
+void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
                   const double k, const double Lambda, const double Ecen,
                   const double T, const double S, const double Tp, const double Sp, const double V0,
                   double &IonW_f, double &IonFy_f);
@@ -168,7 +168,7 @@ int get_column(const std::string &str)
 }
 
 
-void calTransfac(const numeric_table& tbl,  int column_no, const double IonK, const bool half,
+void calTransfac(const numeric_table& fldmap,  int column_no, const double IonK, const bool half,
                  double &Ecenter, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
     // Compute electric center, amplitude, and transit time factors [T, Tp, S, Sp] for RF cavity mode.
@@ -179,19 +179,20 @@ void calTransfac(const numeric_table& tbl,  int column_no, const double IonK, co
     column_no--; // F*** fortran
     assert(column_no>0);
 
-    n = tbl.table.size1();
+    n = fldmap.table.size1();
     if (half) n = (int)round((n-1)/2e0);
+
+    if(n<=0 || (size_t)column_no>=fldmap.table.size2())
+        throw std::runtime_error("field map size invalid");
+
     z.resize(n);
     EM.resize(n);
 
-    if(n==0 || (size_t)column_no>=tbl.table.size2())
-        throw std::runtime_error("CaviMlp table invalid");
-
-    std::copy(tbl.table.find1(2, 0, 0),
-              tbl.table.find1(2, tbl.table.size1(), 0),
+    std::copy(fldmap.table.find1(2, 0, 0),
+              fldmap.table.find1(2, fldmap.table.size1(), 0),
               z.begin());
-    std::copy(tbl.table.find1(2, 0, column_no),
-              tbl.table.find1(2, tbl.table.size1(), column_no),
+    std::copy(fldmap.table.find1(2, 0, column_no),
+              fldmap.table.find1(2, fldmap.table.size1(), column_no),
               EM.begin());
 
     dz = (z[n-1]-z[0])/(n-1);
@@ -676,7 +677,7 @@ double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, con
 
 
 static
-void EvalGapModel(const double dis, const double IonW0, Particle &real, const double IonFy0,
+void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
                   const double k, const double Lambda, const double Ecen,
                   const double T, const double S, const double Tp, const double Sp, const double V0,
                   double &IonW_f, double &IonFy_f)
@@ -737,22 +738,25 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         cavfile += "/Multipole53/thinlenlon_53.txt";
         mlpfile += "/Multipole53/CaviMlp_53.txt";
     } else {
-        std::ostringstream strm;
-        strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-        throw std::runtime_error(strm.str());
+        throw std::runtime_error(SB()<<"*** InitRFCav: undef. cavity type: " << CavType);
     }
 
-    {
+    try{
         std::ifstream fstrm(fldmap.c_str());
         CavData.read(fstrm);
         if(CavData.table.size1()==0 || CavData.table.size2()<2)
             throw std::runtime_error("field map needs 2+ columns");
+    }catch(std::exception& e){
+        throw std::runtime_error(SB()<<"Error parsing "<<fldmap<<" : "<<e.what());
     }
-    {
+
+    try{
         std::ifstream fstrm(mlpfile.c_str());
         mlptable.read(fstrm);
         if(mlptable.table.size1()==0 || mlptable.table.size2()<8)
             throw std::runtime_error("CaviMlp needs 8+ columns");
+    }catch(std::exception& e){
+        throw std::runtime_error(SB()<<"Error parsing "<<mlpfile<<" : "<<e.what());
     }
 
     {
@@ -921,7 +925,7 @@ void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], 
 }
 
 
-void ElementRFCavity::GenCavMat(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
+void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                                 const double beta_tab[], const double gamma_tab[], const double Lambda,
                                 Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M,
                                 const CavTLMLineType& linetab) const
@@ -1170,8 +1174,9 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
     beta_s[0]      = sqrt(1e0-1e0/sqr(gamma_s[0]));
     CaviIonK_s[0]  = 2e0*M_PI/(beta_s[0]*CaviLambda);
 
-    size_t n   = linetab.s.size();
-    dis = (linetab.s[n-1]-linetab.s[0])/2e0;
+    size_t n   = CavData.table.size1();
+    assert(n>0);
+    dis = (CavData.table(n-1,0)-CavData.table(0,0))/2e0;
 
     ElementRFCavity::TransFacts(cavilabel, beta_s[0], CaviIonK_s[0], 1, EfieldScl,
                                 Ecen[0], T[0], Tp[0], S[0], Sp[0], V0[0]);
@@ -1210,7 +1215,7 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
     }
 
     ElementRFCavity::GetCavMatParams(cavi, beta_s, gamma_s, CaviIonK, linetab);
-    ElementRFCavity::GenCavMat(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, CaviLambda, real, IonFy_s, Rm, M, linetab);
+    ElementRFCavity::GenCavMat2(cavi, dis, EfieldScl, TTF_tab, beta_s, gamma_s, CaviLambda, real, IonFy_s, Rm, M, linetab);
 }
 
 
