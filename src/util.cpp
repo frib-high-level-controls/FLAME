@@ -52,14 +52,15 @@ void numeric_table::read(std::istream &strm)
             while(lstrm.good()) {
                 double val;
                 lstrm>>val;
-                values.push_back(val);
+                if(!lstrm.fail())
+                    values.push_back(val);
             }
 
             if(!lstrm.eof() && lstrm.fail())
-                throw std::runtime_error(std::string("Error parsing data line '")+rawline+"'");
+                throw std::runtime_error(SB()<<"Error parsing data line "<<line<<" '"<<rawline<<"'");
 
             if(!table.empty() && table.back().size()!=values.size())
-                throw std::runtime_error("Line w/ different # of elements");
+                throw std::runtime_error(SB()<<"Line "<<line<<" w/ different # of elements");
 
             table.push_back(vector_t(values.size()));
 
@@ -70,7 +71,7 @@ void numeric_table::read(std::istream &strm)
     }
 
     if(!strm.eof() && strm.fail())
-        throw std::runtime_error(std::string("Error parsing line '")+rawline+"'");
+        throw std::runtime_error(SB()<<"Error parsing line "<<line<<" '"<<rawline<<"'");
     else if(table.empty()) {
         this->table.clear();
     } else {

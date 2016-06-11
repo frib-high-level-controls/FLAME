@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(parse_table_empty)
 static const char table1[] = {
     "%A B\n"
     " 12 13\n"
-    "14   15\n"
+    "14   15 \n"
     " 16 17\n"
 };
 
