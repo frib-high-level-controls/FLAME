@@ -413,6 +413,7 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
+    ,scratch(state_t::maxsize, state_t::maxsize)
 {
 }
 
