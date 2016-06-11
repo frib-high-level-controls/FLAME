@@ -185,6 +185,8 @@ void Stripper_GetMat(const Config &conf,
     }
 
     ST.recalc(); // necessary?
+
+    ST.calc_rms();
 }
 
 void ElementStripper::advance(StateBase &s)

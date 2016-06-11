@@ -132,6 +132,8 @@ struct ElementRFCavity : public Moment2ElementBase
             scratch  = prod(misalign_inv[i], ST.moment1[i]);
             ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
         }
+
+        ST.calc_rms();
     }
 
     virtual void recompute_matrix(state_t& ST)

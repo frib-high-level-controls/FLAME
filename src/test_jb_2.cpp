@@ -57,7 +57,7 @@ void PrtMat(const value_mat &M)
 }
 
 static
-void GetCenofChgx(const Config &conf, const state_t &ST,
+void GetCenofChgx(const state_t &ST,
                  Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
 {
     Moment2State::vector_t BeamVar;
@@ -107,7 +107,7 @@ std::ostream& operator<<(std::ostream& strm, const Particle& P)
     return strm;
 }
 
-void PrtState(const Config &conf, const state_t& StatePtr)
+void PrtState(const state_t& StatePtr)
 {
     size_t k;
 
@@ -122,12 +122,8 @@ void PrtState(const Config &conf, const state_t& StatePtr)
         std::cout << "\n";
     }
 
-    Moment2State::vector_t cent, rms;
-
-    GetCenofChgx(conf, StatePtr, cent, rms);
-
     std::cout<<"Center: "<< std::scientific << std::setprecision(10)
-             << std::setw(18)<<cent<<"\n\n";
+             << std::setw(18)<<StatePtr.moment0_env<<"\n\n";
 }
 
 std::vector<double> GetChgState(Config &conf)
@@ -149,19 +145,8 @@ void prt_initial_cond(Machine &sim,
 {
     size_t  k;
 
-    for (k = 0; k < ST.size(); k++) {
-        std::cout << "\nIon charge state:\n"
-                  << "\nIonZ = " << std::fixed << std::setprecision(5) << std::setw(9) << ST.real[k].IonZ << "\n";
-        // Propagate through first element (beam initial conditions).
-        sim.propagate(&ST, 0, 1);
-
-        std::cout << "\nBarycenter:\n";
-        PrtVec(ST.moment0[k]);
-        std::cout << "\nBeam envelope:\n";
-        PrtMat(ST.moment1[k]);
-
-        std::cout << std::fixed << std::setprecision(3) << "\ns [m] = " << ST.pos << "\n";
-    }
+    sim.propagate(&ST, 0, 1);
+    PrtState(ST);
 }
 
 static
@@ -211,7 +196,7 @@ void propagate1(const Config &conf)
                 }
                 ++it;
                 std::cout<<"After element "<<idx<<"\n";
-                PrtState(conf, *StatePtr);
+                PrtState(*StatePtr);
             }
 
             break;
@@ -224,12 +209,12 @@ void propagate1(const Config &conf)
         }
         ++it;
         std::cout<<"After element "<<idx<<"\n\n";
-        PrtState(conf, *StatePtr);
+        PrtState(*StatePtr);
     }
 
     tStamp[1] = clock();
 
-    PrtState(conf, *StatePtr);
+    PrtState(*StatePtr);
 
     std::cout << std::fixed << std::setprecision(5)
               << "\npropagate: " << double(tStamp[1]-tStamp[0])/CLOCKS_PER_SEC << " sec" << "\n";
