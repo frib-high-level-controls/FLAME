@@ -93,7 +93,7 @@ void Config::push_scope()
 {
     flatten();
     implicit_values = values; // _cow() makes this safe
-    values.reset();
+    values.reset(new values_t);
 }
 
 void Config::flatten()
