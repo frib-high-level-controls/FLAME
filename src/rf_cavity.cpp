@@ -682,6 +682,7 @@ int get_MpoleLevel(const Config &conf)
 ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
+    ,MpoleLevel(get_MpoleLevel(c))
 {
     std::string CavType      = conf().get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", "")),
@@ -902,21 +903,18 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
     /* RF cavity model, transverse only defocusing.
      * 2-gap matrix model.                                            */
 
-    int               MpoleLevel, seg;
-    double            Efield, k_s[3];
+    int               seg;
+    double            k_s[3];
     double            Ecens[2], Ts[2], Ss[2], V0s[2], ks[2], L1, L2, L3;
     double            beta, gamma, kfac, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy;
     state_t::matrix_t         Idmat, Mlon_L1, Mlon_K1, Mlon_L2;
     state_t::matrix_t         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
-    std::stringstream str;
 
     const double IonA = 1e0;
 
     using boost::numeric::ublas::prod;
 
     Idmat = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
-
-    MpoleLevel = get_MpoleLevel(conf());
 
     k_s[0] = 2e0*M_PI/(beta_tab[0]*Lambda);
     k_s[1] = 2e0*M_PI/(beta_tab[1]*Lambda);
@@ -984,16 +982,11 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
     for(n=0; n<lattice.size(); n++) {
         const RawParams& P = lattice[n];
 
-        if ((P.type != "drift") && (P.type != "AccGap"))
-            str >> Efield;
-        else
-            Efield = 0e0;
-
         s+=lattice[n].length;
 
         if (false)
             printf("%9.5f %8s %8s %9.5f %9.5f %9.5f\n",
-                   s, P.type.c_str(), P.name.c_str(), P.length, P.aperature, Efield);
+                   s, P.type.c_str(), P.name.c_str(), P.length, P.aperature, P.E0);
 
         Mprob = Idmat;
         if (P.type == "drift") {
