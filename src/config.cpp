@@ -21,32 +21,48 @@ void Config::Scope::check() const
 }
 
 Config::Config()
-    :scope(new Scope)
-{}
+    :value_scopes(1)
+{
+    value_scopes[0].reset(new values_t);
+}
 
 Config::Config(const values_t& V)
-    :scope(new Scope(V))
-{}
+    :value_scopes(1)
+{
+    value_scopes[0].reset(new values_t(V));
+}
 
 Config::Config(const Config& O)
-    :scope(O.scope)
+    :value_scopes(O.value_scopes)
 {}
 
 Config&
 Config::operator=(const Config& O)
 {
     if(this!=&O)
-        scope = O.scope;
+        value_scopes = O.value_scopes;
     return *this;
+}
+
+//! Ensure we have a unique reference to our inner scope, making a copy if necessary
+void Config::_cow()
+{
+    assert(!value_scopes.empty());
+    if(!value_scopes.back().unique()) {
+        Config::values_pointer U(new values_t(*value_scopes.back())); // copy
+        value_scopes.back().swap(U);
+    }
 }
 
 const Config::value_t&
 Config::getAny(const std::string& name) const
 {
-    Scope *S = scope.get();
-    for(;S; S = S->parent.get()) {
-        values_t::const_iterator V=S->values.find(name);
-        if(V!=S->values.end()) return V->second;
+    assert(!value_scopes.empty());
+    for(values_scope_t::const_reverse_iterator it = value_scopes.rbegin(), end = value_scopes.rend()
+        ; it!=end; ++it)
+    {
+        values_t::const_iterator S=(*it)->find(name);
+        if(S!=(*it)->end()) return S->second;
     }
     throw key_error(name);
 }
@@ -54,20 +70,22 @@ Config::getAny(const std::string& name) const
 void
 Config::setAny(const std::string& name, const value_t& val)
 {
-    scope->values[name] = val;
+    _cow();
+    (*value_scopes.back())[name] = val;
 }
 
 void
 Config::swapAny(const std::string& name, value_t& val)
 {
+    _cow();
     {
-        values_t::iterator it = scope->values.find(name);
-        if(it!=scope->values.end()) {
+        values_t::iterator it = value_scopes.back()->find(name);
+        if(it!=value_scopes.back()->end()) {
             it->second.swap(val);
             return;
         }
     }
-    std::pair<values_t::iterator, bool> ret = scope->values.insert(std::make_pair(name,value_t()));
+    std::pair<values_t::iterator, bool> ret = value_scopes.back()->insert(std::make_pair(name,value_t()));
     assert(ret.second);
     ret.first->second.swap(val);
 }
@@ -77,56 +95,62 @@ Config::flatten()
 {
     if(depth()<=1) return;
 
-    Scope::shared_pointer replace(new Scope(scope->values));
+    values_scope_t replace(1);
+    // copy inner scope
+    replace[0].reset(new values_t(*value_scopes.back()));
+    values_t& B(*replace[0]);
 
-    for(Scope *P = scope->parent.get(); P; P = P->parent.get()) {
-        replace->values.insert(P->values.begin(), P->values.end());
-        // note that insert() will not overwrite existing keys
+    // copy enclosing scopes into new base scope
+    // outer most is last to take lowest priority
+    for(size_t i=value_scopes.size()-1; i; i--) {
+        const values_t& S(*value_scopes[i-1]);
+        B.insert(S.begin(), S.end()); // note that insert() will not overwrite existing keys
     }
 
-    scope.swap(replace);
+    value_scopes.swap(replace);
 }
 
 size_t
 Config::depth() const
 {
-    size_t ret = 1;
-    for(Scope *P = scope->parent.get(); P; P = P->parent.get(), ret++) {}
-    return ret;
+    return value_scopes.size();
 }
 
 void
 Config::push_scope()
 {
-    Scope::shared_pointer next(new Scope(scope));
-    scope.swap(next);
+    values_pointer N(new values_t);
+    value_scopes.push_back(N);
 }
 
 void
 Config::pop_scope()
 {
-    if(!!scope->parent) {
-        scope = scope->parent;
-    } else if(!scope->values.empty()) {
-        scope.reset(new Scope);
+    if(value_scopes.size()==1) {
+        // when last scope is popped, just clear
+        values_pointer N(new values_t);
+        value_scopes.back().swap(N);
+    } else {
+        value_scopes.pop_back();
     }
 }
 
 Config Config::new_scope() const
 {
-    Scope::shared_pointer next(new Scope(scope));
-    return Config(next);
+    values_scope_t S(value_scopes.size()+1);
+    std::copy(value_scopes.begin(), value_scopes.end(), S.begin());
+    S.back().reset(new values_t);
+    return Config(S);
 }
 
 namespace {
 struct show_value : public boost::static_visitor<void>
 {
     unsigned indent;
-    bool show_next;
     std::ostream& strm;
     const std::string& name;
-    show_value(std::ostream& s, const std::string& n, unsigned ind=0, bool show=false)
-        : indent(ind), show_next(show), strm(s), name(n) {}
+    show_value(std::ostream& s, const std::string& n, unsigned ind=0)
+        : indent(ind), strm(s), name(n) {}
 
     void operator()(double v) const
     {
@@ -163,7 +187,7 @@ struct show_value : public boost::static_visitor<void>
         {
             doindent(2);
             strm << "[" << i << "] = {\n";
-            v[i].show(strm, indent+4, show_next);
+            v[i].show(strm, indent+4);
             doindent(2);
             strm << "},\n";
         }
@@ -180,29 +204,15 @@ struct show_value : public boost::static_visitor<void>
 };
 }
 
-std::ostream&
-Config::show(std::ostream& strm, unsigned indent, bool nest) const
+void
+Config::show(std::ostream& strm, unsigned indent) const
 {
-    for(Scope *S = scope.get(); S; S = S->parent.get()) {
-        if(nest) {
-            for(unsigned i=indent; i; i--) strm.put(' ');
-            strm<<"["<<(void*)S<<" -> "<<(void*)S->parent.get()<<"\n";
-            indent+=2;
-        }
-        for(Config::values_t::const_iterator it=S->values.begin(), end=S->values.end();
-            it!=end; ++it)
-        {
-            boost::apply_visitor(show_value(strm, it->first, indent), it->second);
-        }
-        if(nest) {
-            indent-=2;
-            for(unsigned i=indent; i; i--) strm.put(' ');
-            strm<<"]\n";
-        } else {
-            break;
-        }
+    //TODO: show nested scopes?
+    for(Config::values_t::const_iterator it=value_scopes.back()->begin(), end=value_scopes.back()->end();
+        it!=end; ++it)
+    {
+        boost::apply_visitor(show_value(strm, it->first, indent), it->second);
     }
-    return strm;
 }
 
 namespace {

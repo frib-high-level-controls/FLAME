@@ -78,26 +78,16 @@ public:
 
     typedef std::map<std::string, value_t> values_t;
 private:
+    typedef boost::shared_ptr<values_t> values_pointer;
+    typedef std::vector<values_pointer> values_scope_t;
+    values_scope_t value_scopes;
+    // value_scopes always has at least one element
 
-    struct Scope {
-        typedef boost::shared_ptr<Scope> shared_pointer;
-        values_t values;
-        const shared_pointer parent;
-        Scope() {}
-        ~Scope() {}
-        explicit Scope(const values_t& V) :values(V), parent() {}
-        explicit Scope(const shared_pointer& P) :values(), parent(P) {check();}
-        explicit Scope(const values_t& V, const shared_pointer& P) :values(V), parent(P) {check();}
-        void check() const;
-    private:
-        Scope(const Scope&);
-        Scope& operator=(const Scope&);
-    };
-
-    Scope::shared_pointer scope;
-
+    void _cow();
+    //! Construct from several std::map (several scopes)
+    //! Argument is consumed via. swap()
     //! Used by new_scope()
-    explicit Config(const Scope::shared_pointer& S) :scope(S) {}
+    explicit Config(values_scope_t& V) { value_scopes.swap(V); }
 public:
     //! New empty config
     Config();
@@ -179,7 +169,8 @@ public:
     void set(const std::string& name,
              typename boost::call_traits<typename detail::is_config_value<T>::type>::param_type val)
     {
-        scope->values[name] = val;
+        _cow();
+        (*value_scopes.back())[name] = val;
     }
 
     /** Exchange a single parameter typed
@@ -205,18 +196,18 @@ public:
     void swap(Config& c)
     {
         // no _cow() here since no value_t are modified
-        scope.swap(c.scope);
+        value_scopes.swap(c.value_scopes);
     }
 
     //! Print listing of inner scope
-    std::ostream &show(std::ostream&, unsigned indent=0, bool nest=false) const;
+    void show(std::ostream&, unsigned indent=0) const;
 
     typedef values_t::iterator iterator;
     typedef values_t::const_iterator const_iterator;
 
     // Only iterates inner most scope
-    inline const_iterator begin() const { return scope->values.begin(); }
-    inline const_iterator end() const { return scope->values.end(); }
+    inline const_iterator begin() const { return value_scopes.back()->begin(); }
+    inline const_iterator end() const { return value_scopes.back()->end(); }
 
     inline void reserve(size_t) {}
 
