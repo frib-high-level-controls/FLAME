@@ -423,6 +423,11 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
 
 Moment2ElementBase::Moment2ElementBase(const Config& c)
     :ElementVoid(c)
+    ,dx   (c.get<double>("dx",    0e0)*MtoMM)
+    ,dy   (c.get<double>("dy",    0e0)*MtoMM)
+    ,pitch(c.get<double>("pitch", 0e0))
+    ,yaw  (c.get<double>("yaw",   0e0))
+    ,tilt (c.get<double>("tilt",  0e0))
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
 }
@@ -438,6 +443,11 @@ void Moment2ElementBase::assign(const ElementVoid *other)
     transfer_raw = O->transfer_raw;
     misalign = O->misalign;
     misalign_inv = O->misalign_inv;
+    dx = O->dx;
+    dy = O->dy;
+    pitch = O->pitch;
+    yaw   = O->yaw;
+    tilt  = O->tilt;
     ElementVoid::assign(other);
 }
 
@@ -460,12 +470,6 @@ void Moment2ElementBase::get_misalign(const state_t &ST, const Particle &real, v
               scl_inv = scl,
               T       = scl,
               T_inv   = scl;
-
-    double dx    = conf().get<double>("dx",    0e0)*MtoMM,
-           dy    = conf().get<double>("dy",    0e0)*MtoMM,
-           pitch = conf().get<double>("pitch", 0e0),
-           yaw   = conf().get<double>("yaw",   0e0),
-           tilt  = conf().get<double>("tilt",  0e0);
 
     scl(state_t::PS_S, state_t::PS_S)   /= -real.SampleIonK;
     scl(state_t::PS_PS, state_t::PS_PS) /= sqr(real.beta)*real.gamma*ST.ref.IonEs/MeVtoeV;

@@ -134,6 +134,9 @@ struct Moment2ElementBase : public ElementVoid
     std::vector<value_t> transfer, transfer_raw;
     std::vector<value_t> misalign, misalign_inv;
 
+    //! constituents of misalign
+    double dx, dy, pitch, yaw, tilt;
+
     virtual void assign(const ElementVoid *other) =0;
 
 protected:
