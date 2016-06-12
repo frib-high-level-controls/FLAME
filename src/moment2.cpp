@@ -1006,33 +1006,6 @@ struct ElementEQuad : public Moment2ElementBase
     }
 };
 
-struct ElementGeneric : public Moment2ElementBase
-{
-    typedef Moment2ElementBase       base_t;
-    typedef typename base_t::state_t state_t;
-
-    value_t proto;
-
-    ElementGeneric(const Config& c)
-        :base_t(c)
-        ,proto(state_t::maxsize, state_t::maxsize)
-    {
-        load_storage(proto.data(), c, "transfer");
-    }
-    virtual ~ElementGeneric() {}
-
-    virtual void recompute_matrix(state_t& ST)
-    {
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
-            transfer[i] = proto;
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
-        }
-    }
-
-    virtual const char* type_name() const {return "generic";}
-};
-
 } // namespace
 
 void registerMoment2()
@@ -1062,6 +1035,4 @@ void registerMoment2()
     Machine::registerElement<ElementEDipole                >("MomentMatrix2", "edipole");
 
     Machine::registerElement<ElementEQuad                  >("MomentMatrix2", "equad");
-
-    Machine::registerElement<ElementGeneric                >("MomentMatrix2", "generic");
 }

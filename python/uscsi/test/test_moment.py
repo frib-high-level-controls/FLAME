@@ -86,8 +86,7 @@ TM = [1,0,0,0,0,0,0,
       0,0,0,0,0,1,0,
       0,0,0,0,0,0,1];
 elem0 : source, initial = IM, moment0=IV;
-elem1 : generic, transfer = TM, L=2.0;
-foo : LINE = (elem0, elem1);
+foo : LINE = (elem0);
 ''')
 
     def test_config(self):
@@ -105,44 +104,6 @@ foo : LINE = (elem0, elem1);
         [0, 1, 0, 1, -0.001193, 1, 0],
         [0, 0, 0, 0, 0, 0, 0]
     ])
-
-    def test_generic(self):
-        "Propogate a state matrix through a generic section"
-        C = self.M.conf()
-
-        S = self.M.allocState({})
-        self.M.propagate(S, 0, 1)
-
-        ##S.moment0[:] = self.expect0
-        self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.ref_IonEs, C['IonEs'])
-        self.assertEqual(S.real_IonEs, C['IonEs'])
-        self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
-        self.assertEqual(S.real_IonEk, C['IonEk'])
-        self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
-        self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
-
-        print("moment0",  S.moment0.tolist(), C['IV'].tolist())
-        assert_aequal(S.moment0, C['IV'])
-        print("state", S.state.tolist(), C['IM'].tolist())
-        assert_aequal(S.state, C['IM'].reshape((7,7)), 1e10)
-
-        self.M.propagate(S, 1, len(self.M))
-
-        self.assertEqual(S.pos, 2.0)
-        print("moment0",  S.moment0.tolist(), C['IV'].tolist())
-        assert_aequal(S.moment0, C['IV'])
-
-        print("state", S.state.tolist(), C['IM'].tolist())
-        assert_aequal(S.state, [
-          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-          [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
-          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-          [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
-          [1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0],
-          [0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0],
-          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        ], 1e10)
 
     def test_source(self):
         "Initialize w/ all zeros, then propagate through source element to overwrite"
@@ -198,8 +159,7 @@ TM = [1,0,0,0,0,0,0,
 IonChargeStates = [42, 43];
 NCharge = [1000, 1010];
 elem0 : source, vector_variable="IV", matrix_variable="IM";
-elem1 : generic, transfer = TM, L=2.0;
-foo : LINE = (elem0, elem1);
+foo : LINE = (elem0);
 '''
 
     def test_source(self):
