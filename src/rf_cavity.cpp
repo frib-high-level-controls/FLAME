@@ -708,9 +708,11 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         throw std::runtime_error(SB()<<"*** InitRFCav: undef. cavity type: " << CavType);
     }
 
+    numeric_table_cache *cache = numeric_table_cache::get();
+
     try{
-        std::ifstream fstrm(fldmap.c_str());
-        CavData.read(fstrm);
+        numeric_table_cache::table_pointer ent = cache->fetch(fldmap);
+        CavData = *ent;
         if(CavData.table.size1()==0 || CavData.table.size2()<2)
             throw std::runtime_error("field map needs 2+ columns");
     }catch(std::exception& e){
@@ -718,8 +720,8 @@ ElementRFCavity::ElementRFCavity(const Config& c)
     }
 
     try{
-        std::ifstream fstrm(mlpfile.c_str());
-        mlptable.read(fstrm);
+        numeric_table_cache::table_pointer ent = cache->fetch(mlpfile);
+        mlptable = *ent;
         if(mlptable.table.size1()==0 || mlptable.table.size2()<8)
             throw std::runtime_error("CaviMlp needs 8+ columns");
     }catch(std::exception& e){

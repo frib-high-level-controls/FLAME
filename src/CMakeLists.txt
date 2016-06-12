@@ -134,10 +134,10 @@ target_link_libraries(test_config
 
 add_executable(test_util
   test_util.cpp
-  util.cpp
 )
 add_test(util test_util)
 target_link_libraries(test_util
+  uscsi_core
   ${Boost_PRG_EXEC_MONITOR_LIBRARY}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )

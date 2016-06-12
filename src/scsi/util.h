@@ -61,20 +61,6 @@ public:
     value_proxy_iterator  operator-(size_t i) const { return value_proxy_iterator(orig-i); }
 };
 
-template<typename M>
-std::ostream& show_mat(std::ostream& strm, const M& m)
-{
-    strm<<"("<<m.size1()<<","<<m.size2()<<") [";
-    for(size_t r=0, rl=m.size1(); r<rl; r++) {
-        strm<<"[";
-        for(size_t c=0, cl=m.size2(); c<cl; c++) {
-            strm<<m(r,c);
-        }
-    }
-    strm<<"]";
-    return strm;
-}
-
 /** Parse a file containing a single table of numeric values w/ optional column headers
  */
 struct numeric_table {
@@ -88,6 +74,22 @@ struct numeric_table {
     value_t table;
 
     void read(std::istream&);
+};
+
+class numeric_table_cache {
+    struct Pvt;
+    std::auto_ptr<Pvt> pvt;
+public:
+    numeric_table_cache();
+    ~numeric_table_cache();
+
+    typedef boost::shared_ptr<const numeric_table> table_pointer;
+
+    table_pointer fetch(const std::string& path);
+
+    void clear();
+
+    static numeric_table_cache* get();
 };
 
 struct SB {
