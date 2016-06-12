@@ -16,6 +16,8 @@ A discrete accelerator simulation engine
 
 @subpage apiusage
 
+@subpage devnotes
+
 Source doc repository https://github.com/frib-high-level-controls/FLAME
 
 */
@@ -662,6 +664,23 @@ file :
 </tbody>
 </table>
 @endhtmlonly
+
+*/
+
+// =====================================================================================
+
+/**
+@page devnotes Notes for Developers
+
+
+All memory directly allocated by FLAME should be free'd after all Config and Machine instances are
+destroyed, and Machine::registeryCleanup() is called
+
+@code
+valgrind --leak-check=full --show-leak-kinds=all ./tools/run_flame python/uscsi/test/to_strl.lat
+@endcode
+
+Should show only "still reachable" blocks associated with the HDF5 library and no blocks definitely, indirectly, or possibly lost.
 
 */
 
