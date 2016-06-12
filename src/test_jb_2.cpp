@@ -24,17 +24,6 @@ typedef state_t::matrix_t value_mat;
 
 extern int glps_debug;
 
-
-static
-void PrtVec(const std::vector<double> &a)
-{
-    for (size_t k = 0; k < a.size(); k++)
-        std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << a[k];
-    std::cout << "\n";
-}
-
-
 static
 void PrtVec(const Moment2State::vector_t &a)
 {
@@ -54,57 +43,6 @@ void PrtMat(const value_mat &M)
                       << std::setw(18) << M(j, k);
         std::cout << "\n";
     }
-}
-
-static
-void GetCenofChgx(const state_t &ST,
-                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
-{
-    Moment2State::vector_t BeamVar;
-    const state_t* StatePtr = &ST;
-
-    CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-    BeamRMS  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-    BeamVar  = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-
-    double Ntot = 0e0;
-    for (size_t i = 0; i < ST.size(); i++) {
-        for (size_t j = 0; j < PS_Dim; j++) {
-            CenofChg[j] += StatePtr->real[i].IonQ*StatePtr->moment0[i][j];
-        }
-        Ntot += StatePtr->real[i].IonQ;
-    }
-
-    for (size_t j = 0; j < PS_Dim; j++)
-        CenofChg[j] /= Ntot;
-
-    for (size_t i = 0; i < ST.size(); i++) {
-        for (size_t j = 0; j < PS_Dim; j++) {
-            BeamVar[j]  +=
-                    StatePtr->real[i].IonQ*(StatePtr->moment1[i](j, j)
-                    +(StatePtr->moment0[i][j]-CenofChg[j])*(StatePtr->moment0[i][j]-CenofChg[j]));
-        }
-    }
-
-    for (size_t j = 0; j < PS_Dim; j++)
-        BeamRMS[j] = sqrt(BeamVar[j]/Ntot);
-}
-
-std::ostream& operator<<(std::ostream& strm, const Particle& P)
-{
-    strm <<std::setprecision(8)<<std::setw(14)
-      <<"IonZ="<<P.IonZ
-      <<" IonQ="<<P.IonQ
-      <<" IonEs="<<P.IonEs
-      <<" IonEk="<<P.IonEk
-      <<" SampleIonK="<<P.SampleIonK
-      <<" phis="<<P.phis
-      <<" IonW="<<P.IonW
-      <<" gamma="<<P.gamma
-      <<" beta="<<P.beta
-      <<" bg="<<P.bg
-      ;
-    return strm;
 }
 
 void PrtState(const state_t& StatePtr)
@@ -131,20 +69,10 @@ std::vector<double> GetChgState(Config &conf)
     return conf.get<std::vector<double> >("IonChargeStates");
 }
 
-
-static
-std::vector<double> GetNChg(Config &conf)
-{
-    return conf.get<std::vector<double> >("NCharge");
-}
-
-
 static
 void prt_initial_cond(Machine &sim,
                       state_t &ST)
 {
-    size_t  k;
-
     sim.propagate(&ST, 0, 1);
     PrtState(ST);
 }

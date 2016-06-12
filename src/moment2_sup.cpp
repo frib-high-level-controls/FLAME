@@ -23,27 +23,6 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
     lu_substitute(scratch, pm, out);
 }
 
-
-void PrtVec1(const Moment2State::vector_t &a)
-{
-    for (size_t k = 0; k < a.size(); k++)
-        std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << a[k];
-    std::cout << "\n";
-}
-
-
-void PrtMat1(const Moment2State::matrix_t &M)
-{
-    for (size_t j = 0; j < M.size1(); j++) {
-        for (size_t k = 0; k < M.size2(); k++)
-            std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << M(j, k);
-        std::cout << "\n";
-    }
-}
-
-
 void RotMat(const double dx, const double dy,
             const double theta_x, const double theta_y, const double theta_z,
             typename Moment2ElementBase::value_t &R)

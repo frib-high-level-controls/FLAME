@@ -9,14 +9,6 @@
 // RF Cavity beam dynamics functions.
 
 static
-void TransitFacMultipole(const int cavi, const std::string &flabel, const double IonK,
-                         double &T, double &S);
-
-static
-void TransFacts(const int cavilabel, double beta, const int gaplabel, const double EfieldScl,
-                double &Ecen, double &T, double &Tp, double &S, double &Sp, double &V0);
-
-static
 void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
                   const double k, const double Lambda, const double Ecen,
                   const double T, const double S, const double Tp, const double Sp, const double V0,
@@ -101,31 +93,6 @@ void PrtVec(const std::vector<double> &a)
         std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << a[k];
     std::cout << "\n";
-}
-
-static
-void rd_data(std::fstream &inf, const int column_no, std::vector<double> &Z, std::vector<double> &EM)
-{
-    std::string       line;
-    std::stringstream str;
-    double            c[8];
-
-    inf.clear();
-    inf.seekg(0, inf.beg);
-
-    while (getline(inf, line) && !inf.fail()) {
-        if (line[0] == '%') {
-            // Comment.
-        } else {
-            str.str(line);
-            str.clear();
-            str >> c[0] >> c[1]>> c[2]>> c[3]>> c[4]>> c[5]>> c[6]>> c[7];
-            if (false)
-                std::cout << std::scientific << std::setprecision(5)
-                          << std::setw(13) << c[0] << std::setw(13) << c[column_no-1] << "\n";
-            Z.push_back(c[0]), EM.push_back(c[column_no-1]);
-        }
-    }
 }
 
 
