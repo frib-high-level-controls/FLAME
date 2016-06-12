@@ -39,12 +39,28 @@ def show_vector(grp, vector='state'):
     xlabel('s')
     ylabel('angle')
 
+def show_moment2(grp):
+    pos = grp['pos'][:]
+    avg = grp['moment0'][:]
+    rms = grp['moment0_rms'][:]
+
+    rmsp, rmsn = avg+rms, avg-rms
+
+    for i,L in zip(range(6), ('x','px','y','py','z','pz')):
+        subplot(3,2,i+1)
+        plot(pos, rmsp[:,i], '-b',
+             pos, avg [:,i], '-r',
+             pos, rmsn[:,i], '-b')
+        xlabel('s')
+        ylabel(L)
+
+
 def show_generic(grp):
     print("Unknown sim_type")
 
 showsim = {
   'Vector': show_vector,
-  'MomentMatrix2': lambda x:show_vector(x,'moment0'),
+  'MomentMatrix2': show_moment2,
 }
 
 showsim.get(simtype)(grp)
