@@ -66,8 +66,12 @@ set(PY_SRC_DATA
   data/orbit.db
   data/common.template
   data/source.template
+  data/rfcavity.template
   data/quadrupole.template
   data/solenoid.template
+  data/orbtrim.template
+  data/sbend.template
+  data/bpm.template
 )
 
 install(FILES ${PY_SRC}

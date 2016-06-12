@@ -1,4 +1,4 @@
-record(ao, "$(P):K-SP") {
+record(ao, "$(P)K-SP") {
     field(DTYP, "FLAME Setting")
     field(OUT , "@$(SIM) $(ELEM) K")
     field(PREC, "6")

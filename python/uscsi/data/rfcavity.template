@@ -1,0 +1,5 @@
+record(ao, "$(P)A-SP") {
+    field(DTYP, "FLAME Setting")
+    field(OUT , "@$(SIM) $(ELEM) phi")
+    field(PREC, "6")
+}

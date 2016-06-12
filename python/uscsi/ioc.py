@@ -10,7 +10,7 @@ from collections import defaultdict
 from . import GLPSParser
 
 def default_mangler(elem):
-    return r'$(PREF)%(name)s'%elem
+    return r'$(PREF)%(name)s:'%elem
 
 class Generator(object):
     """Helper to generate supporting files for FLAME VIOC
@@ -21,7 +21,7 @@ class Generator(object):
         self._input = inp
         P = GLPSParser()
         with open(inp, 'rb') as F:
-            self._D = P.parse(F.read())
+            self._D = P.parse(F)
 
     def emit_subst(self, outdir):
         efile = {}
@@ -32,6 +32,8 @@ class Generator(object):
         outnames = set()
 
         nmarkers = 0
+
+        warnmissing = set()
 
         # collect and group be element type
         for elem in self._D['elements']:
@@ -52,11 +54,14 @@ class Generator(object):
 
             _log.debug("Inspect %(name)s : %(type)s"%elem)
 
-            eall.append((elem, ename, rname))
-
             tempfile = os.path.join(self._I, etype+'.template')
             if not os.path.isfile(tempfile):
+                if etype not in warnmissing:
+                    _log.warn("Unhandled element type %s", etype)
+                    warnmissing.add(etype)
                 continue # if missing unknown.template, then ignore
+
+            eall.append((elem, ename, rname))
 
             if etype not in efile:
                 _log.debug("emit %s", tempfile)
