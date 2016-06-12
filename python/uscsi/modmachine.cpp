@@ -98,6 +98,8 @@ PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
                 C.push_scope();
             }
             Dict2Config(C, d);
+        } else {
+            return PyErr_Format(PyExc_ValueError, "allocState() needs config=None or {}");
         }
         std::auto_ptr<StateBase> state(machine->machine->allocState(C));
         PyObject *ret = wrapstate(state.get());
