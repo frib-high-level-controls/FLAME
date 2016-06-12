@@ -114,8 +114,10 @@ struct ElementVoid : public boost::noncopyable
     virtual void show(std::ostream&, int level) const;
 
     //! @internal
-    //! Used by Machine::reconfigure()
-    //! Assumes other has the same type
+    //! Used by Machine::reconfigure() to avoid re-alloc (and iterator invalidation)
+    //! Assumes other has the same type.
+    //! Sub-classes must call base class assign()
+    //! Come c++11 this can be replaced with a move ctor.
     virtual void assign(const ElementVoid* other ) =0;
 private:
     Observer *p_observe;

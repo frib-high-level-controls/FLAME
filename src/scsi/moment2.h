@@ -134,7 +134,7 @@ struct Moment2ElementBase : public ElementVoid
     std::vector<value_t> transfer, transfer_raw;
     std::vector<value_t> misalign, misalign_inv;
 
-    virtual void assign(const ElementVoid *other);
+    virtual void assign(const ElementVoid *other) =0;
 
 protected:
     // scratch space to avoid temp. allocation in advance()

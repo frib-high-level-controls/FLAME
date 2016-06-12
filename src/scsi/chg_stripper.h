@@ -54,6 +54,7 @@ const double Stripper_IonZ      = 78.0/238.0,
 struct ElementStripper : public Moment2ElementBase
 {
     // Transport (identity) matrix for a Charge Stripper.
+    typedef ElementStripper          self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
     ElementStripper(const Config& c)
@@ -68,6 +69,8 @@ struct ElementStripper : public Moment2ElementBase
             throw std::runtime_error("charge stripper requires that IonChargeStates[] and NCharge[] have the same length");
     }
     virtual ~ElementStripper() {}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void advance(StateBase &s);
 

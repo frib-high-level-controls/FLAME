@@ -572,6 +572,7 @@ namespace {
 
 struct ElementSource : public Moment2ElementBase
 {
+    typedef ElementSource            self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
@@ -596,41 +597,54 @@ struct ElementSource : public Moment2ElementBase
     virtual ~ElementSource() {}
 
     virtual const char* type_name() const {return "source";}
+
+    virtual void assign(const ElementVoid *other) {
+        base_t::assign(other);
+        const self_t* O=static_cast<const self_t*>(other);
+        istate.assign(O->istate);
+    }
 };
 
 struct ElementMark : public Moment2ElementBase
 {
     // Transport (identity) matrix for Marker.
+    typedef ElementMark            self_t;
     typedef Moment2ElementBase     base_t;
     typedef typename base_t::state_t state_t;
 
     ElementMark(const Config& c): base_t(c) {length = 0e0;}
     virtual ~ElementMark() {}
     virtual const char* type_name() const {return "marker";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 };
 
 struct ElementBPM : public Moment2ElementBase
 {
     // Transport (identity) matrix for BPM.
+    typedef ElementBPM               self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
-
-    Particle state;
 
     ElementBPM(const Config& c): base_t(c) {length = 0e0;}
     virtual ~ElementBPM() {}
     virtual const char* type_name() const {return "bpm";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 };
 
 struct ElementDrift : public Moment2ElementBase
 {
     // Transport matrix for Drift.
+    typedef ElementDrift             self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementDrift(const Config& c) : base_t(c) {}
     virtual ~ElementDrift() {}
     virtual const char* type_name() const {return "drift";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -653,12 +667,15 @@ struct ElementDrift : public Moment2ElementBase
 struct ElementOrbTrim : public Moment2ElementBase
 {
     // Transport matrix for Orbit Trim.
+    typedef ElementOrbTrim           self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementOrbTrim(const Config& c) : base_t(c) {length = 0e0;}
     virtual ~ElementOrbTrim() {}
     virtual const char* type_name() const {return "orbtrim";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -686,6 +703,7 @@ struct ElementSBend : public Moment2ElementBase
     // Transport matrix for Gradient Sector Bend; with edge focusing (cylindrical coordinates).
     // Note, TLM only includes energy offset for the orbit; not the transport matrix.
 
+    typedef ElementSBend             self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
@@ -700,6 +718,12 @@ struct ElementSBend : public Moment2ElementBase
     }
     virtual ~ElementSBend() {}
     virtual const char* type_name() const {return "sbend";}
+
+    virtual void assign(const ElementVoid *other) {
+        base_t::assign(other);
+        const self_t* O=static_cast<const self_t*>(other);
+        HdipoleFitMode = O->HdipoleFitMode;
+    }
 
     virtual void advance(StateBase& s)
     {
@@ -801,12 +825,15 @@ struct ElementSBend : public Moment2ElementBase
 struct ElementQuad : public Moment2ElementBase
 {
     // Transport matrix for Quadrupole; K = B2/Brho.
+    typedef ElementQuad              self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementQuad(const Config& c) : base_t(c) {}
     virtual ~ElementQuad() {}
     virtual const char* type_name() const {return "quadrupole";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -843,12 +870,15 @@ struct ElementQuad : public Moment2ElementBase
 struct ElementSolenoid : public Moment2ElementBase
 {
     // Transport (identity) matrix for a Solenoid; K = B/(2 Brho).
+    typedef ElementSolenoid          self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementSolenoid(const Config& c) : base_t(c) {}
     virtual ~ElementSolenoid() {}
     virtual const char* type_name() const {return "solenoid";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -880,12 +910,15 @@ struct ElementSolenoid : public Moment2ElementBase
 struct ElementEDipole : public Moment2ElementBase
 {
     // Transport matrix for Electrostatic Dipole with edge focusing.
+    typedef ElementEDipole           self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementEDipole(const Config& c) : base_t(c) {}
     virtual ~ElementEDipole() {}
     virtual const char* type_name() const {return "edipole";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void recompute_matrix(state_t& ST)
     {
@@ -949,28 +982,20 @@ struct ElementEDipole : public Moment2ElementBase
             last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
-   virtual void assign(const ElementVoid *other)
-   {
-        throw std::logic_error("assign/reconfigure() not implemented for rf cavity");
-        // TODO: can't copy 'inf'.  Need to parse once in ctor.
-//        const ElementRFCavity *O = static_cast<const ElementRFCavity*>(other);
-//        Moment2ElementBase::assign(O);
-//        CavData = O->CavData;
-//        CavTLMLineTab = O->CavTLMLineTab;
-//        phi_ref = O->phi_ref;
-   }
-
 };
 
 struct ElementEQuad : public Moment2ElementBase
 {
     // Transport matrix for Electrostatic Quadrupole.
+    typedef ElementEQuad             self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementEQuad(const Config& c) : base_t(c) {}
     virtual ~ElementEQuad() {}
     virtual const char* type_name() const {return "equad";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 
     virtual void recompute_matrix(state_t& ST)
     {

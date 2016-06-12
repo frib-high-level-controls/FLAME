@@ -43,6 +43,7 @@ public:
 struct ElementRFCavity : public Moment2ElementBase
 {
     // Transport matrix for an RF Cavity.
+    typedef ElementRFCavity          self_t;
     typedef Moment2ElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
@@ -88,6 +89,16 @@ struct ElementRFCavity : public Moment2ElementBase
                              double &T, double &S) const;
 
     virtual ~ElementRFCavity() {}
+
+    virtual void assign(const ElementVoid *other) {
+        base_t::assign(other);
+        const self_t* O=static_cast<const self_t*>(other);
+        lattice       = O->lattice;
+        mlptable      = O->mlptable;
+        CavData       = O->CavData;
+        CavTLMLineTab = O->CavTLMLineTab;
+        phi_ref       = O->phi_ref;
+    }
 
     virtual void advance(StateBase& s)
     {
