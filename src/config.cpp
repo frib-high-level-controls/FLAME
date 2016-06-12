@@ -8,18 +8,6 @@
 
 #include "glps_parser.h"
 
-//! Detect loops
-void Config::Scope::check() const
-{
-    for(const Config::Scope* tochk = parent.get();
-        tochk->parent.get();
-        tochk=tochk->parent.get())
-    {
-        if(tochk==this)
-            throw std::logic_error("Config::Scope loop detected");
-    }
-}
-
 Config::Config()
     :values(new values_t)
 {}
