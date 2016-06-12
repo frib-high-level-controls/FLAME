@@ -82,11 +82,16 @@ private:
     struct Scope {
         typedef boost::shared_ptr<Scope> shared_pointer;
         values_t values;
-        shared_pointer parent;
+        const shared_pointer parent;
         Scope() {}
-        explicit Scope(const values_t& V) :values(V) {}
-        explicit Scope(const shared_pointer& P) :parent(P) {}
-        explicit Scope(const values_t& V, const shared_pointer& P) :values(V), parent(P) {}
+        ~Scope() {}
+        explicit Scope(const values_t& V) :values(V), parent() {}
+        explicit Scope(const shared_pointer& P) :values(), parent(P) {check();}
+        explicit Scope(const values_t& V, const shared_pointer& P) :values(V), parent(P) {check();}
+        void check() const;
+    private:
+        Scope(const Scope&);
+        Scope& operator=(const Scope&);
     };
 
     Scope::shared_pointer scope;
@@ -100,6 +105,7 @@ public:
     explicit Config(const values_t& V);
     //! Copy ctor
     Config(const Config&);
+    ~Config() {}
     //! Assignment
     Config& operator=(const Config&);
 
