@@ -79,12 +79,12 @@ public:
     typedef std::map<std::string, value_t> values_t;
 private:
     typedef boost::shared_ptr<values_t> values_pointer;
+    typedef boost::shared_ptr<const values_t> const_values_pointer;
+
     values_pointer values;
+    const_values_pointer implicit_values;
 
     void _cow();
-    //! Construct from several std::map (several scopes)
-    //! Argument is consumed via. swap()
-    //! Used by new_scope()
 public:
     //! New empty config
     Config();
@@ -193,6 +193,7 @@ public:
     {
         // no _cow() here since no value_t are modified
         values.swap(c.values);
+        implicit_values.swap(c.implicit_values);
     }
 
     //! Print listing of inner scope
@@ -205,11 +206,11 @@ public:
     inline const_iterator end() const { return values->end(); }
 
     inline void reserve(size_t) {}
-    //! Number of scopes (always >=1)
     //! Create a new inner scope
-    //! Discard the inner most scope.
-    //! A no-op if depth()==1
-    //! @return A copy of this Config with a new empty inner scope
+    Config new_scope() const;
+    void push_scope();
+
+    void flatten();
 };
 
 IS_CONFIG_VALUE(std::vector<Config>);

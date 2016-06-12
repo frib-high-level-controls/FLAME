@@ -14,13 +14,16 @@ Config::Config()
 
 Config::Config(const Config& O)
     :values(O.values)
+    ,implicit_values(O.implicit_values)
 {}
 
 Config&
 Config::operator=(const Config& O)
 {
-    if(this!=&O)
+    if(this!=&O) {
         values = O.values;
+        implicit_values = O.implicit_values;
+    }
     return *this;
 }
 
@@ -37,8 +40,12 @@ const Config::value_t&
 Config::getAny(const std::string& name) const
 {
     values_t::const_iterator it=values->find(name);
-    if(it==values->end()) throw key_error(name);
-    return it->second;
+    if(it!=values->end()) return it->second;
+    if(implicit_values) {
+        it = implicit_values->find(name);
+        if(it!=implicit_values->end()) return it->second;
+    }
+    throw key_error(name);
 }
 
 void
@@ -62,6 +69,41 @@ Config::swapAny(const std::string& name, value_t& val)
     std::pair<values_t::iterator, bool> ret = values->insert(std::make_pair(name,value_t()));
     assert(ret.second);
     ret.first->second.swap(val);
+}
+
+Config Config::new_scope() const
+{
+    Config ret;
+    // return new Config with empty 'values' and 'implicit_values' containing our 'implicit_values'+'values'
+    if(values->empty()) {
+        ret.implicit_values = implicit_values;
+    } else if(!implicit_values || implicit_values->empty()) {
+        ret.implicit_values = values; // _cow() makes this safe
+    } else {
+        values_pointer ptr(new values_t(*values)); // copy
+        ptr->insert(implicit_values->begin(),
+                    implicit_values->end());
+        // note that insert() will not overwrite existing keys
+        ret.implicit_values = ptr;
+    }
+    return ret;
+}
+
+void Config::push_scope()
+{
+    flatten();
+    implicit_values = values; // _cow() makes this safe
+    values.reset();
+}
+
+void Config::flatten()
+{
+    if(implicit_values) {
+        values->insert(implicit_values->begin(),
+                       implicit_values->end());
+        implicit_values.reset();
+        // note that insert() will not overwrite existing keys
+    }
 }
 
 namespace {
@@ -255,7 +297,7 @@ struct GLPSParser::Pvt {
         for(strlist_t::list_t::const_iterator it=line->names.begin(), end=line->names.end();
             it!=end; ++it)
         {
-            Config next(ret->new_scope()); // inheirt global scope
+            Config next(ret->new_scope()); // inhiert global scope
             const parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
 
             next.reserve(elem.props.size()+2);
