@@ -11,26 +11,10 @@ from numpy.testing import assert_array_almost_equal as assert_aequal
 
 from .. import Machine
 
-from .._internal import (GLPSPrinter as dictshow, _GLPSParse)
+from .. import GLPSParser
 
 import os
 datadir = os.path.dirname(__file__)
-
-def print_state(S):
-  n = 7
-  for i in range(n):
-    sys.stdout.write('[')
-    for j in range(n):
-      sys.stdout.write('%15.8e' % (S.state[i, j]))
-      if j != n-1: sys.stdout.write(', ')
-    if i != n-1:
-      sys.stdout.write('],\n')
-    else:
-      sys.stdout.write(']\n')
-
-class GLPSParser(object):
-    def parse(self, s):
-        return _GLPSParse(s)
 
 class testComplete(unittest.TestCase):
   'Tests of entire lattice files'
