@@ -79,20 +79,16 @@ public:
     typedef std::map<std::string, value_t> values_t;
 private:
     typedef boost::shared_ptr<values_t> values_pointer;
-    typedef std::vector<values_pointer> values_scope_t;
-    values_scope_t value_scopes;
-    // value_scopes always has at least one element
+    values_pointer values;
 
     void _cow();
     //! Construct from several std::map (several scopes)
     //! Argument is consumed via. swap()
     //! Used by new_scope()
-    explicit Config(values_scope_t& V) { value_scopes.swap(V); }
 public:
     //! New empty config
     Config();
     //! Build config from a single std::map (single scope)
-    explicit Config(const values_t& V);
     //! Copy ctor
     Config(const Config&);
     ~Config() {}
@@ -170,7 +166,7 @@ public:
              typename boost::call_traits<typename detail::is_config_value<T>::type>::param_type val)
     {
         _cow();
-        (*value_scopes.back())[name] = val;
+        (*values)[name] = val;
     }
 
     /** Exchange a single parameter typed
@@ -196,7 +192,7 @@ public:
     void swap(Config& c)
     {
         // no _cow() here since no value_t are modified
-        value_scopes.swap(c.value_scopes);
+        values.swap(c.values);
     }
 
     //! Print listing of inner scope
@@ -205,21 +201,15 @@ public:
     typedef values_t::iterator iterator;
     typedef values_t::const_iterator const_iterator;
 
-    // Only iterates inner most scope
-    inline const_iterator begin() const { return value_scopes.back()->begin(); }
-    inline const_iterator end() const { return value_scopes.back()->end(); }
+    inline const_iterator begin() const { return values->begin(); }
+    inline const_iterator end() const { return values->end(); }
 
     inline void reserve(size_t) {}
-
     //! Number of scopes (always >=1)
-    size_t depth() const;
     //! Create a new inner scope
-    void push_scope();
     //! Discard the inner most scope.
     //! A no-op if depth()==1
-    void pop_scope();
     //! @return A copy of this Config with a new empty inner scope
-    Config new_scope() const;
 };
 
 IS_CONFIG_VALUE(std::vector<Config>);

@@ -21,57 +21,43 @@ void Config::Scope::check() const
 }
 
 Config::Config()
-    :value_scopes(1)
-{
-    value_scopes[0].reset(new values_t);
-}
-
-Config::Config(const values_t& V)
-    :value_scopes(1)
-{
-    value_scopes[0].reset(new values_t(V));
-}
+    :values(new values_t)
+{}
 
 Config::Config(const Config& O)
-    :value_scopes(O.value_scopes)
+    :values(O.values)
 {}
 
 Config&
 Config::operator=(const Config& O)
 {
     if(this!=&O)
-        value_scopes = O.value_scopes;
+        values = O.values;
     return *this;
 }
 
-//! Ensure we have a unique reference to our inner scope, making a copy if necessary
+//! Ensure we have a unique reference to our values std::map by making a copy if necessary
 void Config::_cow()
 {
-    assert(!value_scopes.empty());
-    if(!value_scopes.back().unique()) {
-        Config::values_pointer U(new values_t(*value_scopes.back())); // copy
-        value_scopes.back().swap(U);
+    if(!values.unique()) {
+        Config::values_pointer U(new values_t(*values)); // copy
+        U.swap(values);
     }
 }
 
 const Config::value_t&
 Config::getAny(const std::string& name) const
 {
-    assert(!value_scopes.empty());
-    for(values_scope_t::const_reverse_iterator it = value_scopes.rbegin(), end = value_scopes.rend()
-        ; it!=end; ++it)
-    {
-        values_t::const_iterator S=(*it)->find(name);
-        if(S!=(*it)->end()) return S->second;
-    }
-    throw key_error(name);
+    values_t::const_iterator it=values->find(name);
+    if(it==values->end()) throw key_error(name);
+    return it->second;
 }
 
 void
 Config::setAny(const std::string& name, const value_t& val)
 {
     _cow();
-    (*value_scopes.back())[name] = val;
+    (*values)[name] = val;
 }
 
 void
@@ -79,49 +65,15 @@ Config::swapAny(const std::string& name, value_t& val)
 {
     _cow();
     {
-        values_t::iterator it = value_scopes.back()->find(name);
-        if(it!=value_scopes.back()->end()) {
+        values_t::iterator it = values->find(name);
+        if(it!=values->end()) {
             it->second.swap(val);
             return;
         }
     }
-    std::pair<values_t::iterator, bool> ret = value_scopes.back()->insert(std::make_pair(name,value_t()));
+    std::pair<values_t::iterator, bool> ret = values->insert(std::make_pair(name,value_t()));
     assert(ret.second);
     ret.first->second.swap(val);
-}
-
-
-size_t
-Config::depth() const
-{
-    return value_scopes.size();
-}
-
-void
-Config::push_scope()
-{
-    values_pointer N(new values_t);
-    value_scopes.push_back(N);
-}
-
-void
-Config::pop_scope()
-{
-    if(value_scopes.size()==1) {
-        // when last scope is popped, just clear
-        values_pointer N(new values_t);
-        value_scopes.back().swap(N);
-    } else {
-        value_scopes.pop_back();
-    }
-}
-
-Config Config::new_scope() const
-{
-    values_scope_t S(value_scopes.size()+1);
-    std::copy(value_scopes.begin(), value_scopes.end(), S.begin());
-    S.back().reset(new values_t);
-    return Config(S);
 }
 
 namespace {
@@ -188,8 +140,7 @@ struct show_value : public boost::static_visitor<void>
 void
 Config::show(std::ostream& strm, unsigned indent) const
 {
-    //TODO: show nested scopes?
-    for(Config::values_t::const_iterator it=value_scopes.back()->begin(), end=value_scopes.back()->end();
+    for(Config::values_t::const_iterator it=values->begin(), end=values->end();
         it!=end; ++it)
     {
         boost::apply_visitor(show_value(strm, it->first, indent), it->second);
