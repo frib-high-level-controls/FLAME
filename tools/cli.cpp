@@ -72,7 +72,13 @@ void getargs(int argc, char *argv[], po::variables_map& args)
     po::notify(args);
 
     if(args.count("help") || !args.count("lattice")) {
-        std::cout<<opts<<"\n";
+        std::cout<<opts<<"\n\n"
+                   "Output formats:\n\n"
+                   " txt  - Print selected outputs states to screen ('--format txt' the default default)\n"
+                   "        or file ('--format txt,file=out.txt')\n"
+                   "\n"
+                   " hdf5 - Write selected output states to an HDF5 file.\n"
+                   "        eg. '--format hdf5,file=out.h5'\n";
         exit(1);
     }
 }
@@ -115,7 +121,7 @@ struct StreamObserver : public Observer
     virtual ~StreamObserver() {}
     virtual void view(const ElementVoid* elem, const StateBase* state)
     {
-        (*strm)<<elem->index<<" "<<*state;
+        (*strm)<<"After Element ["<<elem->index<<"] "<<elem->name<<" "<<*state<<"\n";
     }
 
     struct Factory : public ObserverFactory
