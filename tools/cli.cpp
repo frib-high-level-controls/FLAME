@@ -5,6 +5,8 @@
 #include <vector>
 #include <typeinfo>
 
+#include <time.h>
+
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
@@ -63,6 +65,9 @@ void getargs(int argc, char *argv[], po::variables_map& args)
             ("select-type,T", po::value<std::string>()->value_name("ETYPE"),
                 "Select all elements of the given type for output")
             ("select-last,L", "Select last element for output")
+#ifdef CLOCK_MONOTONIC
+            ("timeit", "Measure execution time")
+#endif
             ;
 
     po::positional_options_description pos;
@@ -182,6 +187,35 @@ struct H5Observer : public Observer
     }
 };
 
+struct Timer {
+    timespec ts;
+    Timer() {
+#ifdef CLOCK_MONOTONIC
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+#endif
+    }
+    double delta() {
+#ifdef CLOCK_MONOTONIC
+        timespec start = ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+
+        // tv_nsec and tv_sec are signed integers
+        double D = ts.tv_nsec-start.tv_nsec;
+        D *= 1e-9;
+        D += ts.tv_sec-start.tv_sec;
+        return D;
+#else
+        return std::numeric_limits<double>::quiet_NaN();
+#endif
+    }
+    void showdelta(const char *msg) {
+#ifdef CLOCK_MONOTONIC
+        double D = delta();
+        printf("%s : %.3f ms\n", msg, D*1e3);
+#endif
+    }
+};
+
 } // namespace
 
 int main(int argc, char *argv[])
@@ -189,6 +223,9 @@ int main(int argc, char *argv[])
 try {
     po::variables_map args;
     getargs(argc, argv, args);
+
+    bool showtime = args.count("timeit")>0;
+    Timer timeit;
 
     std::auto_ptr<Config> conf;
 
@@ -245,6 +282,8 @@ try {
         }
     }
 
+    if(showtime) timeit.showdelta("Parsing");
+
     if(verb) {
         std::cout<<"# Reduced lattice\n";
         GLPSPrint(std::cout, *conf);
@@ -280,8 +319,11 @@ try {
         }
     }
 
+    if(showtime) timeit.showdelta("Setup 1");
 
     Machine sim(*conf);
+
+    if(showtime) timeit.showdelta("Create Machine");
 
     if(args.count("select-all")) {
         BOOST_FOREACH(ElementVoid *elem, sim) {
@@ -324,8 +366,12 @@ try {
         std::cout<<"# Machine configuration\n"<<sim<<"\n\n";
     }
 
+    if(showtime) timeit.showdelta("Setup 2");
+
     std::auto_ptr<StateBase> state(sim.allocState());
+    if(showtime) timeit.showdelta("Alloc State");
     sim.propagate(state.get(), 0, maxelem);
+    if(showtime) timeit.showdelta("Simulate");
 
     ofact->after_sim(sim);
 
@@ -334,6 +380,7 @@ try {
     }
 
     Machine::registeryCleanup();
+    if(showtime) timeit.showdelta("Cleanup");
 
     return 0;
 }catch(std::exception& e){
