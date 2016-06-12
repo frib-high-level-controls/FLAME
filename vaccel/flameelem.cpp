@@ -30,7 +30,7 @@ void elem_init_common(dbCommon *prec, const char *link)
         if(M[3].matched)
             inst = boost::lexical_cast<size_t>(M.str(3));
 
-        ElementVoid* elem = priv->sim->machines[0]->find(M.str(2), inst);
+        ElementVoid* elem = priv->sim->machine->find(M.str(2), inst);
         if(!elem)
             throw std::runtime_error("No such element");
         priv->element_index = elem->index;

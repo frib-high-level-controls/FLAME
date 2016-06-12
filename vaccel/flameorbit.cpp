@@ -43,7 +43,7 @@ long orbit_init_common(dbCommon *prec, const char *link)
         if(M[4].matched)
             priv->param_offset = boost::lexical_cast<size_t>(M.str(4));
 
-        std::pair<Machine::lookup_iterator, Machine::lookup_iterator> range = priv->sim->machines[0]->equal_range_type(M.str(2));
+        std::pair<Machine::lookup_iterator, Machine::lookup_iterator> range = priv->sim->machine->equal_range_type(M.str(2));
 
         if(range.first==range.second)
             throw std::runtime_error("No such elements");
@@ -65,7 +65,7 @@ long orbit_init_common(dbCommon *prec, const char *link)
         unsigned idx;
         {
             Config empty;
-            std::auto_ptr<StateBase> state(priv->sim->machines[0]->allocState(empty));
+            std::auto_ptr<StateBase> state(priv->sim->machine->allocState(empty));
 
             for(idx=0; true; idx++) {
                 StateBase::ArrayInfo info;
@@ -131,11 +131,11 @@ long orbit_read_wf(waveformRecord *prec)
             }
 
             ElementVoid *elem = *it;
-            VMeasure *meas = priv->sim->measures[elem->index];
+            VIOCObserver *meas = priv->sim->measures[elem->index];
             StateBase::ArrayInfo info;
 
-            if(meas->reduced.get() &&
-               meas->reduced->getArray(priv->param_index, info))
+            if(meas->last.get() &&
+               meas->last->getArray(priv->param_index, info))
             {
                 double * const arr = (double*)info.ptr;
                 priv->pvalues[i] = &arr[priv->param_offset];

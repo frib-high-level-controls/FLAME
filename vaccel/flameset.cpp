@@ -29,7 +29,7 @@ long setting_init_ao(aoRecord *prec)
         if(M[3].matched)
             inst = boost::lexical_cast<size_t>(M.str(3));
 
-        ElementVoid* elem = priv->sim->machines[0]->find(M.str(2), inst);
+        ElementVoid* elem = priv->sim->machine->find(M.str(2), inst);
         if(!elem)
             throw std::runtime_error("No such element");
         priv->element_index = elem->index;
@@ -63,16 +63,16 @@ long setting_change_ao(aoRecord *prec)
             errlogPrintf("%s: set %u %s.%s = %f\n",
                         prec->name,
                         (unsigned)priv->element_index,
-                        priv->sim->machines[0]->at(priv->element_index)->name.c_str(),
+                        priv->sim->machine->at(priv->element_index)->name.c_str(),
                         priv->param.c_str(),
                         value);
 
-        for(size_t i=0; i<priv->sim->machines.size(); i++) {
-            ElementVoid* elem = priv->sim->machines[i]->at(priv->element_index);
+        {
+            ElementVoid* elem = priv->sim->machine->at(priv->element_index);
             Config conf(elem->conf());
             conf.set<double>(priv->param, value);
 
-            priv->sim->machines[i]->reconfigure(priv->element_index, conf);
+            priv->sim->machine->reconfigure(priv->element_index, conf);
         }
 
         return 0;

@@ -23,91 +23,18 @@ long Sim::io_aftersim(int, dbCommon* prec, IOSCANPVT* io)
     }
 }
 
-VMeasure* Sim::get_measure(size_t index)
+VIOCObserver* Sim::get_measure(size_t index)
 {
-    VMeasure *ret;
+    VIOCObserver *ret;
     if(!find(measures, index, ret))
     {
-        ret = new VMeasure;
-        ret->sim = this;
-        ret->element_index = index;
-        ret->observers.resize(machines.size());
-        for(size_t i=0; i<machines.size(); i++)
-        {
-            ElementVoid *elem = machines[i]->at(index);
-            assert(elem->observer()==NULL);
-            ret->observers[i] = new VIOCObserver;
-            elem->set_observer(ret->observers[i]);
-        }
+        ElementVoid *elem = machine->at(index);
+        assert(elem->observer()==NULL);
+        ret = new VIOCObserver;
+        elem->set_observer(ret);
         measures[index] = ret;
     }
     return ret;
-}
-
-void VMeasure::reduce()
-{
-    // we break the StateBase abstraction here for reasons of performance, and
-    // my not being able to think of any abstract interface for this operation...
-
-    if(!reduced.get())
-    {
-        StateBase *S = observers[0]->last.get();
-        // first run
-        if(!S)
-            return; // Nothing observed yet???
-
-        if(dynamic_cast<VectorState*>(S)) {
-            stype = SVector;
-        } else if(dynamic_cast<MomentState*>(S)) {
-            stype = SMoment;
-        } else {
-            stype = SUnknown;
-            if(observers.size()!=1)
-                errlogPrintf("%s: VMeassure Can't reduce unsupported state type: %s\n",
-                             sim->name.c_str(), typeid(S).name());
-        }
-
-        reduced.reset(observers[0]->last->clone());
-
-    } else {
-        // not first run
-        reduced->assign(*observers[0]->last);
-    }
-
-    // check for trival case, and unknown StateBase sub-classes
-    if(observers.size()==1 || stype==SUnknown)
-        return;
-
-    if(stype==SVector) {
-        VectorState *ST = static_cast<VectorState*>(reduced.get());
-
-        ST->state *= sim->ncharge[0];
-
-        for(size_t i=1; i<observers.size(); i++)
-        {
-            VectorState *O = static_cast<VectorState*>(observers[i]->last.get());
-            ST->state += sim->ncharge[i] * O->state;
-        }
-
-        ST->state /= sim->total_charge;
-
-    } else if(stype==SMoment) {
-        MomentState *ST = static_cast<MomentState*>(reduced.get());
-
-        ST->moment0 *= sim->ncharge[0];
-
-        for(size_t i=1; i<observers.size(); i++)
-        {
-            MomentState *O = static_cast<MomentState*>(observers[i]->last.get());
-            ST->moment0 += sim->ncharge[i] * O->moment0;
-        }
-
-        ST->moment0 /= sim->total_charge;
-
-        //TODO: reduce ST->state?
-
-    } else
-        throw std::logic_error("oops in VMeasure::reduce");
 }
 
 bool SimDev::test_debug(unsigned level)

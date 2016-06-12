@@ -23,7 +23,7 @@ struct SimDevMeasScalar : public SimDev
     unsigned param_index; //!< index of named parameter in StateBase::getArray
     size_t param_offset; //!< value offset in parmeter array
 
-    VMeasure *measure;
+    VIOCObserver *measure;
     double *pvalue;
 };
 
@@ -53,7 +53,7 @@ long measure_init_common(dbCommon *prec, const char *link)
         if(M[5].matched)
             priv->param_offset = boost::lexical_cast<size_t>(M.str(5));
 
-        ElementVoid* elem = priv->sim->machines[0]->find(M.str(2), inst);
+        ElementVoid* elem = priv->sim->machine->find(M.str(2), inst);
         if(!elem)
             throw std::runtime_error("No such element");
         priv->element_index = elem->index;
@@ -66,7 +66,7 @@ long measure_init_common(dbCommon *prec, const char *link)
         unsigned idx;
         {
             Config empty;
-            std::auto_ptr<StateBase> state(priv->sim->machines[0]->allocState(empty));
+            std::auto_ptr<StateBase> state(priv->sim->machine->allocState(empty));
 
             for(idx=0; true; idx++) {
                 StateBase::ArrayInfo info;
@@ -122,8 +122,8 @@ long measure_read_ai(aiRecord *prec)
             if(priv->pvalue) {
                 value = *priv->pvalue;
 
-            } else if(priv->measure->reduced.get() &&
-                      priv->measure->reduced->getArray(priv->param_index, info))
+            } else if(priv->measure->last.get() &&
+                      priv->measure->last->getArray(priv->param_index, info))
             {
                 double * const arr = (double*)info.ptr;
                 priv->pvalue = &arr[priv->param_offset];
@@ -135,7 +135,7 @@ long measure_read_ai(aiRecord *prec)
 
         }
 
-        prec->val = value/priv->sim->total_charge;
+        prec->val = value;
         prec->udf = 0;
 
         if(prec->aslo!=0.0) prec->val *= prec->aslo;

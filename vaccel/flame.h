@@ -43,21 +43,6 @@ struct VIOCObserver : public Observer
     virtual void view(const ElementVoid* elem, const StateBase* state);
 };
 
-struct VMeasure
-{
-    Sim *sim;
-    size_t element_index;
-    std::vector<VIOCObserver*> observers;
-
-    std::auto_ptr<StateBase> reduced;
-
-    void reduce();
-
-    enum {
-        SUnknown, SVector, SMoment,
-    } stype;
-};
-
 struct Sim : public epicsThreadRunable {
     Sim(const std::string& n);
     virtual ~Sim();
@@ -78,14 +63,13 @@ struct Sim : public epicsThreadRunable {
     double last_duration;
     std::string last_msg;
 
-    std::vector<Machine*> machines;
-    std::vector<double> ncharge; //!< charge of each charge state, used in weighted average of measurements
-    double total_charge;
+    std::auto_ptr<Machine> machine;
 
-    typedef std::map<size_t, VMeasure*> measures_t;
+    // map element index to measurement
+    typedef std::map<size_t, VIOCObserver*> measures_t;
     measures_t measures;
 
-    VMeasure *get_measure(size_t index);
+    VIOCObserver *get_measure(size_t index);
 
     virtual void run();
 
