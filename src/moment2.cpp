@@ -196,6 +196,10 @@ Moment2State::~Moment2State() {}
 void Moment2State::calc_rms()
 {
     assert(real.size()>0);
+    assert(moment0_env.size()==maxsize);
+    assert(moment0_rms.size()==maxsize);
+    assert(moment1_env.size1()==maxsize);
+    assert(moment1_env.size2()==maxsize);
 
     double totQ = 0.0;
     for(size_t n=0; n<real.size(); n++) {
@@ -219,7 +223,7 @@ void Moment2State::calc_rms()
         moment0_rms[j] = sqrt(variance/totQ);
     }
 
-    moment1_env = moment1[0];
+    moment1_env.assign(moment1[0]);
 }
 
 Moment2State::Moment2State(const Moment2State& o, clone_tag t)
