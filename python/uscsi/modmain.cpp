@@ -57,7 +57,6 @@ init_internal(void)
 
         // add States and Elements
         registerLinear();
-        registerMoment();
         registerMoment2();
 
 #if PY_MAJOR_VERSION >= 3

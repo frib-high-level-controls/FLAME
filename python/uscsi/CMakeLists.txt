@@ -35,8 +35,6 @@ set(PY_SRC_TEST
   test/test_moment.py
   test/test_config.py
   test/test_jb.py
-  test/moment_jb.lat
-  test/moment_jb_2.lat
   test/parse1.lat
   test/latticeout_IMP_withPV_consolidate.lat
   test/latticeout_IMP_withPV_consolidate2.lat

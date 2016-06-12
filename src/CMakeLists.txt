@@ -41,7 +41,6 @@ set(inst_HEADERS
   scsi/state/vector.h
   scsi/state/matrix.h
   scsi/linear.h
-  scsi/moment.h
   scsi/moment2.h
   scsi/moment2_sup.h
   scsi/rf_cavity.h
@@ -59,7 +58,6 @@ add_library(uscsi_core SHARED
   config.cpp
 
   linear.cpp
-  moment.cpp
   moment2.cpp
   moment2_sup.cpp
   rf_cavity.cpp
@@ -98,13 +96,6 @@ add_executable(test_lex
   test_lex.cpp
 )
 target_link_libraries(test_lex
-  uscsi_core
-)
-
-add_executable(test_jb_1
-  test_jb_1.cpp
-)
-target_link_libraries(test_jb_1
   uscsi_core
 )
 

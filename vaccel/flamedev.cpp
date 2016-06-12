@@ -8,7 +8,6 @@
 
 #include "flame.h"
 #include "scsi/state/vector.h"
-#include "scsi/moment.h"
 
 long Sim::io_aftersim(int, dbCommon* prec, IOSCANPVT* io)
 {

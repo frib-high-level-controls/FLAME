@@ -316,7 +316,6 @@ public:
 std::ostream& operator<<(std::ostream&, const Machine& m);
 
 void registerLinear();
-void registerMoment();
 void registerMoment2();
 
 #endif // SCSI_BASE_H

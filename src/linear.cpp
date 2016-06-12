@@ -3,7 +3,6 @@
 #include <algorithm>
 
 #include "scsi/linear.h"
-#include "scsi/moment.h"
 #include "scsi/state/vector.h"
 #include "scsi/state/matrix.h"
 
@@ -420,45 +419,34 @@ void registerLinear()
 {
     Machine::registerState<VectorState>("Vector");
     Machine::registerState<MatrixState>("TransferMatrix");
-    Machine::registerState<MomentState>("MomentMatrix");
 
     Machine::registerElement<ElementSource<LinearElementBase<VectorState>   > >("Vector",         "source");
     Machine::registerElement<ElementSource<LinearElementBase<MatrixState>   > >("TransferMatrix", "source");
-    Machine::registerElement<ElementSource<MomentElementBase>                 >("MomentMatrix",   "source");
 
     Machine::registerElement<ElementMark<LinearElementBase<VectorState>     > >("Vector",         "marker");
     Machine::registerElement<ElementMark<LinearElementBase<MatrixState>     > >("TransferMatrix", "marker");
-    Machine::registerElement<ElementMark<MomentElementBase>                   >("MomentMatrix",   "marker");
 
     Machine::registerElement<ElementDrift<LinearElementBase<VectorState>    > >("Vector",         "drift");
     Machine::registerElement<ElementDrift<LinearElementBase<MatrixState>    > >("TransferMatrix", "drift");
-    Machine::registerElement<ElementDrift<MomentElementBase>                  >("MomentMatrix",   "drift");
 
     Machine::registerElement<ElementSBend<LinearElementBase<VectorState>    > >("Vector",         "sbend");
     Machine::registerElement<ElementSBend<LinearElementBase<MatrixState>    > >("TransferMatrix", "sbend");
-    Machine::registerElement<ElementSBend<MomentElementBase>                  >("MomentMatrix",   "sbend");
 
     Machine::registerElement<ElementQuad<LinearElementBase<VectorState>     > >("Vector",         "quadrupole");
     Machine::registerElement<ElementQuad<LinearElementBase<MatrixState>     > >("TransferMatrix", "quadrupole");
-    Machine::registerElement<ElementQuad<MomentElementBase>                   >("MomentMatrix",   "quadrupole");
 
     Machine::registerElement<ElementSolenoid<LinearElementBase<VectorState> > >("Vector",         "solenoid");
     Machine::registerElement<ElementSolenoid<LinearElementBase<MatrixState> > >("TransferMatrix", "solenoid");
-    Machine::registerElement<ElementSolenoid<MomentElementBase>               >("MomentMatrix",   "solenoid");
 
     Machine::registerElement<ElementRFCavity<LinearElementBase<VectorState> > >("Vector",         "rfcavity");
     Machine::registerElement<ElementRFCavity<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
-    Machine::registerElement<ElementRFCavity<MomentElementBase>               >("MomentMatrix",   "rfcavity");
 
     Machine::registerElement<ElementStripper<LinearElementBase<VectorState> > >("Vector",         "stripper");
     Machine::registerElement<ElementStripper<LinearElementBase<MatrixState> > >("TransferMatrix", "stripper");
-    Machine::registerElement<ElementStripper<MomentElementBase>               >("MomentMatrix",   "stripper");
 
     Machine::registerElement<ElementEDipole<LinearElementBase<VectorState>  > >("Vector",         "edipole");
     Machine::registerElement<ElementEDipole<LinearElementBase<MatrixState>  > >("TransferMatrix", "edipole");
-    Machine::registerElement<ElementEDipole<MomentElementBase>                >("MomentMatrix",   "edipole");
 
     Machine::registerElement<ElementGeneric<LinearElementBase<VectorState>  > >("Vector",         "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState>  > >("TransferMatrix", "generic");
-    Machine::registerElement<ElementGeneric<MomentElementBase>                >("MomentMatrix",   "generic");
 }
