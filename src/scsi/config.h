@@ -211,11 +211,6 @@ public:
 
     inline void reserve(size_t) {}
 
-    /** Squash all inner scopes
-     * @post depth()==1
-     */
-    void flatten();
-
     //! Number of scopes (always >=1)
     size_t depth() const;
     //! Create a new inner scope

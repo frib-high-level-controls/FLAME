@@ -109,35 +109,3 @@ BOOST_AUTO_TEST_CASE(config_print_stmt)
 
     BOOST_CHECK_EQUAL(strm.str(), "On line 2 : 14\n" "On line 4 : \"test\"\n");
 }
-
-BOOST_AUTO_TEST_CASE(config_flatten)
-{
-    Config C;
-
-    C.set<double>("A", 1.0);
-    C.set<double>("C", 1.0);
-
-    C.push_scope();
-
-    C.set<double>("A", 2.0);
-    C.set<double>("B", 2.0);
-
-    {
-        std::ostringstream strm;
-        C.show(strm);
-        BOOST_CHECK_EQUAL(strm.str(), "A = 2\nB = 2\n");
-    }
-
-    BOOST_CHECK_EQUAL(C.depth(), 2);
-    C.flatten();
-    // A from inner scope overwrites outer
-    // B from inner scope used
-    // C from outer scope used
-    BOOST_CHECK_EQUAL(C.depth(), 1);
-
-    {
-        std::ostringstream strm;
-        C.show(strm);
-        BOOST_CHECK_EQUAL(strm.str(), "A = 2\nB = 2\nC = 1\n");
-    }
-}
