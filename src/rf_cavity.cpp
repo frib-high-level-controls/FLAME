@@ -156,10 +156,10 @@ void calTransfac(const numeric_table& fldmap,  int column_no, const double IonK,
     EM.resize(n);
 
     std::copy(fldmap.table.find1(2, 0, 0),
-              fldmap.table.find1(2, fldmap.table.size1(), 0),
+              fldmap.table.find1(2, n, 0),
               z.begin());
     std::copy(fldmap.table.find1(2, 0, column_no),
-              fldmap.table.find1(2, fldmap.table.size1(), column_no),
+              fldmap.table.find1(2, n, column_no),
               EM.begin());
 
     dz = (z[n-1]-z[0])/(n-1);
