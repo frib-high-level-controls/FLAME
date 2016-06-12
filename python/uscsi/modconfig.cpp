@@ -181,6 +181,42 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
     if(!PyArg_ParseTupleAndKeywords(args, kws, "O|zO", (char**)pnames, &conf, &path, &extra_defs))
         return NULL;
 
+    GLPSParser parser;
+
+    if(extra_defs==Py_None) {
+        // no-op
+    } else if(PyDict_Check(extra_defs)) {
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+
+        while(PyDict_Next(extra_defs, &pos, &key, &value)) {
+            PyRef<> keyx(key, borrow());
+            PyCString keystr(keyx);
+
+            Config::value_t curval;
+
+            if(PyNumber_Check(value)) {
+                PyRef<> pyf(PyNumber_Float(value));
+                curval = PyFloat_AsDouble(pyf.py());
+
+            } else if(PyString_Check(value)) {
+                PyRef<> valuex(value, borrow());
+                PyCString valstr(valuex);
+
+                curval = valstr.c_str();
+
+            } else {
+                PyErr_SetString(PyExc_ValueError, "extra {} can contain only numbers or strings");
+                return NULL;
+            }
+
+            parser.setVar(keystr.c_str(), curval);
+        }
+    } else {
+        PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
+        return NULL;
+    }
+
     PyGetBuf buf;
     std::auto_ptr<Config> C;
 
@@ -199,11 +235,9 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
             PyErr_SetString(PyExc_TypeError, "read() must return a buffer");
             return NULL;
         }
-        GLPSParser parser;
         C.reset(parser.parse_byte((const char*)buf.data(), buf.size(), path));
 
     } else if(buf.get(conf)) {
-        GLPSParser parser;
         C.reset(parser.parse_byte((const char*)buf.data(), buf.size(), path));
 
 #if PY_MAJOR_VERSION >= 3
@@ -211,21 +245,11 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
         PyCString buf;
         const char *cbuf = buf.c_str(conf);
 
-        GLPSParser parser;
         C.reset(parser.parse_byte(cbuf, strlen(cbuf), path));
 #endif
 
     } else {
         throw std::invalid_argument("'config' must be dict or byte buffer");
-    }
-
-    if(extra_defs==Py_None) {
-        // no-op
-    } else if(PyDict_Check(extra_defs)) {
-        Dict2Config(*C, extra_defs);
-    } else {
-        PyErr_SetString(PyExc_ValueError, "'extra' must be a dict");
-        return NULL;
     }
 
     return C.release();

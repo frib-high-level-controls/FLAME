@@ -51,8 +51,8 @@ void getargs(int argc, char *argv[], po::variables_map& args)
             ("help,h", "Display this message")
             ("verbose,v", po::value<std::string>()->default_value("0")->value_name("NUM"),
                 "Make some noise")
-            ("define,D", po::value<std::vector<std::string> >()->composing()->value_name("name=val"),
-                "Override variable value (\"-Dname=value\")")
+            ("define,D", po::value<std::vector<std::string> >()->composing()->value_name("name=type:val"),
+                "Override variable value (\"-Dname=str:value\")")
             ("lattice", po::value<std::string>()->value_name("FILE"),
                 "Input lattice file")
             ("max,M", po::value<std::string>()->value_name("NUM"),
@@ -82,29 +82,6 @@ void getargs(int argc, char *argv[], po::variables_map& args)
         exit(1);
     }
 }
-
-struct update_define : boost::static_visitor<Config::value_t>
-{
-    const std::string& value;
-    update_define(const std::string& val) : value(val) {}
-
-    Config::value_t operator()(double v) const
-    {
-        return boost::lexical_cast<double>(value);
-    }
-    Config::value_t operator()(const std::string& v) const
-    {
-        return value;
-    }
-    Config::value_t operator()(const std::vector<double>& v) const
-    {
-        throw std::runtime_error("-D can't set vector values");
-    }
-    Config::value_t operator()(const Config::vector_t& v) const
-    {
-        throw std::runtime_error("-D can't set Config values");
-    }
-};
 
 struct ObserverFactory
 {
@@ -218,39 +195,53 @@ try {
     size_t verb = boost::lexical_cast<size_t>(args["verbose"].as<std::string>());
     if(verb<=2)
         H5StateWriter::dontPrint();
-
-    try {
+    {
         GLPSParser P;
-        conf.reset(P.parse_file(args["lattice"].as<std::string>().c_str()));
-    }catch(std::exception& e){
-        std::cerr<<"Parse error: "<<e.what()<<"\n";
-        return 1;
-    }
 
-    if(args.count("define")) {
-        const std::vector<std::string>& defs = args["define"].as<std::vector<std::string> >();
+        if(args.count("define")) {
+            const std::vector<std::string>& defs = args["define"].as<std::vector<std::string> >();
 
-        BOOST_FOREACH(const std::string& def, defs) {
-            size_t sep = def.find_first_of('=');
-            if(sep==def.npos) {
-                std::cerr<<"-D "<<def<<" missing '='\n";
-                exit(1);
-            } else if(sep==0) {
-                std::cerr<<"-D "<<def<<" missing variable name\n";
-                exit(1);
+            BOOST_FOREACH(const std::string& def, defs) {
+                // expected form "<name>=<type>:<value>"
+                size_t equal = def.find_first_of('='),
+                       colon = def.find_first_of(':', equal);
+                if(equal==def.npos) {
+                    std::cerr<<"-D "<<def<<" missing '='\n";
+                    exit(1);
+                } else if(colon==def.npos) {
+                    std::cerr<<"-D "<<def<<" missing ':'\n";
+                    exit(1);
+                } else if(equal==0) {
+                    std::cerr<<"-D "<<def<<" missing variable name\n";
+                    exit(1);
+                }
+
+                std::string name(def.substr(0,equal)),
+                            type(def.substr(equal+1, colon-equal-1)),
+                           value(def.substr(colon+1));
+
+                Config::value_t curval;
+
+                if(type=="double" || type=="D") {
+                    curval = boost::lexical_cast<double>(value);
+
+                } else if(type=="str" || type=="S") {
+                    curval = value;
+
+                } else {
+                    std::cerr<<"Unknown type "<<type<<" in -D "<<def<<"\n";
+                    exit(1);
+                }
+
+                P.setVar(name, curval);
             }
+        }
 
-            std::string name(def.substr(0,sep));
-
-            Config::value_t curval;
-            try {
-                curval = conf->getAny(name);
-            } catch(key_error& e) {
-                std::cerr<<"-D "<<def<<" variable "<<name<<" does not exist.  -D may only redefine existing variables\n";
-                exit(1);
-            }
-
-            conf->setAny(name, boost::apply_visitor(update_define(def.substr(sep+1)), curval));
+        try {
+            conf.reset(P.parse_file(args["lattice"].as<std::string>().c_str()));
+        }catch(std::exception& e){
+            std::cerr<<"Parse error: "<<e.what()<<"\n";
+            return 1;
         }
     }
 
