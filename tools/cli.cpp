@@ -51,7 +51,7 @@ void getargs(int argc, char *argv[], po::variables_map& args)
     po::options_description opts(caption.str());
     opts.add_options()
             ("help,h", "Display this message")
-            ("verbose,v", po::value<std::string>()->default_value("0")->value_name("NUM"),
+            ("verbose,v", po::value<int>()->default_value(0)->value_name("NUM"),
                 "Make some noise")
             ("define,D", po::value<std::vector<std::string> >()->composing()->value_name("name=type:val"),
                 "Override variable value (\"-Dname=str:value\")")
@@ -62,8 +62,10 @@ void getargs(int argc, char *argv[], po::variables_map& args)
             ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
                 "output format (txt or hdf5)")
             ("select-all,A", "Select all elements for output")
-            ("select-type,T", po::value<std::string>()->value_name("ETYPE"),
+            ("select-type,T", po::value<std::vector<std::string> >()->composing()->value_name("ETYPE"),
                 "Select all elements of the given type for output")
+            ("select-name,N", po::value<std::vector<std::string> >()->composing()->value_name("ENAME"),
+                "Select all elements with the given name for output")
             ("select-last,L", "Select last element for output")
 #ifdef CLOCK_MONOTONIC
             ("timeit", "Measure execution time")
@@ -80,7 +82,7 @@ void getargs(int argc, char *argv[], po::variables_map& args)
         std::cout<<opts<<"\n\n"
                    "Output formats:\n\n"
                    " txt  - Print selected outputs states to screen ('--format txt' the default default)\n"
-                   "        or file ('--format txt,file=out.txt')\n"
+                   "        or file ('--format txt[,file=out.txt][,verbose[=lvl#]]')\n"
                    "\n"
                    " hdf5 - Write selected output states to an HDF5 file.\n"
                    "        eg. '--format hdf5,file=out.h5'\n";
@@ -99,18 +101,22 @@ struct ObserverFactory
 struct StreamObserver : public Observer
 {
     std::ostream *strm;
-    StreamObserver(std::ostream& strm) :strm(&strm) {}
+    int detail;
+    StreamObserver(std::ostream& strm, int detail=0) :strm(&strm), detail(detail) {}
     virtual ~StreamObserver() {}
     virtual void view(const ElementVoid* elem, const StateBase* state)
     {
-        (*strm)<<"After Element ["<<elem->index<<"] "<<elem->name<<" "<<*state<<"\n";
+        (*strm)<<"After Element ["<<elem->index<<"] "<<elem->name<<" ";
+        state->show(*strm, detail);
+        (*strm)<<"\n";
     }
 
     struct Factory : public ObserverFactory
     {
         std::auto_ptr<std::ostream> owned_strm;
         std::ostream *strm;
-        Factory(const strvect& fmt) :strm(&std::cout)
+        int detail;
+        Factory(const strvect& fmt) :strm(&std::cout), detail(0)
         {
             assert(!fmt.empty() && fmt[0]=="txt");
 
@@ -120,6 +126,10 @@ struct StreamObserver : public Observer
                 if(cmd.substr(0,5)=="file=") {
                     owned_strm.reset(new std::ofstream(cmd.substr(5).c_str()));
                     strm = owned_strm.get();
+                } else if(cmd=="verbose") {
+                    detail=1;
+                } else if(cmd.substr(0,8)=="verbose=") {
+                    detail=boost::lexical_cast<int>(cmd.substr(8));
                 } else {
                     std::cerr<<"Warning: -F "<<fmt[0]<<" includes unknown option "<<cmd<<"\n";
                 }
@@ -128,7 +138,7 @@ struct StreamObserver : public Observer
         virtual ~Factory() {}
         virtual Observer *observe(Machine& M, ElementVoid* E)
         {
-            return new StreamObserver(*strm);
+            return new StreamObserver(*strm, detail);
         }
 
         virtual void after_sim(Machine&)
@@ -229,7 +239,7 @@ try {
 
     std::auto_ptr<Config> conf;
 
-    size_t verb = boost::lexical_cast<size_t>(args["verbose"].as<std::string>());
+    int verb = args["verbose"].as<int>();
     if(verb<=2)
         H5StateWriter::dontPrint();
     {
@@ -331,19 +341,39 @@ try {
         }
     }
     if(args.count("select-type")) {
-        const std::string& etype = args["select-type"].as<std::string>();
+        BOOST_FOREACH(const std::string& etype, args["select-type"].as<std::vector<std::string> >()) {
 
-        std::pair<Machine::lookup_iterator, Machine::lookup_iterator> S(sim.equal_range_type(etype));
+            std::pair<Machine::lookup_iterator, Machine::lookup_iterator> S(sim.equal_range_type(etype));
 
-        if(S.first==S.second) {
-            std::cerr<<"Warning: --select-type "<<etype<<" does not match any elements\n";
-        } else {
-            for(; S.first!=S.second; ++S.first) {
-                ElementVoid *elem = *S.first;
+            if(S.first==S.second) {
+                std::cerr<<"Warning: --select-type "<<etype<<" does not match any elements\n";
+            } else {
+                for(; S.first!=S.second; ++S.first) {
+                    ElementVoid *elem = *S.first;
 
-                if(elem->observer()==NULL) {
-                    // don't replace existing Observer
-                    elem->set_observer(ofact->observe(sim, elem));
+                    if(elem->observer()==NULL) {
+                        // don't replace existing Observer
+                        elem->set_observer(ofact->observe(sim, elem));
+                    }
+                }
+            }
+        }
+    }
+    if(args.count("select-name")) {
+        BOOST_FOREACH(const std::string& ename, args["select-name"].as<std::vector<std::string> >()) {
+
+            std::pair<Machine::lookup_iterator, Machine::lookup_iterator> S(sim.equal_range(ename));
+
+            if(S.first==S.second) {
+                std::cerr<<"Warning: --select-name "<<ename<<" does not match any elements\n";
+            } else {
+                for(; S.first!=S.second; ++S.first) {
+                    ElementVoid *elem = *S.first;
+
+                    if(elem->observer()==NULL) {
+                        // don't replace existing Observer
+                        elem->set_observer(ofact->observe(sim, elem));
+                    }
                 }
             }
         }
