@@ -5,8 +5,8 @@ import sys
 import unittest
 import math
 import numpy
+from numpy import asfarray
 from numpy import testing as NT
-#from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 from numpy.testing import assert_array_almost_equal as assert_aequal
 
 from .. import Machine
@@ -15,6 +15,156 @@ from .. import GLPSParser
 
 import os
 datadir = os.path.dirname(__file__)
+
+class SimTest(object):
+    # sub-class sets these
+    lattice = None # lattice file name
+    extra = None
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F, extra=self.extra)
+
+class Moment2Test(object):
+    'Helper for testing moment2 sim'
+
+    def assertConsistent(self, S, msg=None):
+        'Check internal consistencies of a State'
+        def checkConsist(self, P='real'):
+            self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'), msg)
+            self.assertEqual(getattr(S, P+'_gamma')   , getattr(S, P+'_IonW')/getattr(S, P+'_IonEs'), msg)
+            self.assertEqual(getattr(S, P+'_beta')    , math.sqrt(1e0-1e0/sqr(getattr(S, P+'_gamma'))), msg)
+            self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'), msg)
+        checkConsist('ref')
+        checkConsist('real')
+
+    def assertStateEqual(self, expect, actual, msg=None, decimal=10):
+        'Assert that two moment2 State instances are equal'
+        for k,v in expect.items():
+            #self.assertIn(k, actual, "%s %s missing"%(msg or "",k)) #TODO: make State iterable
+            A = getattr(actual, k, None)
+            if A is None:
+                self.assertTrue(False, "%s %s missing"%(msg or "",k))
+            if isinstance(v, numpy.ndarray):
+                assert_aequal(v, getattr(actual, k), decimal=decimal, err_msg="%s %s doesn't match"%(msg or "",k))
+            else:
+                self.assertAlmostEqual(v, getattr(actual, k), places=decimal, msg="%s %s doesn't match"%(msg or "",k))
+
+
+    def checkPropagate(self, elem, instate, outstate, max=1):
+        '''Pass given input state through the named element
+
+        Propagate the same input twice in succession to verify that element(s)
+        give the same output
+        '''
+
+        S1 = self.M.allocState(instate, inherit=False)
+        S2 = self.M.allocState(instate, inherit=False)
+
+        self.M.propagate(state=S1, start=elem, max=max)
+        self.M.propagate(state=S2, start=elem, max=max)
+
+        self.assertStateEqual(outstate, S1, 'first pass')
+        self.assertStateEqual(outstate, S2, 'second pass') # fails if some Element has a caching problem...
+
+class TestToStrl(unittest.TestCase, Moment2Test, SimTest):
+    """Strategy is to test the state after the first instance of each element type.
+    """
+    lattice = 'to_strl.lat'
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+
+    def test_source(self):
+        self.checkPropagate(0, {}, {
+            'next_elem':1,
+            'ref_IonZ':0.13865546218487396,
+            'ref_IonEs':931494320.0,
+            'ref_IonEk':500000.0,
+            'real_IonZ':0.13865546218487396,
+            'real_IonEs':931494320.0,
+            'real_IonEk':500309.99500000,
+            'moment0':asfarray([3.3444511955e-03,1.2841341839e-05,8.3106826155e-03,-5.0277881002e-07,1.1632697213e-02,1.2028520756e-03,1.0000000000e+00]),
+            'state':asfarray([
+                [ 2.7630945017e+00, -4.2824733660e-04,  1.5817856917e-02,  2.1559419100e-05,  1.8638050602e-04, -2.9939448697e-05,  0.0000000000e+00],
+                [-4.2824733660e-04,  3.8494660679e-06, -1.3838544007e-06, -1.8540987783e-08,  1.0677795224e-07,  5.2856401597e-09,  0.0000000000e+00],
+                [ 1.5817856917e-02, -1.3838544007e-06,  2.3625122600e+00, -6.6932045998e-04, -5.8009993858e-04,  6.7165153406e-06,  0.0000000000e+00],
+                [ 2.1559419100e-05, -1.8540987783e-08, -6.6932045998e-04,  4.8971138918e-06, -5.0161488223e-07,  5.5748422180e-08,  0.0000000000e+00],
+                [ 1.8638050602e-04,  1.0677795224e-07, -5.8009993858e-04, -5.0161488223e-07,  6.7168718453e-04, -1.2322334153e-05,  0.0000000000e+00],
+                [-2.9939448697e-05,  5.2856401597e-09,  6.7165153406e-06,  5.5748422180e-08, -1.2322334153e-05,  1.9952466899e-06,  0.0000000000e+00],
+                [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00],
+            ]),
+        })
+
+    def test_drift1(self):
+        self.checkPropagate(0, {}, {
+            'next_elem':2,
+            'ref_IonZ':1.3865546218e-01,
+            'ref_IonEs':9.3149432000e+08,
+            'ref_IonEk':5.0000000000e+05,
+            'ref_phis':3.7089624016e+00,
+            'real_IonZ':1.3865546218e-01,
+            'real_IonEs':9.3149432000e+08,
+            'real_IonEk':5.0030999500e+05,
+            'real_phis':3.7076293282e+00,
+            'moment0':asfarray([4.2690278079e-03,  1.2841341839e-05,  8.2744825412e-03, -5.0277881002e-07,  7.1994323704e-03,  1.2028520756e-03,  1.0000000000e+00]),
+            'state':asfarray([
+                [ 2.7213825174e+00, -1.5108577971e-04,  1.7174381095e-02,  2.0224467980e-05,  3.0351126313e-04, -2.9558882606e-05,  0.0000000000e+00],
+                [-1.5108577971e-04,  3.8494660679e-06, -2.7188055210e-06, -1.8540987783e-08,  8.7207694000e-08,  5.2856401597e-09,  0.0000000000e+00],
+                [ 1.7174381095e-02, -2.7188055210e-06,  2.2915167521e+00, -3.1672825977e-04, -6.5594587891e-04,  1.0730401738e-05,  0.0000000000e+00],
+                [ 2.0224467980e-05, -1.8540987783e-08, -3.1672825977e-04,  4.8971138918e-06, -7.0802526685e-07,  5.5748422180e-08,  0.0000000000e+00],
+                [ 3.0351126313e-04,  8.7207694000e-08, -6.5594587891e-04, -7.0802526685e-07,  7.9028722984e-04, -1.9709801288e-05,  0.0000000000e+00],
+                [-2.9558882606e-05,  5.2856401597e-09,  1.0730401738e-05,  5.5748422180e-08, -1.9709801288e-05,  1.9952466899e-06,  0.0000000000e+00],
+                [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00],
+            ]),
+        }, max=2)
+
+    def test_rfcav(self):
+        self.checkPropagate(0, {}, {
+            'next_elem':4,
+            'ref_IonZ':1.3865546218e-01,
+            'ref_IonEs':9.3149432000e+08,
+            'ref_IonEk':553528.7992770672,
+            'ref_phis':22.74717198685346,
+            'real_IonZ':1.3865546218e-01,
+            'real_IonEs':9.3149432000e+08,
+            'real_IonEk':553638.1760196686,
+            'real_phis':22.741352002135365,
+            'moment0':asfarray([9.8156783003e-03,  2.0041768075e-05, -5.2898622977e-03, -1.8638562712e-04, -1.7223152071e-02,  1.7187912211e-03,  1.0000000000e+00]),
+            'state':asfarray([
+                [ 3.7856901059e+00,  4.5607101028e-03,  2.5781328900e-02,  3.5801492124e-05,  7.5882891133e-04,  5.1782748040e-07,  0.0000000000e+00],
+                [ 4.5607101028e-03,  7.9901075639e-06,  1.4162914881e-05,  1.0431568344e-08,  6.6676061542e-07,  5.6945015637e-09,  0.0000000000e+00],
+                [ 2.5781328900e-02,  1.4162914881e-05,  3.3136306896e+00,  4.3151100720e-03, -1.3044894126e-03, -2.4909308657e-05,  0.0000000000e+00],
+                [ 3.5801492124e-05,  1.0431568344e-08,  4.3151100720e-03,  8.6528522748e-06, -2.3711960569e-06, -2.4164424535e-08,  0.0000000000e+00],
+                [ 7.5882891133e-04,  6.6676061542e-07, -1.3044894126e-03, -2.3711960569e-06,  1.4207791617e-03,  1.5252839743e-05,  0.0000000000e+00],
+                [ 5.1782748040e-07,  5.6945015637e-09, -2.4909308657e-05, -2.4164424535e-08,  1.5252839743e-05,  1.0001489825e-06,  0.0000000000e+00],
+                [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00],
+            ]),
+        }, max=4)
+
+    def test_final(self):
+        self.checkPropagate(0, {}, {
+            'next_elem':len(self.M),
+            'ref_IonZ':0.3277310924369748,
+            'ref_IonEs':931494320.0,
+            'ref_IonEk':16816951.191958785,
+            'ref_phis':2023.6512871901991,
+            'real_IonZ':0.31932773109243695,
+            'real_IonEs':931494320.0,
+            'real_IonEk':16829746.76773572,
+            'real_phis':2023.6417753279932,
+            'moment0':asfarray([1.1399399086e+00,3.5332829960e-04,1.6963530125e+00,1.2840348237e-05,-1.6985609790e-02,-1.7053590681e-03,1.0000000000e+00]),
+            'state':asfarray([
+                [ 7.0396111546e+00,  1.3709748090e-03,  2.4726060938e+00,  5.3836235891e-04, -2.6978106127e-02, -2.8202076912e-03,  0.0000000000e+00],
+                [ 1.3709748090e-03,  4.2097906741e-07,  8.1254342143e-04,  1.5694672658e-07, -7.9468596201e-06, -7.7463374819e-07,  0.0000000000e+00],
+                [ 2.4726060938e+00,  8.1254342143e-04,  8.2548117957e+00,  1.7136763992e-03, -2.1293668678e-02, -1.6963607990e-03,  0.0000000000e+00],
+                [ 5.3836235891e-04,  1.5694672658e-07,  1.7136763992e-03,  4.2042730013e-07, -3.7254663157e-06, -1.6626440501e-07,  0.0000000000e+00],
+                [-2.6978106127e-02, -7.9468596201e-06, -2.1293668678e-02, -3.7254663157e-06,  6.7055780102e-04,  7.1873589536e-04,  0.0000000000e+00],
+                [-2.8202076912e-03, -7.7463374819e-07, -1.6963607990e-03, -1.6626440501e-07,  7.1873589536e-04,  1.3310946586e-03,  0.0000000000e+00],
+                [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00],
+                ]),
+        }, max=len(self.M))
 
 class testComplete(unittest.TestCase):
   'Tests of entire lattice files'
