@@ -49,7 +49,7 @@ bool load_storage(ARR& to, const Config& conf, const std::string& name, bool T=t
 
 std::ostream& operator<<(std::ostream& strm, const Particle& P)
 {
-    strm <<std::setprecision(8)<<std::setw(14)
+    strm
       <<"IonZ="<<P.IonZ
       <<" IonQ="<<P.IonQ
       <<" IonEs="<<P.IonEs
@@ -257,25 +257,41 @@ void Moment2State::show(std::ostream& strm, int level) const
     int j, k;
 
     if(real.empty()) {
-        strm<<"\nState: empty\n";
+        strm<<"State: empty";
         return;
     }
 
-    strm << std::scientific << std::setprecision(8)
-         << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 mean =\n    ";
-    for (k = 0; k < Moment2State::maxsize; k++)
-        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_env(k);
-    strm << std::scientific << std::setprecision(8)
-         << "\n  moment0 rms =\n    ";
-    for (k = 0; k < Moment2State::maxsize; k++)
-        strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_rms(k);
-    strm << "\n  moment1 =\n";
-    for (j = 0; j < Moment2State::maxsize; j++) {
-        strm << "    ";
-        for (k = 0; k < Moment2State::maxsize; k++) {
-            strm << std::scientific << std::setprecision(8) << std::setw(16) << moment1[0](j, k);
+    if(level<=0) {
+        strm<<"State: moment0 mean="<<moment0_env;
+    }
+    if(level>=1) {
+        strm << std::scientific << std::setprecision(8)
+             << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 mean =\n    ";
+        for (k = 0; k < Moment2State::maxsize; k++)
+            strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_env(k);
+        strm << std::scientific << std::setprecision(8)
+             << "\n  moment0 rms =\n    ";
+        for (k = 0; k < Moment2State::maxsize; k++)
+            strm << std::scientific << std::setprecision(8) << std::setw(16) << moment0_rms(k);
+        strm << "\n  moment1[state=0] =\n";
+        for (j = 0; j < Moment2State::maxsize; j++) {
+            strm << "    ";
+            for (k = 0; k < Moment2State::maxsize; k++) {
+                strm << std::scientific << std::setprecision(8) << std::setw(16) << moment1[0](j, k);
+            }
+            if (j < Moment2State::maxsize-1) strm << "\n";
         }
-        if (j < Moment2State::maxsize-1) strm << "\n";
+    }
+    if(level>=2) {
+        strm<< "\n  Reference state:\n    "<<ref<<"\n";
+        for(size_t k=0; k<size(); k++) {
+            strm<<"  Charge state "<<k<<"\n"
+                  "    "<<real[k]<<"\n"
+                  "    moment0 "<<moment0[k]<<"\n";
+            if(level>=3)
+                strm<<
+                  "    moment1 "<<moment1[k]<<"\n";
+        }
     }
 }
 
