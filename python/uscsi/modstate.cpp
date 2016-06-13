@@ -68,7 +68,7 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
     TRY {
         PyObject *idx = PyDict_GetItem(state->attrs, attr);
         if(!idx) {
-            return PyErr_Format(PyExc_KeyError, "Unknown State attribute");
+            return PyErr_Format(PyExc_AttributeError, "Unknown State attribute");
         }
         int i = PyInt_AsLong(idx);
 
