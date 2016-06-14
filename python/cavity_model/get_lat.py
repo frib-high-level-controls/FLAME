@@ -171,7 +171,7 @@ def parse_line(line, outf):
 
 def prt_decl(outf):
     outf.write('# Beam envelope simulation.\n')
-    outf.write('\nsim_type = "MomentMatrix2";\n\n')
+    outf.write('\nsim_type = "MomentMatrix";\n\n')
 
 
 def transl_file(file_name):

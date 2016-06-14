@@ -66,7 +66,7 @@ std::ostream& operator<<(std::ostream& strm, const Particle& P)
     return strm;
 }
 
-Moment2State::Moment2State(const Config& c)
+MomentState::MomentState(const Config& c)
     :StateBase(c)
     ,ref()
     ,real()
@@ -139,7 +139,7 @@ Moment2State::Moment2State(const Config& c)
         nchg.resize(1);
 
     } else {
-        throw std::invalid_argument("Moment2State: must define IonChargeStates and NCharge when cstate is set");
+        throw std::invalid_argument("MomentState: must define IonChargeStates and NCharge when cstate is set");
     }
 
     if(have_ics) {
@@ -193,9 +193,9 @@ Moment2State::Moment2State(const Config& c)
     calc_rms();
 }
 
-Moment2State::~Moment2State() {}
+MomentState::~MomentState() {}
 
-void Moment2State::calc_rms()
+void MomentState::calc_rms()
 {
     assert(real.size()>0);
     assert(moment0_env.size()==maxsize);
@@ -228,7 +228,7 @@ void Moment2State::calc_rms()
     moment1_env.assign(moment1[0]);
 }
 
-Moment2State::Moment2State(const Moment2State& o, clone_tag t)
+MomentState::MomentState(const MomentState& o, clone_tag t)
     :StateBase(o, t)
     ,ref(o.ref)
     ,real(o.real)
@@ -239,9 +239,9 @@ Moment2State::Moment2State(const Moment2State& o, clone_tag t)
     ,moment1_env(o.moment1_env)
 {}
 
-void Moment2State::assign(const StateBase& other)
+void MomentState::assign(const StateBase& other)
 {
-    const Moment2State *O = dynamic_cast<const Moment2State*>(&other);
+    const MomentState *O = dynamic_cast<const MomentState*>(&other);
     if(!O)
         throw std::invalid_argument("Can't assign State: incompatible types");
     ref     = O->ref;
@@ -254,7 +254,7 @@ void Moment2State::assign(const StateBase& other)
     StateBase::assign(other);
 }
 
-void Moment2State::show(std::ostream& strm, int level) const
+void MomentState::show(std::ostream& strm, int level) const
 {
     int j, k;
 
@@ -269,19 +269,19 @@ void Moment2State::show(std::ostream& strm, int level) const
     if(level>=1) {
         strm << std::scientific << std::setprecision(8)
              << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 mean =\n    ";
-        for (k = 0; k < Moment2State::maxsize; k++)
+        for (k = 0; k < MomentState::maxsize; k++)
             strm << std::scientific << std::setprecision(10) << std::setw(18) << moment0_env(k) << ",";
         strm << std::scientific << std::setprecision(10)
              << "\n  moment0 rms =\n    ";
-        for (k = 0; k < Moment2State::maxsize; k++)
+        for (k = 0; k < MomentState::maxsize; k++)
             strm << std::scientific << std::setprecision(10) << std::setw(18) << moment0_rms(k) << ",";
         strm << "\n  moment1[state=0] =\n";
-        for (j = 0; j < Moment2State::maxsize; j++) {
+        for (j = 0; j < MomentState::maxsize; j++) {
             strm << "    ";
-            for (k = 0; k < Moment2State::maxsize; k++) {
+            for (k = 0; k < MomentState::maxsize; k++) {
                 strm << std::scientific << std::setprecision(10) << std::setw(18) << moment1[0](j, k) << ",";
             }
-            if (j < Moment2State::maxsize-1) strm << "\n";
+            if (j < MomentState::maxsize-1) strm << "\n";
         }
     }
     if(level>=2) {
@@ -297,7 +297,7 @@ void Moment2State::show(std::ostream& strm, int level) const
     }
 }
 
-bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
+bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
     unsigned I=0;
     if(idx==I++) {
         Info.name = "state";
@@ -439,7 +439,7 @@ bool Moment2State::getArray(unsigned idx, ArrayInfo& Info) {
     return StateBase::getArray(idx-I, Info);
 }
 
-Moment2ElementBase::Moment2ElementBase(const Config& c)
+MomentElementBase::MomentElementBase(const Config& c)
     :ElementVoid(c)
     ,dx   (c.get<double>("dx",    0e0)*MtoMM)
     ,dy   (c.get<double>("dy",    0e0)*MtoMM)
@@ -450,11 +450,11 @@ Moment2ElementBase::Moment2ElementBase(const Config& c)
 {
 }
 
-Moment2ElementBase::~Moment2ElementBase() {}
+MomentElementBase::~MomentElementBase() {}
 
-void Moment2ElementBase::assign(const ElementVoid *other)
+void MomentElementBase::assign(const ElementVoid *other)
 {
-    const Moment2ElementBase *O = static_cast<const Moment2ElementBase*>(other);
+    const MomentElementBase *O = static_cast<const MomentElementBase*>(other);
     last_Kenergy_in = O->last_Kenergy_in;
     last_Kenergy_out = O->last_Kenergy_out;
     transfer = O->transfer;
@@ -469,7 +469,7 @@ void Moment2ElementBase::assign(const ElementVoid *other)
     ElementVoid::assign(other);
 }
 
-void Moment2ElementBase::show(std::ostream& strm, int level) const
+void MomentElementBase::show(std::ostream& strm, int level) const
 {
     using namespace boost::numeric::ublas;
     ElementVoid::show(strm, level);
@@ -481,7 +481,7 @@ void Moment2ElementBase::show(std::ostream& strm, int level) const
           */
 }
 
-void Moment2ElementBase::get_misalign(const state_t &ST, const Particle &real, value_t &M, value_t &IM) const
+void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, value_t &M, value_t &IM) const
 {
     state_t::matrix_t R, R_inv,
               scl     = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
@@ -520,7 +520,7 @@ void Moment2ElementBase::get_misalign(const state_t &ST, const Particle &real, v
     IM = prod(scl_inv, IM);
 }
 
-void Moment2ElementBase::advance(StateBase& s)
+void MomentElementBase::advance(StateBase& s)
 {
     state_t&  ST = static_cast<state_t&>(s);
     using namespace boost::numeric::ublas;
@@ -559,7 +559,7 @@ void Moment2ElementBase::advance(StateBase& s)
     ST.calc_rms();
 }
 
-bool Moment2ElementBase::check_cache(const state_t& ST) const
+bool MomentElementBase::check_cache(const state_t& ST) const
 {
     if(last_Kenergy_in.size()!=ST.size()) return false; // different # of charge states
 
@@ -569,7 +569,7 @@ bool Moment2ElementBase::check_cache(const state_t& ST) const
     return true;
 }
 
-void Moment2ElementBase::resize_cache(const state_t& ST)
+void MomentElementBase::resize_cache(const state_t& ST)
 {
     last_Kenergy_in.resize(ST.real.size());
     last_Kenergy_out.resize(ST.real.size());
@@ -579,7 +579,7 @@ void Moment2ElementBase::resize_cache(const state_t& ST)
     misalign_inv.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
 }
 
-void Moment2ElementBase::recompute_matrix(state_t& ST)
+void MomentElementBase::recompute_matrix(state_t& ST)
 {
     // Default, for passive elements.
 
@@ -592,10 +592,10 @@ void Moment2ElementBase::recompute_matrix(state_t& ST)
 
 namespace {
 
-struct ElementSource : public Moment2ElementBase
+struct ElementSource : public MomentElementBase
 {
     typedef ElementSource            self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementSource(const Config& c): base_t(c), istate(c) {}
@@ -627,11 +627,11 @@ struct ElementSource : public Moment2ElementBase
     }
 };
 
-struct ElementMark : public Moment2ElementBase
+struct ElementMark : public MomentElementBase
 {
     // Transport (identity) matrix for Marker.
     typedef ElementMark            self_t;
-    typedef Moment2ElementBase     base_t;
+    typedef MomentElementBase     base_t;
     typedef typename base_t::state_t state_t;
 
     ElementMark(const Config& c): base_t(c) {length = 0e0;}
@@ -641,11 +641,11 @@ struct ElementMark : public Moment2ElementBase
     virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 };
 
-struct ElementBPM : public Moment2ElementBase
+struct ElementBPM : public MomentElementBase
 {
     // Transport (identity) matrix for BPM.
     typedef ElementBPM               self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementBPM(const Config& c): base_t(c) {length = 0e0;}
@@ -655,11 +655,11 @@ struct ElementBPM : public Moment2ElementBase
     virtual void assign(const ElementVoid *other) { base_t::assign(other); }
 };
 
-struct ElementDrift : public Moment2ElementBase
+struct ElementDrift : public MomentElementBase
 {
     // Transport matrix for Drift.
     typedef ElementDrift             self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementDrift(const Config& c) : base_t(c) {}
@@ -686,11 +686,11 @@ struct ElementDrift : public Moment2ElementBase
     }
 };
 
-struct ElementOrbTrim : public Moment2ElementBase
+struct ElementOrbTrim : public MomentElementBase
 {
     // Transport matrix for Orbit Trim.
     typedef ElementOrbTrim           self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementOrbTrim(const Config& c) : base_t(c) {length = 0e0;}
@@ -720,13 +720,13 @@ struct ElementOrbTrim : public Moment2ElementBase
     }
 };
 
-struct ElementSBend : public Moment2ElementBase
+struct ElementSBend : public MomentElementBase
 {
     // Transport matrix for Gradient Sector Bend; with edge focusing (cylindrical coordinates).
     // Note, TLM only includes energy offset for the orbit; not the transport matrix.
 
     typedef ElementSBend             self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     unsigned HdipoleFitMode;
@@ -844,11 +844,11 @@ struct ElementSBend : public Moment2ElementBase
     }
 };
 
-struct ElementQuad : public Moment2ElementBase
+struct ElementQuad : public MomentElementBase
 {
     // Transport matrix for Quadrupole; K = B2/Brho.
     typedef ElementQuad              self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementQuad(const Config& c) : base_t(c) {}
@@ -889,11 +889,11 @@ struct ElementQuad : public Moment2ElementBase
     }
 };
 
-struct ElementSolenoid : public Moment2ElementBase
+struct ElementSolenoid : public MomentElementBase
 {
     // Transport (identity) matrix for a Solenoid; K = B/(2 Brho).
     typedef ElementSolenoid          self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementSolenoid(const Config& c) : base_t(c) {}
@@ -929,11 +929,11 @@ struct ElementSolenoid : public Moment2ElementBase
     }
 };
 
-struct ElementEDipole : public Moment2ElementBase
+struct ElementEDipole : public MomentElementBase
 {
     // Transport matrix for Electrostatic Dipole with edge focusing.
     typedef ElementEDipole           self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementEDipole(const Config& c) : base_t(c) {}
@@ -1006,11 +1006,11 @@ struct ElementEDipole : public Moment2ElementBase
     }
 };
 
-struct ElementEQuad : public Moment2ElementBase
+struct ElementEQuad : public MomentElementBase
 {
     // Transport matrix for Electrostatic Quadrupole.
     typedef ElementEQuad             self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     ElementEQuad(const Config& c) : base_t(c) {}
@@ -1055,31 +1055,31 @@ struct ElementEQuad : public Moment2ElementBase
 
 } // namespace
 
-void registerMoment2()
+void registerMoment()
 {
-    Machine::registerState<Moment2State>("MomentMatrix2");
+    Machine::registerState<MomentState>("MomentMatrix");
 
-    Machine::registerElement<ElementSource                 >("MomentMatrix2", "source");
+    Machine::registerElement<ElementSource                 >("MomentMatrix", "source");
 
-    Machine::registerElement<ElementMark                   >("MomentMatrix2", "marker");
+    Machine::registerElement<ElementMark                   >("MomentMatrix", "marker");
 
-    Machine::registerElement<ElementBPM                    >("MomentMatrix2", "bpm");
+    Machine::registerElement<ElementBPM                    >("MomentMatrix", "bpm");
 
-    Machine::registerElement<ElementDrift                  >("MomentMatrix2", "drift");
+    Machine::registerElement<ElementDrift                  >("MomentMatrix", "drift");
 
-    Machine::registerElement<ElementOrbTrim                >("MomentMatrix2", "orbtrim");
+    Machine::registerElement<ElementOrbTrim                >("MomentMatrix", "orbtrim");
 
-    Machine::registerElement<ElementSBend                  >("MomentMatrix2", "sbend");
+    Machine::registerElement<ElementSBend                  >("MomentMatrix", "sbend");
 
-    Machine::registerElement<ElementQuad                   >("MomentMatrix2", "quadrupole");
+    Machine::registerElement<ElementQuad                   >("MomentMatrix", "quadrupole");
 
-    Machine::registerElement<ElementSolenoid               >("MomentMatrix2", "solenoid");
+    Machine::registerElement<ElementSolenoid               >("MomentMatrix", "solenoid");
 
-    Machine::registerElement<ElementRFCavity               >("MomentMatrix2", "rfcavity");
+    Machine::registerElement<ElementRFCavity               >("MomentMatrix", "rfcavity");
 
-    Machine::registerElement<ElementStripper               >("MomentMatrix2", "stripper");
+    Machine::registerElement<ElementStripper               >("MomentMatrix", "stripper");
 
-    Machine::registerElement<ElementEDipole                >("MomentMatrix2", "edipole");
+    Machine::registerElement<ElementEDipole                >("MomentMatrix", "edipole");
 
-    Machine::registerElement<ElementEQuad                  >("MomentMatrix2", "equad");
+    Machine::registerElement<ElementEQuad                  >("MomentMatrix", "equad");
 }

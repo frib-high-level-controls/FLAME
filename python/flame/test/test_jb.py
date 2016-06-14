@@ -25,7 +25,7 @@ class SimTest(object):
         with open(os.path.join(datadir, self.lattice), 'rb') as F:
             self.M = Machine(F, extra=self.extra)
 
-class Moment2Test(object):
+class MomentTest(object):
     'Helper for testing moment2 sim'
 
     def assertConsistent(self, S, msg=None):
@@ -67,7 +67,7 @@ class Moment2Test(object):
         self.assertStateEqual(outstate, S1, 'first pass')
         self.assertStateEqual(outstate, S2, 'second pass') # fails if some Element has a caching problem...
 
-class TestToStrl(unittest.TestCase, Moment2Test, SimTest):
+class TestToStrl(unittest.TestCase, MomentTest, SimTest):
     """Strategy is to test the state after the first instance of each element type.
     """
     lattice = 'to_strl.lat'

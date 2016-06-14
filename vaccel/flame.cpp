@@ -201,7 +201,7 @@ void flameCleanup(void*)
 void flameRegistrar()
 {
     registerLinear();
-    registerMoment2();
+    registerMoment();
 
     iocshRegister<const char*, const char*, &flamePrepare>("flamePrepare", "name", "lattice");
     iocshRegister<const char*, int, &flameDebug>("flameDebug", "name", "level");

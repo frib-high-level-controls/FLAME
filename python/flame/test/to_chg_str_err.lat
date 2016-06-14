@@ -1,6 +1,6 @@
 # Beam envelope simulation.
 
-sim_type = "MomentMatrix2";
+sim_type = "MomentMatrix";
 
 # Global parameters.
 

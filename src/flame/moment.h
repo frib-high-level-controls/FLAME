@@ -54,7 +54,7 @@ struct Particle {
 
 std::ostream& operator<<(std::ostream&, const Particle&);
 
-struct Moment2State : public StateBase
+struct MomentState : public StateBase
 {
     enum {maxsize=7};
     enum param_t {
@@ -62,8 +62,8 @@ struct Moment2State : public StateBase
         PS_QQ // ???
     };
 
-    Moment2State(const Config& c);
-    virtual ~Moment2State();
+    MomentState(const Config& c);
+    virtual ~MomentState();
 
     typedef boost::numeric::ublas::vector<double,
                     boost::numeric::ublas::bounded_array<double, maxsize>
@@ -90,8 +90,8 @@ struct Moment2State : public StateBase
 
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
-    virtual Moment2State* clone() const {
-        return new Moment2State(*this, clone_tag());
+    virtual MomentState* clone() const {
+        return new MomentState(*this, clone_tag());
     }
 
     void recalc() {
@@ -103,20 +103,20 @@ struct Moment2State : public StateBase
     inline size_t size() const { return real.size(); } // # of charge states
 
 protected:
-    Moment2State(const Moment2State& o, clone_tag);
+    MomentState(const MomentState& o, clone_tag);
 };
 
 /** @brief An Element which propagates the statistical moments of a bunch
  *transfer_raw
  */
-struct Moment2ElementBase : public ElementVoid
+struct MomentElementBase : public ElementVoid
 {
-    typedef Moment2State state_t;
+    typedef MomentState state_t;
 
     typedef state_t::matrix_t value_t;
 
-    Moment2ElementBase(const Config& c);
-    virtual ~Moment2ElementBase();
+    MomentElementBase(const Config& c);
+    virtual ~MomentElementBase();
 
     void get_misalign(const state_t& ST, const Particle& real, value_t& M, value_t& IM) const;
 

@@ -60,7 +60,7 @@ def show_generic(grp):
 
 showsim = {
   'Vector': show_vector,
-  'MomentMatrix2': show_moment2,
+  'MomentMatrix': show_moment2,
 }
 
 showsim.get(simtype)(grp)

@@ -7,14 +7,14 @@
 
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
 // by LU-decomposition.
-void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t& in)
+void inverse(MomentElementBase::value_t& out, const MomentElementBase::value_t& in)
 {
     using boost::numeric::ublas::permutation_matrix;
     using boost::numeric::ublas::lu_factorize;
     using boost::numeric::ublas::lu_substitute;
     using boost::numeric::ublas::identity_matrix;
 
-    Moment2ElementBase::value_t scratch(in); // copy
+    MomentElementBase::value_t scratch(in); // copy
     permutation_matrix<size_t> pm(scratch.size1());
     if(lu_factorize(scratch, pm)!=0)
         throw std::runtime_error("Failed to invert matrix");
@@ -25,11 +25,11 @@ void inverse(Moment2ElementBase::value_t& out, const Moment2ElementBase::value_t
 
 void RotMat(const double dx, const double dy,
             const double theta_x, const double theta_y, const double theta_z,
-            typename Moment2ElementBase::value_t &R)
+            typename MomentElementBase::value_t &R)
 {
-    typedef typename Moment2ElementBase::state_t state_t;
+    typedef typename MomentElementBase::state_t state_t;
 
-    Moment2State::matrix_t T = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+    MomentState::matrix_t T = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
     R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -59,7 +59,7 @@ void RotMat(const double dx, const double dy,
 
 #else
 
-    Moment2State::matrix_t Rx = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
+    MomentState::matrix_t Rx = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
             Ry = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
             Rz = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -93,7 +93,7 @@ void RotMat(const double dx, const double dy,
 }
 
 
-void GetQuadMatrix(const double L, const double K, const unsigned ind, typename Moment2ElementBase::value_t &M)
+void GetQuadMatrix(const double L, const double K, const unsigned ind, typename MomentElementBase::value_t &M)
 {
     // 2D quadrupole transport matrix.
     double sqrtK,
@@ -137,9 +137,9 @@ void GetQuadMatrix(const double L, const double K, const unsigned ind, typename 
 }
 
 
-void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBase::value_t &M)
+void GetEdgeMatrix(const double rho, const double phi, typename MomentElementBase::value_t &M)
 {
-    typedef typename Moment2ElementBase::state_t state_t;
+    typedef typename MomentElementBase::state_t state_t;
 
     M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -148,10 +148,10 @@ void GetEdgeMatrix(const double rho, const double phi, typename Moment2ElementBa
 }
 
 
-void GetEEdgeMatrix(const double fringe_x, const double fringe_y, const double kappa, typename Moment2ElementBase::value_t &M)
+void GetEEdgeMatrix(const double fringe_x, const double fringe_y, const double kappa, typename MomentElementBase::value_t &M)
 {
     // Edge focusing for electrostatic dipole.
-    typedef typename Moment2ElementBase::state_t state_t;
+    typedef typename MomentElementBase::state_t state_t;
 
     M = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -164,11 +164,11 @@ void GetEEdgeMatrix(const double fringe_x, const double fringe_y, const double k
 
 void GetSBendMatrix(const double L, const double phi, const double phi1, const double phi2, const double K,
                     const double IonEs, const double ref_gamma, const double qmrel,
-                    const double dip_beta, const double dip_gamma, const double d, const double dip_IonK, typename Moment2ElementBase::value_t &M)
+                    const double dip_beta, const double dip_gamma, const double d, const double dip_IonK, typename MomentElementBase::value_t &M)
 {
-    typedef typename Moment2ElementBase::state_t state_t;
+    typedef typename MomentElementBase::state_t state_t;
 
-    Moment2State::matrix_t edge1, edge2, R;
+    MomentState::matrix_t edge1, edge2, R;
 
     double  rho = L/phi,
             Kx  = K + 1e0/sqr(rho),
@@ -221,9 +221,9 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
 }
 
 
-void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::value_t &M)
+void GetSolMatrix(const double L, const double K, typename MomentElementBase::value_t &M)
 {
-    typedef typename Moment2ElementBase::state_t state_t;
+    typedef typename MomentElementBase::state_t state_t;
 
     double C = ::cos(K*L),
            S = ::sin(K*L);
@@ -270,11 +270,11 @@ void GetSolMatrix(const double L, const double K, typename Moment2ElementBase::v
 
 void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa, const double Kx, const double Ky,
                     const double IonEs, const double ref_beta, const double real_gamma, const double eta0, const double h,
-                    const double dip_beta, const double dip_gamma, const double delta_KZ, const double SampleIonK, typename Moment2ElementBase::value_t &M)
+                    const double dip_beta, const double dip_gamma, const double delta_KZ, const double SampleIonK, typename MomentElementBase::value_t &M)
 {
-    typedef typename Moment2ElementBase::state_t state_t;
+    typedef typename MomentElementBase::state_t state_t;
 
-    Moment2State::matrix_t edge;
+    MomentState::matrix_t edge;
 
     double  rho = L/phi,
             scl = (real_gamma - 1e0)*IonEs/MeVtoeV,

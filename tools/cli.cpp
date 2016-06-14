@@ -307,7 +307,7 @@ try {
 
     // register state and element types
     registerLinear();
-    registerMoment2();
+    registerMoment();
 
     std::auto_ptr<ObserverFactory> ofact;
 

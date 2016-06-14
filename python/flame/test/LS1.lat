@@ -2,7 +2,7 @@
 
 #sim_type = "TransferMatrix";
 #sim_type = "MomentMatrix";
-sim_type = "MomentMatrix2";
+sim_type = "MomentMatrix";
 
 # Global parameters.
 

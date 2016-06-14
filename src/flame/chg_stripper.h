@@ -5,11 +5,11 @@
 
 #include "moment.h"
 
-typedef Moment2State state_t;
+typedef MomentState state_t;
 
 
 // Phase space dimension; including vector for orbit/1st moment.
-# define PS_Dim Moment2State::maxsize // Set to 7; to include orbit.
+# define PS_Dim MomentState::maxsize // Set to 7; to include orbit.
 
 
 // Charge stripper parameters.
@@ -51,11 +51,11 @@ const double Stripper_IonZ      = 78.0/238.0,
              Stripper_upara     = 2.6903;
 
 
-struct ElementStripper : public Moment2ElementBase
+struct ElementStripper : public MomentElementBase
 {
     // Transport (identity) matrix for a Charge Stripper.
     typedef ElementStripper          self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
     ElementStripper(const Config& c)
         :base_t(c)
@@ -79,7 +79,7 @@ struct ElementStripper : public Moment2ElementBase
 
 
 void Stripper_GetMat(const Config &conf,
-                     Moment2State &ST);
+                     MomentState &ST);
 
 
 #endif // CHG_STRIPPER_H

@@ -9,7 +9,7 @@
 #include "util.h"
 
 // Phase space dimension; including vector for orbit/1st moment.
-# define PS_Dim Moment2State::maxsize // Set to 7; to include orbit.
+# define PS_Dim MomentState::maxsize // Set to 7; to include orbit.
 
 
 class CavDataType {
@@ -40,11 +40,11 @@ public:
     void show(std::ostream& strm) const;
 };
 
-struct ElementRFCavity : public Moment2ElementBase
+struct ElementRFCavity : public MomentElementBase
 {
     // Transport matrix for an RF Cavity.
     typedef ElementRFCavity          self_t;
-    typedef Moment2ElementBase       base_t;
+    typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
     struct RawParams {

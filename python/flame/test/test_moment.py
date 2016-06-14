@@ -11,10 +11,10 @@ from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 from .. import Machine
 import sys
 
-class testMoment2Single(unittest.TestCase):
+class testMomentSingle(unittest.TestCase):
     def setUp(self):
         self.M = Machine(b'''
-sim_type = "MomentMatrix2";
+sim_type = "MomentMatrix";
 Frf = 80.5e6;
 IonEs = 930e6;
 IonEk = 500e3;
@@ -74,9 +74,9 @@ foo : LINE = (elem0);
         print("state", S.state, C['IM'])
         assert_aequal(S.state, C['IM'].reshape((7,7)), 1e10)
 
-class testMoment2Multi(unittest.TestCase):
+class testMomentMulti(unittest.TestCase):
     lattice = b'''
-sim_type = "MomentMatrix2";
+sim_type = "MomentMatrix";
 Frf = 80.5e6;
 IonEs = 1.0;
 IonEk = 1.0;

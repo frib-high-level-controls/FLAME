@@ -18,14 +18,14 @@
 #include <flame/moment_sup.h>
 
 
-typedef Moment2State state_t;
+typedef MomentState state_t;
 typedef state_t::vector_t value_vec;
 typedef state_t::matrix_t value_mat;
 
 extern int glps_debug;
 
 static
-void PrtVec(const Moment2State::vector_t &a)
+void PrtVec(const MomentState::vector_t &a)
 {
     for (size_t k = 0; k < a.size(); k++)
         std::cout << std::scientific << std::setprecision(10)
@@ -87,7 +87,7 @@ void propagate1(const Config &conf)
     Machine sim(conf);
     std::auto_ptr<StateBase> state(sim.allocState());
     state_t *StatePtr = dynamic_cast<state_t*>(state.get());
-    if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix2 is supported");
+    if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix is supported");
 
     prt_initial_cond(sim, *StatePtr);
 
@@ -100,7 +100,7 @@ void propagate1(const Config &conf)
     Machine::iterator it = sim.begin()+1;
     while (it != sim.end()) {
         ElementVoid* elem   = *it;
-        Moment2ElementBase* ELEM = static_cast<Moment2ElementBase*>(elem);
+        MomentElementBase* ELEM = static_cast<MomentElementBase*>(elem);
         unsigned idx = elem->index;
         std::string  t_name = elem->type_name(); // C string -> C++ string.
         std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
@@ -113,7 +113,7 @@ void propagate1(const Config &conf)
 
             while (it != sim.end()) {
                 elem   = *it;
-                ELEM = static_cast<Moment2ElementBase*>(elem);
+                ELEM = static_cast<MomentElementBase*>(elem);
                 unsigned idx = elem->index;
                 std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
 
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 //        GLPSPrint(std::cout, *conf);
 //        std::cout<<"\n";
 
-        registerMoment2();
+        registerMoment();
 
 //        propagate(conf);
         propagate1(*conf);

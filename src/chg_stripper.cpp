@@ -3,8 +3,8 @@
 #include "flame/moment_sup.h"
 #include "flame/chg_stripper.h"
 
-void GetCenofChg(const Config &conf, const Moment2State &ST,
-                 Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS)
+void GetCenofChg(const Config &conf, const MomentState &ST,
+                 MomentState::vector_t &CenofChg, MomentState::vector_t &BeamRMS)
 {
     size_t i, j;
     const size_t n = ST.real.size(); // # of states
@@ -20,7 +20,7 @@ void GetCenofChg(const Config &conf, const Moment2State &ST,
 
     CenofChg /= Ntot;
 
-    for (j = 0; j < Moment2State::maxsize; j++) {
+    for (j = 0; j < MomentState::maxsize; j++) {
         double BeamVar = 0.0;
         for (i = 0; i < n; i++) {
             const double temp = ST.moment0[i][j]-CenofChg[j];
@@ -54,7 +54,7 @@ void StripperCharge(const double beta, double &Q_ave, double &d)
 
 
 static
-void ChargeStripper(const double beta, const std::vector<double> ChgState, Moment2State::vector_t& chargeAmount_Baron)
+void ChargeStripper(const double beta, const std::vector<double> ChgState, MomentState::vector_t& chargeAmount_Baron)
 {
     unsigned    k;
     double Q_ave, d;
@@ -70,7 +70,7 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
 {
     const int n = ChgState.size();
 
-    Moment2State::vector_t chargeAmount_Baron(n);
+    MomentState::vector_t chargeAmount_Baron(n);
 
     // Change reference particle charge state.
     ref.IonZ = Stripper_IonZ;
@@ -89,14 +89,14 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
 }
 
 void Stripper_GetMat(const Config &conf,
-                     Moment2State &ST)
+                     MomentState &ST)
 {
     unsigned               k, n;
     double                 tmptotCharge, Fy_abs_recomb, Ek_recomb, stdEkFoilVariation, ZpAfStr, growthRate;
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
     Particle               ref;
     state_t                *StatePtr = &ST;
-    Moment2State::matrix_t tmpmat;
+    MomentState::matrix_t tmpmat;
 
     // Evaluate beam parameter recombination.
 
