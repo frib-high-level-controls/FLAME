@@ -13,10 +13,10 @@
 #include <boost/call_traits.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <scsi/base.h>
-#include <scsi/state/vector.h>
-#include <scsi/state/matrix.h>
-#include <scsi/h5writer.h>
+#include <flame/base.h>
+#include <flame/state/vector.h>
+#include <flame/state/matrix.h>
+#include <flame/h5writer.h>
 
 namespace po = boost::program_options;
 

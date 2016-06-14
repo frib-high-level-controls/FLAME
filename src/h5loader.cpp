@@ -3,7 +3,7 @@
 
 #include <H5Cpp.h>
 
-#include "scsi/h5loader.h"
+#include "flame/h5loader.h"
 
 // H5::Exception doesn't derive from std::exception
 // so translate to some type which does.

@@ -8,14 +8,14 @@
 
 #include <boost/numeric/ublas/io.hpp>
 
-#include <scsi/constants.h>
-#include <scsi/base.h>
-#include <scsi/moment2.h>
-#include <scsi/chg_stripper.h>
-#include <scsi/state/vector.h>
-#include <scsi/state/matrix.h>
+#include <flame/constants.h>
+#include <flame/base.h>
+#include <flame/moment.h>
+#include <flame/chg_stripper.h>
+#include <flame/state/vector.h>
+#include <flame/state/matrix.h>
 
-#include <scsi/moment2_sup.h>
+#include <flame/moment_sup.h>
 
 
 typedef Moment2State state_t;

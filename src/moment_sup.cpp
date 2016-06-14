@@ -1,8 +1,8 @@
 
 #include <boost/numeric/ublas/lu.hpp>
 
-#include "scsi/constants.h"
-#include "scsi/moment2.h"
+#include "flame/constants.h"
+#include "flame/moment.h"
 
 
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion

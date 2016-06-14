@@ -7,7 +7,7 @@ add_executable(run_flame
   cli.cpp
 )
 target_link_libraries(run_flame
-  uscsi_core
+  flame_core
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
 

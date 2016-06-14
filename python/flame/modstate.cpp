@@ -2,8 +2,8 @@
 #include <string>
 #include <sstream>
 
-#include "scsi/base.h"
-#include "pyscsi.h"
+#include "flame/base.h"
+#include "pyflame.h"
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
@@ -183,7 +183,7 @@ static PyTypeObject PyStateType = {
     PyObject_HEAD_INIT(NULL)
     0,
 #endif
-    "uscsi._internal.State",
+    "flame._internal.State",
     sizeof(PyState),
 };
 

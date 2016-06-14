@@ -299,7 +299,7 @@ elemname: generic, transfer = [1, 0, 0, 0, 0, 0, 0,
 
 The example @subpage examples_sim_cpp demonstrates the basic process of running
 a simulation against an existing sim_type and set of Elements.
-This is a simplified version of cli.cpp, which is compiled as the run_uscsi executable.
+This is a simplified version of cli.cpp, which is compiled as the run_flame executable.
 
 Most user code will only need base.h and config.h.
 
@@ -357,7 +357,7 @@ Before exiting some cleanup may be to clear the registry of "sim_type"s.
 The example @subpage examples_sim_cpp demonstrates the basic process of running
 a simulation using the python API.
 
-Importing "uscsi" also registers a standard set of "sim_type"s.
+Importing "flame" also registers a standard set of "sim_type"s.
 
 @snippet sim.py includes
 
@@ -677,7 +677,7 @@ All memory directly allocated by FLAME should be free'd after all Config and Mac
 destroyed, and Machine::registeryCleanup() is called
 
 @code
-valgrind --leak-check=full --show-leak-kinds=all ./tools/run_flame python/uscsi/test/to_strl.lat
+valgrind --leak-check=full --show-leak-kinds=all ./tools/run_flame python/flame/test/to_strl.lat
 @endcode
 
 Should show only "still reachable" blocks associated with the HDF5 library and no blocks definitely, indirectly, or possibly lost.

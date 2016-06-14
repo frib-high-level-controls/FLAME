@@ -4,8 +4,8 @@
 
 #include <boost/thread/mutex.hpp>
 
-#include "scsi/base.h"
-#include "scsi/util.h"
+#include "flame/base.h"
+#include "flame/util.h"
 
 namespace {
 // This mutex guards the global Machine::p_state_infos

@@ -12,7 +12,7 @@ epics_add_ioc(flame
        flameset.cpp
        flamemeasure.cpp
        flameorbit.cpp
-  LIBS uscsi_core
+  LIBS flame_core
        ${Boost_REGEX_LIBRARY}
   INSTALL_PREFIX lib/epics/
 )

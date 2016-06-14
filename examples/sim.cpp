@@ -2,8 +2,8 @@
 #include <iostream>
 
 //! [includes]
-#include "scsi/config.h"
-#include "scsi/base.h"
+#include "flame/config.h"
+#include "flame/base.h"
 //! [includes]
 
 int main(int argc, char *argv[])

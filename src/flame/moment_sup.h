@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "base.h"
-#include "moment2.h"
+#include "moment.h"
 
 void GetCenofChg(const Config &conf, const Moment2State &ST,
                  Moment2State::vector_t &CenofChg, Moment2State::vector_t &BeamRMS);

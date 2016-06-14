@@ -4,7 +4,7 @@
 
 #include <boost/numeric/ublas/io.hpp>
 
-#include "scsi/util.h"
+#include "flame/util.h"
 
 BOOST_AUTO_TEST_CASE(parse_table_empty)
 {

@@ -5,15 +5,14 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "scsi/constants.h"
-#include "scsi/moment2.h"
+#include "flame/constants.h"
 
-#include "scsi/moment2.h"
-#include "scsi/moment2_sup.h"
-#include "scsi/rf_cavity.h"
-#include "scsi/chg_stripper.h"
+#include "flame/moment.h"
+#include "flame/moment_sup.h"
+#include "flame/rf_cavity.h"
+#include "flame/chg_stripper.h"
 
-#include "scsi/h5loader.h"
+#include "flame/h5loader.h"
 
 
 namespace {

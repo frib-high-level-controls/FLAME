@@ -2,8 +2,8 @@
 #include <list>
 #include <sstream>
 
-#include "scsi/base.h"
-#include "pyscsi.h"
+#include "flame/base.h"
+#include "pyflame.h"
 
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
 #include <numpy/ndarrayobject.h>
@@ -21,7 +21,7 @@ PyMethodDef modmethods[] = {
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef module = {
    PyModuleDef_HEAD_INIT,
-   "uscsi._internal",
+   "flame._internal",
    NULL,
    -1,
    modmethods
@@ -47,7 +47,7 @@ init_internal(void)
 #else
         // w/ py2 we get a borrowed ref. and indicate import
         // failure by returning w/ a python exception set
-        PyObject *mod = Py_InitModule("uscsi._internal", modmethods);
+        PyObject *mod = Py_InitModule("flame._internal", modmethods);
 #endif
 
         if(registerModMachine(mod))

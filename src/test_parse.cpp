@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "scsi/config.h"
+#include "flame/config.h"
 
 extern int glps_debug;
 

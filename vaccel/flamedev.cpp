@@ -7,7 +7,7 @@
 #include <menuFtype.h>
 
 #include "flame.h"
-#include "scsi/state/vector.h"
+#include "flame/state/vector.h"
 
 long Sim::io_aftersim(int, dbCommon* prec, IOSCANPVT* io)
 {

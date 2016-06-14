@@ -1,8 +1,8 @@
 
 #include <sstream>
 
-#include "scsi/base.h"
-#include "pyscsi.h"
+#include "flame/base.h"
+#include "pyflame.h"
 
 
 #define TRY PyMachine *machine = (PyMachine*)raw; try
@@ -244,7 +244,7 @@ static PyTypeObject PyMachineType = {
     PyObject_HEAD_INIT(NULL)
     0,
 #endif
-    "uscsi._internal.Machine",
+    "flame._internal.Machine",
     sizeof(PyMachine),
 };
 

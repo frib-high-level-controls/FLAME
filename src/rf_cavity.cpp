@@ -1,10 +1,10 @@
 
 #include <fstream>
 
-#include "scsi/constants.h"
-#include "scsi/moment2.h"
-#include "scsi/moment2_sup.h"
-#include "scsi/rf_cavity.h"
+#include "flame/constants.h"
+#include "flame/moment.h"
+#include "flame/moment_sup.h"
+#include "flame/rf_cavity.h"
 
 // RF Cavity beam dynamics functions.
 

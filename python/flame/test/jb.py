@@ -4,9 +4,9 @@ import numpy
 
 sys.path.append('/home/johan/git_repos/jmbgsddb/build/python')
 
-from uscsi import Machine
-from uscsi import GLPSPrinter
-from uscsi import _GLPSParse
+from flame import Machine
+from flame import GLPSPrinter
+from flame import _GLPSParse
 
 class GLPSParser(object):
     def parse(self, s):
@@ -27,7 +27,7 @@ MeVtoeV = 1e6
 def sqr(a): return a*a; 
 
 
-home_dir = '/home/johan/git_repos/jmbgsddb/build/python/uscsi/test/'
+home_dir = '/home/johan/git_repos/jmbgsddb/build/python/flame/test/'
 
 P = GLPSParser()
 

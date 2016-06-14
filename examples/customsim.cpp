@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "scsi/config.h"
-#include "scsi/base.h"
+#include "flame/config.h"
+#include "flame/base.h"
 
 # define C0           2.99792458e8
 

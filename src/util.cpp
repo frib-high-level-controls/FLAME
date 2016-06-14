@@ -8,7 +8,7 @@
 #define BOOST_FILESYSTEM_DYN_LINK
 #include <boost/filesystem.hpp>
 
-#include "scsi/util.h"
+#include "flame/util.h"
 
 void numeric_table::read(std::istream &strm)
 {

@@ -2,9 +2,9 @@
 #include <string>
 #include <algorithm>
 
-#include "scsi/linear.h"
-#include "scsi/state/vector.h"
-#include "scsi/state/matrix.h"
+#include "flame/linear.h"
+#include "flame/state/vector.h"
+#include "flame/state/matrix.h"
 
 
 // Phase-space units.

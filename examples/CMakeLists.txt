@@ -9,14 +9,14 @@ add_executable(example_sim
   sim.cpp
 )
 target_link_libraries(example_sim
-  uscsi_core
+  flame_core
 )
 
 add_executable(example_customsim
   customsim.cpp
 )
 target_link_libraries(example_customsim
-  uscsi_core
+  flame_core
 )
 
 # example binaries should not be installed

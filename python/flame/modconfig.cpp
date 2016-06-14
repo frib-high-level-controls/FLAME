@@ -2,9 +2,9 @@
 #include <list>
 #include <sstream>
 
-#include "scsi/base.h"
+#include "flame/base.h"
 
-#include "pyscsi.h"
+#include "pyflame.h"
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API

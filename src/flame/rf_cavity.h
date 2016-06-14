@@ -5,7 +5,7 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include "moment2.h"
+#include "moment.h"
 #include "util.h"
 
 // Phase space dimension; including vector for orbit/1st moment.

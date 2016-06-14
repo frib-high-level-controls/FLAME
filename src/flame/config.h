@@ -21,7 +21,7 @@ extern "C" {
 #include <boost/call_traits.hpp>
 #include <boost/static_assert.hpp>
 
-#include <scsi/util.h>
+#include "util.h"
 
 namespace detail {
 // helper to return POD types by value and complex types by const reference

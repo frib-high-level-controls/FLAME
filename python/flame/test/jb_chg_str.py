@@ -6,9 +6,9 @@ home_dir  = '/home/johan/git_repos/jmbgsddb/build/python'
 
 sys.path.append(home_dir)
 
-from uscsi import Machine
-from uscsi import GLPSPrinter
-from uscsi import _GLPSParse
+from flame import Machine
+from flame import GLPSPrinter
+from flame import _GLPSParse
 
 class GLPSParser(object):
     def parse(self, s):
@@ -62,7 +62,7 @@ def track_chg_state(IonZ_ref, IonZ, m1, m2):
     print S
 
 
-file_name = home_dir+'/uscsi/test/to_strl.lat'
+file_name = home_dir+'/flame/test/to_strl.lat'
 
 with open(file_name, 'rb') as inf:
     M = Machine(inf.read())

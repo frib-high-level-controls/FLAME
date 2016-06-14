@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-#include "scsi/config.h"
+#include "flame/config.h"
 
 BOOST_AUTO_TEST_CASE(config_getset)
 {

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.2)
 
-project("uscsi" C CXX)
+project("flame" C CXX)
 
 option(USE_WERROR "Treat warnings as errors")
 option(USE_PYTHON "Build python support" ON)
@@ -108,7 +108,7 @@ add_subdirectory(examples)
 
 if(USE_PYTHON AND Python_NUMPY_FOUND)
   message(STATUS "Building python support")
-  add_subdirectory(python/uscsi)
+  add_subdirectory(python/flame)
 elseif(NEED_PYTHON)
   message(SEND_ERROR "Unable to build Python support")
 else()

@@ -33,33 +33,33 @@ set_source_files_properties(
 )
 
 set(inst_HEADERS
-  scsi/util.h
-  scsi/base.h
-  scsi/config.h
-  scsi/constants.h
+  flame/util.h
+  flame/base.h
+  flame/config.h
+  flame/constants.h
 
-  scsi/state/vector.h
-  scsi/state/matrix.h
-  scsi/linear.h
-  scsi/moment2.h
-  scsi/moment2_sup.h
-  scsi/rf_cavity.h
-  scsi/chg_stripper.h
+  flame/state/vector.h
+  flame/state/matrix.h
+  flame/linear.h
+  flame/moment.h
+  flame/moment_sup.h
+  flame/rf_cavity.h
+  flame/chg_stripper.h
 
-  scsi/h5loader.h
-  scsi/h5writer.h
+  flame/h5loader.h
+  flame/h5writer.h
 )
 install(FILES ${inst_HEADERS}
-  DESTINATION include/uscsi
+  DESTINATION include/flame
 )
 
-add_library(uscsi_core SHARED
+add_library(flame_core SHARED
   base.cpp
   config.cpp
 
   linear.cpp
-  moment2.cpp
-  moment2_sup.cpp
+  moment.cpp
+  moment_sup.cpp
   rf_cavity.cpp
   chg_stripper.cpp
 
@@ -75,18 +75,18 @@ add_library(uscsi_core SHARED
 
   ${inst_HEADERS}
 )
-target_link_libraries(uscsi_core
+target_link_libraries(flame_core
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
   ${HDF5_LIBRARIES}
 )
-set_target_properties(uscsi_core
+set_target_properties(flame_core
   PROPERTIES
     SOVERSION 0
 )
 
-install(TARGETS uscsi_core
+install(TARGETS flame_core
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
@@ -96,21 +96,21 @@ add_executable(test_lex
   test_lex.cpp
 )
 target_link_libraries(test_lex
-  uscsi_core
+  flame_core
 )
 
 add_executable(test_jb_2
   test_jb_2.cpp
 )
 target_link_libraries(test_jb_2
-  uscsi_core
+  flame_core
 )
 
 add_executable(test_parse
   test_parse.cpp
 )
 target_link_libraries(test_parse
-  uscsi_core
+  flame_core
 )
 
 add_executable(test_config
@@ -118,7 +118,7 @@ add_executable(test_config
 )
 add_test(config test_config)
 target_link_libraries(test_config
-  uscsi_core
+  flame_core
   ${Boost_PRG_EXEC_MONITOR_LIBRARY}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
@@ -128,7 +128,7 @@ add_executable(test_util
 )
 add_test(util test_util)
 target_link_libraries(test_util
-  uscsi_core
+  flame_core
   ${Boost_PRG_EXEC_MONITOR_LIBRARY}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
@@ -137,7 +137,7 @@ add_executable(h5_loader
   h5loadertest.cpp
 )
 target_link_libraries(h5_loader
-  uscsi_core
+  flame_core
 )
 
 if(UNIX)

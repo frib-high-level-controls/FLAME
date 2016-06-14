@@ -9,14 +9,14 @@ add_library(_internal SHARED
   modconfig.cpp
   modmachine.cpp
   modstate.cpp
-  pyscsi.h
+  pyflame.h
 )
 install(TARGETS _internal
-  LIBRARY DESTINATION ${Python_MODULE_DIR}/uscsi
+  LIBRARY DESTINATION ${Python_MODULE_DIR}/flame
 )
 
 target_link_libraries(_internal
-  uscsi_core
+  flame_core
 )
 
 set_target_properties(_internal
@@ -71,13 +71,13 @@ set(PY_SRC_DATA
 )
 
 install(FILES ${PY_SRC}
-  DESTINATION ${Python_MODULE_DIR}/uscsi
+  DESTINATION ${Python_MODULE_DIR}/flame
 )
 install(FILES ${PY_SRC_TEST}
-  DESTINATION ${Python_MODULE_DIR}/uscsi/test
+  DESTINATION ${Python_MODULE_DIR}/flame/test
 )
 install(FILES ${PY_SRC_DATA}
-  DESTINATION ${Python_MODULE_DIR}/uscsi/data
+  DESTINATION ${Python_MODULE_DIR}/flame/data
 )
 
 # Copy .py files to the binary dir in order to run unit-tests
@@ -100,7 +100,7 @@ add_custom_target(testdata ALL
 if(HAVE_NOSE)
   add_test(
     NAME nosetest
-    COMMAND ${PYTHON_EXECUTABLE} -m nose.core uscsi
+    COMMAND ${PYTHON_EXECUTABLE} -m nose.core flame
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
   )
 endif()

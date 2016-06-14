@@ -2,7 +2,7 @@
 
 import sys
 "[includes]"
-from uscsi import Machine
+from flame import Machine
 "[includes]"
 
 "[Parse lattice file]"

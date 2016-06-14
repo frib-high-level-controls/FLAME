@@ -2,7 +2,7 @@
 #include <typeinfo>
 #include <iostream>
 
-#include "scsi/h5loader.h"
+#include "flame/h5loader.h"
 
 int main(int argc, char *argv[])
 {

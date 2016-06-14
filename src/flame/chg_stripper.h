@@ -3,7 +3,7 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include "moment2.h"
+#include "moment.h"
 
 typedef Moment2State state_t;
 

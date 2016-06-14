@@ -3,8 +3,8 @@
 #include <sstream>
 #include <set>
 
-#include <scsi/config.h>
-#include <scsi/util.h>
+#include <flame/config.h>
+#include <flame/util.h>
 
 #include "glps_parser.h"
 
