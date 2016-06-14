@@ -5,7 +5,7 @@
 #include "flame/base.h"
 #include "pyflame.h"
 
-#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
+#define PY_ARRAY_UNIQUE_SYMBOL FLAME_PyArray_API
 #include <numpy/ndarrayobject.h>
 
 namespace {

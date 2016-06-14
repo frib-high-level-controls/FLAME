@@ -1,5 +1,5 @@
-#ifndef SCSI_LINEAR_H
-#define SCSI_LINEAR_H
+#ifndef FLAME_LINEAR_H
+#define FLAME_LINEAR_H
 
 #include <ostream>
 #include <math.h>
@@ -58,4 +58,4 @@ private:
     }
 };
 
-#endif // SCSI_LINEAR_H
+#endif // FLAME_LINEAR_H

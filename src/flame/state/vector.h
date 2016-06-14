@@ -1,5 +1,5 @@
-#ifndef SCSI_STATE_VECTOR_H
-#define SCSI_STATE_VECTOR_H
+#ifndef FLAME_STATE_VECTOR_H
+#define FLAME_STATE_VECTOR_H
 
 #include <ostream>
 
@@ -40,4 +40,4 @@ protected:
     VectorState(const VectorState& o, clone_tag);
 };
 
-#endif // SCSI_STATE_VECTOR_H
+#endif // FLAME_STATE_VECTOR_H

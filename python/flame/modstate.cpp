@@ -6,7 +6,7 @@
 #include "pyflame.h"
 
 #define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL USCSI_PyArray_API
+#define PY_ARRAY_UNIQUE_SYMBOL FLAME_PyArray_API
 #include <numpy/ndarrayobject.h>
 
 #if SIZE_MAX==NPY_MAX_UINT32

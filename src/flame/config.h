@@ -1,5 +1,5 @@
-#ifndef SCSI_CONFIG_H
-#define SCSI_CONFIG_H
+#ifndef FLAME_CONFIG_H
+#define FLAME_CONFIG_H
 
 #include <stdio.h>
 
@@ -279,4 +279,4 @@ void GLPSPrint(std::ostream& strm, const Config&);
 
 #endif /* extern "C" */
 
-#endif // SCSI_CONFIG_H
+#endif // FLAME_CONFIG_H

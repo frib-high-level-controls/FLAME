@@ -1,5 +1,5 @@
-#ifndef SCSI_STATE_MATRIX_HPP
-#define SCSI_STATE_MATRIX_HPP
+#ifndef FLAME_STATE_MATRIX_HPP
+#define FLAME_STATE_MATRIX_HPP
 
 #include <ostream>
 
@@ -41,4 +41,4 @@ protected:
     MatrixState(const MatrixState& o, clone_tag);
 };
 
-#endif // SCSI_STATE_MATRIX_HPP
+#endif // FLAME_STATE_MATRIX_HPP

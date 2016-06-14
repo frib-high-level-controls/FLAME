@@ -1,7 +1,7 @@
 #include <stdexcept>
 
-#ifndef PYSCSI_H
-#define PYSCSI_H
+#ifndef PYFLAME_H
+#define PYFLAME_H
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
@@ -188,4 +188,4 @@ struct PyGetBuf
     void * data() const { return buf.buf; }
 };
 
-#endif // PYSCSI_H
+#endif // PYFLAME_H

@@ -4,7 +4,7 @@ import re
 import StringIO
 import sys
 
-# Script to translate from TLM flat file to U-SCSI lattice.
+# Script to translate from TLM flat file to U-FLAME lattice.
 #
 #  type            name          length [m]  type [-18: Stripper, -21: Corrector, -28: BPM, -30: Matrix]
 #  mark     LS1_CA01:BPM_D1129    0.000000                             -28.000000 

@@ -1,5 +1,5 @@
-#ifndef SCSI_MOMENT_H
-#define SCSI_MOMENT_H
+#ifndef FLAME_MOMENT_H
+#define FLAME_MOMENT_H
 
 #include <ostream>
 #include <limits>
@@ -145,4 +145,4 @@ protected:
     state_t::matrix_t scratch;
 };
 
-#endif // SCSI_MOMENT_H
+#endif // FLAME_MOMENT_H

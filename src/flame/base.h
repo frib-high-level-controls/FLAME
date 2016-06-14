@@ -1,5 +1,5 @@
-#ifndef SCSI_BASE_H
-#define SCSI_BASE_H
+#ifndef FLAME_BASE_H
+#define FLAME_BASE_H
 
 #include <stdlib.h>
 
@@ -318,4 +318,4 @@ std::ostream& operator<<(std::ostream&, const Machine& m);
 void registerLinear();
 void registerMoment();
 
-#endif // SCSI_BASE_H
+#endif // FLAME_BASE_H
