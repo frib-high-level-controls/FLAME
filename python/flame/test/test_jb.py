@@ -16,15 +16,6 @@ from .. import GLPSParser
 import os
 datadir = os.path.dirname(__file__)
 
-class SimTest(object):
-    # sub-class sets these
-    lattice = None # lattice file name
-    extra = None
-
-    def setUp(self):
-        with open(os.path.join(datadir, self.lattice), 'rb') as F:
-            self.M = Machine(F, extra=self.extra)
-
 class MomentTest(object):
     'Helper for testing moment2 sim'
 
@@ -55,7 +46,8 @@ class MomentTest(object):
         '''Pass given input state through the named element
 
         Propagate the same input twice in succession to verify that element(s)
-        give the same output
+        give the same output.
+        The repeat with 'transfer' caching disabled
         '''
 
         S1 = self.M.allocState(instate, inherit=False)
@@ -67,7 +59,16 @@ class MomentTest(object):
         self.assertStateEqual(outstate, S1, 'first pass')
         self.assertStateEqual(outstate, S2, 'second pass') # fails if some Element has a caching problem...
 
-class TestToStrl(unittest.TestCase, MomentTest, SimTest):
+        S1 = self.ICM.allocState(instate, inherit=False)
+        S2 = self.ICM.allocState(instate, inherit=False)
+
+        self.ICM.propagate(state=S1, start=elem, max=max)
+        self.ICM.propagate(state=S2, start=elem, max=max)
+
+        self.assertStateEqual(outstate, S1, 'third pass')
+        self.assertStateEqual(outstate, S2, 'fourth pass')
+
+class TestToStrl(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
     """
     lattice = 'to_strl.lat'
@@ -75,6 +76,8 @@ class TestToStrl(unittest.TestCase, MomentTest, SimTest):
     def setUp(self):
         with open(os.path.join(datadir, self.lattice), 'rb') as F:
             self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
 
     def test_source(self):
         self.checkPropagate(0, {}, {
