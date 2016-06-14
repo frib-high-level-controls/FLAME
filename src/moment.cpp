@@ -17,6 +17,9 @@
 
 namespace {
 
+// ARR should be an array-like object (std::vector or or ublas vector or matrix storage)
+// fill 'to' using config.get<>(name)
+// 'T' selects throw error (true) or return boolean (false)
 template<typename ARR>
 bool load_storage(ARR& to, const Config& conf, const std::string& name, bool T=true)
 {

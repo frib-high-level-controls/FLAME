@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.2)
 
 project("flame" C CXX)
 
-option(USE_WERROR "Treat warnings as errors")
+option(USE_WERROR "Treat warnings as errors" OFF)
 option(USE_PYTHON "Build python support" ON)
 option(NEED_PYTHON "Require python support" OFF)
 option(NEED_EPICS  "Require EPICS support" OFF)
