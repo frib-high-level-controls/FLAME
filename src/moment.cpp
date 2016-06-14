@@ -446,6 +446,7 @@ MomentElementBase::MomentElementBase(const Config& c)
     ,pitch(c.get<double>("pitch", 0e0))
     ,yaw  (c.get<double>("yaw",   0e0))
     ,tilt (c.get<double>("tilt",  0e0))
+    ,skipcache(c.get<double>("skipcache", 0.0)!=0.0)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
 }
@@ -466,6 +467,7 @@ void MomentElementBase::assign(const ElementVoid *other)
     pitch = O->pitch;
     yaw   = O->yaw;
     tilt  = O->tilt;
+    skipcache = O->skipcache;
     ElementVoid::assign(other);
 }
 
@@ -561,6 +563,7 @@ void MomentElementBase::advance(StateBase& s)
 
 bool MomentElementBase::check_cache(const state_t& ST) const
 {
+    if(skipcache) return false;
     if(last_Kenergy_in.size()!=ST.size()) return false; // different # of charge states
 
     for(size_t k=0; k<last_Kenergy_in.size(); k++) {

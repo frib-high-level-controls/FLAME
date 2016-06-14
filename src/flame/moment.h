@@ -122,10 +122,16 @@ struct MomentElementBase : public ElementVoid
 
     virtual void advance(StateBase& s);
 
+    //! Return true if previously calculated 'transfer' matricies may be reused
+    //! Should compare new input state against values used when 'transfer' was
+    //! last computed
     virtual bool check_cache(const state_t& S) const;
-    void resize_cache(const state_t& S);
+    //! Helper to resize our std::vector s to match the # of charge states
+    //! in the provided new input state.
+    void resize_cache(const state_t& ST);
 
-    virtual void recompute_matrix(state_t&);
+    //! recalculate 'transfer' taking into consideration the provided input state
+    virtual void recompute_matrix(state_t& ST);
 
     virtual void show(std::ostream& strm, int level) const;
 
@@ -136,6 +142,8 @@ struct MomentElementBase : public ElementVoid
 
     //! constituents of misalign
     double dx, dy, pitch, yaw, tilt;
+
+    bool skipcache;
 
     virtual void assign(const ElementVoid *other) =0;
 
