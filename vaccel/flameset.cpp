@@ -35,8 +35,24 @@ long setting_init_ao(aoRecord *prec)
         priv->element_index = elem->index;
 
         priv->param = M.str(4);
-//        if(!elem->conf().has<double>(priv->param))
-//            throw std::runtime_error("No such parameter for this element");
+
+        // fetch current value to initialize VAL
+        // autosave may overwrite
+        double initval = elem->conf().get<double>(priv->param);
+
+        if (prec->aslo) initval *= prec->aslo;
+        initval += prec->aoff;
+
+        if(prec->linr && prec->eslo!=0) initval = initval*prec->eslo + prec->eoff;
+
+        prec->val = initval;
+        prec->udf = 0;
+        // Some minor mischief
+        // we don't want the initial UDF alarm, as VAL is indeed defined
+        // however, processing all settings immediately (PINI=YES)
+        // is redundant, and slows down initialization unnecessarily.
+        // so just clear it now.
+        prec->sevr = prec->stat = 0;
 
         prec->dpvt = priv.release();
         return 2;
