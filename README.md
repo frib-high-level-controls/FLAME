@@ -3,6 +3,8 @@ Documentation
 
 Generated [documentation](http://frib-high-level-controls.github.io/FLAME)
 
+Report [bugs through github.com](https://github.com/frib-high-level-controls/FLAME/issues)
+
 Pre-requisites
 ==============
 
@@ -22,22 +24,21 @@ Building
 ========
 
 ```sh
-git clone https://github.com/mdavidsaver/jmbgsddb.git
-cd jmbgsddb
-mkdir build
-cd build
+git clone https://github.com/frib-high-level-controls/FLAME.git flame
+mkdir flame/build
+cd flame/build
 cmake ..
 make
 ```
 
-To build with a specific python version, call cmake with:
+To build with a specific python version, change the cmake invokation to:
 
 ```sh
 cmake .. -DPYTHON_EXECUTABLE=/usr/bin/python3.4
 ```
 
-<p><a href="https://travis-ci.org/mdavidsaver/jmbgsddb">CI status
-<img src="https://travis-ci.org/mdavidsaver/jmbgsddb.svg" alt="Build Status Images">
+<p><a href="https://travis-ci.org/frib-high-level-controls/FLAME">CI status
+<img src="https://travis-ci.org/frib-high-level-controls/FLAME.svg" alt="Build Status Images">
 </a></p>
 
 Running tests
@@ -46,3 +47,5 @@ Running tests
 ```sh
 make test
 ```
+
+Please attach ```Testing/Temporary/LastTest.log``` when reporting test failures.
