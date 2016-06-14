@@ -1,34 +1,34 @@
-record(ai, "$(P):X-I") {
+record(ai, "$(P)X-I") {
     field(DTYP, "FLAME State")
     field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0)[0]")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }
-record(ai, "$(P):PX-I") {
+record(ai, "$(P)PX-I") {
     field(DTYP, "FLAME State")
     field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0)[1]")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }
-record(ai, "$(P):Y-I") {
+record(ai, "$(P)Y-I") {
     field(DTYP, "FLAME State")
     field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0)[2]")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }
-record(ai, "$(P):PY-I") {
+record(ai, "$(P)PY-I") {
     field(DTYP, "FLAME State")
     field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0)[3]")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }
-record(ai, "$(P):Z-I") {
+record(ai, "$(P)Z-I") {
     field(DTYP, "FLAME State")
     field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0)[4]")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }
-record(ai, "$(P):PZ-I") {
+record(ai, "$(P)PZ-I") {
     field(DTYP, "FLAME State")
     field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0)[5]")
     field(SCAN, "I/O Intr")

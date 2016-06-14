@@ -67,8 +67,6 @@ set(PY_SRC_DATA
   data/rfcavity.template
   data/quadrupole.template
   data/solenoid.template
-  data/orbtrim.template
-  data/sbend.template
   data/bpm.template
 )
 

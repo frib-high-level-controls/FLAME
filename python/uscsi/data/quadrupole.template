@@ -1,5 +1,5 @@
-record(ao, "$(P)K-SP") {
+record(ao, "$(P)B-SP") {
     field(DTYP, "FLAME Setting")
-    field(OUT , "@$(SIM) $(ELEM) K")
+    field(OUT , "@$(SIM) $(ELEM) B2")
     field(PREC, "6")
 }
