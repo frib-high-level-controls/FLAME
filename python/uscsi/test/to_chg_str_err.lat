@@ -1829,6 +1829,6 @@ test: LINE = (
 #  str000_94
 );
 
-#USE: test;
+USE: test;
 
-USE: cell;
+#USE: cell;

@@ -1829,6 +1829,6 @@ test: LINE = (
   dt0000_516, dt0000_517, mrk000_95
 );
 
-#USE: test;
+USE: test;
 
-USE: cell;
+#USE: cell;
