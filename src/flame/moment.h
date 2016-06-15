@@ -107,7 +107,6 @@ protected:
 };
 
 /** @brief An Element which propagates the statistical moments of a bunch
- *transfer_raw
  */
 struct MomentElementBase : public ElementVoid
 {
@@ -137,7 +136,7 @@ struct MomentElementBase : public ElementVoid
 
     std::vector<double> last_Kenergy_in, last_Kenergy_out;
     //! final transfer matrix
-    std::vector<value_t> transfer, transfer_raw;
+    std::vector<value_t> transfer;
     std::vector<value_t> misalign, misalign_inv;
 
     //! constituents of misalign

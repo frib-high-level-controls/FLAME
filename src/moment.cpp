@@ -459,7 +459,6 @@ void MomentElementBase::assign(const ElementVoid *other)
     last_Kenergy_in = O->last_Kenergy_in;
     last_Kenergy_out = O->last_Kenergy_out;
     transfer = O->transfer;
-    transfer_raw = O->transfer_raw;
     misalign = O->misalign;
     misalign_inv = O->misalign_inv;
     dx = O->dx;
@@ -478,7 +477,6 @@ void MomentElementBase::show(std::ostream& strm, int level) const
     /*
     strm<<"Length "<<length<<"\n"
           "Transfer: "<<transfer<<"\n"
-          "Transfer Raw: "<<transfer_raw<<"\n"
           "Mis-align: "<<misalign<<"\n";
           */
 }
@@ -577,17 +575,16 @@ void MomentElementBase::resize_cache(const state_t& ST)
     last_Kenergy_in.resize(ST.real.size());
     last_Kenergy_out.resize(ST.real.size());
     transfer.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
-    transfer_raw.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
     misalign.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
     misalign_inv.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
 }
 
 void MomentElementBase::recompute_matrix(state_t& ST)
 {
-    // Default, for passive elements.
+    // Default, initialize as no-op
 
     for(size_t k=0; k<last_Kenergy_in.size(); k++) {
-        transfer[k] = transfer_raw[k];
+        transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
         last_Kenergy_in[k] = last_Kenergy_out[k] = ST.real[k].IonEk; // no energy gain
     }
@@ -877,7 +874,7 @@ struct ElementQuad : public MomentElementBase
             // Vertical plane.
             GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
             // Longitudinal plane.
-    //        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+    //        transfer(state_t::PS_S, state_t::PS_S) = L;
 
             transfer[i](state_t::PS_S, state_t::PS_PS) =
                     -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
@@ -973,11 +970,11 @@ struct ElementEDipole : public MomentElementBase
                    delta_KZ    = ST.ref.IonZ/ST.real[i].IonZ - 1e0,
                    SampleIonK  = 2e0*M_PI/(ST.real[i].beta*SampleLambda);
 
-            transfer_raw[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
 
             GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real[i].gamma,
-                           eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer_raw[i]);
+                           eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer[i]);
 
             if (ver) {
                 // Rotate transport matrix by 90 degrees.
@@ -996,8 +993,6 @@ struct ElementEDipole : public MomentElementBase
                 noalias(transfer[i]) = prod(misalign_inv[i], scratch);
                 //TODO: no-op code?  results are unconditionally overwritten
             }
-
-            transfer[i] = transfer_raw[i];
 
             get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
@@ -1041,7 +1036,7 @@ struct ElementEQuad : public MomentElementBase
             // Vertical plane.
             GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
             // Longitudinal plane.
-            //        transfer_raw(state_t::PS_S, state_t::PS_S) = L;
+            //        transfer(state_t::PS_S, state_t::PS_S) = L;
 
             transfer[i](state_t::PS_S, state_t::PS_PS) =
                     -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
