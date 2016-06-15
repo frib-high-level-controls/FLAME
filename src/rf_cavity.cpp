@@ -1190,11 +1190,10 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 
     assert(n>1);
 
-    double dis = CavData.table(n-1, 0) - CavData.table(0, 0),
-           dz  = dis/(n-1),
-           CaviLambda, CaviIonK, IonFylast, IonGamma, IonBeta;
-
-    CaviLambda = C0/fRF*MtoMM;
+    const double dis        = CavData.table(n-1, 0) - CavData.table(0, 0),
+                 dz         = dis/(n-1),
+                 CaviLambda = C0/fRF*MtoMM;
+    // assumes dz is constant even though CavData contains actual z positions are available
 
 //    std::cout<<__FUNCTION__
 //             <<" IonFy0="<<IonFy0
@@ -1205,17 +1204,19 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
     IonFy = IonFy0;
     // Sample rate is different for RF Cavity; due to different RF frequencies.
 //    IonK  = state.SampleIonK;
-    CaviIonK = 2e0*M_PI*fRF/(state.beta*C0*MtoMM);
+    double CaviIonK = 2e0*M_PI*fRF/(state.beta*C0*MtoMM);
     for (size_t k = 0; k < n-1; k++) {
-        IonFylast = IonFy;
+        double IonFylast = IonFy;
         IonFy += CaviIonK*dz;
         state.IonW  += state.IonZ*EfieldScl*(CavData.table(k,1)+CavData.table(k+1,1))/2e0
                        *cos((IonFylast+IonFy)/2e0)*dz/MtoMM;
-        IonGamma = state.IonW/state.IonEs;
-        IonBeta  = sqrt(1e0-1e0/sqr(IonGamma));
+        double IonGamma = state.IonW/state.IonEs;
+        double IonBeta  = sqrt(1e0-1e0/sqr(IonGamma));
         if ((state.IonW-state.IonEs) < 0e0) {
             state.IonW = state.IonEs;
             IonBeta = 0e0;
+            //TODO: better handling of this error?
+            //      will be divide by zero (NaN)
         }
         CaviIonK = 2e0*M_PI/(IonBeta*CaviLambda);
 //        std::cout<<" "<<k<<" IonK="<<IonK<<" IonW="<<state.IonW<<"\n";
