@@ -147,7 +147,6 @@ MomentState::MomentState(const Config& c)
         moment0.resize(ics.size());
         moment1.resize(ics.size());
 
-        double totalQ = 0.0;
         for(size_t i=0; i<ics.size(); i++) {
             std::string num(boost::lexical_cast<std::string>(icstate+i));
 
@@ -167,13 +166,7 @@ MomentState::MomentState(const Config& c)
             real[i].IonEk    += moment0[i][PS_PS]*MeVtoeV;
 
             real[i].recalc();
-
-            moment0_env += moment0[i]*real[i].IonQ;
-            totalQ += real[i].IonQ;
         }
-
-        moment0_env /= totalQ;
-        moment1_env = moment1[0];
     } else {
         real.resize(1); // hack, ensure at least one element so getArray() can return some pointer
         real[0] = ref;
@@ -185,9 +178,6 @@ MomentState::MomentState(const Config& c)
 
         load_storage(moment0[0].data(), c, vectorname, false);
         load_storage(moment1[0].data(), c, matrixname, false);
-
-        moment0_env = moment0[0];
-        moment1_env = moment1[0];
     }
 
     calc_rms();
@@ -207,9 +197,9 @@ void MomentState::calc_rms()
     for(size_t n=0; n<real.size(); n++) {
         totQ += real[n].IonQ;
         if(n==0)
-            moment0_env  = moment0[n]*real[n].IonQ;
+            noalias(moment0_env)  = moment0[n]*real[n].IonQ;
         else
-            moment0_env += moment0[n]*real[n].IonQ;
+            noalias(moment0_env) += moment0[n]*real[n].IonQ;
     }
     moment0_env /= totQ;
 
@@ -225,7 +215,13 @@ void MomentState::calc_rms()
         moment0_rms[j] = sqrt(variance/totQ);
     }
 
-    moment1_env.assign(moment1[0]);
+    for(size_t n=0; n<real.size(); n++) {
+        if(n==0)
+            noalias(moment1_env)  = moment1[n]*real[n].IonQ;
+        else
+            noalias(moment1_env) += moment1[n]*real[n].IonQ;
+    }
+    moment1_env /= totQ;
 }
 
 MomentState::MomentState(const MomentState& o, clone_tag t)
@@ -275,11 +271,11 @@ void MomentState::show(std::ostream& strm, int level) const
              << "\n  moment0 rms =\n    ";
         for (k = 0; k < MomentState::maxsize; k++)
             strm << std::scientific << std::setprecision(10) << std::setw(18) << moment0_rms(k) << ",";
-        strm << "\n  moment1[state=0] =\n";
+        strm << "\n  moment1 mean =\n";
         for (j = 0; j < MomentState::maxsize; j++) {
             strm << "    ";
             for (k = 0; k < MomentState::maxsize; k++) {
-                strm << std::scientific << std::setprecision(10) << std::setw(18) << moment1[0](j, k) << ",";
+                strm << std::scientific << std::setprecision(10) << std::setw(18) << moment1_env(j, k) << ",";
             }
             if (j < MomentState::maxsize-1) strm << "\n";
         }
