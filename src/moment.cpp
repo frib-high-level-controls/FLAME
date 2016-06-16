@@ -304,6 +304,14 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim[1] = moment1_env.size2();
         return true;
     } else if(idx==I++) {
+        Info.name = "moment1";
+        Info.ptr = &moment1_env(0,0);
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 2;
+        Info.dim[0] = moment1_env.size1();
+        Info.dim[1] = moment1_env.size2();
+        return true;
+    } else if(idx==I++) {
         Info.name = "moment0";
         Info.ptr = &moment0_env(0);
         Info.type = ArrayInfo::Double;
