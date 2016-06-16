@@ -3,12 +3,18 @@ registrar(flameRegistrar)
 device(waveform, INST_IO, devFLAMEwaveformLastMsg, "FLAME Last Message")
 device(bo,       INST_IO, devFLAMEboDoSim,         "FLAME Simulate")
 device(ai,       INST_IO, devFLAMEaiRuntime,       "FLAME Runtime")
+device(longin,   INST_IO, devFLAMElonginRuncount,  "FLAME Run Count")
 
 device(longin,   INST_IO, devFLAMElonginIndex,     "FLAME Index")
 
+# change element Config parameter
 device(ao,       INST_IO, devFLAMEaoSetting,       "FLAME Setting")
+# readback element Config parameter
+device(ai,       INST_IO, devFLAMEaiSetting,       "FLAME Setting")
 
+# readback state parameter
 device(ai,       INST_IO, devFLAMEaiState,         "FLAME State")
 
+# readback single state parameter from many elements, present as waveform
 device(waveform, INST_IO, devFLAMEwaveformSOrbit,  "FLAME State Orbit")
 device(waveform, INST_IO, devFLAMEwaveformIOrbit,  "FLAME Index Orbit")

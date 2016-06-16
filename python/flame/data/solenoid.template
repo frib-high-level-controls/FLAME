@@ -3,3 +3,9 @@ record(ao, "$(P)B-SP") {
     field(OUT , "@$(SIM) $(ELEM) B")
     field(PREC, "6")
 }
+record(ai, "$(P)B-RB") {
+    field(DTYP, "FLAME Setting")
+    field(INP , "@$(SIM) $(ELEM) B")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}

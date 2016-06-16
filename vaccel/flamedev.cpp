@@ -3,6 +3,7 @@
 #include <waveformRecord.h>
 #include <boRecord.h>
 #include <aiRecord.h>
+#include <longinRecord.h>
 
 #include <menuFtype.h>
 
@@ -131,3 +132,22 @@ long read_global_runtime(aiRecord *prec)
 }
 
 DSET6(ai, Runtime, init_global_ai, Sim::io_aftersim, read_global_runtime);
+
+static
+long init_global_longin(longinRecord *prec)
+{
+    assert(prec->inp.type==INST_IO);
+    init_global((dbCommon*)prec, prec->inp.value.instio.string);
+    return 0;
+}
+
+static
+long read_count(longinRecord *prec)
+{
+    TRY(SimDev) {
+        prec->val += 1;
+        return 0;
+    }CATCH_ALARM()
+}
+
+DSET6(longin, Runcount, init_global_longin, Sim::io_aftersim, read_count);

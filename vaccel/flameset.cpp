@@ -4,11 +4,14 @@
 #include <boost/lexical_cast.hpp>
 
 #include <aoRecord.h>
+#include <aiRecord.h>
 
 #include "flame.h"
 
-static
-long setting_init_ao(aoRecord *prec)
+namespace {
+
+template<typename REC> // REC is aoRecord or aiRecord
+long setting_init_a(REC *prec, DBLINK *plink)
 {
     try {
         // "simname elementname param"  implies inst==0
@@ -16,7 +19,7 @@ long setting_init_ao(aoRecord *prec)
         static boost::regex linkpat("(\\S+) ([^\\s\\[]+)(?:\\[(\\d+)\\])? (\\S+)");
 
         boost::cmatch M;
-        if(!boost::regex_match(prec->out.value.instio.string, M, linkpat))
+        if(!boost::regex_match(plink->value.instio.string, M, linkpat))
             throw std::runtime_error("Bad link string");
 
         std::auto_ptr<SimDevSetting> priv(new SimDevSetting);
@@ -62,6 +65,18 @@ long setting_init_ao(aoRecord *prec)
     }
 }
 
+long setting_init_ao(aoRecord *prec)
+{
+    return setting_init_a(prec, &prec->out);
+}
+
+long setting_init_ai(aiRecord *prec)
+{
+    long ret = setting_init_a(prec, &prec->inp);
+    if(ret==2) ret=0;
+    return ret;
+}
+
 static
 long setting_change_ao(aoRecord *prec)
 {
@@ -95,4 +110,28 @@ long setting_change_ao(aoRecord *prec)
     }CATCH_ALARM()
 }
 
+static
+long setting_readback_ai(aiRecord *prec)
+{
+    TRY(SimDevSetting) {
+        Guard G(priv->sim->lock);
+
+        ElementVoid* elem = priv->sim->machine->at(priv->element_index);
+
+        double curval = elem->conf().get<double>(priv->param);
+
+        if (prec->aslo) curval *= prec->aslo;
+        curval += prec->aoff;
+
+        if(prec->linr && prec->eslo!=0) curval = curval*prec->eslo + prec->eoff;
+
+        prec->val = curval;
+
+        return 2;
+    }CATCH_ALARM()
+}
+
+} // namespace
+
 DSET6(ao, Setting, setting_init_ao, NULL, setting_change_ao);
+DSET6(ai, Setting, setting_init_ai, Sim::io_aftersim, setting_readback_ai);

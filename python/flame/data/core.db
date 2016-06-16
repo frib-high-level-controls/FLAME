@@ -25,3 +25,9 @@ record(ai, "$(P)Time-I") {
     field(EGU , "ms")
     field(PREC, "3")
 }
+
+record(longin, "$(P)RunCnt-I") {
+    field(DTYP, "FLAME Run Count")
+    field(INP , "@$(SIM)")
+    field(SCAN, "I/O Intr")
+}
