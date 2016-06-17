@@ -126,6 +126,7 @@ long orbit_read_wf(waveformRecord *prec)
                 break;
             }
             if(priv->pvalues[i]) {
+                // use cached value of pvalues[]
                 pbuf[i] = *priv->pvalues[i];
                 continue;
             }
@@ -137,6 +138,7 @@ long orbit_read_wf(waveformRecord *prec)
             if(meas->last.get() &&
                meas->last->getArray(priv->param_index, info))
             {
+                // fill cached pvalues[]
                 double * const arr = (double*)info.ptr;
                 priv->pvalues[i] = &arr[priv->param_offset];
                 pbuf[i] = *priv->pvalues[i];
