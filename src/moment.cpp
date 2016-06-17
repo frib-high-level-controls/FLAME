@@ -218,10 +218,14 @@ void MomentState::calc_rms()
     }
 
     for(size_t n=0; n<real.size(); n++) {
-        if(n==0)
-            noalias(moment1_env)  = moment1[n]*real[n].IonQ;
-        else
-            noalias(moment1_env) += moment1[n]*real[n].IonQ;
+        for(size_t j=0; j<6; j++) {
+            for(size_t k=0; k<6; k++) {
+                if(n==0)
+                    moment1_env(j, k)  = (moment1[n](j, k)+(moment0[n][j]-moment0_env[j])*(moment0[n][k]-moment0_env[k]))*real[n].IonQ;
+                else
+                    moment1_env(j, k) += (moment1[n](j, k)+(moment0[n][j]-moment0_env[j])*(moment0[n][k]-moment0_env[k]))*real[n].IonQ;
+            }
+        }
     }
     moment1_env /= totQ;
 }

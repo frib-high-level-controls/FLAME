@@ -964,7 +964,6 @@ fs1_css_port_d2226_510: drift, L = 0.000000, aper = 0.020000;
 drift_511: drift, L = 0.099000, aper = 0.020000;
 drift_512: drift, L = 0.072000, aper = 0.020000;
 drift_513: drift, L = 0.928000, aper = 0.020000;
-#fs1_strl_strip_d2237_164: marker;
 fs1_strl_strip_d2237_164: stripper, IonChargeStates=Stripper_IonChargeStates, NCharge=Stripper_NCharge;
 drift_514: drift, L = 0.928000, aper = 0.020000;
 drift_515: drift, L = 0.072000, aper = 0.020000;

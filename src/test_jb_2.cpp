@@ -24,6 +24,7 @@ typedef state_t::matrix_t value_mat;
 
 extern int glps_debug;
 
+
 static
 void PrtVec(const MomentState::vector_t &a)
 {
@@ -32,7 +33,6 @@ void PrtVec(const MomentState::vector_t &a)
                       << std::setw(18) << a[k];
     std::cout << "\n";
 }
-
 
 static
 void PrtMat(const value_mat &M)
@@ -45,23 +45,27 @@ void PrtMat(const value_mat &M)
     }
 }
 
-void PrtState(const state_t& StatePtr)
+void PrtState(const state_t& ST)
 {
-    size_t k;
+    size_t                k;
+    MomentState::vector_t CenofChg, BeamRMS;
 
-    for (k = 0; k < StatePtr.size(); k++) {
-        std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << StatePtr.pos << "\n"
-                          <<"\n Ref:  "<<StatePtr.ref
-                          <<"\n Real: "<<StatePtr.real[k]
-                          <<"\n moment0\n";
-        PrtVec(StatePtr.moment0[k]);
-        std::cout << " moment1\n";
-        PrtMat(StatePtr.moment1[k]);
-        std::cout << "\n";
-    }
+    if (true)
+        for (k = 0; k < ST.size(); k++) {
+            std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << ST.pos << "\n"
+                      <<"\n Ref:  "<<ST.ref
+                     <<"\n Real: "<<ST.real[k]
+                       <<"\n moment0\n";
+            PrtVec(ST.moment0[k]);
+            std::cout << " moment1\n";
+            PrtMat(ST.moment1[k]);
+        }
 
-    std::cout<<"Center: "<< std::scientific << std::setprecision(10)
-             << std::setw(18)<<StatePtr.moment0_env<<"\n\n";
+    std::cout<<"\nCenter:        "<< std::scientific << std::setprecision(10)
+             << std::setw(18)<<ST.moment0_env<<"\n";
+    std::cout<<"RMS Beam Size: "<< std::scientific << std::setprecision(10)
+             << std::setw(18)<<ST.moment0_rms<<"\n";
+    PrtMat(ST.moment1_env);
 }
 
 std::vector<double> GetChgState(Config &conf)
@@ -78,15 +82,15 @@ void prt_initial_cond(Machine &sim,
 }
 
 static
-void propagate1(const Config &conf)
+void propagate(const Config &conf)
 {
     // Propagate element-by-element for each charge state.
-    size_t                                     elem_no = (size_t)-1;
-    std::vector<double>                        ChgState;
-
-    Machine sim(conf);
+    size_t                   elem_no = (size_t)-1;
+    std::vector<double>      ChgState;
+    Machine                  sim(conf);
     std::auto_ptr<StateBase> state(sim.allocState());
-    state_t *StatePtr = dynamic_cast<state_t*>(state.get());
+    state_t                  *StatePtr = dynamic_cast<state_t*>(state.get());
+
     if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix is supported");
 
     prt_initial_cond(sim, *StatePtr);
@@ -99,45 +103,13 @@ void propagate1(const Config &conf)
 
     Machine::iterator it = sim.begin()+1;
     while (it != sim.end()) {
-        ElementVoid* elem   = *it;
+        ElementVoid*       elem = *it;
         MomentElementBase* ELEM = static_cast<MomentElementBase*>(elem);
-        unsigned idx = elem->index;
-        std::string  t_name = elem->type_name(); // C string -> C++ string.
-        std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
-
-        if (t_name == "stripper") {
-            elem_no = elem->index;
-            std::cout << "\nElement no: " << elem_no << "\n";
-            std::cout << elem->conf() << "\n";
-            //Stripper_GetMat(conf, *StatePtr);
-
-            while (it != sim.end()) {
-                elem   = *it;
-                ELEM = static_cast<MomentElementBase*>(elem);
-                unsigned idx = elem->index;
-                std::cout<<"At element "<<idx<<" "<<elem->name<<"\n";
-
-                elem->advance(*state);
-                for (size_t k = 0; k < ELEM->transfer.size(); k++) {
-                    std::cout<<"Transfer "<<k<<"\n";
-                    PrtMat(ELEM->transfer[k]);
-                }
-                ++it;
-                std::cout<<"After element "<<idx<<"\n";
-                PrtState(*StatePtr);
-            }
-
-            break;
-        }
+        unsigned           idx = elem->index;
+        std::string        t_name = elem->type_name(); // C string -> C++ string.
 
         elem->advance(*state);
-        for (size_t k = 0; k < ELEM->transfer.size(); k++) {
-            std::cout<<"Transfer "<<k<<"\n";
-            PrtMat(ELEM->transfer[k]);
-        }
         ++it;
-        std::cout<<"After element "<<idx<<"\n\n";
-        PrtState(*StatePtr);
     }
 
     tStamp[1] = clock();
@@ -173,8 +145,7 @@ int main(int argc, char *argv[])
 
         registerMoment();
 
-//        propagate(conf);
-        propagate1(*conf);
+        propagate(*conf);
 
         return 0;
     } catch(std::exception& e) {

@@ -57,14 +57,14 @@ void StripperCharge(const double beta, double &Q_ave, double &d)
 
 
 static
-void ChargeStripper(const double beta, const std::vector<double> ChgState, MomentState::vector_t& chargeAmount_Baron)
+void ChargeStripper(const double beta, const std::vector<double> ChgState, std::vector<double>& chargeAmount_Baron)
 {
     unsigned    k;
     double Q_ave, d;
 
     StripperCharge(beta, Q_ave, d);
     for (k = 0; k < ChgState.size(); k++)
-        chargeAmount_Baron[k] = Gaussian(ChgState[k]*Stripper_IonMass, Q_ave, d);
+        chargeAmount_Baron.push_back(Gaussian(ChgState[k]*Stripper_IonMass, Q_ave, d));
 }
 
 
@@ -73,12 +73,10 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
 {
     const int n = ChgState.size();
 
-    MomentState::vector_t chargeAmount_Baron(n);
-
     // Change reference particle charge state.
     ref.IonZ = Stripper_IonZ;
 
-    ChargeStripper(ref.beta, ChgState, chargeAmount_Baron);
+//    ChargeStripper(ref.beta, ChgState, chargeAmount_Baron);
 
     // Evaluate change in reference particle energy due to stripper model energy straggling.
     ref.IonEk      = (ref.IonEk-Stripper_Para[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
@@ -87,8 +85,6 @@ void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector
     ref.gamma      = ref.IonW/ref.IonEs;
     ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
     ref.SampleIonK = 2e0*M_PI/(ref.beta*SampleLambda);
-
-    // chargeAmount = fribstripper.chargeAmount_Baron;
 }
 
 void Stripper_GetMat(const Config &conf,
@@ -99,7 +95,9 @@ void Stripper_GetMat(const Config &conf,
     double                 stdXYp, XpAfStr, growthRateXp, YpAfStr, growthRateYp, s;
     Particle               ref;
     state_t                *StatePtr = &ST;
-    MomentState::matrix_t tmpmat;
+    MomentState::matrix_t  tmpmat;
+    std::vector<double>    chargeAmount_Baron;
+
 
     // Evaluate beam parameter recombination.
 
@@ -168,14 +166,15 @@ void Stripper_GetMat(const Config &conf,
     ST.moment1.resize(n);
 
     // Length is zero.
-    StatePtr->pos        = s;
+    StatePtr->pos = s;
 
-    StatePtr->ref        = ref;
+    StatePtr->ref = ref;
+
+    ChargeStripper(StatePtr->real[0].beta, ChgState, chargeAmount_Baron);
 
     for (k = 0; k < n; k++) {
-
         StatePtr->real[k].IonZ  = ChgState[k];
-        StatePtr->real[k].IonQ  = NChg[k];
+        StatePtr->real[k].IonQ  = chargeAmount_Baron[k];
         StatePtr->real[k].IonEs = ref.IonEs;
         StatePtr->real[k].IonEk = Ek_recomb;
         StatePtr->real[k].recalc();
