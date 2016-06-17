@@ -102,7 +102,7 @@ struct StreamObserver : public Observer
 {
     std::ostream *strm;
     int detail;
-    StreamObserver(std::ostream& strm, int detail=0) :strm(&strm), detail(detail) {}
+    StreamObserver(std::ostream& strm, int detail=1) :strm(&strm), detail(detail) {}
     virtual ~StreamObserver() {}
     virtual void view(const ElementVoid* elem, const StateBase* state)
     {
@@ -116,7 +116,7 @@ struct StreamObserver : public Observer
         std::auto_ptr<std::ostream> owned_strm;
         std::ostream *strm;
         int detail;
-        Factory(const strvect& fmt) :strm(&std::cout), detail(0)
+        Factory(const strvect& fmt) :strm(&std::cout), detail(1)
         {
             assert(!fmt.empty() && fmt[0]=="txt");
 
