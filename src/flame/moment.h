@@ -45,7 +45,7 @@ struct Particle {
     void recalc() {
         IonW       = IonEs + IonEk;
         gamma      = (IonEs != 0e0)? IonW/IonEs : 1e0;
-        beta       = sqrt(1e0-1e0/sqr(gamma));
+        beta       = sqrt(1e0-1e0/(gamma*gamma));
         bg         = (beta != 0e0)? beta*gamma : 1e0;
         SampleIonK = 2e0*M_PI/(beta*SampleLambda);
     }

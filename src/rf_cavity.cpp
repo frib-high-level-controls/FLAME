@@ -6,6 +6,9 @@
 #include "flame/moment_sup.h"
 #include "flame/rf_cavity.h"
 
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
 // RF Cavity beam dynamics functions.
 
 static

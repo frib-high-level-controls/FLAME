@@ -50,6 +50,11 @@ init_internal(void)
         PyObject *mod = Py_InitModule("flame._internal", modmethods);
 #endif
 
+        // python API version
+        PyModule_AddIntConstant(mod, "version", 0);
+        // C API version
+        PyModule_AddIntConstant(mod, "cversion", FLAME_API_VERSION);
+
         if(registerModMachine(mod))
             throw std::runtime_error("Failed to initialize Machine");
         if(registerModState(mod))

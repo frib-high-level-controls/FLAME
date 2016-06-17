@@ -1,6 +1,5 @@
 
-from ._internal import Machine
-from ._internal import GLPSPrinter, _GLPSParse
+from ._internal import Machine, GLPSPrinter, _GLPSParse, version, cversion
 
 class GLPSParser(object):
     """GLPS parser context

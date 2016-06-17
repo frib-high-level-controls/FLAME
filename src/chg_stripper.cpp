@@ -3,6 +3,9 @@
 #include "flame/moment_sup.h"
 #include "flame/chg_stripper.h"
 
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
 void GetCenofChg(const Config &conf, const MomentState &ST,
                  MomentState::vector_t &CenofChg, MomentState::vector_t &BeamRMS)
 {

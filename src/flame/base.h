@@ -17,9 +17,7 @@
 #include "config.h"
 #include "util.h"
 
-// Macros:
-#define sqr(x)  ((x)*(x))
-#define cube(x) ((x)*(x)*(x))
+#define FLAME_API_VERSION 0
 
 struct ElementVoid;
 

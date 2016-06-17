@@ -4,6 +4,8 @@
 #include "flame/constants.h"
 #include "flame/moment.h"
 
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
 
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
 // by LU-decomposition.

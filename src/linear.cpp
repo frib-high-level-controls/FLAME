@@ -7,6 +7,9 @@
 #include "flame/state/matrix.h"
 
 
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
 // Phase-space units.
 #if false
     // Use [m, rad, m, rad, rad, eV/u].
