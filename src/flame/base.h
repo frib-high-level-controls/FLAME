@@ -48,7 +48,7 @@ struct StateBase : public boost::noncopyable
     struct ArrayInfo {
         ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
         //! The parameter name
-        std::string name;
+        const char *name;
         //! The parameter type Double (double) or Sizet (size_t)
         enum Type {
             Double, Sizet

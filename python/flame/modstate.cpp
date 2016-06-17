@@ -246,7 +246,7 @@ PyObject* wrapstate(StateBase* b)
                 break;
 
             PyRef<> name(PyInt_FromLong(i));
-            if(PyDict_SetItemString(state->attrs, info.name.c_str(), name.py()))
+            if(PyDict_SetItemString(state->attrs, info.name, name.py()))
                 throw std::runtime_error("Failed to insert into Dict");
 
         }
