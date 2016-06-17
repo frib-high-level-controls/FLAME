@@ -5,6 +5,9 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <boost/numeric/ublas/vector_proxy.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+
 #include "flame/constants.h"
 
 #include "flame/moment.h"
@@ -16,6 +19,8 @@
 
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
+
+namespace ub = boost::numeric::ublas;
 
 namespace {
 
@@ -218,16 +223,13 @@ void MomentState::calc_rms()
     }
 
     // Zero orbit terms.
-    moment1_env = boost::numeric::ublas::zero_matrix<double>(state_t::maxsize);
+    moment1_env = ub::zero_matrix<double>(state_t::maxsize);
+    boost::numeric::ublas::slice S(0, 1, 6);
     for(size_t n=0; n<real.size(); n++) {
-        for(size_t j=0; j<6; j++) {
-            for(size_t k=0; k<6; k++) {
-                if(n==0)
-                    moment1_env(j, k)  = (moment1[n](j, k)+(moment0[n][j]-moment0_env[j])*(moment0[n][k]-moment0_env[k]))*real[n].IonQ;
-                else
-                    moment1_env(j, k) += (moment1[n](j, k)+(moment0[n][j]-moment0_env[j])*(moment0[n][k]-moment0_env[k]))*real[n].IonQ;
-            }
-        }
+        const double Q = real[n].IonQ;
+        state_t::vector_t m0diff = ub::project(moment0[n]-moment0_env, S);
+
+        ub::project(moment1_env, S, S) += Q*(moment1[n]+ub::outer_prod(m0diff, m0diff));
     }
     moment1_env /= totQ;
 }
