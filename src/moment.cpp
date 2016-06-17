@@ -217,6 +217,8 @@ void MomentState::calc_rms()
         moment0_rms[j] = sqrt(variance/totQ);
     }
 
+    // Zero orbit terms.
+    moment1_env = boost::numeric::ublas::zero_matrix<double>(state_t::maxsize);
     for(size_t n=0; n<real.size(); n++) {
         for(size_t j=0; j<6; j++) {
             for(size_t k=0; k<6; k++) {

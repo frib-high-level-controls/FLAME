@@ -110,6 +110,8 @@ void propagate(const Config &conf)
 
         elem->advance(*state);
         ++it;
+
+//        PrtState(*StatePtr);
     }
 
     tStamp[1] = clock();
