@@ -155,7 +155,7 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
 {
 
     TRY {
-        PyObject *state, *toobserv = NULL;
+        PyObject *state, *toobserv = Py_None;
         unsigned long start = 0, max = (unsigned long)-1;
         const char *pnames[] = {"state", "start", "max", "observe", NULL};
         if(!PyArg_ParseTupleAndKeywords(args, kws, "O|kkO", (char**)pnames, &state, &start, &max, &toobserv))
@@ -164,7 +164,7 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
         PyStoreObserver observer;
         PyScopedObserver observing(machine->machine);
 
-        if(toobserv) {
+        if(toobserv!=Py_None) {
             PyRef<> iter(PyObject_GetIter(toobserv)), item;
 
             while(item.reset(PyIter_Next(iter.py()), PyRef<>::allow_null())) {

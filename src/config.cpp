@@ -344,8 +344,12 @@ GLPSParser::setPrinter(std::ostream* strm)
 Config*
 GLPSParser::parse_file(const char *fname)
 {
-    boost::filesystem::path fpath(fname);
-    fpath = boost::filesystem::canonical(fpath).parent_path();
+    boost::filesystem::path fpath;
+    if(fname) {
+        fpath = boost::filesystem::canonical(fname).parent_path();
+    } else {
+        fpath = boost::filesystem::current_path();
+    }
 
     FILE *fp;
     bool closeme = fname!=NULL && strcmp(fname,"-")!=0;
