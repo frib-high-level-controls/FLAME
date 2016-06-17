@@ -228,8 +228,17 @@ StateBase* unwrapstate(PyObject* raw)
     return state->state;
 }
 
+static const char pymdoc[] =
+        "The interface to a sub-class of C++ StateBase.\n"
+        "Can't be constructed from python, see Machine.allocState()\n"
+        "\n"
+        "Provides access to some C++ member variables via the Machine::getArray() interface.\n"
+        ;
+
 int registerModState(PyObject *mod)
 {
+    PyStateType.tp_doc = pymdoc;
+
     PyStateType.tp_str = &PyState_str;
     PyStateType.tp_repr = &PyState_str;
     PyStateType.tp_dealloc = &PyState_free;

@@ -127,7 +127,7 @@ struct PyRef {
     }
 };
 
-//! Extract C string from python object (py2 str or py3 unicode)
+// Extract C string from python object (py2 str or py3 unicode)
 struct PyCString
 {
 #if PY_MAJOR_VERSION >= 3

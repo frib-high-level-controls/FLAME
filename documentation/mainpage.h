@@ -16,6 +16,8 @@ A discrete accelerator simulation engine
 
 @subpage apiusage
 
+@subpage pyapi
+
 @subpage devnotes
 
 Source doc repository https://github.com/frib-high-level-controls/FLAME
@@ -29,17 +31,18 @@ Source doc repository https://github.com/frib-high-level-controls/FLAME
 
 @section abstractoverview Overview
 
-The core concepts of the simulation engine are the Machine, Element, State, and Config.
+The core concepts of the simulation engine are the Machine, @link ElementVoid Element @endlink,
+@link StateBase State @endlink, and Config.
 
 A Config is a container for key/value pairs.
 This is the interface through which Elements are specialized (eg. length=2 vs. length=3).
 The lattice file parser populates a Config, which may then be used to construct a Machine.
 
-A Machine represents a ordered list of Elements.
+A Machine represents a ordered list of Elements (instances of ElementVoid).
 
 @diafile elements.dia Elements in a Machine.
 
-A State represents "the beam", which is to say, a particle or bunch of particles
+A State (sub-class of StateBase) represents "the beam", which is to say, a particle or bunch of particles
 which pass from Element to Element through a Machine.
 The operation of the simulation is for an Element to transform a State.
 This new (output) state is then passed as input to the next element.
@@ -63,7 +66,7 @@ These selections are made from a global table which is populated by Machine::reg
 A simulation is configured by passing a Config to Machine::Machine.
 A Config can be obtained in several ways:
 
-1. Lattice parser GLPSParser::parse()
+1. Lattice parser GLPSParser::parse_file()
 2. A Python dictionary
 3. Construct an empty Config and Config::set all necessary keys.
 
@@ -293,7 +296,49 @@ elemname: generic, transfer = [1, 0, 0, 0, 0, 0, 0,
 // =====================================================================================
 
 /**
-@page apiusage API Usage
+@page pyapi Python API reference
+
+The Python API exposes a limited sub-set of the C++ API with the 'flame' python module.
+
+@code
+from flame import Machine, GLPSPrinter, GLPSParser
+@endcode
+
+@section pyapimachine Machine
+
+See the doc strings for more information.
+
+@code
+class Machine(object):
+    def __init__(self, config, path=None, extra=None):
+        pass
+    def conf(self, index=None):
+        pass
+    def allocState(self, config=None, inherit=False):
+        "returns State"
+    def propagate(self, state, start=0, max=-1, observe=None):
+        pass
+    def reconfigure(self, index, config):
+        pass
+    def __len__(self):
+        pass
+@endcode
+
+A python #Machine is constructed by passing in a file-like object, buffer, or dictionary.
+
+@section pyapistate State
+
+This python type wraps an instance of a sub-class of StateBase.
+The StateBase::getArray() interface is used to find those member variables exported by the sub-class
+and expose them as python attributes.
+
+Different sub-classes will export different member variables.
+*/
+
+// =====================================================================================
+
+/**
+@page apiusage API Usage (C++ and Python)
 
 @section apiusagecpp C++ Simulation API Usage
 
@@ -612,7 +657,7 @@ file :
 // =====================================================================================
 
 /**
-@page glpsexprs Expressions
+@page glpsexprs Lattice File Expressions
 
 @see parse_context::parse_context
 
@@ -680,7 +725,8 @@ destroyed, and Machine::registeryCleanup() is called
 valgrind --leak-check=full --show-leak-kinds=all ./tools/run_flame python/flame/test/to_strl.lat
 @endcode
 
-Should show only "still reachable" blocks associated with the HDF5 library and no blocks definitely, indirectly, or possibly lost.
+Should show no blocks definitely, indirectly, or possibly lost,
+but may show some "still reachable" blocks associated with the HDF5 library.
 
 */
 

@@ -37,18 +37,32 @@ struct StateBase : public boost::noncopyable
 
     double pos;        //!< absolute longitudinal position at end of Element
 
+    //! virtual equivalent to operator=()
+    //! Should only be used with another State originating from the same Machine
+    //! from Machine::allocState() or clone().
     virtual void assign(const StateBase& other) =0;
 
+    //! Print information about the state.
+    //! level is a hint as to the verbosity expected by the caller.
     virtual void show(std::ostream&, int level =0) const {}
 
+    //! Used with StateBase::getArray() to describe a single parameter
     struct ArrayInfo {
         ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
+        //! The parameter name
         std::string name;
+        //! The parameter type Double (double) or Sizet (size_t)
         enum Type {
             Double, Sizet
         } type;
+        //! Pointer to parameter storage.
+        //! Actual type depends on the type: Double (double) or Sizet (size_t)
         void *ptr;
+        //! Number of dimension.
+        //! Indicates how many entries in dim[] are valid.
+        //! ndim==0 indicates a scalar.
         unsigned ndim;
+        //! Array dimensions.  Arrays use C layout
         size_t dim[5];
     };
 
@@ -63,14 +77,22 @@ struct StateBase : public boost::noncopyable
      */
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
+    //! Allocate a new instance which is a copy of this one.
+    //! Caller is responsible to delete the returned pointer
     virtual StateBase* clone() const =0;
 
     //! @private
     //! Mailbox to hold the python interpreter object wrapping us.
     void *pyptr;
 protected:
+    /** Construct a new state
+     *
+     * By convention an empty Config() should be valid.
+     */
     StateBase(const Config& c);
+    //! Used with clone ctor
     struct clone_tag{};
+    //! For use in clone()
     StateBase(const StateBase& c, clone_tag);
 };
 
@@ -81,22 +103,51 @@ std::ostream& operator<<(std::ostream& strm, const StateBase& s)
     return strm;
 }
 
+/**
+ * @brief Allow inspection of intermediate State
+ *
+ * Use with ElementVoid::set_observer() to associate an observer with an Element.
+ * During Machine::propagate() a call will be made to Observer::view()
+ * with the element's output State.
+ */
 struct Observer : public boost::noncopyable
 {
     virtual ~Observer() {}
-    virtual void view(const ElementVoid*, const StateBase*) =0;
+    //! Called from within Machine::propagate()
+    virtual void view(const ElementVoid* elem, const StateBase* state) =0;
 };
 
+/**
+ * @brief Base class for all simulated elements.
+ *
+ * Sub-classes of ElementVoid must be registered with Machine::registerElement
+ * before they will be found by Machine::Machine().
+ */
 struct ElementVoid : public boost::noncopyable
 {
+    /**
+     * @brief Construct this element using the provided Config.
+     *
+     * Base class ctor makes use of Config parameters "name" and "length".
+     * "name" is required.  "length" is option, and is 0.0 if omitted.
+     *
+     * Sub-classes are allowed to require certain parameters to be provided.
+     *
+     * @throws KeyError       If a required parameter is missing
+     * @throws boost::bad_get If a parameter exists, but has the wrong value type
+     */
     ElementVoid(const Config& conf);
     virtual ~ElementVoid();
 
+    /** Sub-classes must provide an approprate short description string.
+     *  Must match the type name passed to Machine::registerElement().
+     */
     virtual const char* type_name() const =0;
 
     //! Propogate the given State through this Element
     virtual void advance(StateBase& s) =0;
 
+    //! The Config used to construct this element.
     inline const Config& conf() const {return p_conf;}
 
     const std::string name; //!< Name of this element (unique in its Machine)
@@ -104,6 +155,7 @@ struct ElementVoid : public boost::noncopyable
 
     double length; //!< Longitudual length of this element (added to StateBase::pos)
 
+    //! The current observer, or NULL
     Observer *observer() const { return p_observe; }
     /** Add Observer which will inspect the output State of this Element.
      *  Observer instance musy outlive the Element.
@@ -111,9 +163,10 @@ struct ElementVoid : public boost::noncopyable
      */
     void set_observer(Observer *o) { p_observe = o; }
 
+    //! Print information about the element.
+    //! level is a hint as to the verbosity expected by the caller.
     virtual void show(std::ostream&, int level) const;
 
-    //! @internal
     //! Used by Machine::reconfigure() to avoid re-alloc (and iterator invalidation)
     //! Assumes other has the same type.
     //! Sub-classes must call base class assign()
@@ -125,14 +178,21 @@ private:
     friend class Machine;
 };
 
-//std::ostream& operator<<(std::ostream& strm, const ElementVoid& s)
-//{
-//    s.show(strm);
-//    return strm;
-//}
-
+/**
+ * @brief The core simulate Machine engine
+ *
+ * Provides std::vector<ElementVoid*>-like access to individual elements
+ *
+ * @note A Machine instance is reentrant, but not thread-safe.
+ *       Any thread may create a Machine at any time.
+ *       However, each instance should be accessed by a single thread.
+ */
 struct Machine : public boost::noncopyable
 {
+    /**
+     * @brief Construct a new Machine
+     * @param c A Config instance, such as that returned by GLPSParser::parse_file().
+     */
     Machine(const Config& c);
     ~Machine();
 
@@ -157,6 +217,7 @@ struct Machine : public boost::noncopyable
     StateBase* allocState(const Config& c) const;
 
     //! Allocate new State with empty Config
+    //! Equivalent to allocState(Config())
     inline StateBase* allocState() const {
         Config defaults;
         return allocState(defaults);
@@ -165,11 +226,35 @@ struct Machine : public boost::noncopyable
     //! Fetch Config used to construct this Machine
     inline const Config& conf() const { return p_conf; }
 
+    /**
+     * @brief Change the configuration of a single element.
+     * @param idx The index of this element
+     * @param c The new Config
+     *
+     * Triggers re-construction of a single element.
+     * An optimization to avoid the overhead of reconstructing
+     * the entire Machine to change a single element.
+     *
+     * @code
+     * Machine M(...);
+     * assert(M.size()>5);
+     * Config e5conf(M[5]->conf());
+     * @endcode
+     */
     void reconfigure(size_t idx, const Config& c);
 
+    //! Return the sim_type string found during construction.
     inline const std::string& simtype() const {return p_simtype;}
 
+    //! The current tracing stream, or NULL.
     inline std::ostream* trace() const {return p_trace;}
+    /**
+     * @brief Assign new tracing stream.
+     * @param v new stream or NULL to clear
+     *
+     * The trace stream will be written to during Machine::propagate()
+     * as a debugging aid.
+     */
     void set_trace(std::ostream* v) {p_trace=v;}
 
 private:
@@ -190,25 +275,37 @@ private:
     typedef std::map<LookupKey, ElementVoid*> p_lookup_t;
 public:
 
+    //! @return Number of beamline elements
     inline size_t size() const { return p_elements.size(); }
 
+    //! Access a beamline element
     inline ElementVoid* operator[](size_t i) { return p_elements[i]; }
+    //! Access a beamline element
     inline const ElementVoid* operator[](size_t i) const { return p_elements[i]; }
 
+    //! Access a beamline element
     inline ElementVoid* at(size_t i) { return p_elements.at(i); }
+    //! Access a beamline element
     inline const ElementVoid* at(size_t i) const { return p_elements.at(i); }
 
+    //! Beamline element iterator
     typedef p_elements_t::iterator iterator;
+    //! Beamline element iterator (const version)
     typedef p_elements_t::const_iterator const_iterator;
 
+    //! Points to the first element
     iterator begin() { return p_elements.begin(); }
+    //! Points to the first element
     const_iterator begin() const { return p_elements.begin(); }
 
+    //! Points just after the last element
     iterator end() { return p_elements.end(); }
+    //! Points just after the last element
     const_iterator end() const { return p_elements.end(); }
 
     //! Find the nth element with the given name
     //! @return NULL on failure
+    //! A convienence wrapper around equal_range().
     ElementVoid* find(const std::string& name, size_t nth=0) {
         p_lookup_t::const_iterator low (p_lookup.lower_bound(LookupKey(name, 0))),
                                    high(p_lookup.upper_bound(LookupKey(name, (size_t)-1)));
@@ -220,6 +317,7 @@ public:
         return NULL;
     }
 
+    //! iterator for use with equal_range() and equal_range_type()
     typedef value_proxy_iterator<p_lookup_t::iterator> lookup_iterator;
 
     //! Return a pair of iterators for the sequence [first, second) of those elements
@@ -293,21 +391,56 @@ private:
 
 public:
 
+    /**
+     * @brief Register a new State with the simulation framework.
+     *
+     * The first step to adding a new sim_type.
+     *
+     * @param name The new sim_type name
+     * @throws std::logic_error if name is already registered
+     *
+     * @note This method may be called from any thread at any time.
+     *
+     * @code
+     * struct MyState : public StateBase { ... };
+     * void myReg() {
+     *   Machine::registerState<MyState>("mysimtype");
+     *   ...
+     * @endcode
+     */
     template<typename State>
     static void registerState(const char *name)
     {
         p_registerState(name, &state_builder_impl<State>::build);
     }
 
+    /**
+     * @brief Register a new Element type with the simulation framework
+     *
+     * Add a new element to an existing sim_type (see registerState()).
+     *
+     * @param sname A sim_type name
+     * @param ename The new element type name
+     * @throws std::logic_error if sname has not been registered, or if ename is already registered
+     *
+     * @note This method may be called from any thread at any time.
+     */
     template<typename Element>
     static void registerElement(const char *sname, const char *ename)
     {
         p_registerElement(sname, ename, new element_builder_impl<Element>);
     }
 
-    //! Discard all registered State and Element type information
-    //! Suggested use case is to call just before process exit
-    //! so that valgrind doesn't flag these as leaks
+    /**
+     * @brief Discard all registered State and Element type information.
+     *
+     * Clears all previous registerations made by registerState() and registerElement().
+     *
+     * Suggested use case is to call just before process exit
+     * so that valgrind doesn't flag these as leaks
+     *
+     * @note This method may be called from any thread at any time.
+     */
     static void registeryCleanup();
 
     friend std::ostream& operator<<(std::ostream&, const Machine& m);
@@ -315,7 +448,9 @@ public:
 
 std::ostream& operator<<(std::ostream&, const Machine& m);
 
+//! Register sim_types "Vector" and "TransferMatrix"
 void registerLinear();
+//! Register sim_type "MomentMatrix"
 void registerMoment();
 
 #endif // FLAME_BASE_H

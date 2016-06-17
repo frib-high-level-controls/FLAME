@@ -17,21 +17,19 @@
 // Sampling distance [m].
 # define SampleLambda (C0/SampleFreq*MtoMM)
 
-
-/** @brief Simulation state which include only a matrix
- */
-
+//! Extra information about a bunch not encoded the vector or matrix of MomentState
+//!
 struct Particle {
-    double IonZ,        // Charge state.
-           IonQ,        // Ion Charge
-           IonEs,       // Rest energy.
-           IonW,        // Total energy.
-           gamma,       // Gamma for ion.
-           beta,        // Beta for ion.
-           bg,          // Beta*gamma.
-           SampleIonK,  // Sample rate; different RF Cavity due to RF frequenies.
-           phis,        // Absolute synchrotron phase [rad].
-           IonEk;       // Kinetic energy.
+    double IonZ,        //!< Charge state.
+           IonQ,        //!< Ion Charge
+           IonEs,       //!< Rest energy.
+           IonW,        //!< Total energy. (dependent)
+           gamma,       //!< Gamma for ion. (dependent)
+           beta,        //!< Beta for ion. (dependent)
+           bg,          //!< Beta*gamma. (dependent)
+           SampleIonK,  //!< Sample rate; different RF Cavity due to RF frequenies. (dependent)
+           phis,        //!< Absolute synchrotron phase [rad].
+           IonEk;       //!< Kinetic energy.
 
     Particle() {
         phis = 0.0;
@@ -42,7 +40,8 @@ struct Particle {
         = std::numeric_limits<double>::quiet_NaN();
     }
 
-    // call after changing IonEs or IonEk
+    //! Recalculate dependent (cached) values.
+    //! Call after changing IonEs or IonEk
     void recalc() {
         IonW       = IonEs + IonEk;
         gamma      = (IonEs != 0e0)? IonW/IonEs : 1e0;
@@ -54,6 +53,12 @@ struct Particle {
 
 std::ostream& operator<<(std::ostream&, const Particle&);
 
+/** State for sim_type=MomentMatrix
+ *
+ * Represents a set of charge states
+ *
+ * @see @ref simmoment
+ */
 struct MomentState : public StateBase
 {
     enum {maxsize=7};
@@ -100,7 +105,7 @@ struct MomentState : public StateBase
 
     void calc_rms();
 
-    inline size_t size() const { return real.size(); } // # of charge states
+    inline size_t size() const { return real.size(); } //!< # of charge states
 
 protected:
     MomentState(const MomentState& o, clone_tag);
@@ -135,13 +140,14 @@ struct MomentElementBase : public ElementVoid
     virtual void show(std::ostream& strm, int level) const;
 
     std::vector<double> last_Kenergy_in, last_Kenergy_out;
-    //! final transfer matrix
+    //! final transfer matricies
     std::vector<value_t> transfer;
     std::vector<value_t> misalign, misalign_inv;
 
     //! constituents of misalign
     double dx, dy, pitch, yaw, tilt;
 
+    //! If set, check_cache() will always return false
     bool skipcache;
 
     virtual void assign(const ElementVoid *other) =0;

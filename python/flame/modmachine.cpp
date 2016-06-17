@@ -223,12 +223,25 @@ Py_ssize_t PyMachine_len(PyObject *raw)
 
 static PyMethodDef PyMachine_methods[] = {
     {"conf", (PyCFunction)&PyMachine_conf, METH_VARARGS|METH_KEYWORDS,
-     "Return configuration used to construct the Machine"},
+     "conf() -> {} Machine config\n"
+     "conf(index) -> {} Element config"},
     {"allocState", (PyCFunction)&PyMachine_allocState, METH_VARARGS|METH_KEYWORDS,
-     "Allocate a new State based on this Machine's configuration"},
+     "allocState() -> State\n"
+     "allocState({'variable':int|str}) -> State\n"
+     "Allocate a new State based on this Machine's configuration."
+     "  Optionally provide additional configuration"},
     {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
-     "Propagate the provided State through the simulation"},
+     "propagate(State, start=0, max=-1, observe=None)\n"
+     "propagate(State, start=0, max=-1, observe=[1,4,...]) -> [(index,State), ...]\n"
+     "Propagate the provided State through the simulation.\n"
+     "\n"
+     "start and max selects through which element the State will be passed.\n"
+     "\n"
+     "observe may be None or an iterable yielding element indicies.\n"
+     "In the second form propagate() returns a list of tuples with the output State of the selected elements."
+    },
     {"reconfigure", (PyCFunction)&PyMachine_reconfigure, METH_VARARGS|METH_KEYWORDS,
+     "reconfigure(index, {'variable':int|str})\n"
      "Change the configuration of an element."},
     {NULL, NULL, 0, NULL}
 };
@@ -251,13 +264,14 @@ static PyTypeObject PyMachineType = {
 } // namespace
 
 static const char pymdoc[] =
-        "Machine(config, path=\"/directory/\", extra={})\n"
+        "Machine(config, path=None, extra=None)\n"
+        "Machine(config, path='/directry/', extra={'variable':float|str}})\n"
         "\n"
         "A Machine() the primary interface to the FLAME simulation engine.\n"
         "\n"
         "The 'config' argument may be a file-like object (with read())"
-        " or buffer which will be parsed with the GLPS parser (see GLPSParser::parse)."
-        "  Or it may be a dictionary.\n"
+        " or a buffer which will be parsed with the GLPS parser (see GLPSParser::parse).\n"
+        " Or it may be a dictionary.\n"
         "\n"
         ">>> with open('some.lat', 'rb') as F:\n"
         "      M = Machine(F)\n"

@@ -199,10 +199,14 @@ public:
     //! Print listing of inner scope
     void show(std::ostream&, unsigned indent=0) const;
 
+    //! iterator
     typedef values_t::iterator iterator;
+    //! const_iterator
     typedef values_t::const_iterator const_iterator;
 
+    //! The first element
     inline const_iterator begin() const { return values->begin(); }
+    //! one after the last element
     inline const_iterator end() const { return values->end(); }
 
     inline void reserve(size_t) {}
@@ -228,6 +232,7 @@ class GLPSParser
     class Pvt;
     std::auto_ptr<Pvt> priv;
 public:
+    //! Construct an empty parser context
     GLPSParser();
     ~GLPSParser();
 
@@ -242,36 +247,39 @@ public:
 
     /** @brief Open and parse a file
      *
-     * @arg fname File name to open.  If NULL or '-' then parse stdin
+     * A wrapper around parse_file(FILE*, const char*).
      *
-     * If stdin is parsed then it is not closed.
+     * @arg fname File name to open.  If NULL or '-' then parse stdin     *
+     *            If stdin is parsed then it is not closed.
      */
     Config *parse_file(const char *fname);
     /** @brief Parse from open FILE
      *
      * @arg fp an open file descriptor
-     * @args path The directory containing the open file
+     * @args path The directory containing the open file (used to expand relative paths in the file)
      * @post fp is not closed.
-     * @returns New Config or NULL
+     * @returns New Config, which the caller must delete.
+     * @throws std::runtime_error For various error conditions
      */
     Config *parse_file(FILE *fp, const char *path=NULL);
     /** @brief Parse from byte buffer
      *
      * @arg s Byte array
      * @arg len Length of byte array (in bytes)
-     * @args path A directory to use as CWD when parsing
+     * @args path A directory to use to expand relative paths when parsing
      * @returns New Config or NULL
      */
     Config *parse_byte(const char* s, size_t len, const char *path=NULL);
     /** @brief Parse from std::string
      *
      * @arg s String
-     * @args path A directory to use as CWD when parsing
+     * @args path A directory to use to expand relative paths when parsing
      * @returns New Config or NULL
      */
     Config *parse_byte(const std::string& s, const char *path=NULL);
 };
 
+//! Print a previously parsed, or constructed, Config
 void GLPSPrint(std::ostream& strm, const Config&);
 
 

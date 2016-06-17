@@ -3,8 +3,11 @@ from ._internal import Machine
 from ._internal import GLPSPrinter, _GLPSParse
 
 class GLPSParser(object):
+    """GLPS parser context
+    """
     def parse(self, *args, **kws):
-        """parse(file_or_buf, path="/dir/", extra={'VAR':'value'})
+        """parse(file_or_buf, path=None, extra=None)
+        parse(file_or_buf, path="/dir/", extra={'VAR':'value'})
 
         Parse the provided buffer or file-like object.
 
