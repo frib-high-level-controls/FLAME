@@ -120,6 +120,16 @@ class TestState(unittest.TestCase):
         self.assertEqual(S1.pos, 43)
         self.assertEqual(S2.pos, 42)
 
+    def test_membership(self):
+        S1 = self.M.allocState({})
+
+        self.assertIn('pos', S1)
+        self.assertIn('state', S1)
+
+        self.assertSetEqual(set(['pos', 'state', 'next_elem']), set(iter(S1)))
+
+        self.assertEqual(3, len(S1))
+
 class TestMatrix(unittest.TestCase):
   def setUp(self):
     self.M = Machine({

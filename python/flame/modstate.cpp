@@ -173,6 +173,26 @@ PyObject* PyState_str(PyObject *raw)
 }
 
 static
+PyObject* PyState_iter(PyObject *raw)
+{
+    TRY {
+        return PyObject_GetIter(state->attrs);
+    }CATCH()
+}
+
+static
+Py_ssize_t PyState_len(PyObject *raw)
+{
+    TRY{
+        return PyObject_Length(state->attrs);
+    }CATCH1(-1)
+}
+
+static PySequenceMethods PyState_seq = {
+    &PyState_len
+};
+
+static
 PyObject* PyState_clone(PyObject *raw, PyObject *unused)
 {
     TRY {
@@ -258,6 +278,9 @@ int registerModState(PyObject *mod)
     PyStateType.tp_str = &PyState_str;
     PyStateType.tp_repr = &PyState_str;
     PyStateType.tp_dealloc = &PyState_free;
+
+    PyStateType.tp_iter = &PyState_iter;
+    PyStateType.tp_as_sequence = &PyState_seq;
 
     PyStateType.tp_weaklistoffset = offsetof(PyState, weak);
     PyStateType.tp_traverse = &PyState_traverse;
