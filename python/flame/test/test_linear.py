@@ -97,6 +97,29 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
     "Try to propagate the something which is not a State"
     self.assertRaises(ValueError, self.M.propagate, None)
 
+class TestState(unittest.TestCase):
+    def setUp(self):
+      self.M = Machine({
+        'sim_type':'TransferMatrix',
+        'elements':[
+          {'name':'elem0', 'type':'drift', 'L':1.0e-3},
+          {'name':'elem1', 'type':'drift', 'L':1.0e-3},
+        ],
+      })
+
+    def test_clone(self):
+        S1 = self.M.allocState({})
+
+        S1.pos = 42
+        self.assertEqual(S1.pos, 42)
+
+        S2 = S1.clone()
+        self.assertEqual(S2.pos, 42)
+
+        S1.pos = 43
+        self.assertEqual(S1.pos, 43)
+        self.assertEqual(S2.pos, 42)
+
 class TestMatrix(unittest.TestCase):
   def setUp(self):
     self.M = Machine({

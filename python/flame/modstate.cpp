@@ -68,7 +68,7 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
     TRY {
         PyObject *idx = PyDict_GetItem(state->attrs, attr);
         if(!idx) {
-            return PyErr_Format(PyExc_AttributeError, "Unknown State attribute");
+            return PyObject_GenericGetAttr(raw, attr);
         }
         int i = PyInt_AsLong(idx);
 
@@ -172,7 +172,23 @@ PyObject* PyState_str(PyObject *raw)
     } CATCH()
 }
 
+static
+PyObject* PyState_clone(PyObject *raw, PyObject *unused)
+{
+    TRY {
+        std::auto_ptr<StateBase> newstate(state->state->clone());
+
+        PyObject *ret = wrapstate(newstate.get());
+        newstate.release();
+        return ret;
+    } CATCH()
+}
+
 static PyMethodDef PyState_methods[] = {
+    {"clone", (PyCFunction)&PyState_clone, METH_NOARGS,
+     "clone()\n\n"
+     "Returns a new State instance which is a copy of this one"
+    },
     {NULL, NULL, 0, NULL}
 };
 
