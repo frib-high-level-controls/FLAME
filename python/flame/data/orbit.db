@@ -1,6 +1,6 @@
 record(waveform, "$(P)IDX-I") {
     field(DTYP, "FLAME Index Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)") # "$(VECTOR=moment0)" is required, but ignored
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=pos)") # "$(VECTOR=pos)" is required, but ignored
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(PINI, "YES")
@@ -16,14 +16,14 @@ record(waveform, "$(P)S-I") {
 
 record(waveform, "$(P)X-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)[0]")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0_env)[0]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
 }
 record(waveform, "$(P)PX-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)[1]")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0_env)[1]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
@@ -31,14 +31,14 @@ record(waveform, "$(P)PX-I") {
 
 record(waveform, "$(P)Y-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)[2]")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0_env)[2]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
 }
 record(waveform, "$(P)PY-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)[3]")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0_env)[3]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
@@ -46,14 +46,14 @@ record(waveform, "$(P)PY-I") {
 
 record(waveform, "$(P)Z-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)[4]")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0_env)[4]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
 }
 record(waveform, "$(P)PZ-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0)[5]")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=moment0_env)[5]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
