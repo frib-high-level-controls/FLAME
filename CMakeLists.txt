@@ -167,7 +167,7 @@ if(CPPCHECK_EXECUTABLE)
   )
   # add a test with fewer checks (those which actually pass)
   add_test(NAME run_cppcheck
-    COMMAND ${CPPCHECK_EXECUTABLE} --error-exitcode=1
+    COMMAND ${CPPCHECK_EXECUTABLE} --enable=performance,portability --error-exitcode=1
                 -I ${CMAKE_CURRENT_SOURCE_DIR}/src
                 -I ${CMAKE_CURRENT_BINARY_DIR}/src
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
