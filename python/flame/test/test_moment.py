@@ -69,10 +69,10 @@ foo : LINE = (elem0);
         self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
         self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
 
-        print("moment0",  S.moment0, C['IV'])
-        assert_aequal(S.moment0, C['IV'])
-        print("state", S.moment1, C['IM'])
-        assert_aequal(S.moment1, C['IM'].reshape((7,7)), 1e10)
+        print("moment0",  S.moment0_env, C['IV'])
+        assert_aequal(S.moment0_env, C['IV'])
+        print("state", S.moment1_env, C['IM'])
+        assert_aequal(S.moment1_env, C['IM'].reshape((7,7)), 1e10)
 
 class testMomentMulti(unittest.TestCase):
     lattice = b'''
@@ -116,8 +116,8 @@ foo : LINE = (elem0);
 
         Use cstate=1 to select
         S.IonZ = IonChargeStates[1]
-        S.moment0 = IV1
-        S.moment1 = IM1
+        S.moment0_env = IV1
+        S.moment1_env = IM1
         """
         M = Machine(self.lattice, extra={"cstate":1})
         C = M.conf()
@@ -134,18 +134,18 @@ foo : LINE = (elem0);
 
         assert_aequal(S.IonQ, C['NCharge'][1:])
 
-        print("moment0",  S.moment0, C['IV1'])
-        assert_aequal(S.moment0, C['IV1'])
-        print("state", S.moment1, C['IM1'])
-        assert_aequal(S.moment1, C['IM1'].reshape((7,7)), 1e10)
+        print("moment0",  S.moment0_env, C['IV1'])
+        assert_aequal(S.moment0_env, C['IV1'])
+        print("state", S.moment1_env, C['IM1'])
+        assert_aequal(S.moment1_env, C['IM1'].reshape((7,7)), 1e10)
 
     def test_source_multi(self):
         """See that source element initializes correctly for many (two) charge states
 
         Use cstate=1 to select
         S.IonZ = IonChargeStates[1]
-        S.moment0 = IV1
-        S.moment1 = IM1
+        S.moment0_env = IV1
+        S.moment1_env = IM1
         """
         M = Machine(self.lattice)
         C = M.conf()
@@ -172,7 +172,7 @@ foo : LINE = (elem0);
         #for Q in S.IonQ:
         #    IM[:7,:7] +=
 
-        print("moment0",  S.moment0, IV)
-        assert_aequal(S.moment0, IV)
-        #print("state", S.moment1, IM)
-        #assert_aequal(S.moment1, IM, 1e10)
+        print("moment0",  S.moment0_env, IV)
+        assert_aequal(S.moment0_env, IV)
+        #print("state", S.moment1_env, IM)
+        #assert_aequal(S.moment1_env, IM, 1e10)
