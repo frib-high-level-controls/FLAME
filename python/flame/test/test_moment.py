@@ -111,8 +111,8 @@ elem0 : source, vector_variable="IV", matrix_variable="IM";
 foo : LINE = (elem0);
 '''
 
-    def test_source(self):
-        """See that source element initializes correctly.
+    def test_source_single(self):
+        """See that source element initializes correctly for a single charge state
 
         Use cstate=1 to select
         S.IonZ = IonChargeStates[1]
@@ -132,7 +132,47 @@ foo : LINE = (elem0);
         self.assertEqual(S.ref_gamma, 2.0)
         self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)
 
+        assert_aequal(S.IonQ, C['NCharge'][1:])
+
         print("moment0",  S.moment0, C['IV1'])
         assert_aequal(S.moment0, C['IV1'])
         print("state", S.moment1, C['IM1'])
         assert_aequal(S.moment1, C['IM1'].reshape((7,7)), 1e10)
+
+    def test_source_multi(self):
+        """See that source element initializes correctly for many (two) charge states
+
+        Use cstate=1 to select
+        S.IonZ = IonChargeStates[1]
+        S.moment0 = IV1
+        S.moment1 = IM1
+        """
+        M = Machine(self.lattice)
+        C = M.conf()
+
+        S = M.allocState({}, inherit=False) # defaults
+
+        M.propagate(S, max=1) # propagate through source element
+
+        self.assertEqual(S.pos, 0.0)
+        self.assertEqual(S.ref_IonEk, 1.0)
+        self.assertEqual(S.ref_IonEs, 1.0)
+        self.assertEqual(S.ref_gamma, 2.0)
+        self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)
+
+        assert_aequal(S.IonQ, C['NCharge'])
+
+        IV  = C['IV0']*S.IonQ[0]
+        IV += C['IV1']*S.IonQ[1]
+        IV /= S.IonQ.sum()
+
+        #IM0 = C['IM0'].reshape((7,7))
+        #IM1 = C['IM1'].reshape((7,7))
+        #IM  = numpy.zeros(IM0.shape)
+        #for Q in S.IonQ:
+        #    IM[:7,:7] +=
+
+        print("moment0",  S.moment0, IV)
+        assert_aequal(S.moment0, IV)
+        #print("state", S.moment1, IM)
+        #assert_aequal(S.moment1, IM, 1e10)

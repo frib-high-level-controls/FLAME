@@ -111,17 +111,18 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
         if(info.ndim==1) {
             for(size_t i=0; i<info.dim[0]; i++) {
                 void *dest = PyArray_GETPTR1(obj.py(), i);
-                const void *src  = ((char*)info.ptr) + info.stride[0]*i;
+                const void *src  = info.raw(&i);
                 switch(info.type) {
                 case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
                 case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
                 }
             }
         } else if(info.ndim==2) {
-            for(size_t i=0; i<info.dim[0]; i++) {
-                for(size_t j=0; j<info.dim[1]; j++) {
-                    void *dest = PyArray_GETPTR2(obj.py(), i, j);
-                    const void *src  = ((char*)info.ptr) + info.stride[0]*i + info.stride[1]*j;
+            size_t idx[2];
+            for(idx[0]=0; idx[0]<info.dim[0]; idx[0]++) {
+                for(idx[1]=0; idx[1]<info.dim[1]; idx[1]++) {
+                    void *dest = PyArray_GETPTR2(obj.py(), idx[0], idx[1]);
+                    const void *src  = info.raw(idx);
                     switch(info.type) {
                     case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
                     case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
@@ -202,17 +203,18 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
         if(info.ndim==1) {
             for(size_t i=0; i<info.dim[0]; i++) {
                 const void *src = PyArray_GETPTR1(arr.py(), i);
-                void *dest  = ((char*)info.ptr) + info.stride[0]*i;
+                void *dest  = info.raw(&i);
                 switch(info.type) {
                 case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
                 case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
                 }
             }
         } else if(info.ndim==2) {
-            for(size_t i=0; i<info.dim[0]; i++) {
-                for(size_t j=0; j<info.dim[1]; j++) {
-                    const void *src = PyArray_GETPTR2(arr.py(), i, j);
-                    void *dest  = ((char*)info.ptr) + info.stride[0]*i + info.stride[1]*j;
+            size_t idx[2];
+            for(idx[0]=0; idx[0]<info.dim[0]; idx[0]++) {
+                for(idx[1]=0; idx[1]<info.dim[1]; idx[1]++) {
+                    const void *src = PyArray_GETPTR2(arr.py(), idx[0], idx[1]);
+                    void *dest  = info.raw(idx);
                     switch(info.type) {
                     case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
                     case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
