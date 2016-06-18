@@ -101,6 +101,7 @@ struct MomentState : public StateBase
     }
 
     void recalc() {
+        ref.recalc();
         for(size_t i=0; i<real.size(); i++) real[i].recalc();
     }
 

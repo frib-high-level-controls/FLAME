@@ -51,10 +51,7 @@ void Stripper_Propagate_ref(Particle &ref)
     // Evaluate change in reference particle energy due to stripper model energy straggling.
     ref.IonEk      = (ref.IonEk-Stripper_Para[2])*Stripper_E0Para[1] + Stripper_E0Para[0];
 
-    ref.IonW       = ref.IonEk + ref.IonEs;
-    ref.gamma      = ref.IonW/ref.IonEs;
-    ref.beta       = sqrt(1e0-1e0/sqr(ref.gamma));
-    ref.SampleIonK = 2e0*M_PI/(ref.beta*SampleLambda);
+    ref.recalc();
 }
 
 void Stripper_GetMat(const Config &conf,
@@ -67,7 +64,6 @@ void Stripper_GetMat(const Config &conf,
     state_t                *StatePtr = &ST;
     MomentState::matrix_t  tmpmat;
     std::vector<double>    chargeAmount_Baron;
-
 
     // Evaluate beam parameter recombination.
 
@@ -153,14 +149,15 @@ void Stripper_GetMat(const Config &conf,
         StatePtr->moment1[k]    = tmpmat;
     }
 
-    ST.recalc(); // necessary?
-
     ST.calc_rms();
 }
 
 void ElementStripper::advance(StateBase &s)
 {
     state_t& ST = static_cast<state_t&>(s);
+
+    ST.recalc();
+    ST.calc_rms(); // paranoia in case someone (python) has made moment0_env inconsistent
 
     Stripper_GetMat(conf(), ST);
 }
