@@ -210,18 +210,6 @@ void MomentState::calc_rms()
     }
     moment0_env /= totQ;
 
-    for(size_t j=0; j<maxsize; j++) {
-        double variance = 0.0;
-        for(size_t n=0; n<moment0.size(); n++) {
-            const double Q = real[n].IonQ;
-            const double diff = moment0[n][j]-moment0_env[j];
-
-            variance += Q*(moment1[n](j,j) + diff*diff); // Q * (sum squares + square of the sum)
-        }
-
-        moment0_rms[j] = sqrt(variance/totQ);
-    }
-
     // Zero orbit terms.
     moment1_env = ub::zero_matrix<double>(state_t::maxsize);
     boost::numeric::ublas::slice S(0, 1, 6);
@@ -232,6 +220,10 @@ void MomentState::calc_rms()
         ub::project(moment1_env, S, S) += Q*(moment1[n]+ub::outer_prod(m0diff, m0diff));
     }
     moment1_env /= totQ;
+
+    for(size_t j=0; j<maxsize; j++) {
+        moment0_rms[j] = sqrt(moment1_env(j,j));
+    }
 }
 
 MomentState::MomentState(const MomentState& o, clone_tag t)
