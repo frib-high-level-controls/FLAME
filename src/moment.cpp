@@ -316,6 +316,26 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[1] = sizeof(double);
         return true;
     } else if(idx==I++) {
+        /* Slight evilness here
+         * moment0 is vector of ublas::matrix
+         * We assume ublax::matrix uses storage bounded_array<>, and that this storage
+         * is really a C array, which means that everything is part of one big allocation.
+         * Further we assume that all entries in the vector have the same shape.
+         * If this isn't the case, then SIGSEGV here we come...
+         */
+        static_assert(sizeof(moment1[0])>=sizeof(double)*maxsize*maxsize);
+        Info.name = "moment1";
+        Info.ptr = &moment1[0](0,0);
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 3;
+        Info.dim[0] = moment1[0].size1();
+        Info.dim[1] = moment1[0].size2();
+        Info.dim[2] = moment1.size();
+        Info.stride[0] = sizeof(double)*moment1_env.size2();
+        Info.stride[1] = sizeof(double);
+        Info.stride[2] = sizeof(moment1[0]);
+        return true;
+    } else if(idx==I++) {
         Info.name = "moment0_env";
         Info.ptr = &moment0_env(0);
         Info.type = ArrayInfo::Double;
@@ -330,6 +350,18 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 1;
         Info.dim[0] = moment0_rms.size();
         Info.stride[0] = sizeof(double);
+        return true;
+    } else if(idx==I++) {
+        // more evilness here, see above
+        static_assert(sizeof(moment0[0])>=sizeof(double)*maxsize);
+        Info.name = "moment0";
+        Info.ptr = &moment0[0][0];
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 2;
+        Info.dim[0] = moment0[0].size();
+        Info.dim[1] = moment0.size();
+        Info.stride[0] = sizeof(double);
+        Info.stride[1] = sizeof(moment0[0]);
         return true;
     } else if(idx==I++) {
         Info.name = "ref_IonZ";
@@ -398,10 +430,27 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
+        Info.name = "IonQ";
+        Info.ptr  = &real[0].IonQ;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
+        // Note: this array is discontigious as we reference a single member from a Particle[]
+        return true;
+    } else if(idx==I++) {
         Info.name = "real_IonEs";
         Info.ptr = &real[0].IonEs;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "IonEs";
+        Info.ptr  = &real[0].IonEs;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
         Info.name = "real_IonW";
@@ -410,10 +459,26 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
+        Info.name = "IonW";
+        Info.ptr  = &real[0].IonW;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
+        return true;
+    } else if(idx==I++) {
         Info.name = "real_gamma";
         Info.ptr = &real[0].gamma;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "gamma";
+        Info.ptr  = &real[0].gamma;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
         Info.name = "real_beta";
@@ -422,10 +487,26 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
+        Info.name = "beta";
+        Info.ptr  = &real[0].beta;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
+        return true;
+    } else if(idx==I++) {
         Info.name = "real_bg";
         Info.ptr = &real[0].bg;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "bg";
+        Info.ptr  = &real[0].bg;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
         Info.name = "real_SampleIonK";
@@ -434,16 +515,40 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
+        Info.name = "SampleIonK";
+        Info.ptr  = &real[0].SampleIonK;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
+        return true;
+    } else if(idx==I++) {
         Info.name = "real_phis";
         Info.ptr = &real[0].phis;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
+        Info.name = "phis";
+        Info.ptr  = &real[0].phis;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
+        return true;
+    } else if(idx==I++) {
         Info.name = "real_IonEk";
         Info.ptr = &real[0].IonEk;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "IonEk";
+        Info.ptr  = &real[0].IonEk;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
         Info.name = "IonQ";

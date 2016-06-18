@@ -46,8 +46,8 @@ struct StateBase : public boost::noncopyable
 
     //! Used with StateBase::getArray() to describe a single parameter
     struct ArrayInfo {
-        enum {maxdims=2};
-        ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
+        enum {maxdims=3};
+        ArrayInfo() :name(0), type(Double), ptr(NULL), ndim(0) {}
         //! The parameter name
         const char *name;
         //! The parameter type Double (double) or Sizet (size_t)
@@ -71,6 +71,7 @@ struct StateBase : public boost::noncopyable
         bool inbounds(size_t* d) const {
             bool ret = true;
             switch(ndim) {
+            case 3: ret &= d[2]<dim[2];
             case 2: ret &= d[1]<dim[1];
             case 1: ret &= d[0]<dim[0];
             }
@@ -80,6 +81,7 @@ struct StateBase : public boost::noncopyable
         void *raw(size_t* d) {
             char *ret = (char*)ptr;
             switch(ndim) {
+            case 3: ret += d[2]*stride[2];
             case 2: ret += d[1]*stride[1];
             case 1: ret += d[0]*stride[0];
             }

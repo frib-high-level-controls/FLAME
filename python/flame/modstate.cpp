@@ -86,9 +86,6 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
                 return PyLong_FromSize_t(*(size_t*)info.ptr);
             }
             return PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
-        } else if(info.ndim>2) {
-            return PyErr_Format(PyExc_ValueError, "parameters with ndim>2 not supported %s has %u",
-                                info.name, info.ndim);
         }
 
         int pytype;
@@ -106,28 +103,28 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
 
         // Alloc new array and copy in
 
-        PyRef<> obj(PyArray_SimpleNew(info.ndim, dims, pytype));
+        PyRef<PyArrayObject> obj(PyArray_SimpleNew(info.ndim, dims, pytype));
 
-        if(info.ndim==1) {
-            for(size_t i=0; i<info.dim[0]; i++) {
-                void *dest = PyArray_GETPTR1(obj.py(), i);
-                const void *src  = info.raw(&i);
-                switch(info.type) {
-                case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
-                case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
-                }
-            }
-        } else if(info.ndim==2) {
-            size_t idx[2];
-            for(idx[0]=0; idx[0]<info.dim[0]; idx[0]++) {
-                for(idx[1]=0; idx[1]<info.dim[1]; idx[1]++) {
-                    void *dest = PyArray_GETPTR2(obj.py(), idx[0], idx[1]);
-                    const void *src  = info.raw(idx);
-                    switch(info.type) {
-                    case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
-                    case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
-                    }
-                }
+        // pull parts from PyArray into ArrayInfo so we can use ArrayInfo::raw() to access
+        StateBase::ArrayInfo pyinfo;
+        pyinfo.ptr = PyArray_BYTES(obj.py());
+        pyinfo.ndim= PyArray_NDIM(obj.get());
+        std::copy(PyArray_SHAPE(obj.get()),
+                  PyArray_SHAPE(obj.get())+pyinfo.ndim,
+                  pyinfo.dim);
+        std::copy(PyArray_STRIDES(obj.get()),
+                  PyArray_STRIDES(obj.get())+pyinfo.ndim,
+                  pyinfo.stride);
+
+        ndindex_iterate<StateBase::ArrayInfo::maxdims> idxiter(info.ndim, info.dim);
+
+        for(; !idxiter.done; idxiter.next()) {
+            void       *dest = pyinfo.raw(idxiter.index);
+            const void *src  = info  .raw(idxiter.index);
+
+            switch(info.type) {
+            case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
+            case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
             }
         }
 
@@ -152,6 +149,8 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
         }
 
         if(info.ndim==0) {
+            // Scalar (use python primative types)
+
             switch(info.type) {
             case StateBase::ArrayInfo::Double: {
                 double *dest = (double*)info.ptr;
@@ -183,6 +182,7 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
 
             return PyErr_Occurred() ? -1 : 0;
         }
+        // array (use numpy)
 
         int pytype;
         switch(info.type) {
@@ -193,12 +193,40 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
             return -1;
         }
 
-        PyRef<> arr(PyArray_FromObject(val, pytype, 1, 2));
+        PyRef<PyArrayObject> arr(PyArray_FromObject(val, pytype, 1, 2));
 
         if(info.ndim!=(size_t)PyArray_NDIM(arr.py())) {
-            PyErr_Format(PyExc_ValueError, "dimension don't match");
+            PyErr_Format(PyExc_ValueError, "cardinality don't match");
+            return -1;
+        } else if(!std::equal(info.dim, info.dim+info.ndim,
+                                    PyArray_DIMS(arr.py()))) {
+            PyErr_Format(PyExc_ValueError, "shape does not match don't match");
             return -1;
         }
+
+        // pull parts from PyArray into ArrayInfo so we can use ArrayInfo::raw() to access
+        StateBase::ArrayInfo pyinfo;
+        pyinfo.ptr = PyArray_BYTES(arr.py());
+        pyinfo.ndim= PyArray_NDIM(arr.get());
+        std::copy(PyArray_SHAPE(arr.get()),
+                  PyArray_SHAPE(arr.get())+pyinfo.ndim,
+                  pyinfo.dim);
+        std::copy(PyArray_STRIDES(arr.get()),
+                  PyArray_STRIDES(arr.get())+pyinfo.ndim,
+                  pyinfo.stride);
+
+        ndindex_iterate<StateBase::ArrayInfo::maxdims> idxiter(info.ndim, info.dim);
+
+        for(; !idxiter.done; idxiter.next()) {
+            const void *src  = pyinfo  .raw(idxiter.index);
+            void       *dest = info.raw(idxiter.index);
+
+            switch(info.type) {
+            case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
+            case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
+            }
+        }
+
 
         if(info.ndim==1) {
             for(size_t i=0; i<info.dim[0]; i++) {
@@ -294,7 +322,7 @@ PyObject* wrapstate(StateBase* b)
 {
     try {
 
-        PyRef<PyState> state((PyState*)PyStateType.tp_alloc(&PyStateType, 0));
+        PyRef<PyState> state(PyStateType.tp_alloc(&PyStateType, 0));
 
         state->state = b;
         state->attrs = state->weak = state->dict = 0;
@@ -309,6 +337,17 @@ PyObject* wrapstate(StateBase* b)
 
             if(!b->getArray(i, info))
                 break;
+
+            bool skip = info.ndim>3;
+            switch(info.type) {
+            case StateBase::ArrayInfo::Double:
+            case StateBase::ArrayInfo::Sizet:
+                break;
+            default:
+                skip = true;
+            }
+
+            if(skip) continue;
 
             PyRef<> name(PyInt_FromLong(i));
             if(PyDict_SetItemString(state->attrs, info.name, name.py()))

@@ -160,19 +160,43 @@ foo : LINE = (elem0);
         self.assertEqual(S.ref_gamma, 2.0)
         self.assertAlmostEqual(S.ref_beta, 0.8660254037844386)
 
+        # check access to array attributes
         assert_aequal(S.IonQ, C['NCharge'])
+        assert_aequal(S.moment0[...,0], C['IV0'])
+        assert_aequal(S.moment0[...,1], C['IV1'])
+        assert_aequal(S.moment0.shape, numpy.asarray([7, 2]))
 
-        IV  = C['IV0']*S.IonQ[0]
-        IV += C['IV1']*S.IonQ[1]
-        IV /= S.IonQ.sum()
+        IM0 = C['IM0'].reshape((7,7))
+        IM1 = C['IM1'].reshape((7,7))
+        assert_aequal(S.moment1[...,0], IM0, 1e10)
+        assert_aequal(S.moment1[...,1], IM1, 1e10)
+        assert_aequal(S.moment1.shape, numpy.asarray([7, 7, 2]))
 
-        #IM0 = C['IM0'].reshape((7,7))
-        #IM1 = C['IM1'].reshape((7,7))
-        #IM  = numpy.zeros(IM0.shape)
-        #for Q in S.IonQ:
-        #    IM[:7,:7] +=
+        # check consistency of *_env and *_rms stats
 
-        print("moment0",  S.moment0_env, IV)
-        assert_aequal(S.moment0_env, IV)
-        #print("state", S.moment1_env, IM)
-        #assert_aequal(S.moment1_env, IM, 1e10)
+        # moment0_env is average of moment0 over charge state weighted by charge in each state
+        W = (S.IonQ/S.IonQ.sum()).reshape((1,2)).repeat(7,axis=0)
+        M0env = (S.moment0*W).sum(axis=1)
+
+        print("moment0_env",  S.moment0_env, M0env)
+        assert_aequal(S.moment0_env, M0env)
+
+        # moment1_env is ... more complex
+        IM  = numpy.zeros(IM0.shape)
+
+        Qs, M0, M0env, M1 = S.IonQ, S.moment0, S.moment0_env, S.moment1
+        # using a loop because outer() doesn't understand axis=
+        for i in range(len(Qs)):
+            Q = Qs[i]
+            m0diff = M0[:,i]-M0env
+
+            IM[:7,:7] += Q*(M1[...,i]+numpy.outer(m0diff, m0diff))
+        IM /= Qs.sum()
+
+        print("moment1_env", S.moment1_env, IM)
+        assert_aequal(S.moment1_env, IM, 1e10)
+
+        # moment0_rms is derived from moment1_env
+        M0rms = numpy.sqrt(numpy.diagonal(S.moment1_env))
+        print("moment0_rms", S.moment0_rms, M0rms)
+        assert_aequal(S.moment0_rms, M0rms)

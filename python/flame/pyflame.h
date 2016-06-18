@@ -59,7 +59,7 @@ struct PyRef {
     //! Explicitly take ownership of a reference which must already
     //! be implicitly owned by the caller.
     //! @throws std::bad_allo if p==NULL (assumed to be a python exception)
-    explicit PyRef(T* p) : _ptr(p) {
+    explicit PyRef(PyObject* p) : _ptr((T*)p) {
         if(!p)
             throw std::bad_alloc(); // TODO: probably already a python exception
     }
@@ -109,6 +109,7 @@ struct PyRef {
         _ptr = p;
         return p;
     }
+    T* get() const { return _ptr; }
     PyObject* releasePy() {
         return (PyObject*)release();
     }
