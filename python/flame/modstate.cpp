@@ -76,7 +76,7 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
         StateBase::ArrayInfo info;
 
         if(!state->state->getArray(i, info))
-            return PyErr_Format(PyExc_AttributeError, "invalid attribute name");
+            return PyErr_Format(PyExc_RuntimeError, "invalid attribute name (sub-class forgot %d)", i);
 
         if(info.ndim==0) { // Scalar
             switch(info.type) {
@@ -86,6 +86,9 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
                 return PyLong_FromSize_t(*(size_t*)info.ptr);
             }
             return PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
+        } else if(info.ndim>2) {
+            return PyErr_Format(PyExc_ValueError, "parameters with ndim>2 not supported %s has %u",
+                                info.name, info.ndim);
         }
 
         int pytype;
@@ -96,13 +99,36 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
             return PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
         }
 
-        npy_intp dims[5];
-        memcpy(dims, info.dim, sizeof(dims));
+        npy_intp dims[StateBase::ArrayInfo::maxdims];
+        std::copy(info.dim,
+                  info.dim+StateBase::ArrayInfo::maxdims,
+                  dims);
 
-        PyRef<> obj(PyArray_SimpleNewFromData(info.ndim, dims, pytype, info.ptr));
+        // Alloc new array and copy in
 
-        Py_INCREF(state);
-        PyArray_BASE(obj.py()) = (PyObject*)state;
+        PyRef<> obj(PyArray_SimpleNew(info.ndim, dims, pytype));
+
+        if(info.ndim==1) {
+            for(size_t i=0; i<info.dim[0]; i++) {
+                void *dest = PyArray_GETPTR1(obj.py(), i);
+                const void *src  = ((char*)info.ptr) + info.stride[0]*i;
+                switch(info.type) {
+                case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
+                case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
+                }
+            }
+        } else if(info.ndim==2) {
+            for(size_t i=0; i<info.dim[0]; i++) {
+                for(size_t j=0; j<info.dim[1]; j++) {
+                    void *dest = PyArray_GETPTR2(obj.py(), i, j);
+                    const void *src  = ((char*)info.ptr) + info.stride[0]*i + info.stride[1]*j;
+                    switch(info.type) {
+                    case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
+                    case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
+                    }
+                }
+            }
+        }
 
         return obj.releasePy();
     } CATCH()
@@ -114,51 +140,88 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
     TRY {
         PyObject *idx = PyDict_GetItem(state->attrs, attr);
         if(!idx)
-            return -1;
+            return PyObject_GenericSetAttr(raw, attr, val);
         int i = PyInt_AsLong(idx);
 
         StateBase::ArrayInfo info;
 
         if(!state->state->getArray(i, info)) {
-            PyErr_SetString(PyExc_AttributeError, "invalid attribute name");
+            PyErr_Format(PyExc_RuntimeError, "invalid attribute name (sub-class forgot %d)", i);
             return -1;
         }
 
-        if(info.ndim!=0) {
-            PyErr_SetString(PyExc_NotImplementedError, "Can't set array attributes (hint, use state.attr[:] = ...)");
-            return -1;
+        if(info.ndim==0) {
+            switch(info.type) {
+            case StateBase::ArrayInfo::Double: {
+                double *dest = (double*)info.ptr;
+                if(PyFloat_Check(val))
+                    *dest = PyFloat_AsDouble(val);
+                else if(PyLong_Check(val))
+                    *dest = PyLong_AsDouble(val);
+                else if(PyInt_Check(val))
+                    *dest = PyInt_AsLong(val);
+                else
+                    PyErr_Format(PyExc_ValueError, "Can't assign to double field");
+            }
+                break;
+            case StateBase::ArrayInfo::Sizet: {
+                size_t *dest = (size_t*)info.ptr;
+                if(PyFloat_Check(val))
+                    *dest = PyFloat_AsDouble(val);
+                else if(PyLong_Check(val))
+                    *dest = PyLong_AsUnsignedLongLong(val);
+                else if(PyInt_Check(val))
+                    *dest = PyInt_AsLong(val);
+                else
+                    PyErr_Format(PyExc_ValueError, "Can't assign to double field");
+            }
+                break;
+            default:
+                PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
+            }
+
+            return PyErr_Occurred() ? -1 : 0;
         }
 
+        int pytype;
         switch(info.type) {
-        case StateBase::ArrayInfo::Double: {
-            double *dest = (double*)info.ptr;
-            if(PyFloat_Check(val))
-                *dest = PyFloat_AsDouble(val);
-            else if(PyLong_Check(val))
-                *dest = PyLong_AsDouble(val);
-            else if(PyInt_Check(val))
-                *dest = PyInt_AsLong(val);
-            else
-                PyErr_Format(PyExc_ValueError, "Can't assign to double field");
-        }
-            break;
-        case StateBase::ArrayInfo::Sizet: {
-            size_t *dest = (size_t*)info.ptr;
-            if(PyFloat_Check(val))
-                *dest = PyFloat_AsDouble(val);
-            else if(PyLong_Check(val))
-                *dest = PyLong_AsUnsignedLongLong(val);
-            else if(PyInt_Check(val))
-                *dest = PyInt_AsLong(val);
-            else
-                PyErr_Format(PyExc_ValueError, "Can't assign to double field");
-        }
-            break;
+        case StateBase::ArrayInfo::Double: pytype = NPY_DOUBLE; break;
+        case StateBase::ArrayInfo::Sizet: pytype = NPY_SIZE_T; break;
         default:
             PyErr_Format(PyExc_TypeError, "unsupported type code %d", info.type);
+            return -1;
         }
-        return PyErr_Occurred() ? -1 : 0;
 
+        PyRef<> arr(PyArray_FromObject(val, pytype, 1, 2));
+
+        if(info.ndim!=(size_t)PyArray_NDIM(arr.py())) {
+            PyErr_Format(PyExc_ValueError, "dimension don't match");
+            return -1;
+        }
+
+        if(info.ndim==1) {
+            for(size_t i=0; i<info.dim[0]; i++) {
+                const void *src = PyArray_GETPTR1(arr.py(), i);
+                void *dest  = ((char*)info.ptr) + info.stride[0]*i;
+                switch(info.type) {
+                case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
+                case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
+                }
+            }
+        } else if(info.ndim==2) {
+            for(size_t i=0; i<info.dim[0]; i++) {
+                for(size_t j=0; j<info.dim[1]; j++) {
+                    const void *src = PyArray_GETPTR2(arr.py(), i, j);
+                    void *dest  = ((char*)info.ptr) + info.stride[0]*i + info.stride[1]*j;
+                    switch(info.type) {
+                    case StateBase::ArrayInfo::Double: *(double*)dest = *(double*)src; break;
+                    case StateBase::ArrayInfo::Sizet:  *(size_t*)dest = *(size_t*)src; break;
+                    }
+                }
+            }
+        }
+
+        return 0;
     } CATCH3(std::exception, RuntimeError, -1)
 }
 

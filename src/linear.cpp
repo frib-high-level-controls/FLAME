@@ -64,6 +64,8 @@ bool MatrixState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 2;
         Info.dim[0] = state.size1();
         Info.dim[1] = state.size2();
+        Info.stride[0] = sizeof(double)*state.size1();
+        Info.stride[1] = sizeof(double);
         return true;
     }
     return StateBase::getArray(idx-1, Info);
@@ -111,6 +113,7 @@ bool VectorState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = state.size();
+        Info.stride[0] = sizeof(double);
         return true;
     }
     return StateBase::getArray(idx-1, Info);

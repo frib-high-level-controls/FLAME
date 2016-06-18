@@ -312,6 +312,8 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 2;
         Info.dim[0] = moment1_env.size1();
         Info.dim[1] = moment1_env.size2();
+        Info.stride[0] = sizeof(double)*moment1_env.size2();
+        Info.stride[1] = sizeof(double);
         return true;
     } else if(idx==I++) {
         Info.name = "moment1";
@@ -320,6 +322,8 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 2;
         Info.dim[0] = moment1_env.size1();
         Info.dim[1] = moment1_env.size2();
+        Info.stride[0] = sizeof(double)*moment1_env.size2();
+        Info.stride[1] = sizeof(double);
         return true;
     } else if(idx==I++) {
         Info.name = "moment0";
@@ -327,6 +331,7 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = moment0_env.size();
+        Info.stride[0] = sizeof(double);
         return true;
     } else if(idx==I++) {
         Info.name = "moment0_rms";
@@ -334,6 +339,7 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim[0] = moment0_rms.size();
+        Info.stride[0] = sizeof(double);
         return true;
     } else if(idx==I++) {
         Info.name = "ref_IonZ";

@@ -46,6 +46,7 @@ struct StateBase : public boost::noncopyable
 
     //! Used with StateBase::getArray() to describe a single parameter
     struct ArrayInfo {
+        enum {maxdims=2};
         ArrayInfo() :name(), type(Double), ptr(NULL), ndim(0) {}
         //! The parameter name
         const char *name;
@@ -56,12 +57,15 @@ struct StateBase : public boost::noncopyable
         //! Pointer to parameter storage.
         //! Actual type depends on the type: Double (double) or Sizet (size_t)
         void *ptr;
-        //! Number of dimension.
-        //! Indicates how many entries in dim[] are valid.
+        //! Number of dimensions.
+        //! Indicates how many entries in dim[] and stride[] are valid.
         //! ndim==0 indicates a scalar.
+        //! @pre ndim<=maxdims
         unsigned ndim;
-        //! Array dimensions.  Arrays use C layout
-        size_t dim[5];
+        //! Array dimensions in elements.
+        size_t dim[maxdims];
+        //! Array strides in bytes
+        size_t stride[maxdims];
     };
 
     /** @brief Introspect named parameter of the derived class
@@ -71,9 +75,19 @@ struct StateBase : public boost::noncopyable
      *
      * To introspect call this with index increasing from zero until false is returned.
      *
-     * @note This method requires that parameter storage be stable for the lifetime of the object
+     * Sub-classes are required to maintain a fixed number of parameters.
+     * Further, the name associated with a particular parameter index must not change.
+     *
+     * ArrayInfo::ptr, ArrayInfo::ndim, ArrayInfo::dim, ArrayInfo::stride
+     * are allowed to change when the state is passed to Machine::propagate().
+     *
+     * Therefore, if getArray() for an instance has returned true for some index,
+     * then a caller may assume that all future calls to getArray() for this instance
+     * will also return true.
+     * However, the caller must still re-call getArray() in future as the storage
+     * may have changed.
      */
-    virtual bool getArray(unsigned idx, ArrayInfo& Info);
+    virtual bool getArray(unsigned index, ArrayInfo& Info);
 
     //! Allocate a new instance which is a copy of this one.
     //! Caller is responsible to delete the returned pointer

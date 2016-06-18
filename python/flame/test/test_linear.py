@@ -4,7 +4,7 @@ from __future__ import print_function
 import unittest, os
 import numpy
 from numpy import testing as NT
-from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
+from numpy.testing import assert_array_almost_equal as assert_aequal
 
 from .. import Machine
 
@@ -30,7 +30,7 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
     S = self.M.allocState({})
     self.assertEqual(S.next_elem, 0)
 
-    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    S.state = [1, 1e-3, 0, 0, 0, 0]
     assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
 
     self.M.propagate(S)
@@ -46,14 +46,14 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
 
     S = self.M.allocState({})
 
-    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    S.state = [1, 1e-3, 0, 0, 0, 0]
     assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
 
     self.M.propagate(S)
 
     assert_aequal(S.state, [1.001, 1e-3, 0, 0, 0, 0])
 
-    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    S.state = [1, 1e-3, 0, 0, 0, 0]
     assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
 
     self.M.reconfigure(0, {"L": 2.0e-3})
@@ -62,7 +62,7 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
 
     assert_aequal(S.state, [1.002, 1e-3, 0, 0, 0, 0])
 
-    S.state[:] = [1, 1e-3, 0, 0, 0, 0]
+    S.state = [1, 1e-3, 0, 0, 0, 0]
     assert_aequal(S.state, [1.000, 1e-3, 0, 0, 0, 0])
 
     self.M.reconfigure(0, {"L": 5.0e-3})
@@ -85,13 +85,7 @@ Transfer: [6,6]((1,1,0,0,0,0),(0,1,0,0,0,0),(0,0,1,1,0,0),(0,0,0,1,0,0),(0,0,0,0
     gc.collect()
 
     # S should be kept alive by reference from state
-    self.assertIsNot(R(), None)
-
-    del state
-
-    gc.collect()
-    S = R()
-    self.assertIs(R(), None)
+    self.assertIsNone(R())
 
   def test_err(self):
     "Try to propagate the something which is not a State"
@@ -177,7 +171,7 @@ class TestObserve(unittest.TestCase):
         """)
     def test_all(self):
         S = self.M.allocState({})
-        S.state[:] = [0, 0, 1, 1e-3, 0, 0]
+        S.state = [0, 0, 1, 1e-3, 0, 0]
 
         results = self.M.propagate(S, observe=range(5))
         self.assertIsNot(results, None)
@@ -208,7 +202,7 @@ foo: LINE = (elem0, elem1, elem2);
 
         S = M.allocState({})
 
-        S.state[:] = [0, 0, 1, 1e-3, 0, 0]
+        S.state = [0, 0, 1, 1e-3, 0, 0]
         assert_aequal(S.state, [0, 0, 1.000, 1e-3, 0, 0])
 
         M.propagate(S)
@@ -297,7 +291,7 @@ class TestOptimze(unittest.TestCase):
         """Test that the expected strength actually results in the expected output state
         """
         S = self.M.allocState({})
-        S.state[:] = [1, 1e-3, 1, 1e-3, 1, 1e-3]
+        S.state = [1, 1e-3, 1, 1e-3, 1, 1e-3]
 
         self.M.reconfigure(1, {
             'L':1.0e-1,
@@ -307,7 +301,7 @@ class TestOptimze(unittest.TestCase):
 
         self.M.propagate(S)
 
-        assert_aequal(S.state, self._expected, 1.0e8)
+        assert_aequal(S.state, self._expected, decimal=8)
 
     @unittest.skipIf('TRAVIS' in os.environ, 'scipy import error?')
     def test_optimize(self):
@@ -318,7 +312,7 @@ class TestOptimze(unittest.TestCase):
         def resid(p):
             # do each iteration with a clean state (todo: reuse?)
             S = self.M.allocState({})
-            S.state[:] = [1, 1e-3, 1, 1e-3, 1, 1e-3] # reset state to initial
+            S.state = [1, 1e-3, 1, 1e-3, 1, 1e-3] # reset state to initial
             self.M.reconfigure(1, {
                 'L':1.0e-1,
                 'phi':1.0e-6,

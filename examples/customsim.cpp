@@ -32,15 +32,16 @@ struct State1D : public StateBase
     // allow introspection of state variable by eg. Python
     virtual bool getArray(unsigned idx, ArrayInfo& Info)
     {
-        if(idx==0) {
+        unsigned I=0;
+        if(idx==I++) {
             Info.name = "x";
             Info.ptr = &x;
             // remaining defaults ok for scalar double
-        } else if(idx==1) {
+        } else if(idx==I++) {
             Info.name = "xv";
             Info.ptr = &xv;
         } else {
-            return StateBase::getArray(idx-2, Info); // check w/ base class for any remaining
+            return StateBase::getArray(idx-I, Info); // check w/ base class for any remaining
         }
         return true;
     }
