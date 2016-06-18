@@ -157,19 +157,21 @@ void H5StateWriter::prepare(const StateBase *RS)
             elem.info = info;
 
             // first dim is simulation "time"
-            std::vector<hsize_t> dims(info.ndim+1), maxdims(info.ndim+1);
-            for(size_t i=0; i<info.ndim; i++) {
-                maxdims[i+1] = dims[i+1] = info.dim[i];
-            }
+            std::vector<hsize_t> dims   (info.ndim+1),
+                                 maxdims(info.ndim+1, H5S_UNLIMITED);
+            std::copy(info.dim,
+                      info.dim+info.ndim,
+                      dims.begin()+1);
 
             elem.shape = dims; // copy
 
             // size w/ first dim==0
             dims[0] = 0;
-            maxdims[0] = H5S_UNLIMITED;
+
             H5::DataSpace dspace(dims.size(), &dims[0], &maxdims[0]);
 
             dims[0] = 10; // chunk size in "time" steps
+            // other chunk sizes are multiple of initial size
             H5::DSetCreatPropList props;
             props.setChunk(dims.size(), &dims[0]);
 
@@ -207,6 +209,10 @@ void H5StateWriter::append(const StateBase *RS)
 
             size_t index = elem.shape[0]; // we will write data[index,...]
             elem.shape[0]++;
+
+            std::copy(info.dim,
+                      info.dim+info.ndim,
+                      elem.shape.begin()+1);
 
             elem.dset.extend(&elem.shape[0]); // resize
 
