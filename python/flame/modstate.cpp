@@ -109,8 +109,8 @@ PyObject *PyState_getattro(PyObject *raw, PyObject *attr)
         StateBase::ArrayInfo pyinfo;
         pyinfo.ptr = PyArray_BYTES(obj.py());
         pyinfo.ndim= PyArray_NDIM(obj.get());
-        std::copy(PyArray_SHAPE(obj.get()),
-                  PyArray_SHAPE(obj.get())+pyinfo.ndim,
+        std::copy(PyArray_DIMS(obj.get()),
+                  PyArray_DIMS(obj.get())+pyinfo.ndim,
                   pyinfo.dim);
         std::copy(PyArray_STRIDES(obj.get()),
                   PyArray_STRIDES(obj.get())+pyinfo.ndim,
