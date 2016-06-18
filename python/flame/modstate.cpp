@@ -208,8 +208,8 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
         StateBase::ArrayInfo pyinfo;
         pyinfo.ptr = PyArray_BYTES(arr.py());
         pyinfo.ndim= PyArray_NDIM(arr.get());
-        std::copy(PyArray_SHAPE(arr.get()),
-                  PyArray_SHAPE(arr.get())+pyinfo.ndim,
+        std::copy(PyArray_DIMS(arr.get()),
+                  PyArray_DIMS(arr.get())+pyinfo.ndim,
                   pyinfo.dim);
         std::copy(PyArray_STRIDES(arr.get()),
                   PyArray_STRIDES(arr.get())+pyinfo.ndim,
