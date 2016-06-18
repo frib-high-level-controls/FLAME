@@ -40,6 +40,10 @@ public:
     matrix_t load(const std::string&);
 
     static void dontPrint();
+
+private:
+    H5Loader(const H5Loader&);
+    H5Loader& operator=(const H5Loader&);
 };
 
 #endif // H5LOADER_H

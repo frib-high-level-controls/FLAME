@@ -36,9 +36,8 @@ H5Loader::~H5Loader()
 {
     try{
         close();
-    } catch(...) {
-        delete pvt;
-        throw;
+    } catch(std::runtime_error& e) {
+        std::cerr<<"H5Loader is ignoring exception in dtor : "<<e.what()<<"\n";
     }
     delete pvt;
 }

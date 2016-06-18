@@ -6,35 +6,6 @@
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
 
-void GetCenofChg(const Config &conf, const MomentState &ST,
-                 MomentState::vector_t &CenofChg, MomentState::vector_t &BeamRMS)
-{
-    size_t i, j;
-    const size_t n = ST.real.size(); // # of states
-
-    CenofChg = boost::numeric::ublas::zero_vector<double>(PS_Dim);
-    BeamRMS.resize(PS_Dim);
-
-    double Ntot = 0e0;
-    for (i = 0; i < n; i++) {
-        CenofChg += ST.moment0[i]*ST.real[i].IonQ;
-        Ntot += ST.real[i].IonQ;
-    }
-
-    CenofChg /= Ntot;
-
-    for (j = 0; j < MomentState::maxsize; j++) {
-        double BeamVar = 0.0;
-        for (i = 0; i < n; i++) {
-            const double temp = ST.moment0[i][j]-CenofChg[j];
-            BeamVar  += ST.real[i].IonQ*(ST.moment1[i](j, j)
-                                         + sqr(temp));
-        }
-        BeamRMS[j] = sqrt(BeamVar/Ntot);
-    }
-}
-
-
 static
 double Gaussian(double in, const double Q_ave, const double d)
 {
@@ -57,7 +28,7 @@ void StripperCharge(const double beta, double &Q_ave, double &d)
 
 
 static
-void ChargeStripper(const double beta, const std::vector<double> ChgState, std::vector<double>& chargeAmount_Baron)
+void ChargeStripper(const double beta, const std::vector<double>& ChgState, std::vector<double>& chargeAmount_Baron)
 {
     unsigned    k;
     double Q_ave, d;
@@ -69,9 +40,8 @@ void ChargeStripper(const double beta, const std::vector<double> ChgState, std::
 
 
 static
-void Stripper_Propagate_ref(const Config &conf, Particle &ref, const std::vector<double> ChgState)
+void Stripper_Propagate_ref(Particle &ref)
 {
-    const int n = ChgState.size();
 
     // Change reference particle charge state.
     ref.IonZ = Stripper_IonZ;
@@ -157,7 +127,7 @@ void Stripper_GetMat(const Config &conf,
 
     // Propagate reference particle.
     ref = ST.ref;
-    Stripper_Propagate_ref(conf, ref, ChgState);
+    Stripper_Propagate_ref(ref);
 
     s = StatePtr->pos;
 

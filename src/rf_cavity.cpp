@@ -21,29 +21,6 @@ static
 double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip);
 
 
-void CavDataType::RdData(std::istream &inf)
-{
-    std::string       line;
-    double            s, Elong;
-    std::stringstream str;
-
-    while (getline(inf, line) && !inf.fail()) {
-        str.str(line);
-        str.clear();
-        str >> s >> Elong;
-        this->s.push_back(s), this->Elong.push_back(Elong);
-        // Convert from [mm] to [m].
-//        this->s[this->s.size()-1] /= MtoMM;
-    }
-
-    if (false) {
-        std::cout << "\n";
-        for (size_t k = 0; k < this->s.size(); k++)
-            show(std::cout, k);
-    }
-}
-
-
 void CavDataType::show(std::ostream& strm, const int k) const
 {
     strm << std::scientific << std::setprecision(5)
@@ -96,18 +73,6 @@ void PrtVec(const std::vector<double> &a)
         std::cout << std::scientific << std::setprecision(10)
                       << std::setw(18) << a[k];
     std::cout << "\n";
-}
-
-
-void prt_data(std::vector<double> &Z, std::vector<double> &EM)
-{
-    int k, n;
-
-    n = Z.size();
-    std::cout << "\nn = " << n << "\n";
-    for (k = 0; k < n; k++)
-        std::cout << std::fixed << std::setprecision(5)
-                  << std::setw(10) << Z[k] << std::setw(15) << EM[k] << "\n";
 }
 
 
@@ -959,7 +924,6 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
     Mlon_L3       = Idmat;
     Mlon_L3(4, 5) = -2e0*M_PI/Lambda*(1e0/cube(beta_tab[2]*gamma_tab[2])*MeVtoeV/real.IonEs*L3);
 
-    Mlon = Idmat;
     Mlon = prod(Mlon_K1, Mlon_L1);
     Mlon = prod(Mlon_L2, Mlon);
     Mlon = prod(Mlon_K2, Mlon);

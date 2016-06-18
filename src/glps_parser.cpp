@@ -466,7 +466,7 @@ void glps_add_line(parse_context *ctxt, string_t *label, string_t *etype, strlis
         } else {
             // reverse order of elements
             std::reverse(names->list.begin(), names->list.end());
-            ctxt->line.push_back(parse_line(label->str, etype->str.c_str(), names->list));
+            ctxt->line.push_back(parse_line(label->str, etype->str, names->list));
             ctxt->line_idx[label->str] = ctxt->line.size()-1;
         }
 
@@ -525,12 +525,11 @@ void parse_common(YY_BUFFER_STATE (*setup)(yyscan_t, void*),
                   parse_context* ctxt, void *pvt)
 {
     yyscan_t scanner;
-    YY_BUFFER_STATE buf = NULL;
 
     if(glps_lex_init_extra(ctxt, &scanner))
         throw std::runtime_error("Failed to allocate/init lexer");
     try{
-        buf = setup(scanner, pvt);
+        YY_BUFFER_STATE buf = setup(scanner, pvt);
         if(!buf)
             throw std::runtime_error("Failed to allocate lex buffer");
 
@@ -578,7 +577,7 @@ struct bytebuf {
 
 YY_BUFFER_STATE setup_bytes(yyscan_t scanner, void* pvt)
 {
-    bytebuf *buf = (bytebuf*)pvt;
+    bytebuf *buf = static_cast<bytebuf*>(pvt);
     return glps__scan_bytes(buf->bytes, buf->len, scanner);
 }
 }

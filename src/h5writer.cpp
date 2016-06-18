@@ -50,9 +50,8 @@ H5StateWriter::~H5StateWriter()
 {
     try{
         close();
-    } catch(...) {
-        delete pvt;
-        throw;
+    } catch(std::runtime_error& e) {
+        std::cerr<<"H5StateWriter is ignoring exception in dtor : "<<e.what()<<"\n";
     }
     delete pvt;
 }

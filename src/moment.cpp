@@ -262,8 +262,6 @@ void MomentState::assign(const StateBase& other)
 
 void MomentState::show(std::ostream& strm, int level) const
 {
-    int j, k;
-
     if(real.empty()) {
         strm<<"State: empty";
         return;
@@ -275,16 +273,16 @@ void MomentState::show(std::ostream& strm, int level) const
     if(level>=1) {
         strm << std::scientific << std::setprecision(8)
              << "\nState:\n  energy [eV] =\n" << std::setw(20) << real[0].IonEk << "\n  moment0 mean =\n    ";
-        for (k = 0; k < MomentState::maxsize; k++)
+        for (size_t k = 0; k < MomentState::maxsize; k++)
             strm << std::scientific << std::setprecision(10) << std::setw(18) << moment0_env(k) << ",";
         strm << std::scientific << std::setprecision(10)
              << "\n  moment0 rms =\n    ";
-        for (k = 0; k < MomentState::maxsize; k++)
+        for (size_t k = 0; k < MomentState::maxsize; k++)
             strm << std::scientific << std::setprecision(10) << std::setw(18) << moment0_rms(k) << ",";
         strm << "\n  moment1 mean =\n";
-        for (j = 0; j < MomentState::maxsize; j++) {
+        for (size_t j = 0; j < MomentState::maxsize; j++) {
             strm << "    ";
-            for (k = 0; k < MomentState::maxsize; k++) {
+            for (size_t k = 0; k < MomentState::maxsize; k++) {
                 strm << std::scientific << std::setprecision(10) << std::setw(18) << moment1_env(j, k) << ",";
             }
             if (j < MomentState::maxsize-1) strm << "\n";

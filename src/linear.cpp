@@ -355,7 +355,6 @@ struct ElementRFCavity : public Base
     ElementRFCavity(const Config& c)
         :base_t(c)
     {
-        std::string cav_type = c.get<std::string>("cavtype");
         double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;

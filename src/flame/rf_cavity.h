@@ -159,7 +159,7 @@ struct ElementRFCavity : public MomentElementBase
 
         CavTLMLineTab.resize(last_Kenergy_in.size());
 
-        ElementRFCavity::PropagateLongRFCav(ST.ref);
+        PropagateLongRFCav(ST.ref);
 
         for(size_t i=0; i<last_Kenergy_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?
@@ -172,7 +172,7 @@ struct ElementRFCavity : public MomentElementBase
             double SampleIonK = ST.real[i].SampleIonK;
 
 
-            ElementRFCavity::InitRFCav(ST.real[i], transfer[i], CavTLMLineTab[i]);
+            InitRFCav(ST.real[i], transfer[i], CavTLMLineTab[i]);
 
             // J.B. Bug in TLM.
             ST.real[i].SampleIonK = SampleIonK;

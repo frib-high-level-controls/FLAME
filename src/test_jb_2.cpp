@@ -47,11 +47,10 @@ void PrtMat(const value_mat &M)
 
 void PrtState(const state_t& ST)
 {
-    size_t                k;
     MomentState::vector_t CenofChg, BeamRMS;
 
     if (true)
-        for (k = 0; k < ST.size(); k++) {
+        for (size_t k = 0; k < ST.size(); k++) {
             std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << ST.pos << "\n"
                       <<"\n Ref:  "<<ST.ref
                      <<"\n Real: "<<ST.real[k]
@@ -68,11 +67,6 @@ void PrtState(const state_t& ST)
     PrtMat(ST.moment1_env);
 }
 
-std::vector<double> GetChgState(Config &conf)
-{
-    return conf.get<std::vector<double> >("IonChargeStates");
-}
-
 static
 void prt_initial_cond(Machine &sim,
                       state_t &ST)
@@ -85,8 +79,6 @@ static
 void propagate(const Config &conf)
 {
     // Propagate element-by-element for each charge state.
-    size_t                   elem_no = (size_t)-1;
-    std::vector<double>      ChgState;
     Machine                  sim(conf);
     std::auto_ptr<StateBase> state(sim.allocState());
     state_t                  *StatePtr = dynamic_cast<state_t*>(state.get());
@@ -104,9 +96,6 @@ void propagate(const Config &conf)
     Machine::iterator it = sim.begin()+1;
     while (it != sim.end()) {
         ElementVoid*       elem = *it;
-        MomentElementBase* ELEM = static_cast<MomentElementBase*>(elem);
-        unsigned           idx = elem->index;
-        std::string        t_name = elem->type_name(); // C string -> C++ string.
 
         elem->advance(*state);
         ++it;

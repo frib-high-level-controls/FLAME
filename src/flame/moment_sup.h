@@ -5,9 +5,6 @@
 #include "base.h"
 #include "moment.h"
 
-void GetCenofChg(const Config &conf, const MomentState &ST,
-                 MomentState::vector_t &CenofChg, MomentState::vector_t &BeamRMS);
-
 void inverse(MomentElementBase::value_t& out, const MomentElementBase::value_t& in);
 
 void RotMat(const double dx, const double dy,
