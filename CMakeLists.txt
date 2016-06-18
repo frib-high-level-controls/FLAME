@@ -54,6 +54,11 @@ if(NOT LEX_EXECUTABLE OR NOT YACC_EXECUTABLE)
   message(SEND_ERROR "Missing flex or bison")
 endif()
 
+find_program(CPPCHECK_EXECUTABLE cppcheck
+  DOC "cppcheck executable"
+)
+message(STATUS "cppcheck ${CPPCHECK_EXECUTABLE}")
+
 message(STATUS "Boost libs in ${Boost_LIBRARY_DIRS}")
 
 find_package(PythonInterp 2.6)
@@ -147,4 +152,26 @@ if(DOXYGEN_FOUND)
   message(STATUS "Will generate documentation")
 else()
   message(STATUS "Skipping documentation generation (missing doxygen)")
+endif()
+
+if(CPPCHECK_EXECUTABLE)
+  # Add a target with --enable=all for maximum noise for developers
+  add_custom_target(cppcheck
+    COMMAND ${CPPCHECK_EXECUTABLE} --enable=all --error-exitcode=1
+                -I ${CMAKE_CURRENT_SOURCE_DIR}/src
+                -I ${CMAKE_CURRENT_BINARY_DIR}/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+                ${CMAKE_CURRENT_BINARY_DIR}/src/*.c
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/cli.cpp
+    COMMENT "Running cppcheck static analysis"
+  )
+  # add a test with fewer checks (those which actually pass)
+  add_test(NAME run_cppcheck
+    COMMAND ${CPPCHECK_EXECUTABLE} --error-exitcode=1
+                -I ${CMAKE_CURRENT_SOURCE_DIR}/src
+                -I ${CMAKE_CURRENT_BINARY_DIR}/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+                ${CMAKE_CURRENT_BINARY_DIR}/src/*.c
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/cli.cpp
+  )
 endif()
