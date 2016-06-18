@@ -13,21 +13,22 @@ struct SimDevOrbit : public SimDev
 {
     std::string param;
     unsigned param_index; //!< index of named parameter in StateBase::getArray
-    size_t param_offset; //!< value offset in parmeter array
+    unsigned ndim;
+    size_t dim[2];
 
     Machine::lookup_iterator start,end;
     size_t nelems;
-
-    std::vector<double*> pvalues;
 };
 
 static
 long orbit_init_common(dbCommon *prec, const char *link)
 {
     try {
-        // "simname elementname param"  implies off==0
-        // "simname elementname param[off]"
-        static boost::regex linkpat("(\\S+) ([^\\s\\[]+) ([^\\s\\[]+)(?:\\[(\\d+)\\])?");
+        // "simname elementname param"      ndim==0
+        // "simname elementname param[i]"   ndim==1
+        // "simname elementname param[i,j]" ndim==2
+        // matches between 3 and 5 groups
+        static boost::regex linkpat("(\\S+) ([^\\s\\[]+) ([^\\s\\[]+)(?:\\[(\\d+)(?:,(\\d+))?\\])?");
 
         boost::cmatch M;
         if(!boost::regex_match(link, M, linkpat))
@@ -39,9 +40,15 @@ long orbit_init_common(dbCommon *prec, const char *link)
         if(!find(SimGlobal.sims, M.str(1), priv->sim))
             throw std::runtime_error("No such simulation instance");
 
-        priv->param_offset = 0;
-        if(M[4].matched)
-            priv->param_offset = boost::lexical_cast<size_t>(M.str(4));
+        priv->ndim = 0;
+        if(M[4].matched) {
+            priv->ndim++;
+            priv->dim[0] = boost::lexical_cast<size_t>(M.str(4));
+        }
+        if(M[5].matched) {
+            priv->ndim++;
+            priv->dim[1] = boost::lexical_cast<size_t>(M.str(5));
+        }
 
         std::pair<Machine::lookup_iterator, Machine::lookup_iterator> range = priv->sim->machine->equal_range_type(M.str(2));
 
@@ -57,7 +64,6 @@ long orbit_init_common(dbCommon *prec, const char *link)
             priv->sim->get_measure(elem->index);
         }
         priv->nelems = N;
-        priv->pvalues.resize(N, NULL);
         assert(N>0);
 
         priv->param = M.str(3);
@@ -75,16 +81,8 @@ long orbit_init_common(dbCommon *prec, const char *link)
                 if(info.name==priv->param) {
                     if(info.type!=StateBase::ArrayInfo::Double)
                         throw std::runtime_error("Requested parameter must be type Double");
-
-                    size_t max=0;
-                    if(info.ndim)
-                        for(size_t dim=0; dim<info.ndim; dim++)
-                            max += info.dim[dim];
-                    else
-                        max = 1;
-
-                    if(priv->param_offset>=max)
-                        throw std::runtime_error("Requested parameter offset is out of range");
+                    else if(info.ndim!=priv->ndim)
+                        throw std::runtime_error("Requested parameter has different cardinality");
 
                     priv->param_index = idx;
                     break;
@@ -121,27 +119,23 @@ long orbit_read_wf(waveformRecord *prec)
         for(Machine::lookup_iterator it = priv->start, end = priv->end;
             it!=end; ++it, i++)
         {
+            ElementVoid * const elem = *it;
+
             if(i==prec->nelm) {
-                (void)recGblSetSevr(prec, READ_ALARM, INVALID_ALARM);
+                valid = false;
                 break;
             }
-            if(priv->pvalues[i]) {
-                // use cached value of pvalues[]
-                pbuf[i] = *priv->pvalues[i];
-                continue;
-            }
 
-            ElementVoid *elem = *it;
             VIOCObserver *meas = priv->sim->measures[elem->index];
             StateBase::ArrayInfo info;
 
             if(meas->last.get() &&
-               meas->last->getArray(priv->param_index, info))
+               meas->last->getArray(priv->param_index, info) &&
+               priv->ndim==info.ndim &&
+               info.inbounds(priv->dim))
             {
-                // fill cached pvalues[]
-                double * const arr = (double*)info.ptr;
-                priv->pvalues[i] = &arr[priv->param_offset];
-                pbuf[i] = *priv->pvalues[i];
+                double * const arr = info.get<double>(priv->dim);
+                pbuf[i] = *arr;
 
             } else {
                 valid = false;

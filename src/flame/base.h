@@ -66,6 +66,31 @@ struct StateBase : public boost::noncopyable
         size_t dim[maxdims];
         //! Array strides in bytes
         size_t stride[maxdims];
+
+        //! is the given index valid?
+        bool inbounds(size_t* d) const {
+            bool ret = true;
+            switch(ndim) {
+            case 2: ret &= d[1]<dim[1];
+            case 1: ret &= d[0]<dim[0];
+            }
+            return ret;
+        }
+
+        void *raw(size_t* d) {
+            char *ret = (char*)ptr;
+            switch(ndim) {
+            case 2: ret += d[1]*stride[1];
+            case 1: ret += d[0]*stride[0];
+            }
+            return ret;
+        }
+
+        //! Helper to fetch the pointer for a given index (assumed valid)
+        template<typename E>
+        inline E* get(size_t *d) {
+            return (E*)raw(d);
+        }
     };
 
     /** @brief Introspect named parameter of the derived class
@@ -76,16 +101,17 @@ struct StateBase : public boost::noncopyable
      * To introspect call this with index increasing from zero until false is returned.
      *
      * Sub-classes are required to maintain a fixed number of parameters.
-     * Further, the name associated with a particular parameter index must not change.
+     * The same ArrayInfo::name should alwaysbe returned for a given index.
+     * Similarly ArrayInfo::ndim and ArrayInfo.type should not change.
      *
-     * ArrayInfo::ptr, ArrayInfo::ndim, ArrayInfo::dim, ArrayInfo::stride
+     * ArrayInfo::ptr, ArrayInfo::dim, ArrayInfo::stride
      * are allowed to change when the state is passed to Machine::propagate().
      *
      * Therefore, if getArray() for an instance has returned true for some index,
      * then a caller may assume that all future calls to getArray() for this instance
      * will also return true.
      * However, the caller must still re-call getArray() in future as the storage
-     * may have changed.
+     * and sizes may have changed.
      */
     virtual bool getArray(unsigned index, ArrayInfo& Info);
 

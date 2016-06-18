@@ -144,10 +144,8 @@ long init_global_longin(longinRecord *prec)
 static
 long read_count(longinRecord *prec)
 {
-    TRY(SimDev) {
-        prec->val += 1;
-        return 0;
-    }CATCH_ALARM()
+    prec->val += 1;
+    return 0;
 }
 
 DSET6(longin, Runcount, init_global_longin, Sim::io_aftersim, read_count);

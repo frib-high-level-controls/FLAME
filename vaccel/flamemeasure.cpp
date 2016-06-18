@@ -21,19 +21,25 @@ struct SimDevMeasScalar : public SimDev
 {
     std::string param;
     unsigned param_index; //!< index of named parameter in StateBase::getArray
-    size_t param_offset; //!< value offset in parmeter array
+
+    unsigned ndim;
+    size_t dim[2];
 
     VIOCObserver *measure;
-    double *pvalue;
 };
 
 static
 long measure_init_common(dbCommon *prec, const char *link)
 {
     try {
-        // "simname elementname param"  implies inst==0 and off==0
-        // "simname elementname[inst] param[off]"
-        static boost::regex linkpat("(\\S+) ([^\\s\\[]+)(?:\\[(\\d+)\\])? ([^\\s\\[]+)(?:\\[(\\d+)\\])?");
+        // "simname elementname param"  implies inst==0 and ndim==0
+        // "simname elementname param[i]"
+        // "simname elementname param[i,j]"
+        // "simname elementname[inst] param"
+        // "simname elementname[inst] param[i]"
+        // "simname elementname[inst] param[i,j]"
+        // matches between 3 and 6 groups
+        static boost::regex linkpat("(\\S+) ([^\\s\\[]+)(?:\\[(\\d+)\\])? ([^\\s\\[]+)(?:\\[(\\d+)(?:,(\\d+))?\\])?");
 
         boost::cmatch M;
         if(!boost::regex_match(link, M, linkpat))
@@ -49,9 +55,15 @@ long measure_init_common(dbCommon *prec, const char *link)
         if(M[3].matched)
             inst = boost::lexical_cast<size_t>(M.str(3));
 
-        priv->param_offset = 0;
-        if(M[5].matched)
-            priv->param_offset = boost::lexical_cast<size_t>(M.str(5));
+        priv->ndim = 0;
+        if(M[5].matched) {
+            priv->ndim++;
+            priv->dim[0] = boost::lexical_cast<size_t>(M.str(5));
+        }
+        if(M[6].matched) {
+            priv->ndim++;
+            priv->dim[1] = boost::lexical_cast<size_t>(M.str(6));
+        }
 
         ElementVoid* elem = priv->sim->machine->find(M.str(2), inst);
         if(!elem)
@@ -61,7 +73,6 @@ long measure_init_common(dbCommon *prec, const char *link)
         priv->measure = priv->sim->get_measure(elem->index);
 
         priv->param = M.str(4);
-        priv->pvalue = NULL;
 
         unsigned idx;
         {
@@ -76,16 +87,8 @@ long measure_init_common(dbCommon *prec, const char *link)
                 if(info.name==priv->param) {
                     if(info.type!=StateBase::ArrayInfo::Double)
                         throw std::runtime_error("Requested parameter must be type Double");
-
-                    size_t max=0;
-                    if(info.ndim)
-                        for(size_t dim=0; dim<info.ndim; dim++)
-                            max += info.dim[dim];
-                    else
-                        max = 1;
-
-                    if(priv->param_offset>=max)
-                        throw std::runtime_error("Requested parameter offset is out of range");
+                    else if(info.ndim!=priv->ndim)
+                        throw std::runtime_error("Requested parameter has different cardinality");
 
                     priv->param_index = idx;
                     break;
@@ -119,15 +122,13 @@ long measure_read_ai(aiRecord *prec)
         {
             StateBase::ArrayInfo info;
 
-            if(priv->pvalue) {
-                value = *priv->pvalue;
-
-            } else if(priv->measure->last.get() &&
-                      priv->measure->last->getArray(priv->param_index, info))
+            if(priv->measure->last.get() &&
+               priv->measure->last->getArray(priv->param_index, info) &&
+               priv->ndim==info.ndim &&
+               info.inbounds(priv->dim))
             {
-                double * const arr = (double*)info.ptr;
-                priv->pvalue = &arr[priv->param_offset];
-                value = *priv->pvalue;
+                double * const arr = info.get<double>(priv->dim);
+                value = *arr;
 
             } else {
                 valid = false;
