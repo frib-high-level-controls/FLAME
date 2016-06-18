@@ -34,13 +34,39 @@ class MomentTest(object):
 
     def assertConsistent(self, S, msg=None):
         'Check internal consistencies of a State'
-        def checkConsist(self, P='real'):
-            self.assertEqual(getattr(S, P+'_IonW')    , getattr(S, P+'_IonEs')+getattr(S, P+'_IonEk'), msg)
-            self.assertEqual(getattr(S, P+'_gamma')   , getattr(S, P+'_IonW')/getattr(S, P+'_IonEs'), msg)
-            self.assertEqual(getattr(S, P+'_beta')    , math.sqrt(1e0-1e0/sqr(getattr(S, P+'_gamma'))), msg)
-            self.assertEqual(getattr(S, P+'_bg')      , getattr(S, P+'_beta')*getattr(S, P+'_gamma'), msg)
-        checkConsist('ref')
-        checkConsist('real')
+        # check "cached" parameters calculated from energy
+        self.assertEqual(S.ref_IonW,  S.ref_IonEs+S.ref_IonEk, msg)
+        self.assertEqual(S.ref_gamma, S.ref_IonW/S.ref_IonEs, msg)
+        self.assertEqual(S.ref_beta,  math.sqrt(1e0-1e0/(S.ref_gamma**2)), msg)
+        self.assertEqual(S.ref_bg,    S.ref_beta*S.ref_gamma)
+
+        assert_aequal(S.IonW,  S.IonEs+S.IonEk, err_msg=msg)
+        assert_aequal(S.gamma, S.IonW/S.IonEs, err_msg=msg)
+        assert_aequal(S.beta,  numpy.sqrt(1e0-1e0/numpy.square(S.gamma)), err_msg=msg)
+        assert_aequal(S.bg,    S.beta*S.gamma, err_msg=msg)
+
+        # moment0_env
+        W = S.IonQ/S.IonQ.sum()
+        W = W.reshape((1,len(W))).repeat(7,axis=0)
+        M0env = (S.moment0*W).sum(axis=1)
+        assert_aequal(S.moment0_env, M0env, err_msg=msg)
+
+        # moment1_env
+        Qs, M0, M0env, M1 = S.IonQ, S.moment0, S.moment0_env, S.moment1
+        # using a loop because outer() doesn't understand axis=
+        M1env  = numpy.zeros((7,7))
+        for i in range(len(Qs)):
+            Q = Qs[i]
+            m0diff = M0[:,i]-M0env
+
+            M1env[:7,:7] += Q*(M1[...,i]+numpy.outer(m0diff, m0diff))
+        M1env /= Qs.sum()
+
+        assert_aequal(S.moment1_env, M1env, err_msg=msg)
+
+        # moment0_rms
+        M0rms = numpy.sqrt(numpy.diagonal(S.moment1_env))
+        assert_aequal(S.moment0_rms, M0rms, err_msg=msg)
 
     def assertStateEqual(self, expect, actual, msg=None, decimal=10):
         'Assert that two moment2 State instances are equal'
@@ -67,7 +93,9 @@ class MomentTest(object):
         S2 = self.M.allocState(instate, inherit=False)
 
         self.M.propagate(state=S1, start=elem, max=max)
+        self.assertConsistent(S1)
         self.M.propagate(state=S2, start=elem, max=max)
+        self.assertConsistent(S2)
 
 #        print_state(S1)
 
@@ -78,7 +106,9 @@ class MomentTest(object):
         S2 = self.ICM.allocState(instate, inherit=False)
 
         self.ICM.propagate(state=S1, start=elem, max=max)
+        self.assertConsistent(S1)
         self.ICM.propagate(state=S2, start=elem, max=max)
+        self.assertConsistent(S2)
 
         self.assertStateEqual(outstate, S1, 'third pass')
         self.assertStateEqual(outstate, S2, 'fourth pass')
