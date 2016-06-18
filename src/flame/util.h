@@ -135,7 +135,7 @@ struct ndindex_iterate {
 #if __cplusplus<201103L && !defined(static_assert)
 #define STATIC_JOIN(x, y) STATIC_JOIN2(x, y)
 #define STATIC_JOIN2(x, y) x ## y
-#define static_assert(expr) \
+#define static_assert(expr, msg) \
     typedef int STATIC_JOIN(static_assert_failed_at_line_, __LINE__) \
     [ (expr) ? 1 : -1 ] FLAME_UNUSED
 #endif

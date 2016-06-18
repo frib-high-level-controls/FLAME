@@ -323,7 +323,8 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
          * Further we assume that all entries in the vector have the same shape.
          * If this isn't the case, then SIGSEGV here we come...
          */
-        static_assert(sizeof(moment1[0])>=sizeof(double)*maxsize*maxsize);
+        static_assert(sizeof(moment1[0])>=sizeof(double)*maxsize*maxsize,
+                      "storage assumption violated");
         Info.name = "moment1";
         Info.ptr = &moment1[0](0,0);
         Info.type = ArrayInfo::Double;
@@ -353,7 +354,8 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         return true;
     } else if(idx==I++) {
         // more evilness here, see above
-        static_assert(sizeof(moment0[0])>=sizeof(double)*maxsize);
+        static_assert(sizeof(moment0[0])>=sizeof(double)*maxsize,
+                "storage assumption violated");
         Info.name = "moment0";
         Info.ptr = &moment0[0][0];
         Info.type = ArrayInfo::Double;
