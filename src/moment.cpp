@@ -306,16 +306,6 @@ void MomentState::show(std::ostream& strm, int level) const
 bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
     unsigned I=0;
     if(idx==I++) {
-        Info.name = "state";
-        Info.ptr = &moment1_env(0,0);
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 2;
-        Info.dim[0] = moment1_env.size1();
-        Info.dim[1] = moment1_env.size2();
-        Info.stride[0] = sizeof(double)*moment1_env.size2();
-        Info.stride[1] = sizeof(double);
-        return true;
-    } else if(idx==I++) {
         Info.name = "moment1";
         Info.ptr = &moment1_env(0,0);
         Info.type = ArrayInfo::Double;

@@ -71,8 +71,8 @@ foo : LINE = (elem0);
 
         print("moment0",  S.moment0, C['IV'])
         assert_aequal(S.moment0, C['IV'])
-        print("state", S.state, C['IM'])
-        assert_aequal(S.state, C['IM'].reshape((7,7)), 1e10)
+        print("state", S.moment1, C['IM'])
+        assert_aequal(S.moment1, C['IM'].reshape((7,7)), 1e10)
 
 class testMomentMulti(unittest.TestCase):
     lattice = b'''
@@ -117,7 +117,7 @@ foo : LINE = (elem0);
         Use cstate=1 to select
         S.IonZ = IonChargeStates[1]
         S.moment0 = IV1
-        S.state = IM1
+        S.moment1 = IM1
         """
         M = Machine(self.lattice, extra={"cstate":1})
         C = M.conf()
@@ -134,5 +134,5 @@ foo : LINE = (elem0);
 
         print("moment0",  S.moment0, C['IV1'])
         assert_aequal(S.moment0, C['IV1'])
-        print("state", S.state, C['IM1'])
-        assert_aequal(S.state, C['IM1'].reshape((7,7)), 1e10)
+        print("state", S.moment1, C['IM1'])
+        assert_aequal(S.moment1, C['IM1'].reshape((7,7)), 1e10)
