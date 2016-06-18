@@ -430,8 +430,8 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
-        Info.name = "IonQ";
-        Info.ptr  = &real[0].IonQ;
+        Info.name = "IonZ";
+        Info.ptr  = &real[0].IonZ;
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim   [0] = real.size();
