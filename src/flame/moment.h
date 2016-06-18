@@ -11,6 +11,7 @@
 
 #include "base.h"
 
+#include "constants.h"
 
 // Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
 # define SampleFreq   80.5e6

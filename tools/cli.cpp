@@ -17,6 +17,7 @@
 #include <flame/state/vector.h>
 #include <flame/state/matrix.h>
 #include <flame/h5writer.h>
+#include <flame/moment.h>
 
 namespace po = boost::program_options;
 
@@ -96,6 +97,137 @@ struct ObserverFactory
     virtual Observer *observe(Machine& M, ElementVoid* E) = 0;
     virtual void before_sim(Machine&) {}
     virtual void after_sim(Machine&) {}
+};
+
+struct UnitTestObserver : public Observer
+{
+    typedef boost::shared_ptr<std::list<std::string> > interested_t;
+    interested_t interested;
+    typedef std::vector<unsigned> interested_indicies_t;
+    interested_indicies_t interested_indicies;
+
+    UnitTestObserver(const interested_t& I) :interested(I) {}
+    virtual ~UnitTestObserver() {}
+
+    void lookup(StateBase *S) {
+        typedef std::map<std::string, unsigned> lookup_t;
+        lookup_t L;
+
+        unsigned idx=0;
+        StateBase::ArrayInfo info;
+        while(S->getArray(idx++, info)) {
+            bool skip = false;
+            switch(info.type) {
+            case StateBase::ArrayInfo::Sizet:
+                if(info.ndim!=0) skip = true;
+            case StateBase::ArrayInfo::Double:
+                break;
+            default:
+                skip = true;
+            }
+            if(info.ndim>2) skip=true;
+            if(skip) continue;
+
+            L[info.name] = idx-1;
+        }
+
+        interested_indicies.resize(interested->size());
+
+        interested_t::element_type::const_iterator it = interested->begin();
+        for(size_t i=0; i<interested_indicies.size(); i++, ++it) {
+            lookup_t::const_iterator Lit = L.find(*it);
+            if(Lit!=L.end()) {
+                interested_indicies[i] = Lit->second;
+            }
+        }
+    }
+
+    virtual void view(const ElementVoid *elem, const StateBase *state)
+    {
+        // hack since getArray() is non-const
+        // we won't actually modify the state
+        StateBase *S = const_cast<StateBase*>(state);
+
+        if(interested_indicies.size()!=interested->size())
+            lookup(S);
+
+        std::cout<<"    def test_"<<elem->type_name()<<"(self):\n"
+                   "        # "<<elem->name<<"\n"
+                 <<"        self.checkPropagate(0, {}, {\n";
+
+        for(size_t i=0; i<interested_indicies.size(); i++) {
+            unsigned idx = interested_indicies[i];
+            StateBase::ArrayInfo info;
+            bool valid = S->getArray(idx, info);
+            assert(valid);
+            (void)valid;
+
+            std::cout<<"            '"<<info.name<<"':";
+            if(info.ndim==0) {
+                switch(info.type) {
+                case StateBase::ArrayInfo::Double:
+                    std::cout<<std::scientific << std::setprecision(17)<<*(double*)info.ptr;
+                    break;
+                case StateBase::ArrayInfo::Sizet:
+                    std::cout<<*(size_t*)info.ptr;
+                }
+
+            } else if(info.ndim==1) {
+                assert(info.type==StateBase::ArrayInfo::Double);
+                std::cout<<"asfarray([";
+                for(size_t i=0; i<info.dim[0]; i++) {
+                    std::cout<<std::scientific << std::setprecision(16)<<*info.get<double>(&i);
+                    if(i!=info.dim[0]-1)
+                        std::cout<<", ";
+                }
+                std::cout<<"])";
+
+            } else if(info.ndim==2) {
+                assert(info.type==StateBase::ArrayInfo::Double);
+                std::cout<<"asfarray([\n";
+                size_t idx[StateBase::ArrayInfo::maxdims];
+                memset(idx, 0, sizeof(idx));
+                for(idx[0]=0; idx[0]<info.dim[0]; idx[0]++) {
+                    std::cout<<"                [";
+                    for(idx[1]=0; idx[1]<info.dim[1]; idx[1]++) {
+                        std::cout<<std::scientific << std::setprecision(16)<<*info.get<double>(idx);
+                        if(idx[1]!=info.dim[1]-1)
+                            std::cout<<", ";
+                    }
+                    std::cout<<"],\n";
+                }
+                std::cout<<"            ])";
+            } else {
+                std::cout<<"None";
+            }
+            std::cout<<",\n";
+        }
+        std::cout<<"        }, max="<<elem->index+1<<")\n";
+    }
+
+    struct Factory : public ObserverFactory
+    {
+        interested_t interested;
+        Factory(const strvect& fmt) :interested(new interested_t::element_type)
+        {
+            assert(!fmt.empty() && fmt[0]=="txt");
+
+            for(strvect::const_iterator it=fmt.begin()+1, end=fmt.end(); it!=end; ++it)
+            {
+                const std::string& cmd = *it;
+                if(cmd.find_first_of('=')==cmd.npos) {
+                    interested->push_back(cmd);
+                } else {
+                    std::cerr<<"Warning: -F "<<fmt[0]<<" includes unknown option "<<cmd<<"\n";
+                }
+            }
+        }
+        virtual ~Factory() {}
+        virtual Observer *observe(Machine& M, ElementVoid* E)
+        {
+            return new UnitTestObserver(interested);
+        }
+    };
 };
 
 struct StreamObserver : public Observer
@@ -322,6 +454,8 @@ try {
             ofact.reset(new StreamObserver::Factory(fmt));
         } else if(fmt[0]=="hdf5") {
             ofact.reset(new H5Observer::Factory(fmt));
+        } else if(fmt[0]=="utest") {
+            ofact.reset(new UnitTestObserver::Factory(fmt));
         } else {
             std::cerr<<"Unknown output format \""<<ofactname<<"\"\n";
             exit(1);
