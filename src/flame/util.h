@@ -100,6 +100,32 @@ struct SB {
     SB& operator<<(T i) { strm<<i; return *this; }
 };
 
+//! Helper to step through the indicies of an Nd array
+template<unsigned MAX>
+struct ndindex_iterate {
+    bool done;
+    const unsigned ndim;
+    size_t index[MAX], limit[MAX];
+    ndindex_iterate(unsigned nd, size_t *lim) :done(false), ndim(nd) {
+        std::fill(index, index+MAX, 0u);
+        std::copy(lim, lim+nd, limit);
+    }
+    bool next() {
+        if(!done) {
+            for(unsigned nd=0; nd<ndim; nd++) {
+                index[nd]++;
+                if(index[nd]<limit[nd]) {
+                    return done;
+                } else {
+                    index[nd] = 0;
+                }
+            }
+            done = true;
+        }
+        return done;
+    }
+};
+
 #ifdef __GNUC__
 #define FLAME_UNUSED __attribute__((unused))
 #else

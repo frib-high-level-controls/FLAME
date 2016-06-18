@@ -97,3 +97,32 @@ BOOST_AUTO_TEST_CASE(parse_table4)
     numeric_table tbl;
     BOOST_CHECK_THROW(tbl.read(strm), std::runtime_error)
 }
+
+BOOST_AUTO_TEST_CASE(test_ndindex_iterate)
+{
+    size_t limits[2] = {2,3};
+    ndindex_iterate<2> iter(2, limits);
+
+    BOOST_CHECK(!iter.done);
+    BOOST_CHECK_EQUAL(iter.ndim, 2);
+    BOOST_CHECK_EQUAL_COLLECTIONS(limits, limits+2, iter.limit, iter.limit+2);
+
+#define CHECKME(isdone, I, J) {size_t P[2] = {I,J}; BOOST_CHECK_EQUAL(isdone, iter.done); \
+    BOOST_CHECK_EQUAL_COLLECTIONS(P, P+2, iter.index, iter.index+2); }
+
+    CHECKME(false, 0, 0);
+    iter.next();
+    CHECKME(false, 1, 0);
+    iter.next();
+    CHECKME(false, 0, 1);
+    iter.next();
+    CHECKME(false, 1, 1);
+    iter.next();
+    CHECKME(false, 0, 2);
+    iter.next();
+    CHECKME(false, 1, 2);
+    iter.next();
+    CHECKME(true,  0, 0);
+
+#undef CHECKME
+}
