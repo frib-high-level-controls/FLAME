@@ -23,8 +23,8 @@ struct StateElement {
     unsigned idx;
     StateBase::ArrayInfo info;
     H5::DataSet dset;
-    std::vector<hsize_t> shape;
-    H5::DataSpace memspace;
+    size_t nextrow;
+    StateElement() :nextrow(0u) {}
 };
 }
 
@@ -156,27 +156,25 @@ void H5StateWriter::prepare(const StateBase *RS)
             elem.info = info;
 
             // first dim is simulation "time"
-            std::vector<hsize_t> dims   (info.ndim+1),
-                                 maxdims(info.ndim+1, H5S_UNLIMITED);
+            hsize_t dims[StateBase::ArrayInfo::maxdims+1],
+                    maxdims[StateBase::ArrayInfo::maxdims+1];
+            std::fill(maxdims, maxdims+info.ndim+1, H5S_UNLIMITED);
             std::copy(info.dim,
                       info.dim+info.ndim,
-                      dims.begin()+1);
-
-            elem.shape = dims; // copy
+                      dims+1);
 
             // size w/ first dim==0
             dims[0] = 0;
 
-            H5::DataSpace dspace(dims.size(), &dims[0], &maxdims[0]);
+            H5::DataSpace dspace(info.ndim+1, &dims[0], &maxdims[0]);
 
-            dims[0] = 10; // chunk size in "time" steps
+            dims[0] = 1024; // chunk size in "time" steps (arbitrary)
             // other chunk sizes are multiple of initial size
             H5::DSetCreatPropList props;
-            props.setChunk(dims.size(), &dims[0]);
+            props.setChunk(info.ndim+1, &dims[0]);
 
             // memspace is simple from origin to [1,shape]
             dims[0] = 1;
-            elem.memspace = H5::DataSpace(dims.size(), &dims[0]);
 
             elem.dset = pvt->group.createDataSet(info.name, dtype, dspace, props);
 
@@ -206,29 +204,31 @@ void H5StateWriter::append(const StateBase *RS)
 
             assert((elem.info.ndim==info.ndim) && (elem.info.type==info.type));
 
-            size_t index = elem.shape[0]; // we will write data[index,...]
-            elem.shape[0]++;
-
+            hsize_t shape[StateBase::ArrayInfo::maxdims+1];
+            shape[0] = ++elem.nextrow;
             std::copy(info.dim,
                       info.dim+info.ndim,
-                      elem.shape.begin()+1);
+                      shape+1);
 
-            elem.dset.extend(&elem.shape[0]); // resize
+            // resize
+            // always in time, maybe in other dimensions
+            elem.dset.extend(shape);
 
             // filespace is hyper from [index,0...] to [index,shape]
-            std::vector<hsize_t> start(elem.shape.size(), 0);
-            start[0] = index;
+            hsize_t start[StateBase::ArrayInfo::maxdims+1];
+            start[0] = shape[0]-1;
+            std::fill(start+1, start+info.ndim+1, 0);
 
-            elem.shape[0] = 1; // reuse as count
+            shape[0] = 1; // reuse as count
+            H5::DataSpace memspace(info.ndim+1, shape);
 
             H5::DataSpace filespace(elem.dset.getSpace());
-            filespace.selectHyperslab(H5S_SELECT_SET, &elem.shape[0], &start[0]);
+            filespace.selectHyperslab(H5S_SELECT_SET, shape, start);
 
             H5::DataType dtype(elem.dset.getDataType());
 
-            elem.dset.write(info.ptr, dtype, elem.memspace, filespace);
+            elem.dset.write(info.ptr, dtype, memspace, filespace);
 
-            elem.shape[0] = index+1;
         }
     } CATCH()
 }
