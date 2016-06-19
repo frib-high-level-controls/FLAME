@@ -103,19 +103,18 @@ int get_column(const std::string &str)
 }
 
 
-void calTransfac(const numeric_table& fldmap,  int column_no, const double IonK, const bool half,
+void calTransfac(const numeric_table& fldmap, int column_no, const int gaplabel, const double IonK, const bool half,
                  double &Ecenter, double &T, double &Tp, double &S, double &Sp, double &V0)
 {
     // Compute electric center, amplitude, and transit time factors [T, Tp, S, Sp] for RF cavity mode.
     int                 n, k;
-    double              dz, eml, em_mom;
+    double              len, dz, eml, em_mom;
     std::vector<double> z, EM;
 
     column_no--; // F*** fortran
     assert(column_no>0);
 
     n = fldmap.table.size1();
-    if (half) n = (int)round((n-1)/2e0);
 
     if(n<=0 || (size_t)column_no>=fldmap.table.size2())
         throw std::runtime_error("field map size invalid");
@@ -130,7 +129,12 @@ void calTransfac(const numeric_table& fldmap,  int column_no, const double IonK,
               fldmap.table.find1(2, n, column_no),
               EM.begin());
 
-    dz = (z[n-1]-z[0])/(n-1);
+    // Used at end of function.
+    len = z[n-1];
+
+    if (half) n = (int)round((n-1)/2e0);
+
+    dz  = (z[n-1]-z[0])/(n-1);
 
 //    prt_data(z, EM);
 
@@ -170,6 +174,13 @@ void calTransfac(const numeric_table& fldmap,  int column_no, const double IonK,
     Sp /= eml;
 
     V0 = eml/MeVtoeV/MtoMM;
+
+    if (gaplabel == 2) {
+        // Second gap.
+        Ecenter = len - Ecenter;
+        T  = -T;
+        Tp = -Tp;
+    }
 }
 
 
@@ -199,8 +210,9 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     std::ostringstream  strm;
 
     // For debugging of TTF function.
-    if (false) {
-        calTransfac(CavData, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
+    bool ttf_debug = false;
+    if (ttf_debug) {
+        calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
         V0 *= EfieldScl;
         printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
 //        return;
@@ -210,7 +222,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     case 41:
         if (beta < 0.025 || beta > 0.08) {
             std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
-            calTransfac(CavData, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
+            calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
         }
@@ -250,7 +262,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     case 85:
         if (beta < 0.05 || beta > 0.25) {
             std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
-            calTransfac(CavData, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
+            calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
         }
@@ -287,7 +299,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     case 29:
         if (beta < 0.15 || beta > 0.4) {
             std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
-            calTransfac(CavData, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
+            calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
         }
@@ -324,7 +336,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     case 53:
         if (beta < 0.3 || beta > 0.6) {
             std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
-            calTransfac(CavData, 2, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
+            calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
         }
@@ -366,7 +378,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     // Convert from [mm] to [m].
 //    Ecen /= MtoMM;
 
-//    printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+    if (ttf_debug) printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
 }
 
 
@@ -376,8 +388,9 @@ void ElementRFCavity::TransitFacMultipole(const int cavi, const std::string &fla
     double Ecen, Tp, Sp, V0;
 
     // For debugging of TTF function.
-    if (false) {
-        calTransfac(mlptable, get_column(flabel), CaviIonK, false, Ecen, T, Tp, S, Sp, V0);
+    bool ttf_debug = false;
+    if (ttf_debug) {
+        calTransfac(mlptable, get_column(flabel), 0, CaviIonK, false, Ecen, T, Tp, S, Sp, V0);
         return;
     }
 
@@ -386,7 +399,7 @@ void ElementRFCavity::TransitFacMultipole(const int cavi, const std::string &fla
         ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) ||
         ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954))) {
         std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
-        calTransfac(mlptable, get_column(flabel), CaviIonK, false, Ecen, T, Tp, S, Sp, V0);
+        calTransfac(mlptable, get_column(flabel), 0, CaviIonK, false, Ecen, T, Tp, S, Sp, V0);
         return;
     }
 

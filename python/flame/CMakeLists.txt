@@ -36,18 +36,12 @@ set(PY_SRC_TEST
   test/test_config.py
   test/test_jb.py
   test/parse1.lat
-  test/latticeout_IMP_withPV_consolidate.lat
-  test/latticeout_IMP_withPV_consolidate2.lat
   test/LS1.lat
   test/to_strl.lat
   test/to_strl_err.lat
   test/to_chg_str_err.lat
-  test/latticeout_IMP_All.lat
   test/test_h5.lat
   test/test.h5
-  test/jb.py
-  test/jb_example.py
-  test/jb_chg_str.py
   test/FrontEnd.lat
 
   test/data/axisData_41.txt
