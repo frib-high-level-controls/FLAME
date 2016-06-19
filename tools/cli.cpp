@@ -534,7 +534,11 @@ try {
     std::auto_ptr<StateBase> state(sim.allocState());
     if(showtime) timeit.showdelta("Alloc State");
     sim.propagate(state.get(), 0, maxelem);
-    if(showtime) timeit.showdelta("Simulate");
+    if(showtime) {
+        timeit.showdelta("Simulate (cache cold)");
+        sim.propagate(state.get(), 0, maxelem);
+        timeit.showdelta("Simulate (cache hot)");
+    }
 
     ofact->after_sim(sim);
 
