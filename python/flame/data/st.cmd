@@ -1,8 +1,8 @@
 
 epicsEnvSet("EPICS_DB_INCLUDE_PATH", "../vaccel:.")
 
-dbLoadDatabase("flame.dbd")
-flame_registerRecordDeviceDriver(pdbbase)
+dbLoadDatabase("flamedemo.dbd")
+flamedemo_registerRecordDeviceDriver(pdbbase)
 
 < vconfig
 
