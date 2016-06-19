@@ -28,31 +28,35 @@ set_target_properties(_internal
 set(PY_SRC
   __init__.py
   ioc.py
-)
-set(PY_SRC_TEST
+
   test/__init__.py
   test/test_linear.py
   test/test_moment.py
   test/test_config.py
   test/test_jb.py
+)
+set(PY_DATA
+  # data for test_config.py
+  test/test_h5.lat
+  test/test.h5
+
+  # lattice files for unit tests
   test/parse1.lat
   test/LS1.lat
   test/to_strl.lat
   test/to_strl_err.lat
   test/to_chg_str_err.lat
-  test/test_h5.lat
-  test/test.h5
   test/FrontEnd.lat
 
+  # cavity data for test lattice files
   test/data/axisData_41.txt
   test/data/axisData_85.txt
   test/data/Multipole41/thinlenlon_41.txt
   test/data/Multipole85/thinlenlon_85.txt
   test/data/Multipole41/CaviMlp_41.txt
   test/data/Multipole85/CaviMlp_85.txt
-)
 
-set(PY_SRC_DATA
+  # vaccel IOC template
   data/st.cmd
   data/core.db
   data/orbit.db
@@ -64,19 +68,10 @@ set(PY_SRC_DATA
   data/bpm.template
 )
 
-install(FILES ${PY_SRC}
-  DESTINATION ${Python_MODULE_DIR}/flame
-)
-install(FILES ${PY_SRC_TEST}
-  DESTINATION ${Python_MODULE_DIR}/flame/test
-)
-install(FILES ${PY_SRC_DATA}
-  DESTINATION ${Python_MODULE_DIR}/flame/data
-)
-
 # Copy .py files to the binary dir in order to run unit-tests
 
-foreach(pyfile IN LISTS PY_SRC PY_SRC_TEST PY_SRC_DATA)
+foreach(pyfile IN LISTS PY_SRC PY_DATA)
+  get_filename_component(_dir ${pyfile} DIRECTORY)
   add_custom_command(
     OUTPUT ${pyfile}
     COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${pyfile} ${pyfile}
@@ -84,11 +79,13 @@ foreach(pyfile IN LISTS PY_SRC PY_SRC_TEST PY_SRC_DATA)
     DEPENDS ${_pydir}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-  list(APPEND PY_BIN ${pyfile})
+  install(FILES ${pyfile}
+    DESTINATION ${Python_MODULE_DIR}/flame/${_dir}
+  )
 endforeach()
 
-add_custom_target(testdata ALL
-  DEPENDS ${PY_BIN}
+add_custom_target(pyfiles ALL
+  DEPENDS ${PY_SRC} ${PY_DATA}
 )
 
 if(HAVE_NOSE)
