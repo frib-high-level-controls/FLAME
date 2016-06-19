@@ -572,8 +572,10 @@ MomentElementBase::~MomentElementBase() {}
 void MomentElementBase::assign(const ElementVoid *other)
 {
     const MomentElementBase *O = static_cast<const MomentElementBase*>(other);
-    last_Kenergy_in = O->last_Kenergy_in;
-    last_Kenergy_out = O->last_Kenergy_out;
+    last_real_in = O->last_real_in;
+    last_real_out= O->last_real_out;
+    last_ref_in  = O->last_ref_in;
+    last_ref_out = O->last_ref_out;
     transfer = O->transfer;
     misalign = O->misalign;
     misalign_inv = O->misalign_inv;
@@ -648,23 +650,31 @@ void MomentElementBase::advance(StateBase& s)
     {
         // need to re-calculate energy dependent terms
 
+        last_ref_in = ST.ref;
+        last_real_in = ST.real;
         resize_cache(ST);
 
         recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
         ST.recalc();
-    }
 
-    // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
-    // Matrix elements are scaled with particle energy.
+        for(size_t k=0; k<last_real_in.size(); k++)
+            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        last_ref_out = ST.ref;
+        last_real_out = ST.real;
+    } else {
+        ST.ref = last_ref_out;
+        assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+        std::copy(last_real_out.begin(),
+                  last_real_out.end(),
+                  ST.real.begin());
+    }
 
     ST.pos += length;
 
-    ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
-
-    for(size_t k=0; k<last_Kenergy_in.size(); k++) {
-        ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
-        ST.real[k].IonEk  = last_Kenergy_out[k];
+    for(size_t k=0; k<last_real_in.size(); k++) {
 
         ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 
@@ -677,19 +687,16 @@ void MomentElementBase::advance(StateBase& s)
 
 bool MomentElementBase::check_cache(const state_t& ST) const
 {
-    if(skipcache) return false;
-    if(last_Kenergy_in.size()!=ST.size()) return false; // different # of charge states
-
-    for(size_t k=0; k<last_Kenergy_in.size(); k++) {
-        if(last_Kenergy_in[k]!=ST.real[k].IonEk) return false;
-    }
-    return true;
+    return !skipcache
+            && last_real_in.size()==ST.size()
+            && last_ref_in==ST.ref
+            && std::equal(last_real_in.begin(),
+                          last_real_in.end(),
+                          ST.real.begin());
 }
 
 void MomentElementBase::resize_cache(const state_t& ST)
 {
-    last_Kenergy_in.resize(ST.real.size());
-    last_Kenergy_out.resize(ST.real.size());
     transfer.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
     misalign.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
     misalign_inv.resize(ST.real.size(), boost::numeric::ublas::identity_matrix<double>(state_t::maxsize));
@@ -699,10 +706,8 @@ void MomentElementBase::recompute_matrix(state_t& ST)
 {
     // Default, initialize as no-op
 
-    for(size_t k=0; k<last_Kenergy_in.size(); k++) {
+    for(size_t k=0; k<last_real_in.size(); k++) {
         transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-
-        last_Kenergy_in[k] = last_Kenergy_out[k] = ST.real[k].IonEk; // no energy gain
     }
 }
 
@@ -790,14 +795,12 @@ struct ElementDrift : public MomentElementBase
 
         const double L = length*MtoMM; // Convert from [m] to [mm].
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
             transfer[i](state_t::PS_X, state_t::PS_PX) = L;
             transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
             transfer[i](state_t::PS_S, state_t::PS_PS) =
                 -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
 };
@@ -821,12 +824,10 @@ struct ElementOrbTrim : public MomentElementBase
         double theta_x = conf().get<double>("theta_x", 0e0),
                theta_y = conf().get<double>("theta_y", 0e0);
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
             transfer[i](state_t::PS_PX, 6) = theta_x*ST.ref.IonZ/ST.real[i].IonZ;
             transfer[i](state_t::PS_PY, 6) = theta_y*ST.ref.IonZ/ST.real[i].IonZ;
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
 
             get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
@@ -873,21 +874,28 @@ struct ElementSBend : public MomentElementBase
 
         if(!check_cache(ST)) {
             // need to re-calculate energy dependent terms
+            last_ref_in = ST.ref;
+            last_real_in = ST.real;
             resize_cache(ST);
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
             ST.recalc();
+            last_ref_out = ST.ref;
+            last_real_out = ST.real;
+        } else {
+            ST.ref = last_ref_out;
+            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+            std::copy(last_real_out.begin(),
+                      last_real_out.end(),
+                      ST.real.begin());
         }
-
-        // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
-        // Matrix elements are scaled with particle energy.
 
         ST.pos += length;
 
         ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             double phis_temp = ST.moment0[i][state_t::PS_S];
 
             ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
@@ -911,8 +919,6 @@ struct ElementSBend : public MomentElementBase
             } else
                 ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
 
-            ST.real[i].IonEk  = last_Kenergy_out[i];
-
             noalias(scratch)  = prod(transfer[i], ST.moment1[i]);
             noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
         }
@@ -930,7 +936,7 @@ struct ElementSBend : public MomentElementBase
                phi2  = conf().get<double>("phi2")*M_PI/180e0,
                K     = conf().get<double>("K", 0e0)/sqr(MtoMM);
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             double qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ;
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
@@ -954,8 +960,6 @@ struct ElementSBend : public MomentElementBase
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
 };
@@ -978,7 +982,7 @@ struct ElementQuad : public MomentElementBase
         const double B2= conf().get<double>("B2"),
                      L = conf().get<double>("L")*MtoMM;
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             // Re-initialize transport matrix.
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -999,8 +1003,6 @@ struct ElementQuad : public MomentElementBase
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
 };
@@ -1023,7 +1025,7 @@ struct ElementSolenoid : public MomentElementBase
         const double B = conf().get<double>("B"),
                      L = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             // Re-initialize transport matrix.
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -1039,8 +1041,6 @@ struct ElementSolenoid : public MomentElementBase
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
 };
@@ -1080,7 +1080,7 @@ struct ElementEDipole : public MomentElementBase
                dip_beta    = conf().get<double>("beta"),
                dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta));
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             double eta0        = (ST.real[i].gamma-1e0)/2e0,
                    Kx          = (1e0-spher+sqr(1e0+2e0*eta0))/sqr(rho),
                    delta_KZ    = ST.ref.IonZ/ST.real[i].IonZ - 1e0,
@@ -1114,8 +1114,6 @@ struct ElementEDipole : public MomentElementBase
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
 };
@@ -1139,7 +1137,7 @@ struct ElementEQuad : public MomentElementBase
                      R    = conf().get<double>("radius"),
                      L    = conf().get<double>("L")*MtoMM;
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             // Re-initialize transport matrix.
             // V0 [V] electrode voltage and R [m] electrode half-distance.
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
@@ -1161,8 +1159,6 @@ struct ElementEQuad : public MomentElementBase
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
-
-            last_Kenergy_in[i] = last_Kenergy_out[i] = ST.real[i].IonEk; // no energy gain
         }
     }
 };

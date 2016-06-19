@@ -114,23 +114,31 @@ struct ElementRFCavity : public MomentElementBase
         //          which should be done on each iteration.
         //          Disable caching until this is fixed
         if(true) { // !check_cache(ST)) {
+            last_ref_in = ST.ref;
+            last_real_in = ST.real;
             resize_cache(ST);
             // need to re-calculate energy dependent terms
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-            for(size_t i=0; i<last_Kenergy_in.size(); i++)
+            for(size_t i=0; i<last_real_in.size(); i++)
                 get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
             ST.recalc();
-        }
 
-        // recompute_matrix only called when ST.IonEk != last_Kenergy_in.
-        // Matrix elements are scaled with particle energy.
+            last_ref_out = ST.ref;
+            last_real_out = ST.real;
+        } else {
+            ST.ref = last_ref_out;
+            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+            std::copy(last_real_out.begin(),
+                      last_real_out.end(),
+                      ST.real.begin());
+        }
 
         ST.pos += length;
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
             ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
 
@@ -154,20 +162,18 @@ struct ElementRFCavity : public MomentElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        // Re-initialize transport matrix.
+        // Re-initialize transport matrix. and update ST.ref and ST.real[]
 
-
-        CavTLMLineTab.resize(last_Kenergy_in.size());
+        CavTLMLineTab.resize(last_real_in.size());
 
         PropagateLongRFCav(ST.ref);
 
-        for(size_t i=0; i<last_Kenergy_in.size(); i++) {
+        for(size_t i=0; i<last_real_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
             transfer[i](state_t::PS_X, state_t::PS_PX) = length;
             transfer[i](state_t::PS_Y, state_t::PS_PY) = length;
 
-            last_Kenergy_in[i] = ST.real[i].IonEk;
             // J.B. Bug in TLM.
             double SampleIonK = ST.real[i].SampleIonK;
 
@@ -176,8 +182,6 @@ struct ElementRFCavity : public MomentElementBase
 
             // J.B. Bug in TLM.
             ST.real[i].SampleIonK = SampleIonK;
-
-            last_Kenergy_out[i] = ST.real[i].IonEk;
         }
    }
 

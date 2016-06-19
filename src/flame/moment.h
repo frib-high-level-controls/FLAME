@@ -54,6 +54,19 @@ struct Particle {
 
 std::ostream& operator<<(std::ostream&, const Particle&);
 
+inline bool operator==(const Particle& lhs, const Particle& rhs)
+{
+    // compare only independent variables.
+    return lhs.IonEk==rhs.IonEk && lhs.IonEs==rhs.IonEs
+            && lhs.IonZ==rhs.IonZ && lhs.IonQ==rhs.IonQ
+            && lhs.phis==rhs.phis;
+}
+
+inline bool operator!=(const Particle& lhs, const Particle& rhs)
+{
+    return !(lhs==rhs);
+}
+
 /** State for sim_type=MomentMatrix
  *
  * Represents a set of charge states
@@ -141,7 +154,8 @@ struct MomentElementBase : public ElementVoid
 
     virtual void show(std::ostream& strm, int level) const;
 
-    std::vector<double> last_Kenergy_in, last_Kenergy_out;
+    Particle last_ref_in, last_ref_out;
+    std::vector<Particle> last_real_in, last_real_out;
     //! final transfer matricies
     std::vector<value_t> transfer;
     std::vector<value_t> misalign, misalign_inv;
