@@ -116,7 +116,7 @@ class MomentTest(object):
 class TestToStrl(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
-    $ ./tools/run_flame -N <element_name> \
+    $ ./tools/flame -N <element_name> \
        -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
        python/flame/test/to_strl.lat
     """
@@ -471,7 +471,7 @@ class TestToStrl(unittest.TestCase, MomentTest):
 class TestToStrl(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
-    $ ./tools/run_flame -N <element_name> \
+    $ ./tools/flame -N <element_name> \
        -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
        python/flame/test/to_chg_str_err.lat
     """

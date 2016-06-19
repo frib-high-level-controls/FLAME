@@ -3,14 +3,17 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../src
 )
 
-add_executable(run_flame
+add_executable(flamecli
   cli.cpp
 )
-target_link_libraries(run_flame
+target_link_libraries(flamecli
   flame_core
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
 )
-
-install(TARGETS run_flame
+set_target_properties(flamecli
+  PROPERTIES
+    OUTPUT_NAME flame
+)
+install(TARGETS flamecli
   RUNTIME DESTINATION bin
 )
