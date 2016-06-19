@@ -95,8 +95,7 @@ int get_column(const std::string &str)
     else if (str == "CaviMlp_HQuad")
         column = 8;
     else {
-        std::cout << "get_column: undef. column: " << str << "\n";
-        exit(1);
+        throw std::runtime_error(SB()<<"get_column: undef. column: " << str);
     }
 
     return column;
@@ -653,8 +652,7 @@ int get_MpoleLevel(const Config &conf)
     else if (str == "2")
         MpoleLevel = 2;
     else {
-        std::cout << "get_MpoleLevel: undef. MpoleLevel " << MpoleLevel << "\n";
-        exit(1);
+        throw std::runtime_error(SB()<< "get_MpoleLevel: undef. MpoleLevel " << MpoleLevel);
     }
 
     return MpoleLevel;
