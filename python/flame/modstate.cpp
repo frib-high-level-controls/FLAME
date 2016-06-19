@@ -297,10 +297,28 @@ PyObject* PyState_clone(PyObject *raw, PyObject *unused)
     } CATCH()
 }
 
+static
+PyObject* PyState_show(PyObject *raw, PyObject *args, PyObject *kws)
+{
+    TRY {
+        unsigned long level = 1;
+        const char *names[] = {"level", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "|k", (char**)names, &level))
+            return NULL;
+
+        std::ostringstream strm;
+        state->state->show(strm, level);
+        return PyString_FromString(strm.str().c_str());
+    } CATCH()
+}
+
 static PyMethodDef PyState_methods[] = {
     {"clone", (PyCFunction)&PyState_clone, METH_NOARGS,
      "clone()\n\n"
      "Returns a new State instance which is a copy of this one"
+    },
+    {"show", (PyCFunction)&PyState_show, METH_VARARGS|METH_KEYWORDS,
+     "show(level=1)"
     },
     {NULL, NULL, 0, NULL}
 };
