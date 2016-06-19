@@ -68,11 +68,14 @@ PyObject *PyMachine_conf(PyObject *raw, PyObject *args, PyObject *kws)
         Config C;
         if(pyindex==Py_None) {
             C = machine->machine->conf();
-        } else {
-            long index = PyInt_AsLong(pyindex);
+        } else if(PyNumber_Check(pyindex)) {
+            PyRef<> pylong(PyNumber_Long(pyindex));
+            long index = PyLong_AsLong(pylong.py());
             if(index<0 || (unsigned long)index>=machine->machine->size())
                 return PyErr_Format(PyExc_IndexError, "Element index out of range");
             C = (*machine->machine)[index]->conf();
+        } else {
+            return PyErr_Format(PyExc_ValueError, "'index' must be an integer or None");
         }
         C.flatten();
 
@@ -192,17 +195,17 @@ PyObject *PyMachine_reconfigure(PyObject *raw, PyObject *args, PyObject *kws)
 {
     TRY{
         unsigned long idx;
-        PyObject *conf;
-        const char *pnames[] = {"index", "config", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "kO!|", (char**)pnames, &idx, &PyDict_Type, &conf))
+        PyObject *conf, *replace = Py_False;
+        const char *pnames[] = {"index", "config", "replace", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "kO!|O", (char**)pnames, &idx, &PyDict_Type, &conf, &replace))
             return NULL;
 
         if(idx>=machine->machine->size())
             return PyErr_Format(PyExc_ValueError, "invalid element index %lu", idx);
 
-        // TODO: only allow existing elements to be changed.
-        //       allow unassign
-        Config newconf((*machine->machine)[idx]->conf());
+        Config newconf;
+        if(!PyObject_IsTrue(replace))
+            newconf = (*machine->machine)[idx]->conf();
 
         Dict2Config(newconf, conf, 3); // set depth=3 to prevent recursion
 
