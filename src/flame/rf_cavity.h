@@ -110,10 +110,7 @@ struct ElementRFCavity : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        //TODO: MD: Caching is broken for this element as recompute_matrix is changing ST.ref
-        //          which should be done on each iteration.
-        //          Disable caching until this is fixed
-        if(true) { // !check_cache(ST)) {
+        if(!check_cache(ST)) {
             last_ref_in = ST.ref;
             last_real_in = ST.real;
             resize_cache(ST);
