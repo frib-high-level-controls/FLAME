@@ -347,60 +347,6 @@ struct ElementSolenoid : public Base
 };
 
 template<typename Base>
-struct ElementRFCavity : public Base
-{
-    // Transport matrix for an RF Cavity.
-    typedef Base base_t;
-    typedef typename base_t::state_t state_t;
-    ElementRFCavity(const Config& c)
-        :base_t(c)
-    {
-        double L             = c.get<double>("L")*MtoMM;         // Convert from [m] to [mm].
-
-        this->transfer(state_t::PS_X, state_t::PS_PX) = L;
-        this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
-        // For total path length.
-//        this->transfer(state_t::PS_S, state_t::PS_S)  = L;
-    }
-    virtual ~ElementRFCavity() {}
-
-    virtual const char* type_name() const {return "rfcavity";}
-};
-
-template<typename Base>
-struct ElementStripper : public Base
-{
-    // Transport (identity) matrix for a Charge Stripper.
-    typedef Base base_t;
-    typedef typename base_t::state_t state_t;
-    ElementStripper(const Config& c)
-        :base_t(c)
-    {
-        // Identity matrix.
-    }
-    virtual ~ElementStripper() {}
-
-    virtual const char* type_name() const {return "stripper";}
-};
-
-template<typename Base>
-struct ElementEDipole : public Base
-{
-    // Transport matrix for an Electric Dipole.
-    typedef Base base_t;
-    typedef typename base_t::state_t state_t;
-    ElementEDipole(const Config& c)
-        :base_t(c)
-    {
-        //double L = c.get<double>("L")*MtoMM;
-
-    }
-    virtual ~ElementEDipole() {}
-
-    virtual const char* type_name() const {return "edipole";}
-};
-
-template<typename Base>
 struct ElementGeneric : public Base
 {
     typedef Base base_t;
@@ -442,15 +388,6 @@ void registerLinear()
 
     Machine::registerElement<ElementSolenoid<LinearElementBase<VectorState> > >("Vector",         "solenoid");
     Machine::registerElement<ElementSolenoid<LinearElementBase<MatrixState> > >("TransferMatrix", "solenoid");
-
-    Machine::registerElement<ElementRFCavity<LinearElementBase<VectorState> > >("Vector",         "rfcavity");
-    Machine::registerElement<ElementRFCavity<LinearElementBase<MatrixState> > >("TransferMatrix", "rfcavity");
-
-    Machine::registerElement<ElementStripper<LinearElementBase<VectorState> > >("Vector",         "stripper");
-    Machine::registerElement<ElementStripper<LinearElementBase<MatrixState> > >("TransferMatrix", "stripper");
-
-    Machine::registerElement<ElementEDipole<LinearElementBase<VectorState>  > >("Vector",         "edipole");
-    Machine::registerElement<ElementEDipole<LinearElementBase<MatrixState>  > >("TransferMatrix", "edipole");
 
     Machine::registerElement<ElementGeneric<LinearElementBase<VectorState>  > >("Vector",         "generic");
     Machine::registerElement<ElementGeneric<LinearElementBase<MatrixState>  > >("TransferMatrix", "generic");
