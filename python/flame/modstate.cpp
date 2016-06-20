@@ -193,7 +193,7 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
             return -1;
         }
 
-        PyRef<PyArrayObject> arr(PyArray_FromObject(val, pytype, 1, 2));
+        PyRef<PyArrayObject> arr(PyArray_FromObject(val, pytype, info.ndim, info.ndim));
 
         if(info.ndim!=(size_t)PyArray_NDIM(arr.py())) {
             PyErr_Format(PyExc_ValueError, "cardinality don't match");

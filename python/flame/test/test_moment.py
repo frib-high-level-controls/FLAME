@@ -74,6 +74,26 @@ foo : LINE = (elem0);
         print("state", S.moment1_env, C['IM'])
         assert_aequal(S.moment1_env, C['IM'].reshape((7,7)), 1e10)
 
+    def test_modify_state(self):
+        S = self.M.allocState({}, inherit=False)
+
+        # assign scalar
+        S.pos = 42.2
+        self.assertEqual(S.pos, 42.2)
+
+        # assign 1d
+        S.moment0_env = numpy.asfarray([1, 2, 3, 4, 5, 6, 7])
+        assert_aequal(S.moment0_env, numpy.asfarray([1, 2, 3, 4, 5, 6, 7]))
+
+        # assign 2d
+        S.moment1_env = self.expect*2.0
+        assert_aequal(S.moment1_env, self.expect*2.0)
+
+        # assign 3d
+        X = self.expect.reshape((7,7,1))
+        S.moment1 = X*2.0
+        assert_aequal(S.moment1, X*2.0)
+
 class testMomentMulti(unittest.TestCase):
     lattice = b'''
 sim_type = "MomentMatrix";
