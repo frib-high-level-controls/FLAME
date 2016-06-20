@@ -176,6 +176,7 @@ void calTransfac(const numeric_table& fldmap, int column_no, const int gaplabel,
 
     if (gaplabel == 2) {
         // Second gap.
+        std::cout << "gaplabel: " << gaplabel << "\n";
         Ecenter = len - Ecenter;
         T  = -T;
         Tp = -Tp;
