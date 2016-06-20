@@ -669,18 +669,22 @@ ElementRFCavity::ElementRFCavity(const Config& c)
                 mlpfile(cavfile);
 
     if (CavType == "0.041QWR") {
+        cavi = 1;
         fldmap  += "/axisData_41.txt";
         cavfile += "/Multipole41/thinlenlon_41.txt";
         mlpfile += "/Multipole41/CaviMlp_41.txt";
     } else if (CavType == "0.085QWR") {
+        cavi = 2;
         fldmap  += "/axisData_85.txt";
         cavfile += "/Multipole85/thinlenlon_85.txt";
         mlpfile += "/Multipole85/CaviMlp_85.txt";
     } else if (CavType == "0.029HWR") {
+        cavi = 3;
         fldmap  += "/axisData_29.txt";
         cavfile += "/Multipole29/thinlenlon_29.txt";
         mlpfile += "/Multipole29/CaviMlp_29.txt";
     } else if (CavType == "0.053HWR") {
+        cavi = 4;
         fldmap  += "/axisData_53.txt";
         cavfile += "/Multipole53/thinlenlon_53.txt";
         mlpfile += "/Multipole53/CaviMlp_53.txt";
@@ -755,8 +759,6 @@ ElementRFCavity::ElementRFCavity(const Config& c)
 void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double CaviIonK[],
                                        CavTLMLineType& lineref) const
 {
-    int MpoleLevel = get_MpoleLevel(conf());
-
     if(lattice.empty())
         throw std::runtime_error("empty RF cavity lattice");
 
@@ -1204,24 +1206,7 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 
 void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 {
-    std::string CavType;
-    int         cavi;
     double      fRF, multip, IonFys, EfieldScl, caviFy, IonFy_i, IonFy_o;
-
-    CavType = conf().get<std::string>("cavtype");
-    if (CavType == "0.041QWR") {
-        cavi = 1;
-    } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-        cavi = 2;
-    } else if (conf().get<std::string>("cavtype") == "0.29HWR") {
-        cavi = 3;
-    } else if (conf().get<std::string>("cavtype") == "0.53HWR") {
-        cavi = 4;
-    } else {
-        std::ostringstream strm;
-        strm << "*** PropagateLongRFCav: undef. cavity type: " << CavType << "\n";
-        throw std::runtime_error(strm.str());
-    }
 
     fRF       = conf().get<double>("f");
     multip    = fRF/SampleFreq;
@@ -1252,43 +1237,34 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 
 void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
-    std::string CavType;
-    int         cavi, cavilabel, multip;
+    int         cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
 
 //    std::cout<<"RF recompute start "<<real<<"\n";
-    CavType = conf().get<std::string>("cavtype");
 
-    if (CavType == "0.041QWR") {
-        cavi       = 1;
+    if (cavi      == 1) {
         cavilabel  = 41;
         multip     = 1;
         Rm         = 17e0;
-    } else if (conf().get<std::string>("cavtype") == "0.085QWR") {
-        cavi       = 2;
+    } else if (cavi== 2) {
         cavilabel  = 85;
         multip     = 1;
         Rm         = 17e0;
-    } else if (conf().get<std::string>("cavtype") == "0.29HWR") {
-        cavi       = 3;
+    } else if (cavi== 3) {
         cavilabel  = 29;
         multip     = 4;
         Rm         = 20e0;
-    } else if (conf().get<std::string>("cavtype") == "0.53HWR") {
-        cavi       = 4;
+    } else if (cavi== 4) {
         cavilabel  = 53;
         multip     = 4;
         Rm         = 20e0;
-    } else if (conf().get<std::string>("cavtype") == "??EL") {
+    } else if (cavi== 5) {
         // 5 Cell elliptical.
-        cavi       = 5;
         cavilabel  = 53;
         multip     = 8;
         Rm         = 20e0;
     } else {
-        std::ostringstream strm;
-        strm << "*** InitRFCav: undef. cavity type: " << CavType << "\n";
-        throw std::runtime_error(strm.str());
+        throw std::logic_error(SB()<<"*** InitRFCav: undef. cavity type: after ctor");
     }
 
     IonFy_i   = multip*real.phis + phi_ref;

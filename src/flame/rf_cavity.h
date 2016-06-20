@@ -59,6 +59,7 @@ struct ElementRFCavity : public MomentElementBase
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
     double phi_ref;
     int MpoleLevel;
+    int cavi;
 
     ElementRFCavity(const Config& c);
 
@@ -100,6 +101,7 @@ struct ElementRFCavity : public MomentElementBase
         CavTLMLineTab = O->CavTLMLineTab;
         phi_ref       = O->phi_ref;
         MpoleLevel    = O->MpoleLevel;
+        cavi          = O->cavi;
     }
 
     virtual void advance(StateBase& s)
