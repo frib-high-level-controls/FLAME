@@ -100,6 +100,8 @@ with the vector VectorState::state.
 
 \f{eqnarray*}{ state = Transfer \cdot state \f}
 
+
+
 @subsection simmatrix sim_type=TransferMatrix
 
 Selects use of MatrixState as the state type.
@@ -113,19 +115,105 @@ with the matrix MatrixState::state.
 
 \f{eqnarray*}{ State = Transfer \cdot State \f}
 
+
+
 @subsection simmoment sim_type=MomentMatrix
 
 Selects use of MomentState as the state type.
 Elements derive from \ref MomentElementBase
 
-The propagation step MomentElementBase::advance multiples
+MomentState has several components.
+A single reference Particle MomentState::ref
+as well has several members which held as arrays over the number of
+charge states.
+MomentState::real hold a Particle for each charge state.
+MomentState::moment0 and MomentState::moment1 hold
+an array of vectors and matricies.
+
+The members MomentState::moment0_env, MomentState::moment1_env,
+MomentState::moment0_rms are derived from MomentState::moment0 and MomentState::moment1
+in MomentState::calc_rms().
+
+A Particle holds several independent member: Particle::IonQ, Particle::IonZ, Particle::IonEs, Particle::IonEk, and Particle::phis.
+The remaining members are derived from IonEk and IonEs by Particle::recalc().
+
+Each MomentElementBase holds an array of transfer matrices (MomentElementBase::transfer).
+One for each charge state.
+
+The propagation step MomentElementBase::advance() multiples
 the an Element's transfer matrix (MomentElementBase::transfer)
 with the matrix MomentState::state, and also by the vector MomentState::moment0.
 
 \f{eqnarray*}{
-  State &=& Transfer \cdot State \cdot Transfer^t \\
-  moment0 &=& Transfer \cdot moment0
+  Moment1_n &=& Transfer_n \cdot Moment1_n \cdot Transfer_n^t \\
+  moment0_n &=& Transfer_n \cdot moment0_n
 \f}
+
+Specializations of advance() exist for the rf cavity and charge stripper elements:
+
+@subsubsection simmomentcache transfer matrix caching
+
+MomentElementBase::transfer can be viewed as a linear approximation around
+the given reference and real Particle.
+As long as the approximation remains valid, the previously computed (cached) transfer matrix can be reused.
+
+The method MomentElementBase::check_cache determines if the cached transfer matrices, and output Particles can be reused.
+It works by comparing MomentElementBase::last_ref_in and MomentElementBase::last_real_in
+with MomentState::ref and MomentState::real.
+
+If check_cache() returns true, then ref and real are overwritten with
+MomentElementBase::last_ref_out and MomentElementBase::last_real_out.
+If not, then MomentElementBase::recompute_matrix() is called,
+then ref and real are copied into last_ref_out and last_real_out.
+
+@note As a debugging/troubleshooting aid, setting the Config parameter 'skipcache' to
+a non-zero value will force check_cache() to return false.
+This will for recalculation of transfer matricies on each iteration.
+
+@subsubsection simmomentconf MomentState configuration
+
+The members of MomentState are configured from a number of input Config parameters.
+Several "magic" parameters control initialization of either 0, 1, or many charge states
+depending on the presense of the parameters "IonChargeStates" and "cstate".
+
+If neither is included, an empty Config will initialize a MomentState with zero charge states.
+Such a MomentState is only useful in conjunction with the @link elementsource source element type @endlink.
+
+If only "IonChargeStates" is given, it must be an array of floating point values.
+This will initalize a number of charge states equal to the length of "IonChargeStates".
+
+@code
+# initialize two charge states with a source element in a lattice file
+S: source, IonChargeStates= [33.0/238.0, 34.0/238.0],
+           NCharge        = [10111.0, 10531.0],
+           IonEs = 931.49432e6,
+           IonEk = 0.5e6,
+           vector_variable = "vecname",
+           matrix_variable = "matname",
+           vecname0 = [ ... 7 values ... ],
+           vecname1 = [ ... 7 values ... ],
+           matname0 = [ ... 49 values ... ],
+           matname1 = [ ... 49 values ... ];
+
+# in python
+M = Machine(...)
+S = M.allocState({
+    'IonChargeStates':[33.0/238.0, 34.0/238.0],
+    'NCharge': [10111.0, 10531.0],
+    'IonEs': 931.49432e6,
+    'IonEk': 0.5e6,
+    'vector_variable': "vecname",
+    'matrix_variable': "matname",
+    'vecname0': [ ... 7 values ... ],
+    'vecname1': [ ... 7 values ... ],
+    'matname0': [ ... 49 values ... ],
+    'matname1': [ ... 49 values ... ],
+})
+@endcode
+
+As a debugging/development aid, if the parameter 'cstate' is set to a value
+in the range [0, # of change states), the the simulation will only be
+initialized for a single selected change state.
 
 @subsection simelements Element Types
 
@@ -152,16 +240,6 @@ elemname: source, initial = [1, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 1, 0, 0,
                              0, 0, 0, 0, 0, 1, 0,
                              0, 0, 0, 0, 0, 0, 1];
-
-sim_type = "MomentMatrix";
-elemname: source, initial = [1, 0, 0, 0, 0, 0, 0,
-                             0, 1, 0, 0, 0, 0, 0,
-                             0, 0, 1, 0, 0, 0, 0,
-                             0, 0, 0, 1, 0, 0, 0,
-                             0, 0, 0, 0, 1, 0, 0,
-                             0, 0, 0, 0, 0, 1, 0,
-                             0, 0, 0, 0, 0, 0, 1],
-                  moment0 = [0, 0, 0, 0, 0, 0, 0];
 @endcode
 
 @subsubsection elementdrift drift
@@ -203,15 +281,22 @@ Sector bend magnet.
 <tbody>
 <tr><td>L</td><td>None</td><td>Length</td></tr>
 <tr><td>phi</td><td>None</td><td>Bend angle</td></tr>
+<tr><td>phi1</td><td>None</td><td>??? angle</td></tr>
+<tr><td>phi2</td><td>None</td><td>??? angle</td></tr>
 <tr><td>K</td><td>0.0</td><td>Strength</td></tr>
+<tr><td>bg</td><td>None</td><td>Reference energy (beta*gamma)</td></tr>
 </tbody>
 </table>
 @endhtmlonly
 
 Supported by all "sim_type"s.
+Only MomentMatrix uses phi1, phi2, and bg.
 
 @code
-elemname: sbend, L = 0.1, phi = pi/16, K = 10;
+# general
+elem1: sbend, L = 0.1, phi = pi/16, K = 10;
+# MomentMatrix
+elem2: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.190370;
 @endcode
 
 @subsubsection elementquad quadrupole
@@ -224,14 +309,19 @@ Magnetic quadrupole.
 <tbody>
 <tr><td>L</td><td>None</td><td>Length</td></tr>
 <tr><td>K</td><td>0.0</td><td>Strength.  K&gt;0 focusing in horizontal. K&lt;0 focusing in vertical. </td></tr>
+<tr><td>B2</td><td>None</td><td>Field.  B2&gt;0 focusing in horizontal. B2&lt;0 focusing in vertical. </td></tr>
 </tbody>
 </table>
 @endhtmlonly
 
 Supported by all "sim_type"s.
+MomentMatrix uses B2, others use K.
 
 @code
-elemname: quadrupole, L = 0.1, K = 10;
+# general
+elem1: quadrupole, L = 0.1, K = 10;
+# MomentMatrix
+elem2: quadrupole, L = 0.250000, B2 = 3.459800, aper = 0.025000;
 @endcode
 
 @subsubsection elementsol solenoid
@@ -244,11 +334,13 @@ Solenoid magnet.
 <tbody>
 <tr><td>L</td><td>None</td><td>Length</td></tr>
 <tr><td>K</td><td>0.0</td><td>Strength.</td></tr>
+<tr><td>B</td><td>None</td><td>Field</td></tr>
 </tbody>
 </table>
 @endhtmlonly
 
 Supported by all "sim_type"s.
+MomentMatrix uses B, others use K.
 
 @code
 elemname: solenoid, L = 0.1, K = 10;
@@ -256,7 +348,21 @@ elemname: solenoid, L = 0.1, K = 10;
 
 @subsubsection elementrf rfcavity
 
-TODO
+
+@htmlonly
+<table class="param">
+<thead><tr><th>Name</th><th>Default</th><th>Desc.</th></tr></thead>
+<tbody>
+<tr><td>L</td><td>None</td><td>Length</td></tr>
+<tr><td>cavtype</td><td>None</td><td>Cavity type ID string</td></tr>
+<tr><td>Eng_Data_Dir</td><td>None</td><td>Directory containing data files</td></tr>
+<tr><td>f</td><td>None</td><td>Cavity frequency (Hz)</td></tr>
+<tr><td>phi</td><td>None</td><td>Synchrotron phase (rad)</td></tr>
+<tr><td>scl_fac</td><td>None</td><td>Electric field scale factor</td></tr>
+<tr><td>MpoleLevel</td><td>"2"</td><td>"0", "1", or "2"</td></tr>
+</tbody>
+</table>
+@endhtmlonly
 
 @subsubsection elementstrip stripper
 
