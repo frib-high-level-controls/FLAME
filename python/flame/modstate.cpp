@@ -193,6 +193,8 @@ int PyState_setattro(PyObject *raw, PyObject *attr, PyObject *val)
             return -1;
         }
 
+        // ValueError: object too deep for desired array
+        //  means assignment with wrong cardinality
         PyRef<PyArrayObject> arr(PyArray_FromObject(val, pytype, info.ndim, info.ndim));
 
         if(info.ndim!=(size_t)PyArray_NDIM(arr.py())) {
