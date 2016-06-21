@@ -129,7 +129,7 @@ Machine::Machine(const Config& c)
         }catch(std::exception& e){
             std::ostringstream strm;
             strm<<"Error while constructing element "<<idx<<" '"<<EC.get<std::string>("name", "<invalid>")
-               <<"' : "<<e.what();
+               <<"' : "<<typeid(e).name()<<" : "<<e.what();
             throw std::runtime_error(strm.str());
         }
 

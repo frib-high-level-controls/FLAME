@@ -33,24 +33,17 @@ bool load_storage(ARR& to, const Config& conf, const std::string& name, bool T=t
     try{
         const std::vector<double>& val(conf.get<std::vector<double> >(name));
         if(to.size()!=val.size()) {
-            std::ostringstream strm;
-            strm<<"Array "<<name<<" must have "<<to.size()<<" elements, not "<<val.size();
-            throw std::invalid_argument(strm.str());
+            throw std::invalid_argument(SB()<<"Array "<<name<<" must have "<<to.size()<<" elements, not "<<val.size());
         }
         std::copy(val.begin(), val.end(), to.begin());
 
         return true;
-    }catch(key_error&){
+    }catch(std::exception&){
         if(T)
-            throw std::invalid_argument(name+" not defined");
+            throw std::invalid_argument(name+" not defined or has wrong type (must be vector)");
         else
             return false;
         // default to identity
-    }catch(boost::bad_any_cast&){
-        if(T)
-            throw std::invalid_argument(name+" has wrong type (must be vector)");
-        else
-            return false;
     }
 }
 
@@ -215,9 +208,9 @@ void MomentState::calc_rms()
     boost::numeric::ublas::slice S(0, 1, 6);
     for(size_t n=0; n<real.size(); n++) {
         const double Q = real[n].IonQ;
-        state_t::vector_t m0diff = ub::project(moment0[n]-moment0_env, S);
+        state_t::vector_t m0diff(moment0[n]-moment0_env);
 
-        ub::project(moment1_env, S, S) += Q*(moment1[n]+ub::outer_prod(m0diff, m0diff));
+        ub::project(moment1_env, S, S) += ub::project(Q*(moment1[n]+ub::outer_prod(m0diff, m0diff)), S, S);
     }
     moment1_env /= totQ;
 
