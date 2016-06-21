@@ -60,6 +60,7 @@ struct ElementRFCavity : public MomentElementBase
     double phi_ref;
     int MpoleLevel;
     int cavi;
+    bool forcettfcalc;
 
     ElementRFCavity(const Config& c);
 
@@ -102,6 +103,7 @@ struct ElementRFCavity : public MomentElementBase
         phi_ref       = O->phi_ref;
         MpoleLevel    = O->MpoleLevel;
         cavi          = O->cavi;
+        forcettfcalc  = O->forcettfcalc;
     }
 
     virtual void advance(StateBase& s)

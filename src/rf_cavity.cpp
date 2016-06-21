@@ -176,7 +176,6 @@ void calTransfac(const numeric_table& fldmap, int column_no, const int gaplabel,
 
     if (gaplabel == 2) {
         // Second gap.
-        std::cout << "gaplabel: " << gaplabel << "\n";
         Ecenter = len - Ecenter;
         T  = -T;
         Tp = -Tp;
@@ -211,11 +210,12 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
 
     // For debugging of TTF function.
     bool ttf_debug = false;
-    if (ttf_debug) {
+    if (forcettfcalc || ttf_debug) {
         calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
         V0 *= EfieldScl;
-        printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
-//        return;
+        if(ttf_debug)
+            printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+        return;
     }
 
     switch (cavilabel) {
@@ -389,7 +389,7 @@ void ElementRFCavity::TransitFacMultipole(const int cavi, const std::string &fla
 
     // For debugging of TTF function.
     bool ttf_debug = false;
-    if (ttf_debug) {
+    if (forcettfcalc || ttf_debug) {
         calTransfac(mlptable, get_column(flabel), 0, CaviIonK, false, Ecen, T, Tp, S, Sp, V0);
         return;
     }
@@ -663,6 +663,7 @@ ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
     ,MpoleLevel(get_MpoleLevel(c))
+    ,forcettfcalc(c.get<double>("forcettfcalc", 0.0)!=0.0)
 {
     std::string CavType      = conf().get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", "")),
