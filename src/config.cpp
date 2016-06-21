@@ -36,6 +36,24 @@ void Config::_cow()
     }
 }
 
+bool
+Config::tryGetAny(const std::string& name, value_t& ret) const
+{
+    values_t::const_iterator it=values->find(name);
+    if(it!=values->end()) {
+        ret = it->second;
+        return true;
+    }
+    if(implicit_values) {
+        it = implicit_values->find(name);
+        if(it!=implicit_values->end()) {
+            ret = it->second;
+            return true;
+        }
+    }
+    return false;
+}
+
 const Config::value_t&
 Config::getAny(const std::string& name) const
 {
@@ -45,9 +63,8 @@ Config::getAny(const std::string& name) const
         it = implicit_values->find(name);
         if(it!=implicit_values->end()) return it->second;
     }
-    throw key_error(name);
+    throw key_error(SB()<<"Missing parameter '"<<name<<"'");
 }
-
 void
 Config::setAny(const std::string& name, const value_t& val)
 {

@@ -96,6 +96,10 @@ public:
     Config& operator=(const Config&);
 
     /** lookup untyped.
+     * @returns true if 'ret' updates, and false if no parameter with 'name'.
+     */
+    bool tryGetAny(const std::string& name, value_t& ret) const;
+    /** lookup untyped.
      * @throws key_error if name doesn't refer to an existing parameter
      */
     const value_t& getAny(const std::string& name) const;
@@ -106,8 +110,8 @@ public:
     void swapAny(const std::string& name, value_t& val);
 
     /** lookup typed.
-     * @throws key_error if name doesn't refer to an existing parameter
-     * @throws boost::bad_get if the parameter value has a type other than T
+     * @throws key_error if name doesn't refer to an existing parameter, or the parameter has other
+     *                   than the requested type.
      *
      @code
      Config X;
@@ -117,7 +121,11 @@ public:
     template<typename T>
     typename detail::RT<T>::type
     get(const std::string& name) const {
-        return boost::get<typename detail::is_config_value<T>::type>(getAny(name));
+        try {
+            return boost::get<typename detail::is_config_value<T>::type>(getAny(name));
+        } catch(boost::bad_get&) {
+            throw key_error(SB()<<"Wrong type for '"<<name<<"'.  should be "<<typeid(T).name());
+        }
     }
     /** lookup typed with default.
      * If 'name' doesn't refer to a parameter, or it has the wrong type,
@@ -146,11 +154,13 @@ public:
     template<typename T>
     bool
     tryGet(const std::string& name, T& val) const {
-        try{
-            val = boost::get<typename detail::is_config_value<T>::type>(getAny(name));
-            return true;
-        } catch(boost::bad_get&) {
-        } catch(key_error&) {
+        value_t ret;
+        if(tryGetAny(name, ret)) {
+            try{
+                val = boost::get<typename detail::is_config_value<T>::type>(ret);
+                return true;
+            } catch(boost::bad_get&) {
+            }
         }
         return false;
     }
