@@ -198,6 +198,7 @@ class TestToStrl(unittest.TestCase, MomentTest):
 
     def test_rfcav_41(self):
         # ls1_ca01_cav1_d1127  cavtype = "0.041QWR"
+        self.assertEqual(self.M.find(name='ls1_ca01_cav1_d1127')[0], 3)
         self.checkPropagate(0, {}, {
             'next_elem':4,
             'moment0':asfarray([

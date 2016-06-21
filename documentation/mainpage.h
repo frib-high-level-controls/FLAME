@@ -426,6 +426,8 @@ class Machine(object):
         pass
     def reconfigure(self, index, config):
         pass
+    def find(self, name=None, type=None):
+        pass
     def __len__(self):
         pass
 @endcode

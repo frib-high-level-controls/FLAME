@@ -217,6 +217,42 @@ PyObject *PyMachine_reconfigure(PyObject *raw, PyObject *args, PyObject *kws)
 }
 
 static
+PyObject *PyMachine_find(PyObject *raw, PyObject *args, PyObject *kws)
+{
+    TRY{
+        const char *ename = NULL, *etype = NULL;
+        const char *pnames[] = {"name", "type", NULL};
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "|zz", (char**)pnames, &ename, &etype))
+            return NULL;
+
+        PyRef<> ret(PyList_New(0));
+
+        std::pair<Machine::lookup_iterator, Machine::lookup_iterator> range;
+
+        if(ename && etype) {
+            return PyErr_Format(PyExc_ValueError, "only one of 'ename' or 'etype' may be given");
+        } else if(ename) {
+            range = machine->machine->equal_range(ename);
+        } else if(etype) {
+            range = machine->machine->equal_range_type(etype);
+        } else {
+            range = machine->machine->all_range();
+        }
+
+        for(; range.first!=range.second; ++range.first) {
+            ElementVoid *elem = *range.first;
+
+            PyRef<> pyidx(PyInt_FromLong(elem->index));
+
+            if(PyList_Append(ret.py(), pyidx.py()))
+                return NULL;
+        }
+
+        return ret.release();
+    }CATCH()
+}
+
+static
 Py_ssize_t PyMachine_len(PyObject *raw)
 {
     TRY{
@@ -246,6 +282,9 @@ static PyMethodDef PyMachine_methods[] = {
     {"reconfigure", (PyCFunction)&PyMachine_reconfigure, METH_VARARGS|METH_KEYWORDS,
      "reconfigure(index, {'variable':int|str})\n"
      "Change the configuration of an element."},
+    {"find", (PyCFunction)&PyMachine_find, METH_VARARGS|METH_KEYWORDS,
+    "find(ename=None, etype=None) -> [int]\n"
+    "Return a list of element indices for element name or type matching the given string."},
     {NULL, NULL, 0, NULL}
 };
 

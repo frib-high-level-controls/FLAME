@@ -360,6 +360,11 @@ public:
     //! iterator for use with equal_range() and equal_range_type()
     typedef value_proxy_iterator<p_lookup_t::iterator> lookup_iterator;
 
+    std::pair<lookup_iterator, lookup_iterator> all_range() {
+        return std::make_pair(lookup_iterator(p_lookup.begin()),
+                              lookup_iterator(p_lookup.end()));
+    }
+
     //! Return a pair of iterators for the sequence [first, second) of those elements
     //! with the given name.
     std::pair<lookup_iterator, lookup_iterator> equal_range(const std::string& name) {
