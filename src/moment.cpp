@@ -898,7 +898,10 @@ struct ElementSBend : public MomentElementBase
         for(size_t i=0; i<last_real_in.size(); i++) {
             double phis_temp = ST.moment0[i][state_t::PS_S];
 
-            ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
+            ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+
+            noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+            noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
 
             double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
@@ -918,9 +921,6 @@ struct ElementSBend : public MomentElementBase
                 ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
             } else
                 ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
-
-            noalias(scratch)  = prod(transfer[i], ST.moment1[i]);
-            noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
         }
 
         ST.calc_rms();
