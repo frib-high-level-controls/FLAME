@@ -468,7 +468,7 @@ class TestToStrl(unittest.TestCase, MomentTest):
             'phis':asfarray([2.0236417753279932e+03, 2.0236356660500376e+03, 2.0236326008320109e+03, 2.0236318853736768e+03, 2.0236328811007140e+03]),
         }, max=-1)
 
-class TestToStrl(unittest.TestCase, MomentTest):
+class TestToChgStrErr(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
     $ ./tools/flame -N <element_name> \
