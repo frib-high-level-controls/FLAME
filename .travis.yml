@@ -1,3 +1,4 @@
+
 sudo: required
 dist: trusty
 addons:
@@ -23,23 +24,24 @@ addons:
     - libmpfr-dev
     - cppcheck
 language: python
-python:
-  - "2.7"
-  - "3.4"
 cache: pip
-env:
-  - PROF=deb7
-  - PROF=deb8
-  - PROF=deb8 XTRA=-DCMAKE_CXX_FLAGS=-std=c++11
 install:
  - pip install -r requirements-${PROF}.txt
  - mkdir build
- - (cd build && cmake -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=`which python` -DNEED_PYTHON=ON $XTRA ..)
+ - (cd build && cmake -DCMAKE_BUILD_TYPE=$BTYPE -DPYTHON_EXECUTABLE=`which python` -DNEED_PYTHON=ON $XTRA ..)
  - make -C build -j2 VERBOSE=1
 script: cd build && ctest --output-on-failure
 matrix:
-  exclude:
+  include:
+  - python: "2.7"
+    env: PROF=deb7 BTYPE=RELEASE
+  - python: "2.7"
+    env: PROF=deb8 BTYPE=RELEASE
+  - python: "2.7"
+    env: PROF=deb8 BTYPE=DEBUG
   - python: "3.4"
-    env: PROF=deb7
+    env: PROF=deb8 BTYPE=RELEASE
   - python: "3.4"
-    env: PROF=deb7 XTRA=-DCMAKE_CXX_FLAGS=-std=c++11
+    env: PROF=deb8 BTYPE=DEBUG
+  - python: "3.4"
+    env: PROF=deb8 BTYPE=RELEASE XTRA=-DCMAKE_CXX_FLAGS=-std=c++11
