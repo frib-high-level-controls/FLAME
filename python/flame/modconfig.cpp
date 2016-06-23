@@ -24,21 +24,27 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
     if(depth>3)
         throw std::runtime_error("too deep for Dict2Config");
 
-    PyObject *key, *value;
-    Py_ssize_t pos = 0;
+    PyRef<> iter(PyObject_GetIter(dict));
+    while(true) {
+        PyObject *key = PyIter_Next(iter.py());
+        if(!key) break;
+        PyRef<> keyref(key);
+        PyObject *value = PyDict_GetItem(dict, keyref.py()); // borrowed
 
-    while(PyDict_Next(dict, &pos, &key, &value)) {
-        PyRef<> keyref(key, borrow());
         PyCString skey(keyref);
         const char *kname = skey.c_str();
 
-        PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(value);
-        if(valuetype==&PyFloat_Type) { // scalar double
-            double val = PyFloat_AsDouble(value);
-            ret.set<double>(kname, val);
+        if(PyArray_Check(value)) { // array as vector<double>
+            PyRef<> arr(PyArray_ContiguousFromAny(value, NPY_DOUBLE, 0, 2));
+            double *buf = (double*)PyArray_DATA(arr.py());
+            std::vector<double> temp(PyArray_SIZE(arr.py()));
+            std::copy(buf, buf+temp.size(), temp.begin());
 
-        } else if(valuetype==&PyInt_Type) { // scalar integer (treated as double)
-            long val = PyInt_AsLong(value);
+            ret.swap<std::vector<double> >(kname, temp);
+
+        } else if(PyNumber_Check(value)) { // scalar as double
+            PyRef<> dval(PyNumber_Float(value));
+            double val = PyFloat_AsDouble(dval.py());
             ret.set<double>(kname, val);
 
         } else if(PyUnicode_Check(value) || (PY_MAJOR_VERSION < 3 && PyBytes_Check(value))) { // string
@@ -47,14 +53,6 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
             const char *val = sval.c_str();
 
             ret.set<std::string>(kname, val);
-
-        } else if(PyArray_Check(value)) { // array (ndarray)
-            PyRef<> arr(PyArray_ContiguousFromAny(value, NPY_DOUBLE, 0, 2));
-            double *buf = (double*)PyArray_DATA(arr.py());
-            std::vector<double> temp(PyArray_SIZE(arr.py()));
-            std::copy(buf, buf+temp.size(), temp.begin());
-
-            ret.swap<std::vector<double> >(kname, temp);
 
         } else if(PySequence_Check(value)) { // list of dict
             Py_ssize_t N = PySequence_Size(value);
@@ -69,8 +67,7 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
                 if(!PyDict_Check(elem))
                     throw std::invalid_argument("lists must contain only dict()s");
 
-                //output.push_back(ret.new_scope()); // TODO: can't use scoping here since iteration order of PyDict_Next() is not stable
-                output.push_back(Config());
+                output.push_back(ret.new_scope());
 
                 Dict2Config(output.back(), elem, depth+1); // inheirt parent scope
             }
@@ -78,9 +75,8 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
             ret.set<Config::vector_t>(kname, output);
 
         } else {
-            std::ostringstream msg;
-            msg<<"Must be a dict, not "<<valuetype->tp_name;
-            throw std::invalid_argument(msg.str());
+            PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(value);
+            throw std::invalid_argument(SB()<<"Must be a dict, not "<<valuetype->tp_name);
         }
     }
 }

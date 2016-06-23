@@ -8,7 +8,7 @@ import numpy
 from numpy import testing as NT
 from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 
-from .. import Machine
+from .. import Machine, GLPSParser
 import sys
 
 class testMomentSingle(unittest.TestCase):
@@ -130,6 +130,14 @@ NCharge = [1000, 1010];
 elem0 : source, vector_variable="IV", matrix_variable="IM";
 foo : LINE = (elem0);
 '''
+
+    def test_through_dict(self):
+        P = GLPSParser()
+        L = P.parse(self.lattice)
+        M = Machine(L)
+        print("E", L)
+        print("A", M.conf())
+        self.assertEqual(L['Frf'], M.conf()['Frf'])
 
     def test_source_single(self):
         """See that source element initializes correctly for a single charge state
