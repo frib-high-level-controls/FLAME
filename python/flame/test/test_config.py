@@ -14,6 +14,13 @@ from .. import GLPSParser
 import os
 datadir = os.path.dirname(__file__)
 
+class testPrint(unittest.TestCase):
+    def test_unicode(self):
+        P = dictshow({ 'elements':[{ 'name':'drift_1', 'type':'drift' }] })
+        self.assertEqual(P, 'drift_1: drift;\ndefault: LINE = (drift_1);\nUSE: default;\n')
+
+        P = dictshow({ 'elements':[{ 'name':u'drift_1', 'type':u'drift' }] })
+        self.assertEqual(P, 'drift_1: drift;\ndefault: LINE = (drift_1);\nUSE: default;\n')
 
 class testParse(unittest.TestCase):
     maxDiff = 1000

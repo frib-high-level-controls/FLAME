@@ -41,7 +41,7 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
             long val = PyInt_AsLong(value);
             ret.set<double>(kname, val);
 
-        } else if(PyString_Check(value)) { // string
+        } else if(PyUnicode_Check(value) || (PY_MAJOR_VERSION < 3 && PyBytes_Check(value))) { // string
             PyRef<> valref(value, borrow());
             PyCString sval(valref);
             const char *val = sval.c_str();
