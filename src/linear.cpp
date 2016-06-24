@@ -222,7 +222,7 @@ struct ElementDrift : public Base
     ElementDrift(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*MtoMM; // Convert from [m] to [mm].
+        double L = this->length*MtoMM; // Convert from [m] to [mm].
 
         this->transfer(state_t::PS_X, state_t::PS_PX) = L;
         this->transfer(state_t::PS_Y, state_t::PS_PY) = L;
@@ -243,7 +243,7 @@ struct ElementSBend : public Base
     ElementSBend(const Config& c)
         :base_t(c)
     {
-        double L   = c.get<double>("L")*MtoMM,
+        double L   = this->length*MtoMM,
                phi = c.get<double>("phi"),               // [rad].
                rho = L/phi,
                K   = c.get<double>("K", 0e0)/sqr(MtoMM), // [1/m^2].
@@ -271,7 +271,7 @@ struct ElementQuad : public Base
     ElementQuad(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*MtoMM,
+        double L = this->length*MtoMM,
                //B2 = c.get<double>("B2"),
                K = c.get<double>("K", 0e0)/sqr(MtoMM);
 
@@ -297,7 +297,7 @@ struct ElementSolenoid : public Base
     ElementSolenoid(const Config& c)
         :base_t(c)
     {
-        double L = c.get<double>("L")*MtoMM,      // Convert from [m] to [mm].
+        double L = this->length*MtoMM,      // Convert from [m] to [mm].
 //               B = c.get<double>("B"),
                K = c.get<double>("K", 0e0)/MtoMM, // Convert from [m] to [mm].
                C = ::cos(K*L),
