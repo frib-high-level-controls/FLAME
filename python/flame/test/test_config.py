@@ -199,7 +199,9 @@ foo: LINE = (x1, x1);
         C = OrderedDict(C['elements'][0])
         assert_array_equal(C['extra'], asarray([1,3,5]))
 
-class testScope(unittest.TestCase):
+class testScopeDict(unittest.TestCase):
+    'Test Config scoping when constructing from dict'
+
     def test_right(self):
         L = OrderedDict([
             ('phi', 1.0), # define before use
@@ -222,6 +224,30 @@ class testScope(unittest.TestCase):
         ])
 
         self.assertRaisesRegexp(KeyError, '.*issing.*phi.*', Machine, L)
+
+    def test_overwrite1(self):
+        L = OrderedDict([
+            ('phi', 1.0),
+            ('elements', [
+                [('name', 'X'), ('type', 'sbend'), ('phi',2.0), ],
+            ]),
+            ('sim_type', 'Vector'),
+        ])
+
+        M = Machine(L)
+        self.assertEqual(M.conf(0)['phi'], 2.0)
+
+    def test_overwrite2(self):
+        L = OrderedDict([
+            ('elements', [
+                [('name', 'X'), ('type', 'sbend'), ('phi',2.0), ],
+            ]),
+            ('phi', 1.0),
+            ('sim_type', 'Vector'),
+        ])
+
+        M = Machine(L)
+        self.assertEqual(M.conf(0)['phi'], 2.0)
 
 class testHDF5(unittest.TestCase):
     def test_good_explicit(self):
