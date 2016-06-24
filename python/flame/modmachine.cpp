@@ -95,7 +95,7 @@ PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
         Config C;
         if(d==Py_None) {
             C = machine->machine->conf();
-        } else if(PyMapping_Check(d)) {
+        } else if(PyDict_Check(d)) {
             if(PyObject_IsTrue(W)) {
                 C = machine->machine->conf();
                 C.push_scope();

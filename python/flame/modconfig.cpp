@@ -66,7 +66,7 @@ void List2Config(Config& ret, PyObject *list, unsigned depth)
 
                 PyRef<> list;
                 if(PyDict_Check(elem)) {
-                    list.reset(PyDict_Items(elem));
+                    list.reset(PyMapping_Items(elem));
                     elem = list.py();
                 }
                 if(!PyList_Check(elem)) {
@@ -166,7 +166,7 @@ PyObject* PyGLPSPrint(PyObject *, PyObject *args)
 
         PyRef<> list;
         if(PyDict_Check(inp)) {
-            list.reset(PyDict_Items(inp));
+            list.reset(PyMapping_Items(inp));
             inp = list.py();
         }
         if(!PyList_Check(inp))
@@ -232,15 +232,8 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
     std::auto_ptr<Config> C;
 
     PyRef<> listref;
-    if(PyDict_Check(conf)) {
-        listref.reset(PyDict_Items(conf));
-        conf = listref.py();
-    }
 
-    if(PyList_Check(conf)) {
-        C.reset(list2conf(conf));
-
-    } else if(PyObject_HasAttrString(conf, "read")) { // file-like
+    if(PyObject_HasAttrString(conf, "read")) { // file-like
         PyCString pyname;
 
         if(!path && PyObject_HasAttrString(conf, "name")) {
@@ -266,7 +259,16 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
 #endif
 
     } else {
-        throw std::invalid_argument("'config' must be dict, list of tuples, or byte buffer");
+        if(PyDict_Check(conf)) {
+            listref.reset(PyMapping_Items(conf));
+            conf = listref.py();
+        }
+        if(PyList_Check(conf)) {
+            C.reset(list2conf(conf));
+
+        } else {
+            throw std::invalid_argument("'config' must be dict, list of tuples, or byte buffer");
+        }
     }
 
     return C.release();

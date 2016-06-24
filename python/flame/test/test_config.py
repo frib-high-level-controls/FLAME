@@ -10,8 +10,8 @@ from numpy import asarray
 from numpy.testing import assert_array_almost_equal as assert_array_equal
 from numpy.testing import assert_equal
 
-from .._internal import (GLPSPrinter as dictshow, _GLPSParse)
-from .. import GLPSParser
+from .._internal import (GLPSPrinter as dictshow)
+from .. import GLPSParser, Machine
 import os
 datadir = os.path.dirname(__file__)
 
@@ -198,6 +198,30 @@ foo: LINE = (x1, x1);
         assert_array_equal(C['hello'], asarray([1,2,3,4]))
         C = OrderedDict(C['elements'][0])
         assert_array_equal(C['extra'], asarray([1,3,5]))
+
+class testScope(unittest.TestCase):
+    def test_right(self):
+        L = OrderedDict([
+            ('phi', 1.0), # define before use
+            ('elements', [
+                [('name', 'X'), ('type', 'sbend'),],
+            ]),
+            ('sim_type', 'Vector'),
+        ])
+
+        M = Machine(L)
+        self.assertEqual(M.conf(0)['phi'], 1.0)
+
+    def test_wrong(self):
+        L = OrderedDict([
+            ('elements', [
+                [('name', 'X'), ('type', 'sbend'),],
+            ]),
+            ('phi', 1.0), # definition after use (implied under 'elements')
+            ('sim_type', 'Vector'),
+        ])
+
+        self.assertRaisesRegexp(KeyError, '.*issing.*phi.*', Machine, L)
 
 class testHDF5(unittest.TestCase):
     def test_good_explicit(self):

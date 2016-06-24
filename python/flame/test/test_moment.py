@@ -132,22 +132,6 @@ elem0 : source, vector_variable="IV", matrix_variable="IM";
 foo : LINE = (elem0);
 '''
 
-    def test_through_dict(self):
-        "Check that list is translated to Config w/ scope"
-        P = GLPSParser()
-        L = P.parse(self.lattice)
-        print("E", L)
-        M = Machine(L)
-
-        # check that 'Frf' is defined in file scope, but not (explicitly) in element scope
-        L = OrderedDict(L)
-        self.assertIn('Frf', L)
-        E = OrderedDict(L['elements'][0])
-        self.assertNotIn('Frf', E)
-
-        # however, 'Frf' is still found implicitly at element scope
-        self.assertEqual(L['Frf'], M.conf()['Frf'])
-
     def test_source_single(self):
         """See that source element initializes correctly for a single charge state
 
