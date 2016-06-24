@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import unittest
+from collections import OrderedDict
 
 import os
 datadir = os.path.dirname(__file__)
@@ -91,14 +92,14 @@ x1: drift, L=4; # comments are ignored
 foo: LINE = (x1, x1);
 """)
         
-        self.assertEqual(C, {
-            'hello':"test\x1f",
-            'name':'foo',
-            'elements':[
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x1', 'type':'drift', 'L':4.0},
-            ],
-        })
+        self.assertListEqual(C, [
+            ('elements', [
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',4.0),('name','x1'), ('type','drift')],
+            ]),
+            ('hello', "test\x1f"),
+            ('name', 'foo'),
+        ])
 
     def test_good(self):
         P = GLPSParser()
@@ -109,14 +110,14 @@ x1: drift, L=4;
 foo: LINE = (x1, x1);
 """)
 
-        self.assertEqual(C, {
-            'hello':42.0,
-            'name':'foo',
-            'elements':[
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x1', 'type':'drift', 'L':4.0},
-            ],
-        })
+        self.assertListEqual(C, [
+            ('elements', [
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',4.0),('name','x1'), ('type','drift')],
+            ]),
+            ('hello', 42.0),
+            ('name', 'foo'),
+        ])
 
     def test_good2(self):
         P = GLPSParser()
@@ -128,15 +129,15 @@ x:2: quad, L=1;
 f:oo: LINE = (2*x1, x:2);
 """)
 
-        self.assertEqual(C, {
-            'hello':42.0,
-            'name':'f:oo',
-            'elements':[
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x:2', 'type':'quad', 'L':1.0},
-            ],
-        })
+        self.assertListEqual(C, [
+            ('elements', [
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',1.0),('name','x:2'), ('type','quad')],
+            ]),
+            ('hello', 42.0),
+            ('name', 'f:oo'),
+        ])
 
     def test_good3(self):
         P = GLPSParser()
@@ -149,18 +150,18 @@ x2: quad, L=1;
 foo: LINE = (S, 2*x1, x2);
 """)
 
-        E = {
-            'hello':42.0,
-            'name':'foo',
-            'elements':[
-                {'name':'S', 'type':'source'},
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x2', 'type':'quad', 'L':1.0},
-            ],
-        }
+        E = [
+            ('elements', [
+                [('name','S'), ('type','source')],
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',1.0),('name','x2'), ('type','quad')],
+            ]),
+            ('hello', 42.0),
+            ('name', 'foo'),
+        ]
         try:
-            self.assertEqual(C, E)
+            self.assertListEqual(C, E)
         except:
             from pprint import pformat
             print('Actual', pformat(C))
@@ -176,14 +177,14 @@ x1: drift, L=4;
 foo: LINE = (0*x1, (3-1)*x1);
 """)
 
-        self.assertEqual(C, {
-            'hello':42.0,
-            'name':'foo',
-            'elements':[
-                {'name':'x1', 'type':'drift', 'L':4.0},
-                {'name':'x1', 'type':'drift', 'L':4.0},
-            ],
-        })
+        self.assertListEqual(C, [
+            ('elements', [
+                [('L',4.0),('name','x1'), ('type','drift')],
+                [('L',4.0),('name','x1'), ('type','drift')],
+            ]),
+            ('hello', 42.0),
+            ('name', 'foo'),
+        ])
 
     def test_arr(self):
         P = GLPSParser()
@@ -192,9 +193,11 @@ hello = [1,2, 3, 4];
 x1: drift, L=4, extra = [1, 3, 5];
 foo: LINE = (x1, x1);
 """)
+        C = OrderedDict(C)
 
         assert_array_equal(C['hello'], asarray([1,2,3,4]))
-        assert_array_equal(C['elements'][0]['extra'], asarray([1,3,5]))
+        C = OrderedDict(C['elements'][0])
+        assert_array_equal(C['extra'], asarray([1,3,5]))
 
 class testHDF5(unittest.TestCase):
     def test_good_explicit(self):
@@ -202,7 +205,7 @@ class testHDF5(unittest.TestCase):
 
         with open(os.path.join(datadir, "test_h5.lat"), "rb") as F:
             C = P.parse(F.read(), path=datadir) # explicitly provide path
-
+        C = OrderedDict(C)
         self.assertEqual(C['plainname'], os.path.join(datadir, "test.h5"))
         self.assertEqual(C['h5name'], os.path.join(datadir, "test.h5/foo/baz"))
 
@@ -211,6 +214,7 @@ class testHDF5(unittest.TestCase):
 
         with open(os.path.join(datadir, "test_h5.lat"), "rb") as F:
             C = P.parse(F) # uses os.path.dirname(F.name)
+        C = OrderedDict(C)
 
         self.assertEqual(C['plainname'], os.path.join(datadir, "test.h5"))
         self.assertEqual(C['h5name'], os.path.join(datadir, "test.h5/foo/baz"))
@@ -227,16 +231,22 @@ foo: LINE = (x1);
 """%os.path.join(datadir,"parse1.lat"))
         print("actual", C)
 
-        self.assertEqual(C, {
-            'name':'foo',
-            'elements':[
-                {'name':'x1', 'type':'drift', 'L':4.0, 'nest':[{
-                    'name':'baz',
-                    'elements':[
-                        {'name':'foo', 'type':'bar'},
-                        {'name':'foo', 'type':'bar'},
-                    ]
-                    }]
-                },
-            ],
-        })
+        self.assertEqual(C, [
+            ('elements', [
+                [
+                    ('L', 4.0),
+                    ('name', 'x1'),
+                    ('nest', [
+                        [
+                            ('elements', [
+                                [('name','foo'), ('type','bar')],
+                                [('name','foo'), ('type','bar')],
+                            ]),
+                            ('name', 'baz'),
+                        ],
+                    ]),
+                    ('type', 'drift'),
+                ],
+            ]),
+            ('name', 'foo'),
+        ])
