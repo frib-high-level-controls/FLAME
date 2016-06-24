@@ -127,18 +127,18 @@ struct confval : public boost::static_visitor<PyObject*>
 
 PyObject* conf2dict(const Config *conf)
 {
-    PyRef<> ret(PyDict_New());
+    PyRef<> list(PyList_New(0));
 
     for(Config::const_iterator it=conf->begin(), end=conf->end();
         it!=end; ++it)
     {
-        if(PyDict_SetItemString(ret.py(), it->first.c_str(),
-                                boost::apply_visitor(confval(), it->second)
-                                ))
+        PyRef<> tup(Py_BuildValue("sO", it->first.c_str(),
+                                  boost::apply_visitor(confval(), it->second)));
+        if(PyList_Append(list.py(), tup.py()))
             throw std::runtime_error("Failed to insert into dictionary from conf2dict");
     }
 
-    return ret.release();
+    return list.releasePy();
 }
 
 Config* dict2conf(PyObject *dict)

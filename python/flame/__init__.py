@@ -1,4 +1,6 @@
 
+from collections import OrderedDict
+
 from ._internal import Machine, GLPSPrinter, _GLPSParse, version, cversion
 
 class GLPSParser(object):
@@ -16,9 +18,9 @@ class GLPSParser(object):
 
         'extra' may be used to provide additional variable definitions when parsing.
 
-        Returns a dict.
+        Returns an OrderedDict.
         """
-        return _GLPSParse(*args, **kws)
+        return OrderedDict(_GLPSParse(*args, **kws))
 
 __all__ = ['Machine',
     'GLPSPrinter',
