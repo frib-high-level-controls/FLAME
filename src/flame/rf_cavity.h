@@ -57,10 +57,13 @@ struct ElementRFCavity : public MomentElementBase
                   CavData; // from thinlenlon_*.txt
 
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
-    double phi_ref;
+    double fRF, IonFys, phi_ref;
+    std::vector<double> ave_beta, ave_gamma, accIonW;
     int MpoleLevel;
     int cavi;
     bool forcettfcalc;
+
+    unsigned EmitGrowth;
 
     ElementRFCavity(const Config& c);
 
@@ -79,6 +82,11 @@ struct ElementRFCavity : public MomentElementBase
                    const CavTLMLineType& linetab) const;
 
     void PropagateLongRFCav(Particle &ref);
+
+    void calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Particle &state, const int n,
+                             const double betaf, const double gamaf,
+                             const double aveX2i, const double cenX, const double aveY2i, const double cenY,
+                             state_t::matrix_t &matOut);
 
     void InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab);
 
@@ -101,6 +109,7 @@ struct ElementRFCavity : public MomentElementBase
         CavData       = O->CavData;
         CavTLMLineTab = O->CavTLMLineTab;
         phi_ref       = O->phi_ref;
+        EmitGrowth    = O->EmitGrowth;
         MpoleLevel    = O->MpoleLevel;
         cavi          = O->cavi;
         forcettfcalc  = O->forcettfcalc;
@@ -110,6 +119,8 @@ struct ElementRFCavity : public MomentElementBase
     {
         state_t&  ST = static_cast<state_t&>(s);
         using namespace boost::numeric::ublas;
+
+        double x0[2], x2[2];
 
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
@@ -141,6 +152,13 @@ struct ElementRFCavity : public MomentElementBase
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
+
+            // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
+            x0[0]  = ST.moment0[i][state_t::PS_X];
+            x0[1]  = ST.moment0[i][state_t::PS_Y];
+            x2[0]  = ST.moment1[i](0, 0);
+            x2[1]  = ST.moment1[i](2, 2);
+
             ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
 
             ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
@@ -153,6 +171,11 @@ struct ElementRFCavity : public MomentElementBase
 
             scratch  = prod(transfer[i], ST.moment1[i]);
             ST.moment1[i] = prod(scratch, trans(transfer[i]));
+
+            if (EmitGrowth) {
+                calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
+                ST.moment1[i] = scratch;
+            }
 
             scratch  = prod(misalign_inv[i], ST.moment1[i]);
             ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));

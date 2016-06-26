@@ -213,8 +213,8 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     if (forcettfcalc || ttf_debug) {
         calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
         V0 *= EfieldScl;
-        if(ttf_debug)
-            printf("\n%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+//        if(ttf_debug)
+//            printf("\n%19.10e %19.10e %19.10e %19.10e %19.10e %19.10e\n", Ecen, T, Tp, S, Sp, V0);
         return;
     }
 
@@ -378,7 +378,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     // Convert from [mm] to [m].
 //    Ecen /= MtoMM;
 
-    if (ttf_debug) printf("%19.12e %19.12e %19.12e %19.12e %19.12e %19.12e\n", Ecen, T, Tp, S, Sp, V0);
+//    if (ttf_debug) printf("%19.10e %19.10e %19.10e %19.10e %19.10e %19.10e\n", Ecen, T, Tp, S, Sp, V0);
 }
 
 
@@ -662,9 +662,15 @@ int get_MpoleLevel(const Config &conf)
 ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
+    ,EmitGrowth(0)
     ,MpoleLevel(get_MpoleLevel(c))
     ,forcettfcalc(c.get<double>("forcettfcalc", 0.0)!=0.0)
 {
+    std::istringstream strm(c.get<std::string>("EmitGrowth", "0"));
+    strm>>EmitGrowth;
+    if(!strm.eof() && strm.fail())
+        throw std::runtime_error("EmitGrowth must be an integer");
+
     std::string CavType      = conf().get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", "")),
                 fldmap(cavfile),
@@ -1208,7 +1214,7 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 
 void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 {
-    double      fRF, multip, IonFys, EfieldScl, caviFy, IonFy_i, IonFy_o;
+    double      multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
 
     fRF       = conf().get<double>("f");
     multip    = fRF/SampleFreq;
@@ -1237,10 +1243,70 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 }
 
 
+void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Particle &state, const int n, const double betaf, const double gamaf,
+                                          const double aveX2i, const double cenX, const double aveY2i, const double cenY,
+                                          state_t::matrix_t &matOut)
+{
+    // Evaluate emittance growth.
+    int       k;
+    double    ionLamda, E0TL, DeltaPhi, kpX, fDeltaPhi, f2DeltaPhi, gPhisDeltaPhi, deltaAveXp2f, XpIncreaseFactor;
+    double    kpY, deltaAveYp2f, YpIncreaseFactor, kpZ, ionK, aveZ2i, deltaAveZp2, longiTransFactor, ZpIncreaseFactor;
+
+    matOut = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
+
+    matOut = matIn;
+
+    ionLamda = C0/fRF*MtoMM;
+
+    E0TL     = accIonW[n]/cos(IonFys)/state.IonZ;
+
+    // for rebuncher, because no acceleration, E0TL would be wrong when cos(ionFys) is devided.
+    if (cos(IonFys) > -0.0001 && cos(IonFys) < 0.0001) E0TL = 0e0;
+    DeltaPhi = sqrt(matIn(4, 4));
+    // ionLamda in m, kpX in 1/mm
+    kpX              = -M_PI*fabs(state.IonZ)*E0TL/state.IonEs/sqr(ave_beta[n]*ave_gamma[n])/betaf/gamaf/ionLamda;
+    fDeltaPhi        = 15e0/sqr(DeltaPhi)*(3e0/sqr(DeltaPhi)*(sin(DeltaPhi)/DeltaPhi-cos(DeltaPhi))-(sin(DeltaPhi)/DeltaPhi));
+    f2DeltaPhi       = 15e0/sqr(2e0*DeltaPhi)*(3e0/sqr(2e0*DeltaPhi)
+                       *(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)-cos(2e0*DeltaPhi))-(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)));
+    gPhisDeltaPhi    = 0.5e0*(1+(sqr(sin(IonFys))-sqr(cos(IonFys)))*f2DeltaPhi);
+    deltaAveXp2f     = kpX*kpX*(gPhisDeltaPhi-sqr(sin(IonFys)*fDeltaPhi))*(aveX2i+cenX*cenX);
+    XpIncreaseFactor = 1e0;
+
+    if (deltaAveXp2f+matIn(1, 1) > 0e0) XpIncreaseFactor = sqrt((deltaAveXp2f+matIn(1, 1))/matIn(1, 1));
+
+     // ionLamda in m
+    kpY = -M_PI*fabs(state.IonZ)*E0TL/state.IonEs/sqr(ave_beta[n]*ave_gamma[n])/betaf/gamaf/ionLamda;
+    deltaAveYp2f = sqr(kpY)*(gPhisDeltaPhi-sqr(sin(IonFys)*fDeltaPhi))*(aveY2i+sqr(cenY));
+    YpIncreaseFactor = 1.0;
+    if (deltaAveYp2f+matIn(3, 3)>0) {
+        YpIncreaseFactor = sqrt((deltaAveYp2f+matIn(3, 3))/matIn(3, 3));
+    }
+
+    kpZ = -2e0*kpX*ave_gamma[n]*ave_gamma[n];
+     //unit: 1/mm
+    ionK = 2e0*M_PI/(ave_beta[n]*ionLamda);
+    aveZ2i = DeltaPhi*DeltaPhi/ionK/ionK;
+    deltaAveZp2 = sqr(kpZ*DeltaPhi)*aveZ2i*(cos(IonFys)*cos(IonFys)/8e0+DeltaPhi*sin(IonFys)/576e0);
+    longiTransFactor = 1e0/(ave_gamma[n]-1e0)/state.IonEs*MeVtoeV;
+    ZpIncreaseFactor = 1e0;
+    if (deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor > 0e0)
+        ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor))/(matIn(5, 5)*sqr(longiTransFactor)));
+
+    for (k = 0; k < PS_Dim; k++) {
+        matOut(1, k) *= XpIncreaseFactor;
+        matOut(k, 1) *= XpIncreaseFactor;
+        matOut(3, k) *= YpIncreaseFactor;
+        matOut(k, 3) *= YpIncreaseFactor;
+        matOut(5, k) *= ZpIncreaseFactor;
+        matOut(k, 5) *= ZpIncreaseFactor;
+    }
+}
+
+
 void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
     int         cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o;
+    double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o, beta, gamma;
 
 //    std::cout<<"RF recompute start "<<real<<"\n";
 
@@ -1276,7 +1342,17 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
     fRF       = conf().get<double>("f");
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
 
+    ave_beta.push_back(real.beta);
+    ave_gamma.push_back(real.gamma);
+    accIonW.push_back(real.IonW);
+
     ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o); // updates IonW
+
+    accIonW.back()   = real.IonW - accIonW.back();
+    gamma            = real.IonW/real.IonEs;
+    beta             = sqrt(1e0-1e0/sqr(gamma));
+    ave_beta.back()  = (ave_beta.back()+beta)/2e0;
+    ave_gamma.back() = (ave_gamma.back()+gamma)/2e0;
 
     real.IonEk       = real.IonW - real.IonEs;
     real.recalc();
