@@ -594,11 +594,12 @@ void MomentElementBase::show(std::ostream& strm, int level) const
 
 void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, value_t &M, value_t &IM) const
 {
-    state_t::matrix_t R, R_inv,
+    state_t::matrix_t R,
               scl     = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
               scl_inv = scl,
               T       = scl,
-              T_inv   = scl;
+              T_inv   = scl,
+              R_inv   = scl;
 
     scl(state_t::PS_S, state_t::PS_S)   /= -real.SampleIonK;
     scl(state_t::PS_PS, state_t::PS_PS) /= sqr(real.beta)*real.gamma*ST.ref.IonEs/MeVtoeV;
@@ -619,6 +620,7 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
 
     // J.B. Bug in TLM: should be inverse.
     RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
+//    inverse(R_inv, R);
 
     // Translate to center of element.
     T(state_t::PS_S,  6) = length/2e0*MtoMM;

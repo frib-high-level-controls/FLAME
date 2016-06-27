@@ -1282,14 +1282,14 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
         YpIncreaseFactor = sqrt((deltaAveYp2f+matIn(3, 3))/matIn(3, 3));
     }
 
-    kpZ = -2e0*kpX*ave_gamma[n]*ave_gamma[n];
+    kpZ = -2e0*kpX*sqr(ave_gamma[n]);
      //unit: 1/mm
     ionK = 2e0*M_PI/(ave_beta[n]*ionLamda);
-    aveZ2i = DeltaPhi*DeltaPhi/ionK/ionK;
-    deltaAveZp2 = sqr(kpZ*DeltaPhi)*aveZ2i*(cos(IonFys)*cos(IonFys)/8e0+DeltaPhi*sin(IonFys)/576e0);
+    aveZ2i = sqr(DeltaPhi)/sqr(ionK);
+    deltaAveZp2 = sqr(kpZ*DeltaPhi)*aveZ2i*(sqr(cos(IonFys))/8e0+DeltaPhi*sin(IonFys)/576e0);
     longiTransFactor = 1e0/(ave_gamma[n]-1e0)/state.IonEs*MeVtoeV;
     ZpIncreaseFactor = 1e0;
-    if (deltaAveZp2+matIn(5, 5)*longiTransFactor*longiTransFactor > 0e0)
+    if (deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor) > 0e0)
         ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor))/(matIn(5, 5)*sqr(longiTransFactor)));
 
     for (k = 0; k < PS_Dim; k++) {
