@@ -11,6 +11,9 @@ sim_type = "MomentMatrix";
 #                   2 include quadrupole terms.
 MpoleLevel = "2";
 
+# Include emittance growth from RF Cavity.
+EmitGrowth = "0";
+
 # Dipole strength adjusted to beam energy.
 HdipoleFitMode = "1";
 

@@ -82,7 +82,7 @@ void RotMat(const double dx, const double dy,
 
     Rz(1, 1) =  cos(theta_z); Rz(1, 3) =  sin(theta_z);
     // J.B. Bug in TLM: should be Rz(3, 1) vs. Rz(2, 1).
-    Rz(2, 1) = -sin(theta_z), Rz(3, 3) =  cos(theta_z);
+    Rz(3, 1) = -sin(theta_z), Rz(3, 3) =  cos(theta_z);
 
     R = prod(Ry, Rx);
     R = prod(Rz, R);
@@ -185,30 +185,30 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
 
     // Include dispersion.
     if (Kx == 0e0) {
-        dx = sqr(L)/2e0;
-        sx = L;
+        dx = sqr(L)/(2e0*rho);
+        sx = L/rho;
     } else if (Kx > 0e0) {
-        dx = (1e0-cos(sqrt(Kx)*L))/Kx;
-        sx = sin(sqrt(Kx)*L)/sqrt(Kx);
+        dx = (1e0-cos(sqrt(Kx)*L))/(rho*Kx);
+        sx = sin(sqrt(Kx)*L)/(rho*sqrt(Kx));
     } else {
-        dx = (1e0-cosh(sqrt(-Kx)*L))/Kx;
-        sx = sin(sqrt(Kx)*L)/sqrt(Kx);
+        dx = (1e0-cosh(sqrt(-Kx)*L))/(rho*Kx);
+        sx = sin(sqrt(Kx)*L)/(rho*sqrt(Kx));
     }
 
-    M(state_t::PS_X,  state_t::PS_PS) = dx/(rho*sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
-    M(state_t::PS_PX, state_t::PS_PS) = sx/(rho*sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
+    M(state_t::PS_X,  state_t::PS_PS) = dx/(sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
+    M(state_t::PS_PX, state_t::PS_PS) = sx/(sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
 
-    M(state_t::PS_S,  state_t::PS_X)  = sx/rho*dip_IonK;
-    M(state_t::PS_S,  state_t::PS_PX) = dx/rho*dip_IonK;
+    M(state_t::PS_S,  state_t::PS_X)  = sx*dip_IonK;
+    M(state_t::PS_S,  state_t::PS_PX) = dx*dip_IonK;
     // Low beta approximation.
     M(state_t::PS_S,  state_t::PS_PS) =
-            ((L-sx)/(Kx*sqr(rho))-L/sqr(ref_gamma))*dip_IonK
+            ((L/rho-sx)/(Kx*rho)-L/sqr(ref_gamma))*dip_IonK
             /(sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
 
     // Add dipole terms.
-    M(state_t::PS_S,  6) = ((L-sx)/(Kx*sqr(rho))*d-L/sqr(ref_gamma)*(d+qmrel))*dip_IonK;
-    M(state_t::PS_X,  6) = dx/rho*d;
-    M(state_t::PS_PX, 6) = sx/rho*d;
+    M(state_t::PS_S,  6) = ((L/rho-sx)/(Kx*rho)*d-L/sqr(ref_gamma)*(d+qmrel))*dip_IonK;
+    M(state_t::PS_X,  6) = dx*d;
+    M(state_t::PS_PX, 6) = sx*d;
 
     // Edge focusing.
     GetEdgeMatrix(rho, phi1, edge1);
