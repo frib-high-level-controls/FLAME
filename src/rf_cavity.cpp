@@ -1245,8 +1245,6 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
     double    ionLamda, E0TL, DeltaPhi, kpX, fDeltaPhi, f2DeltaPhi, gPhisDeltaPhi, deltaAveXp2f, XpIncreaseFactor;
     double    kpY, deltaAveYp2f, YpIncreaseFactor, kpZ, ionK, aveZ2i, deltaAveZp2, longiTransFactor, ZpIncreaseFactor;
 
-    matOut = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
-
     matOut = matIn;
 
     ionLamda = C0/fRF*MtoMM;
