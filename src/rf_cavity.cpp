@@ -1,6 +1,8 @@
 
 #include <fstream>
 
+#include <boost/lexical_cast.hpp>
+
 #include "flame/constants.h"
 #include "flame/moment.h"
 #include "flame/moment_sup.h"
@@ -662,16 +664,11 @@ int get_MpoleLevel(const Config &conf)
 ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
-    ,EmitGrowth(0)
     ,MpoleLevel(get_MpoleLevel(c))
     ,forcettfcalc(c.get<double>("forcettfcalc", 0.0)!=0.0)
+    ,EmitGrowth(boost::lexical_cast<unsigned>(c.get<std::string>("EmitGrowth", "0")))
 {
-    std::istringstream strm(c.get<std::string>("EmitGrowth", "0"));
-    strm>>EmitGrowth;
-    if(!strm.eof() && strm.fail())
-        throw std::runtime_error("EmitGrowth must be an integer");
-
-    std::string CavType      = conf().get<std::string>("cavtype");
+    std::string CavType      = c.get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", "")),
                 fldmap(cavfile),
                 mlpfile(cavfile);
@@ -708,7 +705,7 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         if(CavData.table.size1()==0 || CavData.table.size2()<2)
             throw std::runtime_error("field map needs 2+ columns");
     }catch(std::exception& e){
-        throw std::runtime_error(SB()<<"Error parsing "<<fldmap<<" : "<<e.what());
+        throw std::runtime_error(SB()<<"Error parsing '"<<fldmap<<"' : "<<e.what());
     }
 
     try{
@@ -717,7 +714,7 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         if(mlptable.table.size1()==0 || mlptable.table.size2()<8)
             throw std::runtime_error("CaviMlp needs 8+ columns");
     }catch(std::exception& e){
-        throw std::runtime_error(SB()<<"Error parsing "<<mlpfile<<" : "<<e.what());
+        throw std::runtime_error(SB()<<"Error parsing '"<<mlpfile<<"' : "<<e.what());
     }
 
     {
@@ -748,18 +745,14 @@ ElementRFCavity::ElementRFCavity(const Config& c)
                 params.E0 = 0.0;
 
             if(lstrm.fail() && !lstrm.eof()) {
-                std::ostringstream strm;
-                strm<<"Error parsing line "<<line<<" in "<<cavfile;
-                throw std::runtime_error(strm.str());
+                throw std::runtime_error(SB()<<"Error parsing line '"<<line<<"' in '"<<cavfile<<"'");
             }
 
             lattice.push_back(params);
         }
 
         if(fstrm.fail() && !fstrm.eof()) {
-            std::ostringstream strm;
-            strm<<"Error, extra chars at end of file (line "<<line<<") in "<<cavfile;
-            throw std::runtime_error(strm.str());
+            throw std::runtime_error(SB()<<"Error, extra chars at end of file (line "<<line<<") in '"<<cavfile<<"'");
         }
     }
 }
