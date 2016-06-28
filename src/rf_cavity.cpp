@@ -1207,7 +1207,7 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 }
 
 
-void ElementRFCavity::PropagateLongRFCav(Particle &ref)
+void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
 {
     double      multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
 

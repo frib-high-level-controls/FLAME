@@ -83,7 +83,7 @@ struct ElementRFCavity : public MomentElementBase
                    Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M,
                    const CavTLMLineType& linetab) const;
 
-    void PropagateLongRFCav(Particle &ref);
+    void PropagateLongRFCav(Particle &ref, double &phi_ref) const;
 
     void calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Particle &state, const int n,
                              const double betaf, const double gamaf,
@@ -195,7 +195,7 @@ struct ElementRFCavity : public MomentElementBase
 
         CavTLMLineTab.resize(last_real_in.size());
 
-        PropagateLongRFCav(ST.ref);
+        PropagateLongRFCav(ST.ref, phi_ref);
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?
