@@ -663,6 +663,8 @@ int get_MpoleLevel(const Config &conf)
 
 ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
+    ,fRF(conf().get<double>("f"))
+    ,IonFys(conf().get<double>("phi")*M_PI/180e0)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
     ,MpoleLevel(get_MpoleLevel(c))
     ,forcettfcalc(c.get<double>("forcettfcalc", 0.0)!=0.0)
@@ -1104,7 +1106,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
 
 void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                                 const double EfieldScl, const double IonFyi_s,
-                                const double IonEk_s, const double fRF, state_t::matrix_t &M,
+                                const double IonEk_s, state_t::matrix_t &M,
                                 CavTLMLineType &linetab) const
 {
     double CaviLambda, Ecen[2], T[2], Tp[2], S[2], Sp[2], V0[2];
@@ -1164,7 +1166,7 @@ void ElementRFCavity::GetCavMat(const int cavi, const int cavilabel, const doubl
 }
 
 
-void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state, const double IonFy0, const double fRF,
+void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state, const double IonFy0,
                                   const double EfieldScl, double &IonFy) const
 {
     size_t  n = CavData.table.size1();
@@ -1209,9 +1211,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 {
     double      multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
 
-    fRF       = conf().get<double>("f");
     multip    = fRF/SampleFreq;
-    IonFys    = conf().get<double>("phi")*M_PI/180e0;  // Synchrotron phase [rad].
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
 
     caviFy = GetCavPhase(cavi, ref, IonFys, multip);
@@ -1228,7 +1228,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref)
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
-    GetCavBoost(CavData, ref, IonFy_i, fRF, EfieldScl, IonFy_o);
+    GetCavBoost(CavData, ref, IonFy_i, EfieldScl, IonFy_o);
 
     ref.IonEk       = ref.IonW - ref.IonEs;
     ref.recalc();
@@ -1299,7 +1299,7 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
 void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
     int         cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, fRF, EfieldScl, IonFy_o, beta, gamma;
+    double      Rm, IonFy_i, Ek_i, EfieldScl, IonFy_o, beta, gamma;
 
 //    std::cout<<"RF recompute start "<<real<<"\n";
 
@@ -1332,14 +1332,13 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
     Ek_i      = real.IonEk;
     real.IonW = real.IonEk + real.IonEs;
 
-    fRF       = conf().get<double>("f");
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
 
     ave_beta.push_back(real.beta);
     ave_gamma.push_back(real.gamma);
     accIonW.push_back(real.IonW);
 
-    ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, fRF, EfieldScl, IonFy_o); // updates IonW
+    ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, EfieldScl, IonFy_o); // updates IonW
 
     accIonW.back()   = real.IonW - accIonW.back();
     gamma            = real.IonW/real.IonEs;
@@ -1361,7 +1360,7 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
 //             <<" fRF="<<fRF
 //             <<"\n";
 
-    GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, fRF, M, linetab);
+    GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, M, linetab);
 
 //    std::cout<<"RF recompute after  "<<real<<"\n"
 //             <<" YY "<<M<<"\n"
