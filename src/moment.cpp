@@ -618,7 +618,8 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
     M = prod(scl_inv, M);
 
     // J.B. Bug in TLM: should be inverse.
-    RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
+    //RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
+    inverse(R_inv, R);
 
     // Translate to center of element.
     T(state_t::PS_S,  6) = length/2e0*MtoMM;
@@ -819,8 +820,8 @@ struct ElementOrbTrim : public MomentElementBase
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-            transfer[i](state_t::PS_PX, 6) = theta_x*ST.ref.IonZ/ST.real[i].IonZ;
-            transfer[i](state_t::PS_PY, 6) = theta_y*ST.ref.IonZ/ST.real[i].IonZ;
+            transfer[i](state_t::PS_PX, 6) = theta_x*ST.real[i].IonZ/ST.ref.IonZ;
+            transfer[i](state_t::PS_PY, 6) = theta_y*ST.real[i].IonZ/ST.ref.IonZ;
 
             get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
@@ -1098,8 +1099,8 @@ struct ElementEDipole : public MomentElementBase
                 R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
                 R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
 
-                noalias(scratch)  = prod(transfer[i], misalign[i]);
-                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+                noalias(scratch)  = prod(R, transfer[i]);
+                noalias(transfer[i]) = prod(scratch, trans(R));
                 //TODO: no-op code?  results are unconditionally overwritten
             }
 

@@ -21,7 +21,7 @@ void inverse(MomentElementBase::value_t& out, const MomentElementBase::value_t& 
     if(lu_factorize(scratch, pm)!=0)
         throw std::runtime_error("Failed to invert matrix");
     out.assign(identity_matrix<double>(scratch.size1()));
-    //out = identity_matrix<double>(scratch.size1());
+    out = identity_matrix<double>(scratch.size1());
     lu_substitute(scratch, pm, out);
 }
 

@@ -118,12 +118,19 @@ struct ElementRFCavity : public MomentElementBase
             last_ref_in = ST.ref;
             last_real_in = ST.real;
             resize_cache(ST);
+            state_t::matrix_t dummy_mat;
+
             // need to re-calculate energy dependent terms
+
+            for(size_t i=0; i<last_real_in.size(); i++)
+                get_misalign(ST, ST.real[i], misalign[i], dummy_mat);
+            // only use entrance misalignment matrix, exit is dummy.
 
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
             for(size_t i=0; i<last_real_in.size(); i++)
-                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                get_misalign(ST, ST.real[i], dummy_mat, misalign_inv[i]);
+            // only use exit misalignment matrix, entrance is dummy.
 
             ST.recalc();
 
@@ -176,13 +183,13 @@ struct ElementRFCavity : public MomentElementBase
             transfer[i](state_t::PS_Y, state_t::PS_PY) = length;
 
             // J.B. Bug in TLM.
-            double SampleIonK = ST.real[i].SampleIonK;
+            //double SampleIonK = ST.real[i].SampleIonK;
 
 
             InitRFCav(ST.real[i], transfer[i], CavTLMLineTab[i]);
 
             // J.B. Bug in TLM.
-            ST.real[i].SampleIonK = SampleIonK;
+            //ST.real[i].SampleIonK = SampleIonK;
         }
    }
 
