@@ -24,7 +24,7 @@ struct StateElement {
     StateBase::ArrayInfo info;
     H5::DataSet dset;
     size_t nextrow;
-    StateElement() :nextrow(0u) {}
+    StateElement() :idx((unsigned)-1), nextrow(0u) {}
 };
 }
 

@@ -57,7 +57,9 @@ struct ElementRFCavity : public MomentElementBase
                   CavData; // from thinlenlon_*.txt
 
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
-    double fRF, IonFys, phi_ref;
+    double fRF,    // RF frequency [Hz]
+           IonFys, // Synchrotron phase [rad].
+           phi_ref;
     std::vector<double> ave_beta, ave_gamma, accIonW;
     int MpoleLevel;
     int cavi;
@@ -73,7 +75,7 @@ struct ElementRFCavity : public MomentElementBase
 
     void GetCavMat(const int cavi, const int cavilabel, const double Rm, Particle &real,
                    const double EfieldScl, const double IonFyi_s,
-                   const double IonEk_s, const double fRF, state_t::matrix_t &M,
+                   const double IonEk_s, state_t::matrix_t &M,
                    CavTLMLineType &linetab) const;
 
     void GenCavMat2(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
@@ -81,7 +83,7 @@ struct ElementRFCavity : public MomentElementBase
                    Particle &real, const double IonFys[], const double Rm, state_t::matrix_t &M,
                    const CavTLMLineType& linetab) const;
 
-    void PropagateLongRFCav(Particle &ref);
+    void PropagateLongRFCav(Particle &ref, double &phi_ref) const;
 
     void calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Particle &state, const int n,
                              const double betaf, const double gamaf,
@@ -90,7 +92,7 @@ struct ElementRFCavity : public MomentElementBase
 
     void InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab);
 
-    void GetCavBoost(const numeric_table &CavData, Particle &state, const double IonFy0, const double fRF,
+    void GetCavBoost(const numeric_table &CavData, Particle &state, const double IonFy0,
                      const double EfieldScl, double &IonFy) const;
 
     void TransFacts(const int cavilabel, double beta, const double CaviIonK, const int gaplabel, const double EfieldScl,
@@ -104,10 +106,13 @@ struct ElementRFCavity : public MomentElementBase
     virtual void assign(const ElementVoid *other) {
         base_t::assign(other);
         const self_t* O=static_cast<const self_t*>(other);
+        // *all* member variables must be assigned here or reconfigure() will result in inconsistancy
         lattice       = O->lattice;
         mlptable      = O->mlptable;
         CavData       = O->CavData;
         CavTLMLineTab = O->CavTLMLineTab;
+        fRF           = O->fRF;
+        IonFys        = O->IonFys;
         phi_ref       = O->phi_ref;
         EmitGrowth    = O->EmitGrowth;
         MpoleLevel    = O->MpoleLevel;
@@ -190,7 +195,7 @@ struct ElementRFCavity : public MomentElementBase
 
         CavTLMLineTab.resize(last_real_in.size());
 
-        PropagateLongRFCav(ST.ref);
+        PropagateLongRFCav(ST.ref, phi_ref);
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             // TODO: 'transfer' is overwritten in InitRFCav()?

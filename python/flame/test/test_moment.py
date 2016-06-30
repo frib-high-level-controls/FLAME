@@ -2,13 +2,14 @@
 from __future__ import print_function
 
 from math import sqrt
+from collections import OrderedDict
 
 import unittest
 import numpy
 from numpy import testing as NT
 from numpy.testing import assert_array_almost_equal_nulp as assert_aequal
 
-from .. import Machine
+from .. import Machine, GLPSParser
 import sys
 
 class testMomentSingle(unittest.TestCase):

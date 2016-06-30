@@ -8,8 +8,8 @@
 struct Config;
 struct StateBase;
 
-Config* dict2conf(PyObject *dict);
-void Dict2Config(Config& ret, PyObject *dict, unsigned depth=0);
+Config* list2conf(PyObject *dict);
+void List2Config(Config& ret, PyObject *dict, unsigned depth=0);
 PyObject* conf2dict(const Config *conf);
 
 PyObject* wrapstate(StateBase*); // takes ownership of argument from caller
@@ -128,39 +128,29 @@ struct PyRef {
     }
 };
 
-// Extract C string from python object (py2 str or py3 unicode)
+// Extract C string from python object.  py2 str or unicode, py3 str only (aka. unicode)
 struct PyCString
 {
-#if PY_MAJOR_VERSION >= 3
-    PyRef<> ascii;
-#else
-    PyRef<> pystr;
-#endif
+    PyRef<> pystr; // py2 str or py3 bytes
     PyCString() {}
-    PyCString(PyRef<>& o)
-#if PY_MAJOR_VERSION >= 3
-        :ascii(PyUnicode_AsASCIIString(o.py()))
-#else
-        :pystr(o)
-#endif
-    {}
+    PyCString(const PyRef<>& o) { *this = o; }
+    PyCString& operator=(const PyRef<>& o) { reset(o.py()); return *this; }
+    void reset(PyObject *obj)
+    {
+        if(PY_MAJOR_VERSION>=3 || PyUnicode_Check(obj)) {
+            pystr.reset(PyUnicode_AsUTF8String(obj));
+        } else if(PyBytes_Check(obj)) {
+            pystr.reset(obj, borrow());
+        }
+    }
     const char *c_str(PyObject *obj) {
         if(!obj)
             throw std::bad_alloc();
-#if PY_MAJOR_VERSION >= 3
-        ascii.reset(PyUnicode_AsASCIIString(obj));
-#else
-        pystr.reset(obj, borrow());
-#endif
+        reset(obj);
         return c_str();
     }
     const char *c_str() const {
-        const char *ret;
-#if PY_MAJOR_VERSION >= 3
-        ret = PyBytes_AsString(ascii.py());
-#else
-        ret = PyString_AsString(pystr.py());
-#endif
+        const char *ret = PyBytes_AsString(pystr.py());
         if(!ret)
             throw std::invalid_argument("Can't extract string from object");
         return ret;

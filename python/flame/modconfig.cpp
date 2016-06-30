@@ -10,51 +10,49 @@
 #define PY_ARRAY_UNIQUE_SYMBOL FLAME_PyArray_API
 #include <numpy/ndarrayobject.h>
 
-/** Translate python dict to Config
+/** Translate python list of tuples to Config
  *
- *  {}      -> Config
+ *  [(K,V)]   -> Config
  *    float   -> double
  *    str     -> string
- *    [{}]    -> vector<Config>  (recurse)
+ *    [[()]]    -> vector<Config>  (recurse)
  *    ndarray -> vector<double>
  *    TODO: [0.0]   -> vector<double>
  */
-void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
+void List2Config(Config& ret, PyObject *list, unsigned depth)
 {
     if(depth>3)
         throw std::runtime_error("too deep for Dict2Config");
 
-    PyObject *key, *value;
-    Py_ssize_t pos = 0;
+    PyRef<> iter(PyObject_GetIter(list));
+    while(true) {
+        PyObject *item = PyIter_Next(iter.py());
+        if(!item) break;
+        PyRef<> itemref(item);
+        const char *kname;
+        PyObject *value;
+        if(!PyArg_ParseTuple(item, "sO", &kname, &value))
+            throw std::runtime_error("list item is not a tuple?");
 
-    while(PyDict_Next(dict, &pos, &key, &value)) {
-        PyRef<> keyref(key, borrow());
-        PyCString skey(keyref);
-        const char *kname = skey.c_str();
-
-        PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(value);
-        if(valuetype==&PyFloat_Type) { // scalar double
-            double val = PyFloat_AsDouble(value);
-            ret.set<double>(kname, val);
-
-        } else if(valuetype==&PyInt_Type) { // scalar integer (treated as double)
-            long val = PyInt_AsLong(value);
-            ret.set<double>(kname, val);
-
-        } else if(PyString_Check(value)) { // string
-            PyRef<> valref(value, borrow());
-            PyCString sval(valref);
-            const char *val = sval.c_str();
-
-            ret.set<std::string>(kname, val);
-
-        } else if(PyArray_Check(value)) { // array (ndarray)
+        if(PyArray_Check(value)) { // array as vector<double>
             PyRef<> arr(PyArray_ContiguousFromAny(value, NPY_DOUBLE, 0, 2));
             double *buf = (double*)PyArray_DATA(arr.py());
             std::vector<double> temp(PyArray_SIZE(arr.py()));
             std::copy(buf, buf+temp.size(), temp.begin());
 
             ret.swap<std::vector<double> >(kname, temp);
+
+        } else if(PyNumber_Check(value)) { // scalar as double
+            PyRef<> dval(PyNumber_Float(value));
+            double val = PyFloat_AsDouble(dval.py());
+            ret.set<double>(kname, val);
+
+        } else if(PyUnicode_Check(value) || (PY_MAJOR_VERSION < 3 && PyBytes_Check(value))) { // string
+            PyRef<> valref(value, borrow());
+            PyCString sval(valref);
+            const char *val = sval.c_str();
+
+            ret.set<std::string>(kname, val);
 
         } else if(PySequence_Check(value)) { // list of dict
             Py_ssize_t N = PySequence_Size(value);
@@ -66,21 +64,26 @@ void Dict2Config(Config& ret, PyObject *dict, unsigned depth)
                 PyObject *elem = PySequence_GetItem(value, i);
                 assert(elem);
 
-                if(!PyDict_Check(elem))
-                    throw std::invalid_argument("lists must contain only dict()s");
+                PyRef<> list;
+                if(PyDict_Check(elem)) {
+                    list.reset(PyMapping_Items(elem));
+                    elem = list.py();
+                }
+                if(!PyList_Check(elem)) {
+                    PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(elem);
+                    throw std::invalid_argument(SB()<<"lists must contain only dict or list of tuples, not "<<valuetype->tp_name);
+                }
 
-                //output.push_back(ret.new_scope()); // TODO: can't use scoping here since iteration order of PyDict_Next() is not stable
-                output.push_back(Config());
+                output.push_back(ret.new_scope());
 
-                Dict2Config(output.back(), elem, depth+1); // inheirt parent scope
+                List2Config(output.back(), elem, depth+1); // inheirt parent scope
             }
 
             ret.set<Config::vector_t>(kname, output);
 
         } else {
-            std::ostringstream msg;
-            msg<<"Must be a dict, not "<<valuetype->tp_name;
-            throw std::invalid_argument(msg.str());
+            PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(value);
+            throw std::invalid_argument(SB()<<"Must be a dict, not "<<valuetype->tp_name);
         }
     }
 }
@@ -95,27 +98,27 @@ PyObject* pydirname(PyObject *obj)
     return PyObject_CallMethod(ospath.py(), "dirname", "O", obj);
 }
 
-struct confval : public boost::static_visitor<PyObject*>
+struct confval : public boost::static_visitor<PyRef<> >
 {
-    PyObject* operator()(double v) const
+    PyRef<> operator()(double v) const
     {
-        return PyFloat_FromDouble(v);
+        return PyRef<>(PyFloat_FromDouble(v));
     }
 
-    PyObject* operator()(const std::string& v) const
+    PyRef<> operator()(const std::string& v) const
     {
-        return PyString_FromString(v.c_str());
+        return PyRef<>(PyString_FromString(v.c_str()));
     }
 
-    PyObject* operator()(const std::vector<double>& v) const
+    PyRef<> operator()(const std::vector<double>& v) const
     {
         npy_intp dims[]  = {(npy_intp)v.size()};
         PyRef<> obj(PyArray_SimpleNew(1, dims, NPY_DOUBLE));
         std::copy(v.begin(), v.end(), (double*)PyArray_DATA(obj.py()));
-        return obj.release();
+        return obj;
     }
 
-    PyObject* operator()(const Config::vector_t& v) const
+    PyRef<> operator()(const Config::vector_t& v) const
     {
         PyRef<> L(PyList_New(v.size()));
 
@@ -123,7 +126,7 @@ struct confval : public boost::static_visitor<PyObject*>
         {
             PyList_SetItem(L.py(), i, conf2dict(&v[i]));
         }
-        return L.release();
+        return L;
     }
 };
 
@@ -131,38 +134,46 @@ struct confval : public boost::static_visitor<PyObject*>
 
 PyObject* conf2dict(const Config *conf)
 {
-    PyRef<> ret(PyDict_New());
+    PyRef<> list(PyList_New(0));
 
     for(Config::const_iterator it=conf->begin(), end=conf->end();
         it!=end; ++it)
     {
-        if(PyDict_SetItemString(ret.py(), it->first.c_str(),
-                                boost::apply_visitor(confval(), it->second)
-                                ))
+        PyRef<> val(boost::apply_visitor(confval(), it->second));
+        PyRef<> tup(Py_BuildValue("sO", it->first.c_str(), val.py()));
+        if(PyList_Append(list.py(), tup.py()))
             throw std::runtime_error("Failed to insert into dictionary from conf2dict");
     }
 
-    return ret.release();
+    return list.releasePy();
 }
 
-Config* dict2conf(PyObject *dict)
+Config* list2conf(PyObject *dict)
 {
-    if(!PyDict_Check(dict))
-        throw std::invalid_argument("Not a dict");
+    if(!PyList_Check(dict))
+        throw std::invalid_argument("Not a list");
     std::auto_ptr<Config> conf(new Config);
-    Dict2Config(*conf, dict);
+    List2Config(*conf, dict);
     return conf.release();
 }
 
 PyObject* PyGLPSPrint(PyObject *, PyObject *args)
 {
     try {
-        PyObject *dict;
-        if(!PyArg_ParseTuple(args, "O!", &PyDict_Type, &dict))
+        PyObject *inp;
+        if(!PyArg_ParseTuple(args, "O", &inp))
             return NULL;
 
+        PyRef<> list;
+        if(PyDict_Check(inp)) {
+            list.reset(PyMapping_Items(inp));
+            inp = list.py();
+        }
+        if(!PyList_Check(inp))
+            return PyErr_Format(PyExc_ValueError, "argument must be dict or list of tuples");
+
         Config conf;
-        Dict2Config(conf, dict);
+        List2Config(conf, inp);
         std::ostringstream strm;
         GLPSPrint(strm, conf);
         return PyString_FromString(strm.str().c_str());
@@ -220,10 +231,9 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
     PyGetBuf buf;
     std::auto_ptr<Config> C;
 
-    if(PyDict_Check(conf)) {
-        C.reset(dict2conf(conf));
+    PyRef<> listref;
 
-    } else if(PyObject_HasAttrString(conf, "read")) { // file-like
+    if(PyObject_HasAttrString(conf, "read")) { // file-like
         PyCString pyname;
 
         if(!path && PyObject_HasAttrString(conf, "name")) {
@@ -249,7 +259,16 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
 #endif
 
     } else {
-        throw std::invalid_argument("'config' must be dict or byte buffer");
+        if(PyDict_Check(conf)) {
+            listref.reset(PyMapping_Items(conf));
+            conf = listref.py();
+        }
+        if(PyList_Check(conf)) {
+            C.reset(list2conf(conf));
+
+        } else {
+            throw std::invalid_argument("'config' must be dict, list of tuples, or byte buffer");
+        }
     }
 
     return C.release();

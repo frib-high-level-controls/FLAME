@@ -100,7 +100,8 @@ PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
                 C = machine->machine->conf();
                 C.push_scope();
             }
-            Dict2Config(C, d);
+            PyRef<> list(PyMapping_Items(d));
+            List2Config(C, list.py());
         } else {
             return PyErr_Format(PyExc_ValueError, "allocState() needs config=None or {}");
         }
@@ -207,7 +208,8 @@ PyObject *PyMachine_reconfigure(PyObject *raw, PyObject *args, PyObject *kws)
         if(!PyObject_IsTrue(replace))
             newconf = (*machine->machine)[idx]->conf();
 
-        Dict2Config(newconf, conf, 3); // set depth=3 to prevent recursion
+        PyRef<> list(PyMapping_Items(conf));
+        List2Config(newconf, list.py(), 3); // set depth=3 to prevent recursion
 
         machine->machine->reconfigure(idx, newconf);
 
