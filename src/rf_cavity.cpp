@@ -686,12 +686,12 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         fldmap  += "/axisData_85.txt";
         cavfile += "/Multipole85/thinlenlon_85.txt";
         mlpfile += "/Multipole85/CaviMlp_85.txt";
-    } else if (CavType == "0.029HWR") {
+    } else if (CavType == "0.29HWR") {
         cavi = 3;
         fldmap  += "/axisData_29.txt";
         cavfile += "/Multipole29/thinlenlon_29.txt";
         mlpfile += "/Multipole29/CaviMlp_29.txt";
-    } else if (CavType == "0.053HWR") {
+    } else if (CavType == "0.53HWR") {
         cavi = 4;
         fldmap  += "/axisData_53.txt";
         cavfile += "/Multipole53/thinlenlon_53.txt";

@@ -47,13 +47,20 @@ set(PY_DATA
   test/to_strl_err.lat
   test/to_chg_str_err.lat
   test/FrontEnd.lat
+  test/ALL_latticeE.lat
 
   # cavity data for test lattice files
+  test/data/axisData_29.txt
   test/data/axisData_41.txt
+  test/data/axisData_53.txt
   test/data/axisData_85.txt
+  test/data/Multipole29/thinlenlon_29.txt
   test/data/Multipole41/thinlenlon_41.txt
+  test/data/Multipole53/thinlenlon_53.txt
   test/data/Multipole85/thinlenlon_85.txt
+  test/data/Multipole29/CaviMlp_29.txt
   test/data/Multipole41/CaviMlp_41.txt
+  test/data/Multipole53/CaviMlp_53.txt
   test/data/Multipole85/CaviMlp_85.txt
 
   # vaccel IOC template
