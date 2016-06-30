@@ -619,8 +619,8 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
     M = prod(scl_inv, M);
 
     // J.B. Bug in TLM: should be inverse.
-        RotMat(-dx, -dy, -pitch, -yaw, -roll, R_inv);
-//        inverse(R_inv, R);
+//        RotMat(-dx, -dy, -pitch, -yaw, -roll, R_inv);
+        inverse(R_inv, R);
 
     // Translate to center of element.
     T(state_t::PS_S,  6) = length/2e0*MtoMM;

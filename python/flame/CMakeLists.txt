@@ -47,6 +47,7 @@ set(PY_DATA
   test/to_strl_err.lat
   test/to_chg_str_err.lat
   test/FrontEnd.lat
+  test/LS1FS1_latticeE.lat
   test/ALL_latticeE.lat
 
   # cavity data for test lattice files
