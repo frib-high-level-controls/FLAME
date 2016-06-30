@@ -554,7 +554,7 @@ MomentElementBase::MomentElementBase(const Config& c)
     ,dy   (c.get<double>("dy",    0e0)*MtoMM)
     ,pitch(c.get<double>("pitch", 0e0))
     ,yaw  (c.get<double>("yaw",   0e0))
-    ,tilt (c.get<double>("tilt",  0e0))
+    ,roll (c.get<double>("roll",  0e0))
     ,skipcache(c.get<double>("skipcache", 0.0)!=0.0)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
@@ -576,7 +576,7 @@ void MomentElementBase::assign(const ElementVoid *other)
     dy = O->dy;
     pitch = O->pitch;
     yaw   = O->yaw;
-    tilt  = O->tilt;
+    roll  = O->roll;
     skipcache = O->skipcache;
     ElementVoid::assign(other);
 }
@@ -611,7 +611,7 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
     T(state_t::PS_PS, 6) = 1e0;
     inverse(T_inv, T);
 
-    RotMat(dx, dy, pitch, yaw, tilt, R);
+    RotMat(dx, dy, pitch, yaw, roll, R);
 
     M = prod(T, scl);
     M = prod(R, M);
@@ -619,7 +619,7 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
     M = prod(scl_inv, M);
 
     // J.B. Bug in TLM: should be inverse.
-        RotMat(-dx, -dy, -pitch, -yaw, -tilt, R_inv);
+        RotMat(-dx, -dy, -pitch, -yaw, -roll, R_inv);
 //        inverse(R_inv, R);
 
     // Translate to center of element.

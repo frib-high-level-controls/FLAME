@@ -35,8 +35,6 @@ void RotMat(const double dx, const double dy,
 
     R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-#if 1
-
     // Left-handed coordinate system => theta_y -> -theta_y.
 
     double m11 =  cos(-theta_y)*cos(theta_z),
@@ -58,36 +56,6 @@ void RotMat(const double dx, const double dy,
     R(1, 1) = m11, R(1, 3) = m12, R(1, 5) = m13;
     R(3, 1) = m21, R(3, 3) = m22, R(3, 5) = m23;
     R(5, 1) = m31, R(5, 3) = m32, R(5, 5) = m33;
-
-#else
-
-    MomentState::matrix_t Rx = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-            Ry = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize),
-            Rz = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-
-    Rx(2, 2) =  cos(theta_x), Rx(2, 4) =  sin(theta_x);
-    Rx(4, 2) = -sin(theta_x), Rx(4, 4) =  cos(theta_x);
-
-    Ry(0, 0) =  cos(theta_y), Ry(0, 4) =  sin(theta_y);
-    Ry(4, 0) = -sin(theta_y), Ry(4, 4) =  cos(theta_y);
-
-    Rz(0, 0) =  cos(theta_z), Rz(0, 2) =  sin(theta_z);
-    Rz(2, 0) = -sin(theta_z), Rz(2, 2) =  cos(theta_z),
-
-    Rx(3, 3) =  cos(theta_x), Rx(3, 5) =  sin(theta_x);
-    Rx(5, 3) = -sin(theta_x), Rx(5, 5) =  cos(theta_x),
-
-    Ry(1, 1) =  cos(theta_y), Ry(1, 5) =  sin(theta_y);
-    Ry(5, 1) = -sin(theta_y), Ry(5, 5) =  cos(theta_y);
-
-    Rz(1, 1) =  cos(theta_z); Rz(1, 3) =  sin(theta_z);
-    // J.B. Bug in TLM: should be Rz(3, 1) vs. Rz(2, 1).
-    Rz(3, 1) = -sin(theta_z), Rz(3, 3) =  cos(theta_z);
-
-    R = prod(Ry, Rx);
-    R = prod(Rz, R);
-
-#endif
 
     T(0, 6) = -dx, T(2, 6) = -dy;
 
