@@ -409,12 +409,6 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
-        Info.name = "real_IonZ";
-        Info.ptr = &real[0].IonZ;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
         Info.name = "IonZ";
         Info.ptr  = &real[0].IonZ;
         Info.type = ArrayInfo::Double;
@@ -422,12 +416,6 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim   [0] = real.size();
         Info.stride[0] = sizeof(real[0]);
         // Note: this array is discontigious as we reference a single member from a Particle[]
-        return true;
-    } else if(idx==I++) {
-        Info.name = "real_IonEs";
-        Info.ptr = &real[0].IonEs;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "IonEs";
@@ -438,24 +426,12 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
-        Info.name = "real_IonW";
-        Info.ptr = &real[0].IonW;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
         Info.name = "IonW";
         Info.ptr  = &real[0].IonW;
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim   [0] = real.size();
         Info.stride[0] = sizeof(real[0]);
-        return true;
-    } else if(idx==I++) {
-        Info.name = "real_gamma";
-        Info.ptr = &real[0].gamma;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "gamma";
@@ -466,24 +442,12 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
-        Info.name = "real_beta";
-        Info.ptr = &real[0].beta;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
         Info.name = "beta";
         Info.ptr  = &real[0].beta;
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim   [0] = real.size();
         Info.stride[0] = sizeof(real[0]);
-        return true;
-    } else if(idx==I++) {
-        Info.name = "real_bg";
-        Info.ptr = &real[0].bg;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "bg";
@@ -494,12 +458,6 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
-        Info.name = "real_SampleIonK";
-        Info.ptr = &real[0].SampleIonK;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
         Info.name = "SampleIonK";
         Info.ptr  = &real[0].SampleIonK;
         Info.type = ArrayInfo::Double;
@@ -508,24 +466,12 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         return true;
     } else if(idx==I++) {
-        Info.name = "real_phis";
-        Info.ptr = &real[0].phis;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
         Info.name = "phis";
         Info.ptr  = &real[0].phis;
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim   [0] = real.size();
         Info.stride[0] = sizeof(real[0]);
-        return true;
-    } else if(idx==I++) {
-        Info.name = "real_IonEk";
-        Info.ptr = &real[0].IonEk;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
         return true;
     } else if(idx==I++) {
         Info.name = "IonEk";
