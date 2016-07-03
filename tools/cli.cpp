@@ -85,8 +85,11 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                    " txt  - Print selected outputs states to screen ('--format txt' the default default)\n"
                    "        or file ('--format txt[,file=out.txt][,verbose[=lvl#]]')\n"
                    "\n"
+                   " utest - Print selected output states to screen as a python checkPropagate()\n"
+                   "\n"
                    " hdf5 - Write selected output states to an HDF5 file.\n"
-                   "        eg. '--format hdf5,file=out.h5'\n";
+                   "        eg. '--format hdf5,file=out.h5'\n"
+                   ;
         exit(1);
     }
 }
@@ -210,7 +213,7 @@ struct UnitTestObserver : public Observer
         interested_t interested;
         Factory(const strvect& fmt) :interested(new interested_t::element_type)
         {
-            assert(!fmt.empty() && fmt[0]=="txt");
+            assert(!fmt.empty() && fmt[0]=="utest");
 
             for(strvect::const_iterator it=fmt.begin()+1, end=fmt.end(); it!=end; ++it)
             {

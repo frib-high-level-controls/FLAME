@@ -41,7 +41,7 @@ def show_vector(grp, vector='state'):
 
 def show_moment2(grp):
     pos = grp['pos'][:]
-    avg = grp['moment0'][:]
+    avg = grp['moment0_env'][:]
     rms = grp['moment0_rms'][:]
 
     rmsp, rmsn = avg+rms, avg-rms

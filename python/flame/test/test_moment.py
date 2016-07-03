@@ -64,11 +64,11 @@ foo : LINE = (elem0);
         self.M.propagate(S, max=1) # propagate through source element
 
         self.assertEqual(S.pos, 0.0)
-        self.assertEqual(S.real_IonEs, C['IonEs'])
-        self.assertEqual(S.real_IonW, C['IonEk']+C['IonEs'])
-        self.assertEqual(S.real_IonEk, C['IonEk'])
-        self.assertEqual(S.real_gamma, (C['IonEk']+C['IonEs'])/C['IonEs'])
-        self.assertAlmostEqual(S.real_beta, sqrt(1-1/(S.real_gamma**2)))
+        self.assertEqual(S.IonEs[0], C['IonEs'])
+        self.assertEqual(S.IonW[0], C['IonEk']+C['IonEs'])
+        self.assertEqual(S.IonEk[0], C['IonEk'])
+        self.assertEqual(S.gamma[0], (C['IonEk']+C['IonEs'])/C['IonEs'])
+        self.assertAlmostEqual(S.beta[0], sqrt(1-1/(S.gamma[0]**2)))
 
         print("moment0",  S.moment0_env, C['IV'])
         assert_aequal(S.moment0_env, C['IV'])
