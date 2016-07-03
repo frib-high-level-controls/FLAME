@@ -51,7 +51,7 @@ void PrtState(const state_t& ST)
 
     if (true)
         for (size_t k = 0; k < ST.size(); k++) {
-            std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(3) << ST.pos << "\n"
+            std::cout << "\nState: "<<k<<" s = "<<std::fixed << std::setprecision(5) << ST.pos << "\n"
                       <<"\n Ref:  "<<ST.ref
                      <<"\n Real: "<<ST.real[k]
                        <<"\n moment0\n";

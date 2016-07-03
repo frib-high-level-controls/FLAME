@@ -42,11 +42,10 @@ set(PY_DATA
 
   # lattice files for unit tests
   test/parse1.lat
-  test/LS1.lat
   test/to_strl.lat
   test/to_strl_err.lat
   test/to_chg_str_err.lat
-  test/FrontEnd.lat
+  test/FE_latticeE.lat
   test/LS1FS1_latticeE.lat
   test/ALL_latticeE.lat
 
