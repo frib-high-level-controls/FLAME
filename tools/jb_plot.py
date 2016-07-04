@@ -13,8 +13,7 @@ def plt_moment0(s, moment0):
         for j in range(5):
             plot(s, moment0[:, j, i], '-b')
         plot(s, moment0[:, 5, i], '-r')
-        xlabel('s')
-        ylabel(L)
+        xlabel('s'); ylabel(L)
 
 
 def plt_moment1(s, moment1):
@@ -23,8 +22,7 @@ def plt_moment1(s, moment1):
         for j in range(5):
             plot(s, moment1[:, j, i], '-b')
         plot(s, moment1[:, 5, i], '-r')
-        xlabel('s')
-        ylabel(L)
+        xlabel('s'); ylabel(L)
 
 
 def rd_data(file_name):
@@ -56,9 +54,17 @@ def rd_data(file_name):
 [s, moment0] = rd_data(file_name1)
 [s, moment1] = rd_data(file_name2)
 
-figure(1)
+plt.rcParams['savefig.dpi'] = 600 # For png.
+
+fig1 = figure(1)
 plt_moment0(s, moment0)
-figure(2)
+fig2 = figure(2)
 plt_moment1(s, moment1)
 
-show()
+#fig.savefig('fig.png')
+fig1.savefig('fig1.ps', orientation='landscape')
+fig2.savefig('fig2.ps', orientation='landscape')
+
+#show()
+ion(); show(); ioff()
+raw_input('<ret> to continue>')
