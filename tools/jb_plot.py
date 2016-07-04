@@ -10,12 +10,9 @@ from matplotlib.pylab import *
 def plt_moment0(s, moment0):
     for i, L in zip(range(6), ('x', 'p_x', 'y', 'p_y', 'z', 'p_z')):
         subplot(3, 2, i+1)
-        plot(s, moment0[:, 0, i], '-b',
-             s, moment0[:, 1, i], '-b',
-             s, moment0[:, 2, i], '-b',
-             s, moment0[:, 3, i], '-b',
-             s, moment0[:, 4, i], '-b',
-             s, moment0[:, 5, i], '-r')
+        for j in range(5):
+            plot(s, moment0[:, j, i], '-b')
+        plot(s, moment0[:, 5, i], '-r')
         xlabel('s')
         ylabel(L)
 
@@ -23,12 +20,9 @@ def plt_moment0(s, moment0):
 def plt_moment1(s, moment1):
     for i, L in zip(range(6), ('s_x', 's_p_x', 's_y', 's_p_y', 's_z', 's_p_z')):
         subplot(3, 2, i+1)
-        plot(s, moment1[:, 0, i], '-b',
-             s, moment1[:, 1, i], '-b',
-             s, moment1[:, 2, i], '-b',
-             s, moment1[:, 3, i], '-b',
-             s, moment1[:, 4, i], '-b',
-             s, moment1[:, 5, i], '-r')
+        for j in range(5):
+            plot(s, moment1[:, j, i], '-b')
+        plot(s, moment1[:, 5, i], '-r')
         xlabel('s')
         ylabel(L)
 
