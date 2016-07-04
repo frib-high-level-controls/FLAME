@@ -1,5 +1,3 @@
-
-
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -76,14 +74,38 @@ void prt_initial_cond(Machine &sim,
 }
 
 static
+void PrtOut(std::ofstream &outf1, std::ofstream &outf2, const state_t& ST)
+{
+    outf1 << std::scientific << std::setprecision(10) << std::setw(18) << ST.pos;
+    for (size_t j = 0; j < ST.size(); j++)
+        for (int k = 0; k < 6; k++)
+            outf1 << std::scientific << std::setprecision(10) << std::setw(18) << ST.moment0[j][k];
+    for (int k = 0; k < 6; k++)
+        outf1 << std::scientific << std::setprecision(10) << std::setw(18) << ST.moment0_env[k];
+    outf1 << "\n";
+
+    outf2 << std::scientific << std::setprecision(10) << std::setw(18) << ST.pos;
+    for (size_t j = 0; j < ST.size(); j++)
+        for (int k = 0; k < 6; k++)
+            outf2 << std::scientific << std::setprecision(10) << std::setw(18) << sqrt(ST.moment1[j](k, k));
+    for (int k = 0; k < 6; k++)
+        outf2 << std::scientific << std::setprecision(10) << std::setw(18) << sqrt(ST.moment1_env(k, k));
+    outf2 << "\n";
+}
+
+static
 void propagate(const Config &conf)
 {
     // Propagate element-by-element for each charge state.
     Machine                  sim(conf);
     std::auto_ptr<StateBase> state(sim.allocState());
     state_t                  *StatePtr = dynamic_cast<state_t*>(state.get());
+    std::ofstream            outf1, outf2;
 
     if(!StatePtr) throw std::runtime_error("Only sim_type MomentMatrix is supported");
+
+    outf1.open("moment0.txt", std::ios::out);
+    outf2.open("moment1.txt", std::ios::out);
 
     prt_initial_cond(sim, *StatePtr);
 
@@ -95,13 +117,18 @@ void propagate(const Config &conf)
 
     Machine::iterator it = sim.begin()+1;
     while (it != sim.end()) {
-        ElementVoid*       elem = *it;
+        ElementVoid* elem = *it;
 
         elem->advance(*state);
         ++it;
 
+        PrtOut(outf1, outf2, *StatePtr);
+
 //        PrtState(*StatePtr);
     }
+
+    outf1.close();
+    outf2.close();
 
     tStamp[1] = clock();
 
