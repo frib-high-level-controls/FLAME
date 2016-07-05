@@ -1,7 +1,5 @@
 # Beam envelope simulation.
 
-#sim_type = "TransferMatrix";
-#sim_type = "MomentMatrix";
 sim_type = "MomentMatrix";
 
 # Global parameters.
@@ -12,7 +10,7 @@ sim_type = "MomentMatrix";
 MpoleLevel = "2";
 
 # Include emittance growth from RF Cavity.
-EmitGrowth = "0";
+EmitGrowth = "1";
 
 # Dipole strength adjusted to beam energy.
 HdipoleFitMode = "1";
@@ -23,6 +21,10 @@ IonZ  = 33.0/238.0;    # Charge state for U_238.
 IonEs = AMU;           # Nucleon mass [eV/u].
 IonEk = 0.5e6;         # Kinetic energy at LS1 entrance [eV/u].
 IonW  = IonEs + IonEk; # Total energy [eV/u].
+
+# Stripper down stream Charge States and amount; the latter modeled by Baron's formula.
+Stripper_IonChargeStates = [76.0/238.0, 77.0/238.0, 78.0/238.0, 79.0/238.0, 80.0/238.0];
+Stripper_NCharge         = [2660.0, 4360.0, 5300.0, 5090.0, 3230.0];
 
 # Define Initial Conditions for the Charge States.
 # Units are: [mm, rad, mm, rad, rad, MeV/u]
@@ -962,8 +964,7 @@ fs1_css_port_d2226_510: drift, L = 0.000000, aper = 0.020000;
 drift_511: drift, L = 0.099000, aper = 0.020000;
 drift_512: drift, L = 0.072000, aper = 0.020000;
 drift_513: drift, L = 0.928000, aper = 0.020000;
-#fs1_strl_strip_d2237_164: marker;
-fs1_strl_strip_d2237_164: stripper;
+fs1_strl_strip_d2237_164: stripper, IonChargeStates=Stripper_IonChargeStates, NCharge=Stripper_NCharge;
 drift_514: drift, L = 0.928000, aper = 0.020000;
 drift_515: drift, L = 0.072000, aper = 0.020000;
 drift_516: drift, L = 0.116000, aper = 0.020000;
@@ -1007,30 +1008,30 @@ drift_542: drift, L = 0.280000, aper = 0.025000;
 fs1_css_port_d2286_543: drift, L = 0.430000, aper = 0.025000;
 drift_544: drift, L = 0.100000, aper = 0.025000;
 drift_545: drift, L = 0.185000, aper = 0.025000;
-fs1_css_dh_d2293_21: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_22: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_23: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_24: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2293_25: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_21: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_22: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_23: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_24: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_25: sbend, L = 0.060000, phi = -1.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
 drift_546: drift, L = 0.250000, aper = 0.020000;
 fs1_css_dh_d2298_26: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2298_27: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2298_28: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2298_29: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2298_30: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2298_30: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 drift_547: drift, L = 0.100000, aper = 0.020000;
 drift_548: drift, L = 0.250000, aper = 0.020000;
-fs1_css_dh_d2305_31: sbend, L = 0.060000, phi = 1.000000, phi1 = 5.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2305_31: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_32: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_33: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_34: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 fs1_css_dh_d2305_35: sbend, L = 0.060000, phi = 1.000000, phi1 = 0.000000, phi2 = 5.000000, bg = 0.188787, aper = 0.020000;
 drift_549: drift, L = 0.250000, aper = 0.020000;
-fs1_css_dh_d2310_36: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_37: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_38: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_39: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
-fs1_css_dh_d2310_40: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_36: sbend, L = 0.060000, phi = -1.000000, phi1 = -5.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_37: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_38: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_39: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2310_40: sbend, L = 0.060000, phi = -1.000000, phi1 =  0.000000, phi2 = 0.000000, bg = 0.188787, aper = 0.020000;
 drift_550: drift, L = 0.015530, aper = 0.020000;
 drift_551: drift, L = 0.116000, aper = 0.020000;
 fs1_css_bpm_d2313_172: marker;
@@ -1606,12 +1607,4 @@ cell: LINE = (
   FS1_STRL, FS1_CSS2, FS1_CH03, FS1_CSS3, FS1_BBS, FS1_BMS1, FS1_CH04, FS1_BMS2
 );
 
-LS1: LINE = (
-  S,
-  LS1_CA01, LS1_WA01, LS1_CA02, LS1_WA02, LS1_CA03, LS1_WA03, LS1_CB01, LS1_WB01, LS1_CB02, LS1_WB02, LS1_CB03,
-  LS1_WB03, LS1_CB04, LS1_WB04, LS1_CB05, LS1_WB05, LS1_CB06, LS1_WB06, LS1_CB07, LS1_WB07, LS1_CB08, LS1_WB08,
-  LS1_CB09, LS1_WB09, LS1_CB10, LS1_WB10, LS1_CB11, LS1_WB11, LS1_BTS1, LS1_CH01, LS1_BTS2, LS1_CH02
-);
-
-
-USE: LS1;
+USE: cell;

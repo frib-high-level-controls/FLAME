@@ -12,7 +12,7 @@ def plt_ref_orbit(s, lng):
     plot(s, lng[:, 0], '-b')
     xlabel('s [m]'); ylabel('phase [rad]')
     subplot(1, 2, 2)
-    plot(s, lng[:, 1], '-r')
+    plot(s, lng[:, 1], '-b')
     xlabel('s [m]'); ylabel('E_k [MeV]')
 
 
@@ -187,15 +187,15 @@ fig9 = plt1(9, 'RMS Beam Size Difference Between FLAME and Corrected TLM',
 
 plt.rcParams['savefig.dpi'] = 600 # For png.
 
-fig1.savefig('fig1_FE.eps', orientation='landscape')
-fig2.savefig('fig2_FE.eps', orientation='landscape')
-fig3.savefig('fig3_FE.eps', orientation='landscape')
-fig4.savefig('fig4_FE.eps', orientation='landscape')
-fig5.savefig('fig5_FE.eps', orientation='landscape')
-fig6.savefig('fig6_FE.eps', orientation='landscape')
-fig7.savefig('fig7_FE.eps', orientation='landscape')
-fig8.savefig('fig8_FE.eps', orientation='landscape')
-fig9.savefig('fig9_FE.eps', orientation='landscape')
+fig1.savefig('fig1_LS1-Target.eps', orientation='landscape')
+fig2.savefig('fig2_LS1-Target.eps', orientation='landscape')
+fig3.savefig('fig3_LS1-Target.eps', orientation='landscape')
+fig4.savefig('fig4_LS1-Target.eps', orientation='landscape')
+fig5.savefig('fig5_LS1-Target.eps', orientation='landscape')
+fig6.savefig('fig6_LS1-Target.eps', orientation='landscape')
+fig7.savefig('fig7_LS1-Target.eps', orientation='landscape')
+fig8.savefig('fig8_LS1-Target.eps', orientation='landscape')
+fig9.savefig('fig9_LS1-Target.eps', orientation='landscape')
 
 ion(); show(); ioff()
 raw_input('<ret> to continue>')
