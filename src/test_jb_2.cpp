@@ -76,20 +76,20 @@ void prt_initial_cond(Machine &sim,
 static
 void PrtOut(std::ofstream &outf1, std::ofstream &outf2, const state_t& ST)
 {
-    outf1 << std::scientific << std::setprecision(10) << std::setw(18) << ST.pos;
+    outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.pos;
     for (size_t j = 0; j < ST.size(); j++)
         for (int k = 0; k < 6; k++)
-            outf1 << std::scientific << std::setprecision(10) << std::setw(18) << ST.moment0[j][k];
+            outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.moment0[j][k];
     for (int k = 0; k < 6; k++)
-        outf1 << std::scientific << std::setprecision(10) << std::setw(18) << ST.moment0_env[k];
+        outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.moment0_env[k];
     outf1 << "\n";
 
-    outf2 << std::scientific << std::setprecision(10) << std::setw(18) << ST.pos;
+    outf2 << std::scientific << std::setprecision(14) << std::setw(22) << ST.pos;
     for (size_t j = 0; j < ST.size(); j++)
         for (int k = 0; k < 6; k++)
-            outf2 << std::scientific << std::setprecision(10) << std::setw(18) << sqrt(ST.moment1[j](k, k));
+            outf2 << std::scientific << std::setprecision(14) << std::setw(22) << sqrt(ST.moment1[j](k, k));
     for (int k = 0; k < 6; k++)
-        outf2 << std::scientific << std::setprecision(10) << std::setw(18) << sqrt(ST.moment1_env(k, k));
+        outf2 << std::scientific << std::setprecision(14) << std::setw(22) << sqrt(ST.moment1_env(k, k));
     outf2 << "\n";
 }
 
