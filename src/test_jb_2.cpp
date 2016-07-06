@@ -126,7 +126,7 @@ void propagate(const Config &conf)
         elem->advance(*state);
         ++it;
 
-        PrtOut(outf1, outf2, outf3, *StatePtr);
+//        PrtOut(outf1, outf2, outf3, *StatePtr);
 
 //        PrtState(*StatePtr);
     }
