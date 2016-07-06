@@ -161,9 +161,11 @@ if(CPPCHECK_EXECUTABLE)
     COMMAND ${CPPCHECK_EXECUTABLE} --enable=all --error-exitcode=1
                 -I ${CMAKE_CURRENT_SOURCE_DIR}/src
                 -I ${CMAKE_CURRENT_BINARY_DIR}/src
+                -I ${CMAKE_CURRENT_BINARY_DIR}/python/flame
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
                 ${CMAKE_CURRENT_BINARY_DIR}/src/*.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/tools/cli.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/python/flame/mod*.cpp
     COMMENT "Running cppcheck static analysis"
   )
   # add a test with fewer checks (those which actually pass)
@@ -171,8 +173,10 @@ if(CPPCHECK_EXECUTABLE)
     COMMAND ${CPPCHECK_EXECUTABLE} --enable=performance,portability --error-exitcode=1
                 -I ${CMAKE_CURRENT_SOURCE_DIR}/src
                 -I ${CMAKE_CURRENT_BINARY_DIR}/src
+                -I ${CMAKE_CURRENT_BINARY_DIR}/python/flame
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
                 ${CMAKE_CURRENT_BINARY_DIR}/src/*.c
                 ${CMAKE_CURRENT_SOURCE_DIR}/tools/cli.cpp
+                ${CMAKE_CURRENT_SOURCE_DIR}/python/flame/mod*.cpp
   )
 endif()

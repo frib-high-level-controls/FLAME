@@ -5,7 +5,7 @@
 #include "pyflame.h"
 
 
-#define TRY PyMachine *machine = (PyMachine*)raw; try
+#define TRY PyMachine *machine = reinterpret_cast<PyMachine*>(raw); try
 
 namespace {
 
