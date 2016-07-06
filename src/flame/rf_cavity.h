@@ -60,7 +60,6 @@ struct ElementRFCavity : public MomentElementBase
     double fRF,    // RF frequency [Hz]
            IonFys, // Synchrotron phase [rad].
            phi_ref;
-    std::vector<double> ave_beta, ave_gamma, accIonW;
     int MpoleLevel;
     int cavi;
     bool forcettfcalc;
@@ -152,6 +151,7 @@ struct ElementRFCavity : public MomentElementBase
                       last_real_out.end(),
                       ST.real.begin());
         }
+        // note that calRFcaviEmitGrowth() assumes real[] isn't changed after this point
 
         ST.pos += length;
 

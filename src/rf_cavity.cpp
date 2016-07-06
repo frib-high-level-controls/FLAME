@@ -1243,13 +1243,18 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
 
     ionLamda = C0/fRF*MtoMM;
 
-    E0TL     = accIonW[n]/cos(IonFys)/state.IonZ;
+    // safe to look at last_real_out[] here as we are called (from advance() ) after it is updated
+    const double accIonW   =  last_real_out[n].IonW -last_real_in[n].IonW,
+                 ave_beta  = (last_real_out[n].beta +last_real_in[n].beta)/2.0,
+                 ave_gamma = (last_real_out[n].gamma+last_real_in[n].gamma)/2.0;
+
+    E0TL     = accIonW/cos(IonFys)/state.IonZ;
 
     // for rebuncher, because no acceleration, E0TL would be wrong when cos(ionFys) is devided.
     if (cos(IonFys) > -0.0001 && cos(IonFys) < 0.0001) E0TL = 0e0;
     DeltaPhi = sqrt(matIn(4, 4));
     // ionLamda in m, kpX in 1/mm
-    kpX              = -M_PI*fabs(state.IonZ)*E0TL/state.IonEs/sqr(ave_beta[n]*ave_gamma[n])/betaf/gamaf/ionLamda;
+    kpX              = -M_PI*fabs(state.IonZ)*E0TL/state.IonEs/sqr(ave_beta*ave_gamma)/betaf/gamaf/ionLamda;
     fDeltaPhi        = 15e0/sqr(DeltaPhi)*(3e0/sqr(DeltaPhi)*(sin(DeltaPhi)/DeltaPhi-cos(DeltaPhi))-(sin(DeltaPhi)/DeltaPhi));
     f2DeltaPhi       = 15e0/sqr(2e0*DeltaPhi)*(3e0/sqr(2e0*DeltaPhi)
                        *(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)-cos(2e0*DeltaPhi))-(sin(2e0*DeltaPhi)/(2e0*DeltaPhi)));
@@ -1260,19 +1265,19 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
     if (deltaAveXp2f+matIn(1, 1) > 0e0) XpIncreaseFactor = sqrt((deltaAveXp2f+matIn(1, 1))/matIn(1, 1));
 
      // ionLamda in m
-    kpY = -M_PI*fabs(state.IonZ)*E0TL/state.IonEs/sqr(ave_beta[n]*ave_gamma[n])/betaf/gamaf/ionLamda;
+    kpY = -M_PI*fabs(state.IonZ)*E0TL/state.IonEs/sqr(ave_beta*ave_gamma)/betaf/gamaf/ionLamda;
     deltaAveYp2f = sqr(kpY)*(gPhisDeltaPhi-sqr(sin(IonFys)*fDeltaPhi))*(aveY2i+sqr(cenY));
     YpIncreaseFactor = 1.0;
     if (deltaAveYp2f+matIn(3, 3)>0) {
         YpIncreaseFactor = sqrt((deltaAveYp2f+matIn(3, 3))/matIn(3, 3));
     }
 
-    kpZ = -2e0*kpX*sqr(ave_gamma[n]);
+    kpZ = -2e0*kpX*sqr(ave_gamma);
      //unit: 1/mm
-    ionK = 2e0*M_PI/(ave_beta[n]*ionLamda);
+    ionK = 2e0*M_PI/(ave_beta*ionLamda);
     aveZ2i = sqr(DeltaPhi)/sqr(ionK);
     deltaAveZp2 = sqr(kpZ*DeltaPhi)*aveZ2i*(sqr(cos(IonFys))/8e0+DeltaPhi*sin(IonFys)/576e0);
-    longiTransFactor = 1e0/(ave_gamma[n]-1e0)/state.IonEs*MeVtoeV;
+    longiTransFactor = 1e0/(ave_gamma-1e0)/state.IonEs*MeVtoeV;
     ZpIncreaseFactor = 1e0;
     if (deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor) > 0e0)
         ZpIncreaseFactor = sqrt((deltaAveZp2+matIn(5, 5)*sqr(longiTransFactor))/(matIn(5, 5)*sqr(longiTransFactor)));
@@ -1291,7 +1296,7 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
 void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
     int         cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, EfieldScl, IonFy_o, beta, gamma;
+    double      Rm, IonFy_i, Ek_i, EfieldScl, IonFy_o;
 
 //    std::cout<<"RF recompute start "<<real<<"\n";
 
@@ -1325,18 +1330,7 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
     real.IonW = real.IonEk + real.IonEs;
 
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
-
-    ave_beta.push_back(real.beta);
-    ave_gamma.push_back(real.gamma);
-    accIonW.push_back(real.IonW);
-
     ElementRFCavity::GetCavBoost(CavData, real, IonFy_i, EfieldScl, IonFy_o); // updates IonW
-
-    accIonW.back()   = real.IonW - accIonW.back();
-    gamma            = real.IonW/real.IonEs;
-    beta             = sqrt(1e0-1e0/sqr(gamma));
-    ave_beta.back()  = (ave_beta.back()+beta)/2e0;
-    ave_gamma.back() = (ave_gamma.back()+gamma)/2e0;
 
     real.IonEk       = real.IonW - real.IonEs;
     real.recalc();
