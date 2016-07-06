@@ -17,10 +17,8 @@ HdipoleFitMode = "1";
 
 AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
 
-IonZ  = 33.0/238.0;    # Charge state for U_238.
 IonEs = AMU;           # Nucleon mass [eV/u].
 IonEk = 0.0119e6;      # Kinetic energy at FE entrance [eV/u].
-IonW  = IonEs + IonEk; # Total energy [eV/u].
 
 # Stripper down stream Charge States and amount; the latter modeled by Baron's formula.
 Stripper_IonChargeStates = [76.0/238.0, 77.0/238.0, 78.0/238.0, 79.0/238.0, 80.0/238.0];
