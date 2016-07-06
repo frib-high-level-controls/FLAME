@@ -489,7 +489,54 @@ public:
     static void registeryCleanup();
 
     friend std::ostream& operator<<(std::ostream&, const Machine& m);
+
+    struct LogRecord {
+        const char * fname;
+        unsigned short lnum; // >=64k LoC in one file is already a bug
+        unsigned short level;
+        std::ostringstream strm;
+        LogRecord(const char *fname, unsigned short lnum, unsigned short lvl)
+            :fname(fname), lnum(lnum), level(lvl) {}
+        ~LogRecord();
+        template<typename T>
+        LogRecord& operator<<(T v)
+        { strm<<v; return *this; }
+    private:
+        LogRecord(const LogRecord&);
+        LogRecord& operator=(const LogRecord&);
+    };
+
+    struct Logger {
+        virtual ~Logger() {}
+        virtual void log(const LogRecord& r)=0;
+    };
+
+    static int log_detail;
+
+    static inline bool detail(int lvl) { return log_detail<=lvl; }
+
+    static void set_logger(const boost::shared_ptr<Logger>& p);
+private:
+    static boost::shared_ptr<Logger> p_logger;
 };
+
+#define FLAME_ERROR 40
+#define FLAME_WARN  30
+#define FLAME_INFO  20
+#define FLAME_DEBUG 10
+// Super verbose logging, a la the rf cavity element
+#define FLAME_FINE  0
+
+#define FLAME_LOG_ALWAYS(LVL) Machine::LogRecord(__FILE__, __LINE__, FLAME_##LVL)
+
+#ifndef FLAME_DISABLE_LOG
+#define FLAME_LOG_CHECK(LVL) UNLIKELY(Machine::detail(FLAME_##LVL))
+#else
+#define FLAME_LOG_CHECK(LVL) (false)
+#endif
+
+//! Hook into redirect-able logging.  Use like an std::ostream w/ operator<<
+#define FLAME_LOG(LVL) if(FLAME_LOG_CHECK(LVL)) FLAME_LOG_ALWAYS(LVL)
 
 std::ostream& operator<<(std::ostream&, const Machine& m);
 

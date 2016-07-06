@@ -85,6 +85,7 @@ Machine::Machine(const Config& c)
 {
     std::string type(c.get<std::string>("sim_type"));
     p_simtype = type;
+    FLAME_LOG(INFO)<<"Constructing Machine w/ sim_type='"<<type<<'\'';
 
     info_mutex_t::scoped_lock G(info_mutex);
 
@@ -151,6 +152,7 @@ Machine::Machine(const Config& c)
     p_elements.swap(result);
     p_lookup.swap(result_l);
     p_lookup_type.swap(result_t);
+    FLAME_LOG(DEBUG)<<"Complete constructing Machine w/ sim_type='"<<type<<'\'';
 }
 
 Machine::~Machine()
@@ -262,4 +264,45 @@ std::ostream& operator<<(std::ostream& strm, const Machine& m)
         (*it)->show(strm, 0);
     }
     return strm;
+}
+
+namespace {
+struct Logcerr : public Machine::Logger
+{
+    virtual ~Logcerr() {}
+    virtual void log(const Machine::LogRecord &r)
+    {
+        std::string msg(r.strm.str());
+        std::cerr<<r.fname<<':'<<r.lnum<<" : "<<msg;
+        if(msg.empty() || msg[msg.size()-1]!='\n')
+            std::cerr.put('\n');
+    }
+    static Logcerr singleton;
+    static void noopdtor(Logcerr*) {}
+};
+Logcerr Logcerr::singleton;
+}
+
+int Machine::log_detail = FLAME_WARN;
+boost::shared_ptr<Machine::Logger> Machine::p_logger(&Logcerr::singleton, Logcerr::noopdtor);
+
+void Machine::set_logger(const boost::shared_ptr<Logger> &p)
+{
+    boost::shared_ptr<Logger> temp(p);
+    if(!temp)
+        temp.reset(&Logcerr::singleton, Logcerr::noopdtor);
+    {
+        info_mutex_t::scoped_lock G(info_mutex);
+        p_logger.swap(temp);
+    }
+}
+
+Machine::LogRecord::~LogRecord()
+{
+    boost::shared_ptr<Logger> logger;
+    {
+        info_mutex_t::scoped_lock G(info_mutex);
+        logger = p_logger;
+    }
+    logger->log(*this);
 }

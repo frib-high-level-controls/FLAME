@@ -53,9 +53,9 @@ void getargs(int argc, char *argv[], po::variables_map& args)
     opts.add_options()
             ("help,h", "Display this message")
             ("verbose,v", po::value<int>()->default_value(0)->value_name("NUM"),
-                "Make some noise")
+                "Make some noise.  Values 0 through 6 are useful.")
             ("define,D", po::value<std::vector<std::string> >()->composing()->value_name("name=type:val"),
-                "Override variable value (\"-Dname=str:value\")")
+                "Define variable value (\"-Dname=str:value\")")
             ("lattice", po::value<std::string>()->value_name("FILE"),
                 "Input lattice file")
             ("max,M", po::value<std::string>()->value_name("NUM"),
@@ -89,6 +89,11 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                    "\n"
                    " hdf5 - Write selected output states to an HDF5 file.\n"
                    "        eg. '--format hdf5,file=out.h5'\n"
+                   "\n"
+                   "Definitions:\n\n"
+                   " Variable defintions made by arguments must specify a name, type, and value\n"
+                   " The type may be: 'str'' or 'double', which may be abbreviated as 'S' or 'D'.\n"
+                   " Definitions are overwritten by those in the lattice file.\n"
                    ;
         exit(1);
     }
@@ -377,6 +382,8 @@ try {
     int verb = args["verbose"].as<int>();
     if(verb<=2)
         H5StateWriter::dontPrint();
+    if(verb>2)
+        Machine::log_detail=(FLAME_ERROR-10*(verb-2));
     {
         GLPSParser P;
 

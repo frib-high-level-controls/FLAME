@@ -8,6 +8,12 @@
 #include <boost/call_traits.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
+#ifdef __GNUC__
+#  define UNLIKELY(E) __builtin_expect(E, 0)
+#else
+#  define UNLIKELY(E) (E)
+#endif
+
 struct key_error : public std::runtime_error
 {
     key_error(const std::string& s) : std::runtime_error(s) {}

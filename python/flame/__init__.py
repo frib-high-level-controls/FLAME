@@ -1,7 +1,12 @@
 
 from collections import OrderedDict
 
-from ._internal import (Machine as MachineBase, GLPSPrinter, _GLPSParse, version, cversion)
+from ._internal import (Machine as MachineBase,
+                        GLPSPrinter, _GLPSParse,
+                        version, cversion,
+                        FLAME_ERROR, FLAME_WARN,
+                        FLAME_INFO, FLAME_DEBUG,
+                        setLogLevel)
 
 def _list2odict(L):
     'Recursively turn list of tuples into OrderedDict'
@@ -33,6 +38,10 @@ class GLPSParser(object):
 class Machine(MachineBase):
     def conf(self, *args, **kws):
         return _list2odict(super(Machine, self).conf(*args, **kws))
+
+# by default pass all but DEBUG to python logger.
+# May set to FLAME_WARN for performance
+setLogLevel(FLAME_INFO)
 
 __all__ = ['Machine',
     'GLPSPrinter',

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import unittest
+import logging
 from collections import OrderedDict
 
 import os
@@ -10,7 +11,8 @@ from numpy import asarray
 from numpy.testing import assert_array_almost_equal as assert_array_equal
 from numpy.testing import assert_equal
 
-from .._internal import (GLPSPrinter as dictshow)
+from .._internal import (GLPSPrinter as dictshow,
+                         FLAME_ERROR, FLAME_WARN, FLAME_INFO, FLAME_DEBUG, setLogLevel, getLoggerName)
 from .. import GLPSParser, Machine
 import os
 datadir = os.path.dirname(__file__)
@@ -300,3 +302,75 @@ foo: LINE = (x1);
             ]),
             ('name', 'foo'),
         ])
+
+class testLog(unittest.TestCase):
+    class CaptureHandler(logging.Handler):
+        def __init__(self, *args, **kws):
+            super(testLog.CaptureHandler, self).__init__(*args, **kws)
+            self._L = []
+        def emit(self, record):
+            self._L.append(record)
+
+    def test_name(self):
+        self.assertEqual(getLoggerName(), "flame.machine")
+        self.assertEqual(FLAME_ERROR, logging.ERROR)
+        self.assertEqual(FLAME_WARN, logging.WARN)
+        self.assertEqual(FLAME_INFO, logging.INFO)
+        self.assertEqual(FLAME_DEBUG, logging.DEBUG)
+
+    def test_capture_default(self):
+        L = logging.getLogger(getLoggerName())
+        H = self.CaptureHandler()
+        L.addHandler(H)
+
+        L.setLevel(logging.DEBUG)
+
+        lattice = OrderedDict([
+            ('elements', [
+                [('name', 'X'), ('type', 'sbend'), ('phi', 1.0),],
+            ]),
+            ('sim_type', 'Vector'),
+        ])
+
+        M = Machine(lattice)
+
+        # by default FLAME_DEBUG is disabled, so only one log record from Machine ctor
+        self.assertRegexpMatches(H._L[0].msg, "Constructing Machine")
+        self.assertRegexpMatches(H._L[0].filename, "base.cpp$")
+        self.assertGreater(H._L[0].lineno, 1)
+        self.assertEqual(H._L[0].levelno, logging.INFO)
+
+        self.assertEqual(len(H._L), 1)
+
+        L.removeHandler(H)
+
+    def test_capture_default(self):
+        L = logging.getLogger(getLoggerName())
+        H = self.CaptureHandler()
+        L.addHandler(H)
+
+        L.setLevel(logging.DEBUG)
+        setLogLevel(FLAME_DEBUG)
+
+        lattice = OrderedDict([
+            ('elements', [
+                [('name', 'X'), ('type', 'sbend'), ('phi', 1.0),],
+            ]),
+            ('sim_type', 'Vector'),
+        ])
+
+        M = Machine(lattice)
+
+        self.assertRegexpMatches(H._L[0].msg, "Constructing Machine")
+        self.assertRegexpMatches(H._L[0].filename, "base.cpp$")
+        self.assertGreater(H._L[0].lineno, logging.ERROR) # check that lineno and levelno aren't mixed up.  assume __LINE__>100
+        self.assertEqual(H._L[0].levelno, logging.INFO)
+
+        self.assertRegexpMatches(H._L[1].msg, "Complete constructing Machine")
+        self.assertRegexpMatches(H._L[1].filename, "base.cpp$")
+        self.assertGreater(H._L[1].lineno, H._L[0].lineno)
+        self.assertEqual(H._L[1].levelno, logging.DEBUG)
+
+        self.assertEqual(len(H._L), 2)
+
+        L.removeHandler(H)
