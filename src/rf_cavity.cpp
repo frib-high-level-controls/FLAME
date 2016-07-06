@@ -52,9 +52,9 @@ void CavTLMLineType::set(const double s, const std::string &Elem, const double E
 }
 
 
-void CavTLMLineType::show(std::ostream& strm, const int k) const
+void CavTLMLineType::show(const int k) const
 {
-    strm << std::fixed << std::setprecision(5)
+    FLAME_LOG(FINE) << std::fixed << std::setprecision(5)
          << std::setw(9) << s[k] << std::setw(10) << Elem[k]
          << std::scientific << std::setprecision(10)
          << std::setw(18) << T[k] << std::setw(18) << S[k]
@@ -62,19 +62,10 @@ void CavTLMLineType::show(std::ostream& strm, const int k) const
 }
 
 
-void CavTLMLineType::show(std::ostream& strm) const
+void CavTLMLineType::show() const
 {
     for (unsigned int k = 0; k < s.size(); k++)
-        show(strm, k);
-}
-
-
-void PrtVec(const std::vector<double> &a)
-{
-    for (size_t k = 0; k < a.size(); k++)
-        std::cout << std::scientific << std::setprecision(10)
-                      << std::setw(18) << a[k];
-    std::cout << "\n";
+        show(k);
 }
 
 
@@ -220,7 +211,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
     switch (cavilabel) {
     case 41:
         if (beta < 0.025 || beta > 0.08) {
-            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            FLAME_LOG(DEBUG) << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
             calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
@@ -260,7 +251,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
         break;
     case 85:
         if (beta < 0.05 || beta > 0.25) {
-            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            FLAME_LOG(DEBUG) << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
             calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
@@ -297,7 +288,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
         break;
     case 29:
         if (beta < 0.15 || beta > 0.4) {
-            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            FLAME_LOG(DEBUG) << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
             calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
@@ -334,7 +325,7 @@ void ElementRFCavity::TransFacts(const int cavilabel, double beta, const double 
         break;
     case 53:
         if (beta < 0.3 || beta > 0.6) {
-            std::cout << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
+            FLAME_LOG(DEBUG) << "*** TransFacts: CaviIonK out of Range " << cavilabel << "\n";
             calTransfac(CavData, 2, gaplabel, CaviIonK, true, Ecen, T, Tp, S, Sp, V0);
             V0 *= EfieldScl;
             return;
@@ -394,7 +385,7 @@ void ElementRFCavity::TransitFacMultipole(const int cavi, const std::string &fla
         ((cavi == 2) && (CaviIonK < 0.006 || CaviIonK > 0.035)) ||
         ((cavi == 3) && (CaviIonK < 0.01687155 || CaviIonK > 0.0449908)) ||
         ((cavi == 4) && (CaviIonK < 0.0112477 || CaviIonK > 0.0224954))) {
-        std::cout << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
+        FLAME_LOG(DEBUG) << "*** TransitFacMultipole: CaviIonK out of Range" << "\n";
         calTransfac(mlptable, get_column(flabel), 0, CaviIonK, false, Ecen, T, Tp, S, Sp, V0);
         return;
     }
@@ -866,9 +857,9 @@ void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], 
         }
     }
 
-    if (false) {
+    if (FLAME_LOG_CHECK(DEBUG)) {
         std::cout << "\n";
-        lineref.show(std::cout);
+        lineref.show();
     }
 }
 
@@ -887,6 +878,9 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
     double            beta, gamma, kfac, V0, T, S, kfdx, kfdy, dpy, Accel, IonFy;
     state_t::matrix_t         Idmat, Mlon_L1, Mlon_K1, Mlon_L2;
     state_t::matrix_t         Mlon_K2, Mlon_L3, Mlon, Mtrans, Mprob;
+
+    // fetch the log level once to speed our loop
+    const bool logme = FLAME_LOG_CHECK(DEBUG);
 
     const double IonA = 1e0;
 
@@ -978,9 +972,11 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             S    = linetab.S[n];
             kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             kfdy = kfdx;
-//                std::cout<<" X EFocus1 kfdx="<<kfdx<<"\n";
-//                std::cout<<" Y "<<linetab.E0[n]<<" "<<EfieldScl<<" "<<beta
-//                         <<" "<<gamma<<" "<<IonFy<<" "<<Rm<<"\n Z "<<T<<" "<<S<<"\n";
+            if(logme) {
+                FLAME_LOG(FINE)<<" X EFocus1 kfdx="<<kfdx<<"\n"
+                         <<" Y "<<linetab.E0[n]<<" "<<EfieldScl<<" "<<beta
+                         <<" "<<gamma<<" "<<IonFy<<" "<<Rm<<"\n Z "<<T<<" "<<S<<"\n";
+            }
 
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -991,7 +987,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             S    = linetab.S[n];
             kfdx = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
             kfdy = kfdx;
-//                std::cout<<" X EFocus2 kfdx="<<kfdx<<"\n";
+            if(logme) FLAME_LOG(FINE)<<" X EFocus2 kfdx="<<kfdx<<"\n";
 
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
@@ -1002,7 +998,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 T   = linetab.T[n];
                 S   = linetab.S[n];
                 dpy = real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy));
-//                    std::cout<<" X EDipole dpy="<<dpy<<"\n";
+                if(logme) FLAME_LOG(FINE)<<" X EDipole dpy="<<dpy<<"\n";
 
                 Mprob(3, 6) = dpy;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1014,7 +1010,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx =  real.IonZ*V0/sqr(beta)/gamma/IonA/AU*(T*cos(IonFy)-S*sin(IonFy))/Rm;
                 kfdy = -kfdx;
-//                    std::cout<<" X EQuad kfdx="<<kfdx<<"\n";
+                if(logme) FLAME_LOG(FINE)<<" X EQuad kfdx="<<kfdx<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
@@ -1027,7 +1023,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = kfdx;
-//                    std::cout<<" X HMono kfdx="<<kfdx<<"\n";
+                if(logme) FLAME_LOG(FINE)<<" X HMono kfdx="<<kfdx<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
@@ -1039,7 +1035,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 T   = linetab.T[n];
                 S   = linetab.S[n];
                 dpy = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0));
-//                    std::cout<<" X HDipole dpy="<<dpy<<"\n";
+                if(logme) FLAME_LOG(FINE)<<" X HDipole dpy="<<dpy<<"\n";
 
                 Mprob(3, 6) = dpy;
                 Mtrans      = prod(Mprob, Mtrans);
@@ -1059,7 +1055,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
                 S    = linetab.S[n];
                 kfdx = -MU0*C0*real.IonZ*V0/beta/gamma/IonA/AU*(T*cos(IonFy+M_PI/2e0)-S*sin(IonFy+M_PI/2e0))/Rm;
                 kfdy = -kfdx;
-//                    std::cout<<" X HQuad kfdx="<<kfdx<<"\n";
+                if(logme) FLAME_LOG(FINE)<<" X HQuad kfdx="<<kfdx<<"\n";
 
                 Mprob(1, 0) = kfdx;
                 Mprob(3, 2) = kfdy;
@@ -1073,7 +1069,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             gamma  = gamma_tab[seg];
             kfac   = 2e0*M_PI/(beta*Lambda);
             Accel  = linetab.Accel[n];
-//                std::cout<<" X AccGap Accel="<<Accel<<"\n";
+            if(logme) FLAME_LOG(FINE)<<" X AccGap Accel="<<Accel<<"\n";
 
             Mprob(1, 1) = Accel;
             Mprob(3, 3) = Accel;
@@ -1083,10 +1079,10 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
             strm << "*** GetCavMat: undef. multipole type " << P.type << "\n";
             throw std::runtime_error(strm.str());
         }
-        //            std::cout << Elem << "\n";
+        //            FLAME_LOG(FINE) << Elem << "\n";
         //            PrtMat(Mprob);
 
-//            std::cout<<"Elem "<<P.name<<":"<<P.type<<"\n Mtrans "<<Mtrans<<"\nMprob "<<Mprob<<"\n";
+        if(logme) FLAME_LOG(FINE)<<"Elem "<<P.name<<":"<<P.type<<"\n Mtrans "<<Mtrans<<"\nMprob "<<Mprob<<"\n";
     }
 
     M = Mtrans;
@@ -1167,17 +1163,19 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 
     assert(n>1);
 
+    const bool logme = FLAME_LOG_CHECK(DEBUG);
+
     const double dis        = CavData.table(n-1, 0) - CavData.table(0, 0),
                  dz         = dis/(n-1),
                  CaviLambda = C0/fRF*MtoMM;
     // assumes dz is constant even though CavData contains actual z positions are available
 
-//    std::cout<<__FUNCTION__
-//             <<" IonFy0="<<IonFy0
-//             <<" fRF="<<fRF
-//             <<" EfieldScl="<<EfieldScl
-//             <<" state="<<state
-//             <<"\n";
+    FLAME_LOG(DEBUG)<<__FUNCTION__
+             <<" IonFy0="<<IonFy0
+             <<" fRF="<<fRF
+             <<" EfieldScl="<<EfieldScl
+             <<" state="<<state
+             <<"\n";
     IonFy = IonFy0;
     // Sample rate is different for RF Cavity; due to different RF frequencies.
 //    IonK  = state.SampleIonK;
@@ -1196,7 +1194,7 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
             //      will be divide by zero (NaN)
         }
         CaviIonK = 2e0*M_PI/(IonBeta*CaviLambda);
-//        std::cout<<" "<<k<<" IonK="<<IonK<<" IonW="<<state.IonW<<"\n";
+        if(logme) FLAME_LOG(DEBUG)<<" "<<k<<" CaviIonK="<<CaviIonK<<" IonW="<<state.IonW<<"\n";
     }
 }
 
@@ -1212,13 +1210,13 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
 
     IonFy_i = multip*ref.phis + caviFy;
     phi_ref = caviFy;
-//    std::cout<<"RF long phase"
-//               " caviFy="<<caviFy
-//             <<" multip="<<multip
-//             <<" phis="<<ref.phis
-//             <<" IonFy_i="<<IonFy_i
-//             <<" EfieldScl="<<EfieldScl
-//             <<"\n";
+    FLAME_LOG(DEBUG)<<"RF long phase"
+               " caviFy="<<caviFy
+             <<" multip="<<multip
+             <<" phis="<<ref.phis
+             <<" IonFy_i="<<IonFy_i
+             <<" EfieldScl="<<EfieldScl
+             <<"\n";
 
     // For the reference particle, evaluate the change of:
     // kinetic energy, absolute phase, beta, and gamma.
@@ -1298,7 +1296,7 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
     int         cavilabel, multip;
     double      Rm, IonFy_i, Ek_i, EfieldScl, IonFy_o;
 
-//    std::cout<<"RF recompute start "<<real<<"\n";
+    FLAME_LOG(DEBUG)<<"RF recompute start "<<real<<"\n";
 
     if (cavi      == 1) {
         cavilabel  = 41;
@@ -1336,19 +1334,19 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
     real.recalc();
     real.phis       += (IonFy_o-IonFy_i)/multip;
 
-//    std::cout<<"RF recompute before "<<real
-//             <<" cavi="<<cavi
-//             <<" cavilabel="<<cavilabel
-//             <<" Rm="<<Rm
-//             <<" EfieldScl="<<EfieldScl
-//             <<" IonFy_i="<<IonFy_i
-//             <<" Ek_i="<<Ek_i
-//             <<" fRF="<<fRF
-//             <<"\n";
+    FLAME_LOG(DEBUG)<<"RF recompute before "<<real
+             <<" cavi="<<cavi
+             <<" cavilabel="<<cavilabel
+             <<" Rm="<<Rm
+             <<" EfieldScl="<<EfieldScl
+             <<" IonFy_i="<<IonFy_i
+             <<" Ek_i="<<Ek_i
+             <<" fRF="<<fRF
+             <<"\n";
 
     GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, M, linetab);
 
-//    std::cout<<"RF recompute after  "<<real<<"\n"
-//             <<" YY "<<M<<"\n"
-//             ;
+    FLAME_LOG(DEBUG)<<"RF recompute after  "<<real<<"\n"
+             <<" YY "<<M<<"\n"
+             ;
 }

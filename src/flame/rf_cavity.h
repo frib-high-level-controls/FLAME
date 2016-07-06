@@ -36,8 +36,8 @@ public:
     void clear(void);
     void set(const double, const std::string &, const double,
              const double, const double, const double);
-    void show(std::ostream& strm, const int) const;
-    void show(std::ostream& strm) const;
+    void show(const int) const;
+    void show() const;
 };
 
 struct ElementRFCavity : public MomentElementBase
