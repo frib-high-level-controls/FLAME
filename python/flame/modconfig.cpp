@@ -61,22 +61,19 @@ void List2Config(Config& ret, PyObject *list, unsigned depth)
             output.reserve(N);
 
             for(Py_ssize_t i=0; i<N; i++) {
-                PyObject *elem = PySequence_GetItem(value, i);
-                assert(elem);
+                PyRef<> elem(PySequence_GetItem(value, i));
 
-                PyRef<> list;
-                if(PyDict_Check(elem)) {
-                    list.reset(PyMapping_Items(elem));
-                    elem = list.py();
+                if(PyDict_Check(elem.py())) {
+                    elem.reset(PyMapping_Items(elem.py()));
                 }
-                if(!PyList_Check(elem)) {
-                    PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(elem);
+                if(!PyList_Check(elem.py())) {
+                    PyTypeObject *valuetype = (PyTypeObject*)PyObject_Type(elem.py());
                     throw std::invalid_argument(SB()<<"lists must contain only dict or list of tuples, not "<<valuetype->tp_name);
                 }
 
                 output.push_back(ret.new_scope());
 
-                List2Config(output.back(), elem, depth+1); // inheirt parent scope
+                List2Config(output.back(), elem.py(), depth+1); // inheirt parent scope
             }
 
             ret.set<Config::vector_t>(kname, output);
