@@ -22,7 +22,7 @@ def print_state(S):
   sys.stdout.write('\nmoment0_env:\n')
   sys.stdout.write('[')
   for i in range(n):
-    sys.stdout.write('%21.14e' % (S.moment0_env[i]))
+    sys.stdout.write('%23.16e' % (S.moment0_env[i]))
     if i != n-1: sys.stdout.write(', ')
   sys.stdout.write(']\n')
 
@@ -30,7 +30,7 @@ def print_state(S):
   for i in range(n):
     sys.stdout.write('[')
     for j in range(n):
-      sys.stdout.write('%21.14e' % (S.moment1_env[i, j]))
+      sys.stdout.write('%23.16e' % (S.moment1_env[i, j]))
       if j != n-1: sys.stdout.write(', ')
     if i != n-1:
       sys.stdout.write('],\n')
@@ -804,4 +804,37 @@ class TestLS1(unittest.TestCase, MomentTest):
                 [ 2.038719906716e-03, -9.847556293971e-07,  5.245764724897e-03,  4.376310089076e-06,  5.139586577118e-04,  1.305180933464e-03,  0.000000000000e+00],
                 [ 0.000000000000e+00,  0.000000000000e+00,  0.000000000000e+00,  0.000000000000e+00,  0.000000000000e+00,  0.000000000000e+00,  0.000000000000e+00]
             ]),
+        }, max=-1)
+
+
+class TestFE(unittest.TestCase, MomentTest):
+    """Strategy is to test the state after the first instance of each element type.
+
+    $ ./tools/flame -N <element_name> \
+       -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
+       python/flame/test/LS1.lat
+    """
+    lattice = 'FE_latticeE.lat'
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
+
+    def test_FE(self):
+        "Test of Front End."
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([-8.49762481072278e+00,  5.18007440037213e-02, -6.06062877459902e+01,  2.59765883514659e-01, -3.90228543782396e+02,  1.21498924974542e-03,  1.00000000000000e+00]),
+            'moment1_env':asfarray([
+                [ 1.7525965523152655e+02, -1.5947399230415265e+00,  1.0173245924004422e+03, -7.7918347157872345e+00,  7.0964724952438555e+03, -2.1061260545138308e-02,  0.0000000000000000e+00],
+                [-1.5947399230415313e+00,  2.0297627836803469e-02, -7.3951153746535878e+00,  8.7167164043037065e-02, -6.1621498789325251e+01,  1.7093991870577186e-04,  0.0000000000000000e+00],
+                [ 1.0173245924004435e+03, -7.3951153746536047e+00,  6.7551428565001661e+03, -4.0767637521805469e+01,  4.3486718921223830e+04, -1.3337138926108441e-01,  0.0000000000000000e+00],
+                [-7.7918347157872541e+00,  8.7167164043037079e-02, -4.0767637521805469e+01,  3.9605321813434385e-01, -3.1180907878509856e+02,  8.9269118598357493e-04,  0.0000000000000000e+00],
+                [ 7.0964724952438601e+03, -6.1621498789325322e+01,  4.3486718921223845e+04, -3.1180907878509873e+02,  2.9623055724159628e+05, -8.8757815373919524e-01,  0.0000000000000000e+00],
+                [-2.1061260545138315e-02,  1.7093991870577150e-04, -1.3337138926108427e-01,  8.9269118598357341e-04, -8.8757815373919491e-01,  2.6850001065988695e-06,  0.0000000000000000e+00],
+                [ 0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00]
+            ])
         }, max=-1)

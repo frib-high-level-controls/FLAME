@@ -286,8 +286,12 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
     // Add dipole terms.
     double delta_K = sqr(ref_beta/dip_beta) - 1e0;
 
-    M(state_t::PS_X,  6) = dx*Nk*(delta_K+delta_KZ);
-    M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
+//    M(state_t::PS_X,  6) = dx*Nk*(delta_K+delta_KZ);
+//    M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
+
+    double Nkz = (1e0+2e0*eta0-h)/(2e0*(1e0+eta0)*(1e0+2e0*eta0));
+    M(state_t::PS_X,  6) = dx*(Nk*delta_K+Nkz*delta_KZ);
+    M(state_t::PS_PX, 6) = sx/rho*(Nk*delta_K+Nkz*delta_KZ);
 
     // Edge focusing.
     GetEEdgeMatrix(fringe_x, fringe_y ,kappa, edge);

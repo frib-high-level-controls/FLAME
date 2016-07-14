@@ -1022,7 +1022,7 @@ struct ElementEDipole : public MomentElementBase
         for(size_t i=0; i<last_real_in.size(); i++) {
             double eta0        = (ST.real[i].gamma-1e0)/2e0,
                    Kx          = (1e0-spher+sqr(1e0+2e0*eta0))/sqr(rho),
-                   delta_KZ    = ST.ref.IonZ/ST.real[i].IonZ - 1e0,
+                   delta_KZ    = ST.real[i].IonZ/ST.ref.IonZ - 1e0,
                    SampleIonK  = 2e0*M_PI/(ST.real[i].beta*SampleLambda);
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
