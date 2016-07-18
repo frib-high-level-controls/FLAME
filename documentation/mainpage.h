@@ -6,6 +6,8 @@ A discrete accelerator simulation engine
 
 @tableofcontents
 
+@subpage gettingstarted
+
 @subpage abstract
 
 @subpage latparse
@@ -21,6 +23,72 @@ A discrete accelerator simulation engine
 @subpage devnotes
 
 Source doc repository https://github.com/frib-high-level-controls/FLAME
+
+*/
+
+// =====================================================================================
+
+/**
+@page gettingstarted Getting Started
+
+@section startbuilding Building
+
+Checkout and compilation from VCS repository
+
+@code
+git clone https://github.com/frib-high-level-controls/FLAME.git flame
+mkdir flame/build
+cd flame/build
+cmake ..
+make
+@endcode
+
+@section startcli CLI
+
+The command line interface ('flame' executable) is found in the tools/ sub-directory.
+
+@code
+./tools/flame -h
+@endcode
+
+Prints some help hints.
+
+@code
+./tools/flame -L python/flame/test/LS1.lat
+@endcode
+
+Run simulation with the LS1 lattice and prints final output state.
+
+@code
+./tools/flame -F hdf5,file=out.h5 -T marker python/flame/test/LS1.lat
+python ../tools/h5plotsim.py out.h5
+@endcode
+
+Run simulation with the LS1 lattice and stores the output state
+of each marker element in an HDF5 file.
+The 'h5plotsim' helper script does a quick plot.
+
+@section startpy Python
+
+To use the python module it is necessary that the 'flame' module
+be in the python module search path.
+For a VCS build this needs set explicitly.
+
+@code
+$ export PYTHONPATH=$PWD/python
+$ python -m flame
+This is FLAME
+ Python API version: 0
+ C++ API version: 0
+@endcode
+
+See @subpage examples_sim_py for a basic example of API usage.
+Also:
+
+@subpage apiusage
+
+@subpage pyapi
+
 
 */
 
@@ -507,7 +575,7 @@ Before exiting some cleanup may be to clear the registry of "sim_type"s.
 
 @section apiusagepy Python Simulation API Usage
 
-The example @subpage examples_sim_cpp demonstrates the basic process of running
+The example @subpage examples_sim_py demonstrates the basic process of running
 a simulation using the python API.
 
 Importing "flame" also registers a standard set of "sim_type"s.

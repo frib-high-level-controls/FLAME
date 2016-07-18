@@ -27,6 +27,7 @@ set_target_properties(_internal
 
 set(PY_SRC
   __init__.py
+  __main__.py
   ioc.py
 
   test/__init__.py
