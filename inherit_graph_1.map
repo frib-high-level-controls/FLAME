@@ -1,0 +1,5 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$struct_element_void.html" title="Base class for all simulated elements. " alt="" coords="5,42,107,69"/>
+<area shape="rect" id="node2" href="$struct_linear_element_base.html" title="An Element based on a simple Transfer matrix. " alt="" coords="156,5,309,47"/>
+<area shape="rect" id="node3" href="$struct_moment_element_base.html" title="An Element which propagates the statistical moments of a bunch. " alt="" coords="155,71,311,98"/>
+</map>
