@@ -1346,6 +1346,23 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
 
     GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, M, linetab);
 
+
+    //Wrapper for fequency jump in rf cavity
+    if (multip != 1) {
+        for (int i=0; i < state_t::maxsize; i++){
+           M(i,4) *= multip;
+           M(4,i) /= multip;
+        }
+        //* Below is using matrix for wrapper,
+        //* but there is no big difference in the calculation time.
+        //state_t::matrix_t
+        //trans = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        //trans(4,4) = float(multip);
+        //noalias(scratch) = prod(M,trans);        
+        //trans(4,4) = 1.0/float(multip);
+        //noalias(M) = prod(trans,scratch);
+    }
+
     FLAME_LOG(DEBUG)<<"RF recompute after  "<<real<<"\n"
              <<" YY "<<M<<"\n"
              ;
