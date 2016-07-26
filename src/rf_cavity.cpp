@@ -1293,35 +1293,32 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
 
 void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
-    int         cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, EfieldScl, IonFy_o;
+    int         cavilabel;
+    double      Rm, multip, IonFy_i, Ek_i, EfieldScl, IonFy_o;
 
     FLAME_LOG(DEBUG)<<"RF recompute start "<<real<<"\n";
 
     if (cavi      == 1) {
         cavilabel  = 41;
-        multip     = 1;
         Rm         = 17e0;
     } else if (cavi== 2) {
         cavilabel  = 85;
-        multip     = 1;
         Rm         = 17e0;
     } else if (cavi== 3) {
         cavilabel  = 29;
-        multip     = 4;
         Rm         = 20e0;
     } else if (cavi== 4) {
         cavilabel  = 53;
-        multip     = 4;
         Rm         = 20e0;
     } else if (cavi== 5) {
         // 5 Cell elliptical.
         cavilabel  = 53;
-        multip     = 8;
         Rm         = 20e0;
     } else {
         throw std::logic_error(SB()<<"*** InitRFCav: undef. cavity type: after ctor");
     }
+
+    multip    = fRF/SampleFreq;
 
     IonFy_i   = multip*real.phis + phi_ref;
     Ek_i      = real.IonEk;
@@ -1353,14 +1350,6 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
            M(i,4) *= multip;
            M(4,i) /= multip;
         }
-        //* Below is using matrix for wrapper,
-        //* but there is no big difference in the calculation time.
-        //state_t::matrix_t
-        //trans = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-        //trans(4,4) = float(multip);
-        //noalias(scratch) = prod(M,trans);        
-        //trans(4,4) = 1.0/float(multip);
-        //noalias(M) = prod(trans,scratch);
     }
 
     FLAME_LOG(DEBUG)<<"RF recompute after  "<<real<<"\n"
