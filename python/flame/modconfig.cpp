@@ -131,6 +131,8 @@ struct confval : public boost::static_visitor<PyRef<> >
 
 PyObject* conf2dict(const Config *conf)
 {
+    if(!conf)
+        return NULL;
     PyRef<> list(PyList_New(0));
 
     for(Config::const_iterator it=conf->begin(), end=conf->end();
