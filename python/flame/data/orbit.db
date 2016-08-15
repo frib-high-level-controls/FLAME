@@ -61,7 +61,7 @@ record(waveform, "$(P)PZ-I") {
 
 record(waveform, "$(P)Ek-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=real_IonEk)")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=IonEk)[0]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")
@@ -76,7 +76,7 @@ record(waveform, "$(P)EkRef-I") {
 
 record(waveform, "$(P)Phas-I") {
     field(DTYP, "FLAME State Orbit")
-    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=real_phis)")
+    field(INP , "@$(SIM) $(ENAME=marker) $(VECTOR=phis)[0]")
     field(FTVL, "DOUBLE")
     field(NELM, "$(NELM=10)")
     field(SCAN, "I/O Intr")

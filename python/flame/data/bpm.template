@@ -39,7 +39,7 @@ record(ai, "$(P)PZ-I") {
 record(ai, "$(P)EK-I") {
     field(DESC, "E kin. on exit")
     field(DTYP, "FLAME State")
-    field(INP , "@$(SIM) $(ELEM) real_IonEk")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=ref_IonEk)")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }
