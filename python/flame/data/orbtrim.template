@@ -1,0 +1,11 @@
+record(ao, "$(P)ThetaX-SP") {
+    field(DTYP, "FLAME Setting")
+    field(OUT , "@$(SIM) $(ELEM) theta_x")
+    field(PREC, "6")
+}
+record(ai, "$(P)ThetaX-RB") {
+    field(DTYP, "FLAME Setting")
+    field(INP , "@$(SIM) $(ELEM) theta_x")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
