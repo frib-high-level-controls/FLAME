@@ -129,64 +129,76 @@ struct ElementRFCavity : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if(!check_cache(ST)) {
-            last_ref_in = ST.ref;
-            last_real_in = ST.real;
-            resize_cache(ST);
-            // need to re-calculate energy dependent terms
+        if ((int)ST.clng)
+        {
+            // limit to longitudinal run
 
-            recompute_matrix(ST); // updates transfer and last_Kenergy_out
+            PropagateLongRFCav(ST.ref, phi_ref);
 
-            for(size_t i=0; i<last_real_in.size(); i++)
-                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+            ST.pos += length;
+            ST.ref.recalc();
 
-            ST.recalc();
-
-            last_ref_out = ST.ref;
-            last_real_out = ST.real;
         } else {
-            ST.ref = last_ref_out;
-            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
-            std::copy(last_real_out.begin(),
-                      last_real_out.end(),
-                      ST.real.begin());
-        }
-        // note that calRFcaviEmitGrowth() assumes real[] isn't changed after this point
 
-        ST.pos += length;
+            if(!check_cache(ST)) {
+                last_ref_in = ST.ref;
+                last_real_in = ST.real;
+                resize_cache(ST);
+                // need to re-calculate energy dependent terms
 
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
+                recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
-            // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
-            x0[0]  = ST.moment0[i][state_t::PS_X];
-            x0[1]  = ST.moment0[i][state_t::PS_Y];
-            x2[0]  = ST.moment1[i](0, 0);
-            x2[1]  = ST.moment1[i](2, 2);
+                for(size_t i=0; i<last_real_in.size(); i++)
+                    get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
-            ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
+                ST.recalc();
 
-            ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
-            ST.moment0[i][state_t::PS_PS] = (ST.real[i].IonEk-ST.ref.IonEk)/MeVtoeV;
+                last_ref_out = ST.ref;
+                last_real_out = ST.real;
+            } else {
+                ST.ref = last_ref_out;
+                assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+                std::copy(last_real_out.begin(),
+                          last_real_out.end(),
+                          ST.real.begin());
+            }
+            // note that calRFcaviEmitGrowth() assumes real[] isn't changed after this point
 
-            ST.moment0[i] = prod(misalign_inv[i], ST.moment0[i]);
+            ST.pos += length;
 
-            scratch  = prod(misalign[i], ST.moment1[i]);
-            ST.moment1[i] = prod(scratch, trans(misalign[i]));
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
 
-            scratch  = prod(transfer[i], ST.moment1[i]);
-            ST.moment1[i] = prod(scratch, trans(transfer[i]));
+                // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
+                x0[0]  = ST.moment0[i][state_t::PS_X];
+                x0[1]  = ST.moment0[i][state_t::PS_Y];
+                x2[0]  = ST.moment1[i](0, 0);
+                x2[1]  = ST.moment1[i](2, 2);
 
-            if (EmitGrowth) {
-                calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
-                ST.moment1[i] = scratch;
+                ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
+
+                ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
+                ST.moment0[i][state_t::PS_PS] = (ST.real[i].IonEk-ST.ref.IonEk)/MeVtoeV;
+
+                ST.moment0[i] = prod(misalign_inv[i], ST.moment0[i]);
+
+                scratch  = prod(misalign[i], ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(misalign[i]));
+
+                scratch  = prod(transfer[i], ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(transfer[i]));
+
+                if (EmitGrowth) {
+                    calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
+                    ST.moment1[i] = scratch;
+                }
+
+                scratch  = prod(misalign_inv[i], ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
             }
 
-            scratch  = prod(misalign_inv[i], ST.moment1[i]);
-            ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
+            ST.calc_rms();
         }
-
-        ST.calc_rms();
     }
 
     virtual void recompute_matrix(state_t& ST)

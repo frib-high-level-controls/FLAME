@@ -106,6 +106,112 @@ void GetQuadMatrix(const double L, const double K, const unsigned ind, typename 
     }
 }
 
+void GetSextMatrix(const double L, const double K3, const double Dx, const double Dy,
+                   const double D2x, const double D2y, const double D2xy, const bool thinlens, const bool dstkick, typename MomentElementBase::value_t &M)
+{
+    typedef typename MomentElementBase::state_t state_t;
+    // 2D sextupole transport matrix.
+    double sqrtK,
+           psi,
+           cs,
+           sn,
+           ch,
+           sh,
+           dr = sqrt(sqr(Dx)+sqr(Dx));
+
+    if (thinlens) {    //option thin-lens model
+
+        MomentState::matrix_t T = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        MomentState::matrix_t P = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        MomentState::matrix_t scratch;
+
+        T(state_t::PS_X, state_t::PS_PX) = L/2e0;
+        T(state_t::PS_Y, state_t::PS_PY) = L/2e0;
+
+        P(state_t::PS_PX, state_t::PS_X) = -K3*L*Dx;
+        P(state_t::PS_PX, state_t::PS_Y) =  K3*L*Dy;
+
+        P(state_t::PS_PY, state_t::PS_X) = K3*L*Dy;
+        P(state_t::PS_PY, state_t::PS_Y) = K3*L*Dx;
+
+        scratch = prod(P,T);
+        M = prod(T,scratch);
+
+    } else {    //option thick-lens model
+
+        if (K3 > 0e0) {
+            // Focusing.
+            sqrtK = sqrt(K3*dr);
+            psi = sqrtK*L;
+            cs = ::cos(psi);
+            sn = ::sin(psi);
+            ch = ::cosh(psi);
+            sh = ::sinh(psi);
+
+            if (sqrtK != 0e0) {
+                M(state_t::PS_X, state_t::PS_X) = M(state_t::PS_PX, state_t::PS_PX) = ((dr+Dx)*cs+(dr-Dx)*ch)/(2e0*dr);
+                M(state_t::PS_X, state_t::PS_PX) = ((dr+Dx)*sn+(dr-Dx)*sh)/(2e0*sqrtK*dr);
+                M(state_t::PS_X, state_t::PS_Y) = M(state_t::PS_PX, state_t::PS_PY) =
+                M(state_t::PS_Y, state_t::PS_X) = M(state_t::PS_PY, state_t::PS_PX) = Dy*(-cs+ch)/(2e0*dr);
+                M(state_t::PS_X, state_t::PS_PY) = Dy*(-sn+sh)/(2e0*sqrtK*dr);
+
+                M(state_t::PS_PX, state_t::PS_X) = sqrtK*(-(dr+Dx)*sn+(dr-Dx)*sh)/(2e0*dr);
+                M(state_t::PS_PX, state_t::PS_Y) = M(state_t::PS_PY, state_t::PS_X) =  Dy*sqrtK*(sn+sh)/(2e0*dr);
+
+                M(state_t::PS_Y, state_t::PS_PX) = Dy*(-sn+sh)/(2e0*sqrtK*dr);
+                M(state_t::PS_Y, state_t::PS_Y) = M(state_t::PS_PY, state_t::PS_PY) = ((dr-Dx)*cs+(dr+Dx)*ch)/(2e0*dr);
+                M(state_t::PS_Y, state_t::PS_PY) = ((dr-Dx)*sn+(dr+Dx)*sh)/(2e0*sqrtK*dr);
+
+                M(state_t::PS_PY, state_t::PS_Y) = sqrtK*(-(dr-Dx)*sn+(dr+Dx)*sh)/(2e0*dr);
+
+            } else {
+                M(state_t::PS_X, state_t::PS_PX) = L;
+                M(state_t::PS_Y, state_t::PS_PY) = L;
+            }
+
+
+        } else {
+            // Defocusing.
+            sqrtK = sqrt(-K3*dr);
+            psi = sqrtK*L;
+            cs = ::cos(psi);
+            sn = ::sin(psi);
+            ch = ::cosh(psi);
+            sh = ::sinh(psi);
+
+            if (sqrtK != 0e0) {
+                M(state_t::PS_X, state_t::PS_X) = M(state_t::PS_PX, state_t::PS_PX) = ((dr-Dx)*cs+(dr+Dx)*ch)/(2e0*dr);
+                M(state_t::PS_X, state_t::PS_PX) = ((dr-Dx)*sn+(dr+Dx)*sh)/(2e0*sqrtK*dr);
+                M(state_t::PS_X, state_t::PS_Y) = M(state_t::PS_PX, state_t::PS_PY) =
+                M(state_t::PS_Y, state_t::PS_X) = M(state_t::PS_PY, state_t::PS_PX) = Dy*(cs-ch)/(2e0*dr);
+                M(state_t::PS_X, state_t::PS_PY) = Dy*(sn-sh)/(2e0*sqrtK*dr);
+
+                M(state_t::PS_PX, state_t::PS_X) = sqrtK*(-(dr-Dx)*sn+(dr+Dx)*sh)/(2e0*dr);
+                M(state_t::PS_PX, state_t::PS_Y) = M(state_t::PS_PY, state_t::PS_X) = - Dy*sqrtK*(sn+sh)/(2e0*dr);
+
+                M(state_t::PS_Y, state_t::PS_PX) = Dy*(sn-sh)/(2e0*sqrtK*dr);
+                M(state_t::PS_Y, state_t::PS_Y) = M(state_t::PS_PY, state_t::PS_PY) = ((dr+Dx)*cs+(dr-Dx)*ch)/(2e0*dr);
+                M(state_t::PS_Y, state_t::PS_PY) = ((dr+Dx)*sn+(dr-Dx)*sh)/(2e0*sqrtK*dr);
+
+                M(state_t::PS_PY, state_t::PS_Y) = sqrtK*(-(dr+Dx)*sn+(dr-Dx)*sh)/(2e0*dr);
+
+            } else {
+                M(state_t::PS_X, state_t::PS_PX) = L;
+                M(state_t::PS_Y, state_t::PS_PY) = L;
+            }
+        }
+
+    } // option
+
+
+    if (dstkick){
+        M(state_t::PS_PX, 6) = -K3*L*(D2x-D2y);
+        M(state_t::PS_PY, 6) =  2e0*K3*L*D2xy;
+    }
+
+
+
+}
 
 void GetEdgeMatrix(const double rho, const double phi, typename MomentElementBase::value_t &M)
 {
@@ -286,8 +392,12 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
     // Add dipole terms.
     double delta_K = sqr(ref_beta/dip_beta) - 1e0;
 
-    M(state_t::PS_X,  6) = dx*Nk*(delta_K+delta_KZ);
-    M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
+//    M(state_t::PS_X,  6) = dx*Nk*(delta_K+delta_KZ);
+//    M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
+
+    double Nkz = (1e0+2e0*eta0-h)/(2e0*(1e0+eta0)*(1e0+2e0*eta0));
+    M(state_t::PS_X,  6) = dx*(Nk*delta_K+Nkz*delta_KZ);
+    M(state_t::PS_PX, 6) = sx/rho*(Nk*delta_K+Nkz*delta_KZ);
 
     // Edge focusing.
     GetEEdgeMatrix(fringe_x, fringe_y ,kappa, edge);

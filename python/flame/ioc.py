@@ -5,7 +5,7 @@ _log = logging.getLogger(__name__)
 import os, shutil
 datadir = os.path.join(os.path.dirname(__file__), 'data')
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from . import GLPSParser
 
@@ -21,7 +21,7 @@ class Generator(object):
         self._input = inp
         P = GLPSParser()
         with open(inp, 'rb') as F:
-            self._D = P.parse(F)
+            self._D = OrderedDict(P.parse(F))
 
     def emit_subst(self, outdir):
         efile = {}
@@ -36,7 +36,7 @@ class Generator(object):
         warnmissing = set()
 
         # collect and group be element type
-        for elem in self._D['elements']:
+        for elem in map(dict, self._D['elements']):
             etype = elem['type']
             ename = elem['name']
             rname = self._M(elem)

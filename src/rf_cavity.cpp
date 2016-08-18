@@ -1293,35 +1293,32 @@ void ElementRFCavity::calRFcaviEmitGrowth(const state_t::matrix_t &matIn, Partic
 
 void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLineType &linetab)
 {
-    int         cavilabel, multip;
-    double      Rm, IonFy_i, Ek_i, EfieldScl, IonFy_o;
+    int         cavilabel;
+    double      Rm, multip, IonFy_i, Ek_i, EfieldScl, IonFy_o;
 
     FLAME_LOG(DEBUG)<<"RF recompute start "<<real<<"\n";
 
     if (cavi      == 1) {
         cavilabel  = 41;
-        multip     = 1;
         Rm         = 17e0;
     } else if (cavi== 2) {
         cavilabel  = 85;
-        multip     = 1;
         Rm         = 17e0;
     } else if (cavi== 3) {
         cavilabel  = 29;
-        multip     = 4;
         Rm         = 20e0;
     } else if (cavi== 4) {
         cavilabel  = 53;
-        multip     = 4;
         Rm         = 20e0;
     } else if (cavi== 5) {
         // 5 Cell elliptical.
         cavilabel  = 53;
-        multip     = 8;
         Rm         = 20e0;
     } else {
         throw std::logic_error(SB()<<"*** InitRFCav: undef. cavity type: after ctor");
     }
+
+    multip    = fRF/SampleFreq;
 
     IonFy_i   = multip*real.phis + phi_ref;
     Ek_i      = real.IonEk;
@@ -1345,6 +1342,15 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
              <<"\n";
 
     GetCavMat(cavi, cavilabel, Rm, real, EfieldScl, IonFy_i, Ek_i, M, linetab);
+
+
+    //Wrapper for fequency jump in rf cavity
+    if (multip != 1) {
+        for (int i=0; i < state_t::maxsize; i++){
+           M(i,4) *= multip;
+           M(4,i) /= multip;
+        }
+    }
 
     FLAME_LOG(DEBUG)<<"RF recompute after  "<<real<<"\n"
              <<" YY "<<M<<"\n"

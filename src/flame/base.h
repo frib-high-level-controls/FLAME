@@ -34,6 +34,7 @@ struct StateBase : public boost::noncopyable
     size_t next_elem;
 
     double pos;        //!< absolute longitudinal position at end of Element
+    double clng;       //!< flag for limit to longitudinal run
 
     //! virtual equivalent to operator=()
     //! Should only be used with another State originating from the same Machine

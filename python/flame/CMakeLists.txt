@@ -27,6 +27,7 @@ set_target_properties(_internal
 
 set(PY_SRC
   __init__.py
+  __main__.py
   ioc.py
 
   test/__init__.py
@@ -71,8 +72,13 @@ set(PY_DATA
   data/source.template
   data/rfcavity.template
   data/quadrupole.template
+  data/sextupole.template
+  data/sbend.template
+  data/stripper.template
   data/solenoid.template
   data/bpm.template
+  data/marker.template
+  data/drift.template
 )
 
 # Copy .py files to the binary dir in order to run unit-tests

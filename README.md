@@ -2,6 +2,7 @@ Documentation
 =============
 
 Generated [documentation](http://frib-high-level-controls.github.io/FLAME)
+including [getting started](http://frib-high-level-controls.github.io/FLAME/gettingstarted.html) guide.
 
 Report [bugs through github.com](https://github.com/frib-high-level-controls/FLAME/issues)
 

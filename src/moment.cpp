@@ -585,43 +585,53 @@ void MomentElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    if(!check_cache(ST))
+    if ((int)ST.clng)
     {
-        // need to re-calculate energy dependent terms
-
-        last_ref_in = ST.ref;
-        last_real_in = ST.real;
-        resize_cache(ST);
-
-        recompute_matrix(ST); // updates transfer and last_Kenergy_out
-
-        ST.recalc();
-
-        for(size_t k=0; k<last_real_in.size(); k++)
-            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        // limit to longitudinal run
+    
+        ST.pos += length;
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
-        last_ref_out = ST.ref;
-        last_real_out = ST.real;
     } else {
-        ST.ref = last_ref_out;
-        assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
-        std::copy(last_real_out.begin(),
-                  last_real_out.end(),
-                  ST.real.begin());
+
+        if(!check_cache(ST)) 
+        {
+            // need to re-calculate energy dependent terms
+
+            last_ref_in = ST.ref;
+            last_real_in = ST.real;
+            resize_cache(ST);
+
+            recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+            ST.recalc();
+
+            for(size_t k=0; k<last_real_in.size(); k++)
+                ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+            ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+            last_ref_out = ST.ref;
+            last_real_out = ST.real;
+        } else {
+            ST.ref = last_ref_out;
+            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+            std::copy(last_real_out.begin(),
+                      last_real_out.end(),
+                      ST.real.begin());
+        }
+
+        ST.pos += length;
+
+        for(size_t k=0; k<last_real_in.size(); k++) {
+
+            ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
+
+            scratch  = prod(transfer[k], ST.moment1[k]);
+            ST.moment1[k] = prod(scratch, trans(transfer[k]));
+        }
+
+        ST.calc_rms();
     }
-
-    ST.pos += length;
-
-    for(size_t k=0; k<last_real_in.size(); k++) {
-
-        ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
-
-        scratch  = prod(transfer[k], ST.moment1[k]);
-        ST.moment1[k] = prod(scratch, trans(transfer[k]));
-    }
-
-    ST.calc_rms();
 }
 
 bool MomentElementBase::check_cache(const state_t& ST) const
@@ -811,58 +821,69 @@ struct ElementSBend : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if(!check_cache(ST)) {
-            // need to re-calculate energy dependent terms
-            last_ref_in = ST.ref;
-            last_real_in = ST.real;
-            resize_cache(ST);
+        if ((int)ST.clng)
+        {
+            // limit to longitudinal run
+        
+            ST.pos += length;
+            ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
-            recompute_matrix(ST); // updates transfer and last_Kenergy_out
-
-            ST.recalc();
-            last_ref_out = ST.ref;
-            last_real_out = ST.real;
         } else {
-            ST.ref = last_ref_out;
-            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
-            std::copy(last_real_out.begin(),
-                      last_real_out.end(),
-                      ST.real.begin());
+
+
+            if(!check_cache(ST)) {
+                // need to re-calculate energy dependent terms
+                last_ref_in = ST.ref;
+                last_real_in = ST.real;
+                resize_cache(ST);
+
+                recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+                ST.recalc();
+                last_ref_out = ST.ref;
+                last_real_out = ST.real;
+            } else {
+                ST.ref = last_ref_out;
+                assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+                std::copy(last_real_out.begin(),
+                          last_real_out.end(),
+                          ST.real.begin());
+            }
+
+            ST.pos += length;
+
+            ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
+
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double phis_temp = ST.moment0[i][state_t::PS_S];
+
+                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+
+                noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+
+                double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
+
+                if (HdipoleFitMode != 1) {
+                    /*
+                    double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
+                    di_bg     = conf().get<double>("bg");
+                    // Dipole reference energy.
+                    Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
+                    gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
+                    beta00    = sqrt(1e0-1e0/sqr(gamma00));
+                    IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
+                    */
+
+                    // J.B.: this is odd.
+                    // ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
+                    ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+                } else
+                    ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+            }
+
+            ST.calc_rms();
         }
-
-        ST.pos += length;
-
-        ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
-
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            double phis_temp = ST.moment0[i][state_t::PS_S];
-
-            ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
-
-            noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
-            noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
-
-            double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
-
-            if (HdipoleFitMode != 1) {
-                /*
-                double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
-                di_bg     = conf().get<double>("bg");
-                // Dipole reference energy.
-                Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
-                gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
-                beta00    = sqrt(1e0-1e0/sqr(gamma00));
-                IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-                */
-
-                // J.B.: this is odd.
-    //            ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
-                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
-            } else
-                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
-        }
-
-        ST.calc_rms();
     }
 
     virtual void recompute_matrix(state_t& ST)
@@ -946,6 +967,92 @@ struct ElementQuad : public MomentElementBase
     }
 };
 
+struct ElementSext : public MomentElementBase
+{
+    // Transport matrix for Sextupole; K = B3/Brho.
+    typedef ElementSext              self_t;
+    typedef MomentElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    ElementSext(const Config& c) : base_t(c) {}
+    virtual ~ElementSext() {}
+    virtual const char* type_name() const {return "sextupole";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
+
+    virtual void advance(StateBase& s)
+    {
+        state_t&  ST = static_cast<state_t&>(s);
+        using namespace boost::numeric::ublas;
+
+        // IonEk is Es + E_state; the latter is set by user.
+        ST.recalc();
+
+        last_ref_in = ST.ref;
+        last_real_in = ST.real;
+        resize_cache(ST);
+
+        //recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+        const double B3= conf().get<double>("B3"),
+                     L = conf().get<double>("L")*MtoMM;
+        const int step = conf().get<double>("step", 1.0);
+        const bool thinlens = conf().get<double>("thinlens", 0.0) == 1.0,
+                   dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
+
+        const double dL = L/step;
+
+        for(size_t k=0; k<last_real_in.size(); k++) {
+
+            //--------------
+
+            transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+            double Brho = ST.real[k].beta*(ST.real[k].IonEk+ST.real[k].IonEs)/(C0*ST.real[k].IonZ),
+                   K = B3/Brho/cube(MtoMM);
+            
+
+            for(int i=0; i<step; i++){
+                double Dx = ST.moment0[k][state_t::PS_X],
+                       Dy = ST.moment0[k][state_t::PS_Y],
+                       D2x = ST.moment1[k](state_t::PS_X, state_t::PS_X),
+                       D2y = ST.moment1[k](state_t::PS_Y, state_t::PS_Y),
+                       D2xy = ST.moment1[k](state_t::PS_X, state_t::PS_Y);
+
+
+                GetSextMatrix(dL,  K, Dx, Dy, D2x, D2y, D2xy, thinlens, dstkick, transfer[k]);
+
+                transfer[k](state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
+
+                //get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
+                //noalias(scratch)     = prod(transfer[k], misalign[k]);
+                //noalias(transfer[k]) = prod(misalign_inv[k], scratch);
+
+                //--------------
+
+                ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
+
+                scratch  = prod(transfer[k], ST.moment1[k]);
+                ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            }
+        }
+
+        ST.recalc();
+
+        for(size_t k=0; k<last_real_in.size(); k++)
+            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        last_ref_out = ST.ref;
+        last_real_out = ST.real;
+
+        ST.pos += length;
+
+        ST.calc_rms();
+    }
+};
+
 struct ElementSolenoid : public MomentElementBase
 {
     // Transport (identity) matrix for a Solenoid; K = B/(2 Brho).
@@ -1022,7 +1129,7 @@ struct ElementEDipole : public MomentElementBase
         for(size_t i=0; i<last_real_in.size(); i++) {
             double eta0        = (ST.real[i].gamma-1e0)/2e0,
                    Kx          = (1e0-spher+sqr(1e0+2e0*eta0))/sqr(rho),
-                   delta_KZ    = ST.ref.IonZ/ST.real[i].IonZ - 1e0,
+                   delta_KZ    = ST.real[i].IonZ/ST.ref.IonZ - 1e0,
                    SampleIonK  = 2e0*M_PI/(ST.real[i].beta*SampleLambda);
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
@@ -1101,6 +1208,111 @@ struct ElementEQuad : public MomentElementBase
     }
 };
 
+/*
+struct ElementRFQcell : public MomentElementBase
+{
+    // Transport matrix for Electrostatic Quadrupole.
+    typedef ElementRFQcell           self_t;
+    typedef MomentElementBase        base_t;
+    typedef typename base_t::state_t state_t;
+
+    ElementRFQcell(const Config& c) : base_t(c) {}
+    virtual ~ElementRFQcell() {}
+    virtual const char* type_name() const {return "rfqcell";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
+
+    virtual void advance(StateBase& s)
+    {
+        state_t&  ST = static_cast<state_t&>(s);
+        using namespace boost::numeric::ublas;
+
+        // IonEk is Es + E_state; the latter is set by user.
+        ST.recalc();
+
+        last_ref_in = ST.ref;
+        last_real_in = ST.real;
+        resize_cache(ST);
+
+        //recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+        const double V0   = conf().get<double>("V"),
+                     R0   = conf().get<double>("r0"),
+                     phi0   = conf().get<double>("phi0"),
+                     A10   = conf().get<double>("A10"),
+                     L    = conf().get<double>("L")*MtoMM;
+        const int step = conf().get<double>("step", 1.0);
+
+        const double dL = L/step;
+
+
+        for(size_t k=0; k<last_real_in.size(); k++) {
+
+            double phi = phi0 + M_PI/(ST.real[k].beta*SampleLambda)*dL,
+                   loc = dL/2e0; // Reference orbit position in RFQcell
+
+            //Brho = ST.real[k].beta*(ST.real[k].IonEk+ST.real[k].IonEs)/(C0*ST.real[k].IonZ),
+            //K    = 2e0*V0/(C0*ST.real[k].beta*sqr(R))/Brho/sqr(MtoMM);
+
+
+            //--------------
+
+            transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+           
+            for(int i=0; i<step; i++){
+
+                double Erho = sqr(ST.real[k].beta)*(ST.real[k].IonEk+ST.real[k].IonEs)/ST.real[k].IonZ,
+                       Accl = sqr(M_PI/L)*A10/4e0*cos(M_PI*loc/L), // modulation term
+                       I0 = 1e0;
+                double Kx = 2e0*V0*dL/Erho*(-1e0/sqr(R0)-Accl)/sqr(MtoMM)*sin(phi),
+                       Ky = 2e0*V0*dL/Erho*( 1e0/sqr(R0)-Accl)/sqr(MtoMM)*sin(phi),
+                       Kz = V0*dL*A10*I0*(M_PI/L)*sin(M_PI*loc/L)*cos(phi)/Erho;
+
+                // Horizontal plane.
+                GetQuadMatrix(L,  Kx, (unsigned)state_t::PS_X, transfer[k]);
+                // Vertical plane.
+                GetQuadMatrix(L,  Ky, (unsigned)state_t::PS_Y, transfer[k]);
+
+
+
+                transfer[k](state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
+
+                get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
+
+                noalias(scratch)     = prod(transfer[k], misalign[k]);
+                noalias(transfer[k]) = prod(misalign_inv[k], scratch);
+
+                //--------------
+
+                ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
+
+                scratch  = prod(transfer[k], ST.moment1[k]);
+                ST.moment1[k] = prod(scratch, trans(transfer[k]));
+
+                phi += 2e0*M_PI/(ST.real[k].beta*SampleLambda)*dL;
+                loc += dL;
+
+                ST.recalc();
+
+            }
+        }
+
+        for(size_t k=0; k<last_real_in.size(); k++)
+            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        last_ref_out = ST.ref;
+        last_real_out = ST.real;
+
+        ST.pos += length;
+
+        ST.calc_rms();
+    }
+};
+*/
+
+
 } // namespace
 
 void registerMoment()
@@ -1121,6 +1333,8 @@ void registerMoment()
 
     Machine::registerElement<ElementQuad                   >("MomentMatrix", "quadrupole");
 
+    Machine::registerElement<ElementSext                   >("MomentMatrix", "sextupole");
+
     Machine::registerElement<ElementSolenoid               >("MomentMatrix", "solenoid");
 
     Machine::registerElement<ElementRFCavity               >("MomentMatrix", "rfcavity");
@@ -1130,4 +1344,6 @@ void registerMoment()
     Machine::registerElement<ElementEDipole                >("MomentMatrix", "edipole");
 
     Machine::registerElement<ElementEQuad                  >("MomentMatrix", "equad");
+
+//    Machine::registerElement<ElementRFQcell                 >("MomentMatrix", "rfqcell");
 }
