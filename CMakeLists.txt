@@ -11,8 +11,8 @@ option(NEED_DEMOIOC  "build flamedemo IOC executable" ON)
 message(STATUS "Option PYTHON ${USE_PYTHON}")
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE DEBUG) # default to debug build
-  message(STATUS "Default to DEBUG build")
+  set(CMAKE_BUILD_TYPE RELEASE) # default to debug build
+  message(STATUS "Default to RELEASE build")
 endif()
 if(CMAKE_COMPILER_IS_GNUCC)
   # Turn on extra GCC warnings
