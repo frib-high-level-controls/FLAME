@@ -107,7 +107,7 @@ void GetQuadMatrix(const double L, const double K, const unsigned ind, typename 
 }
 
 void GetSextMatrix(const double L, const double K3, const double Dx, const double Dy,
-                   const double D2x, const double D2y, const double D2xy, const bool dstkick, typename MomentElementBase::value_t &M)
+                   const double D2x, const double D2y, const double D2xy, const bool thinlens, const bool dstkick, typename MomentElementBase::value_t &M)
 {
     typedef typename MomentElementBase::state_t state_t;
     // 2D sextupole transport matrix.
@@ -119,20 +119,23 @@ void GetSextMatrix(const double L, const double K3, const double Dx, const doubl
            sh,
            dr = sqrt(sqr(Dx)+sqr(Dx));
 
-    if (false) {    //option thin-lens model
+    if (thinlens) {    //option thin-lens model
 
         MomentState::matrix_t T = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        MomentState::matrix_t P = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        MomentState::matrix_t scratch;
+
         T(state_t::PS_X, state_t::PS_PX) = L/2e0;
         T(state_t::PS_Y, state_t::PS_PY) = L/2e0;
 
-        M(state_t::PS_PX, state_t::PS_X) = -K3*L*Dx;
-        M(state_t::PS_PX, state_t::PS_Y) =  K3*L*Dy;
+        P(state_t::PS_PX, state_t::PS_X) = -K3*L*Dx;
+        P(state_t::PS_PX, state_t::PS_Y) =  K3*L*Dy;
 
-        M(state_t::PS_PY, state_t::PS_X) = K3*L*Dy; 
-        M(state_t::PS_PY, state_t::PS_Y) = K3*L*Dx;
+        P(state_t::PS_PY, state_t::PS_X) = K3*L*Dy;
+        P(state_t::PS_PY, state_t::PS_Y) = K3*L*Dx;
 
-        M = prod(M,T);
-        M = prod(T,M);
+        scratch = prod(P,T);
+        M = prod(T,scratch);
 
     } else {    //option thick-lens model
 

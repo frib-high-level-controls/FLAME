@@ -14,7 +14,7 @@ void RotMat(const double dx, const double dy,
 void GetQuadMatrix(const double L, const double K, const unsigned ind, typename MomentElementBase::value_t &M);
 
 void GetSextMatrix(const double L, const double K, const double Dx, const double Dy,
-                   const double D2x, const double D2y, const double D2xy, const bool dstkick, typename MomentElementBase::value_t &M);
+                   const double D2x, const double D2y, const double D2xy, const bool thinlens, const bool dstkick, typename MomentElementBase::value_t &M);
 
 void GetEdgeMatrix(const double rho, const double phi, typename MomentElementBase::value_t &M);
 

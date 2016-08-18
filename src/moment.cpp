@@ -585,43 +585,53 @@ void MomentElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    if(!check_cache(ST)) 
+    if ((int)ST.clng)
     {
-        // need to re-calculate energy dependent terms
-
-        last_ref_in = ST.ref;
-        last_real_in = ST.real;
-        resize_cache(ST);
-
-        recompute_matrix(ST); // updates transfer and last_Kenergy_out
-
-        ST.recalc();
-
-        for(size_t k=0; k<last_real_in.size(); k++)
-            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        // limit to longitudinal run
+    
+        ST.pos += length;
         ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
-        last_ref_out = ST.ref;
-        last_real_out = ST.real;
     } else {
-        ST.ref = last_ref_out;
-        assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
-        std::copy(last_real_out.begin(),
-                  last_real_out.end(),
-                  ST.real.begin());
+
+        if(!check_cache(ST)) 
+        {
+            // need to re-calculate energy dependent terms
+
+            last_ref_in = ST.ref;
+            last_real_in = ST.real;
+            resize_cache(ST);
+
+            recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+            ST.recalc();
+
+            for(size_t k=0; k<last_real_in.size(); k++)
+                ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+            ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+            last_ref_out = ST.ref;
+            last_real_out = ST.real;
+        } else {
+            ST.ref = last_ref_out;
+            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+            std::copy(last_real_out.begin(),
+                      last_real_out.end(),
+                      ST.real.begin());
+        }
+
+        ST.pos += length;
+
+        for(size_t k=0; k<last_real_in.size(); k++) {
+
+            ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
+
+            scratch  = prod(transfer[k], ST.moment1[k]);
+            ST.moment1[k] = prod(scratch, trans(transfer[k]));
+        }
+
+        ST.calc_rms();
     }
-
-    ST.pos += length;
-
-    for(size_t k=0; k<last_real_in.size(); k++) {
-
-        ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
-
-        scratch  = prod(transfer[k], ST.moment1[k]);
-        ST.moment1[k] = prod(scratch, trans(transfer[k]));
-    }
-
-    ST.calc_rms();
 }
 
 bool MomentElementBase::check_cache(const state_t& ST) const
@@ -811,58 +821,69 @@ struct ElementSBend : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if(!check_cache(ST)) {
-            // need to re-calculate energy dependent terms
-            last_ref_in = ST.ref;
-            last_real_in = ST.real;
-            resize_cache(ST);
+        if ((int)ST.clng)
+        {
+            // limit to longitudinal run
+        
+            ST.pos += length;
+            ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
-            recompute_matrix(ST); // updates transfer and last_Kenergy_out
-
-            ST.recalc();
-            last_ref_out = ST.ref;
-            last_real_out = ST.real;
         } else {
-            ST.ref = last_ref_out;
-            assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
-            std::copy(last_real_out.begin(),
-                      last_real_out.end(),
-                      ST.real.begin());
+
+
+            if(!check_cache(ST)) {
+                // need to re-calculate energy dependent terms
+                last_ref_in = ST.ref;
+                last_real_in = ST.real;
+                resize_cache(ST);
+
+                recompute_matrix(ST); // updates transfer and last_Kenergy_out
+
+                ST.recalc();
+                last_ref_out = ST.ref;
+                last_real_out = ST.real;
+            } else {
+                ST.ref = last_ref_out;
+                assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
+                std::copy(last_real_out.begin(),
+                          last_real_out.end(),
+                          ST.real.begin());
+            }
+
+            ST.pos += length;
+
+            ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
+
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double phis_temp = ST.moment0[i][state_t::PS_S];
+
+                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+
+                noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+
+                double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
+
+                if (HdipoleFitMode != 1) {
+                    /*
+                    double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
+                    di_bg     = conf().get<double>("bg");
+                    // Dipole reference energy.
+                    Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
+                    gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
+                    beta00    = sqrt(1e0-1e0/sqr(gamma00));
+                    IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
+                    */
+
+                    // J.B.: this is odd.
+                    // ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
+                    ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+                } else
+                    ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+            }
+
+            ST.calc_rms();
         }
-
-        ST.pos += length;
-
-        ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
-
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            double phis_temp = ST.moment0[i][state_t::PS_S];
-
-            ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
-
-            noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
-            noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
-
-            double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
-
-            if (HdipoleFitMode != 1) {
-                /*
-                double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
-                di_bg     = conf().get<double>("bg");
-                // Dipole reference energy.
-                Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
-                gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
-                beta00    = sqrt(1e0-1e0/sqr(gamma00));
-                IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-                */
-
-                // J.B.: this is odd.
-    //            ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
-                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
-            } else
-                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
-        }
-
-        ST.calc_rms();
     }
 
     virtual void recompute_matrix(state_t& ST)
@@ -976,7 +997,8 @@ struct ElementSext : public MomentElementBase
         const double B3= conf().get<double>("B3"),
                      L = conf().get<double>("L")*MtoMM;
         const int step = conf().get<double>("step", 1.0);
-        const bool dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
+        const bool thinlens = conf().get<double>("thinlens", 0.0) == 1.0,
+                   dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
 
         const double dL = L/step;
 
@@ -998,7 +1020,7 @@ struct ElementSext : public MomentElementBase
                        D2xy = ST.moment1[k](state_t::PS_X, state_t::PS_Y);
 
 
-                GetSextMatrix(dL,  K, Dx, Dy, D2x, D2y, D2xy, dstkick, transfer[k]);
+                GetSextMatrix(dL,  K, Dx, Dy, D2x, D2y, D2xy, thinlens, dstkick, transfer[k]);
 
                 transfer[k](state_t::PS_S, state_t::PS_PS) =
                         -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
