@@ -276,8 +276,7 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
     M(state_t::PS_S,  state_t::PS_PX) = dx*dip_IonK;
     // Low beta approximation.
     M(state_t::PS_S,  state_t::PS_PS) =
-            ((L/rho-sx)/(Kx*rho)-L/sqr(ref_gamma))*dip_IonK
-            /(sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
+            ((L/rho-sx)/(Kx*rho)-L/sqr(ref_gamma))*dip_IonK/(sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
 
     // Add dipole terms.
     M(state_t::PS_S,  6) = ((L/rho-sx)/(Kx*rho)*d-L/sqr(ref_gamma)*(d+qmrel))*dip_IonK;
@@ -285,11 +284,11 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
     M(state_t::PS_PX, 6) = sx*d;
 
     // Edge focusing.
-    GetEdgeMatrix(rho, phi1, edge1);
-    GetEdgeMatrix(rho, phi2, edge2);
+    //GetEdgeMatrix(rho, phi1, edge1);
+    //GetEdgeMatrix(rho, phi2, edge2);
 
-    M = prod(M, edge1);
-    M = prod(edge2, M);
+    //M = prod(M, edge1);
+    //M = prod(edge2, M);
 
     // Longitudinal plane.
     // For total path length.

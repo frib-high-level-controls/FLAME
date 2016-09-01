@@ -796,6 +796,8 @@ struct ElementSBend : public MomentElementBase
     typedef typename base_t::state_t state_t;
 
     unsigned HdipoleFitMode;
+    double L, phi, phi1, phi2, K, Ftype;
+
 
     ElementSBend(const Config& c) : base_t(c), HdipoleFitMode(0) {
 
@@ -803,6 +805,17 @@ struct ElementSBend : public MomentElementBase
         strm>>HdipoleFitMode;
         if(!strm.eof() && strm.fail())
             throw std::runtime_error("HdipoleFitMode must be an integer");
+
+        L     = conf().get<double>("L")*MtoMM;
+        phi   = conf().get<double>("phi")*M_PI/180e0;
+        phi1  = conf().get<double>("phi1")*M_PI/180e0;
+        phi2  = conf().get<double>("phi2")*M_PI/180e0;
+        K     = conf().get<double>("K", 0e0)/sqr(MtoMM);
+        Ftype  = conf().get<double>("FringeType", 2e0);
+        if ((float)(int)Ftype != Ftype)
+            throw std::runtime_error("sbend: FringeType must be an integer");
+
+
     }
     virtual ~ElementSBend() {}
     virtual const char* type_name() const {return "sbend";}
@@ -811,6 +824,12 @@ struct ElementSBend : public MomentElementBase
         base_t::assign(other);
         const self_t* O=static_cast<const self_t*>(other);
         HdipoleFitMode = O->HdipoleFitMode;
+        L = O->L;
+        phi = O->phi;
+        phi1 = O->phi1;
+        phi2 = O->phi2;
+        K   = O->K;
+        Ftype = O->Ftype;
     }
 
     virtual void advance(StateBase& s)
@@ -857,15 +876,33 @@ struct ElementSBend : public MomentElementBase
             for(size_t i=0; i<last_real_in.size(); i++) {
                 double phis_temp = ST.moment0[i][state_t::PS_S];
 
-                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
 
-                noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
-                noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+                if ((int)Ftype != 2) {
+                    ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+                    noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                    noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+
+                } else {
+
+                    // 2nd order Edge focusing.
+                    if (phi1 != 0.0){
+                        fringe2nd(true, i, phi1, ST);
+                    }
+
+                    ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+                    noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                    noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+
+                    if (phi2 != 0.0){
+                        fringe2nd(false, i, phi2, ST);
+                    }
+
+                }
 
                 double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
                 if (HdipoleFitMode != 1) {
-                    /*
+
                     double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
                     di_bg     = conf().get<double>("bg");
                     // Dipole reference energy.
@@ -873,10 +910,9 @@ struct ElementSBend : public MomentElementBase
                     gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
                     beta00    = sqrt(1e0-1e0/sqr(gamma00));
                     IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-                    */
 
                     // J.B.: this is odd.
-                    // ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
+                    //ST.real[i].phis  += IonK_Bend*length*MtoMM + dphis_temp;
                     ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
                 } else
                     ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
@@ -889,12 +925,6 @@ struct ElementSBend : public MomentElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-
-        double L     = conf().get<double>("L")*MtoMM,
-               phi   = conf().get<double>("phi")*M_PI/180e0,
-               phi1  = conf().get<double>("phi1")*M_PI/180e0,
-               phi2  = conf().get<double>("phi2")*M_PI/180e0,
-               K     = conf().get<double>("K", 0e0)/sqr(MtoMM);
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             double qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ;
@@ -916,11 +946,100 @@ struct ElementSBend : public MomentElementBase
                 GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
                                ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
 
+            if ((int)Ftype == 1) {
+                // 1st order Edge focusing.
+                double rho = L/phi;
+
+                MomentState::matrix_t edge1, edge2;
+
+                GetEdgeMatrix(rho, phi1, edge1);
+                GetEdgeMatrix(rho, phi2, edge2);
+
+                noalias(scratch)     = prod(transfer[i], edge1);
+                noalias(transfer[i]) = prod(edge2, scratch);
+            }
+
             get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
         }
+    }
+
+    void fringe2nd(int ent, int i, double phif, state_t& ST)
+    {
+        // 2nd order Edge focusing.
+
+        double h0 = phi/L,
+               tan1 = tan(phif),
+               tan2 = sqr(tan1),
+               sec2 = tan2 + 1,
+               aper = conf().get<double>("aper")*MtoMM,
+               theta = 2e0*aper*K*h0*(1+sqr(sin(phif)))/cos(phif),
+               tan1y = tan(phif-theta),
+               qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ,
+               d = 0e0,
+               dpdw;
+
+        if (HdipoleFitMode != 1) {
+            double dip_bg    = conf().get<double>("bg"),
+                   // Dipole reference energy.
+                   dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
+                   dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
+                   dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma));
+
+            d    = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel;
+            dpdw = 1e0/(sqr(dip_beta)*dip_gamma*ST.ref.IonEs/MeVtoeV);
+        } else {
+            dpdw = 1e0/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+        }
+
+        double xx  = sqr(ST.moment0[i](state_t::PS_X)),
+               xy  = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_Y),
+               yy  = sqr(ST.moment0[i](state_t::PS_Y)),
+               xpx = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_PX),
+               xpy = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_PY),
+               ypx = ST.moment0[i](state_t::PS_Y)*ST.moment0[i](state_t::PS_PX),
+               ypy = ST.moment0[i](state_t::PS_Y)*ST.moment0[i](state_t::PS_PY),
+               xdp = ST.moment0[i](state_t::PS_X)*(ST.moment0[i](state_t::PS_PS)*dpdw +d-qmrel),
+               ydp = ST.moment0[i](state_t::PS_Y)*(ST.moment0[i](state_t::PS_PS)*dpdw +d-qmrel);
+
+        xx  += ST.moment1[i](state_t::PS_X, state_t::PS_X),
+        xy  += ST.moment1[i](state_t::PS_X, state_t::PS_Y),
+        yy  += ST.moment1[i](state_t::PS_Y, state_t::PS_Y),
+        xpx += ST.moment1[i](state_t::PS_X, state_t::PS_PX),
+        xpy += ST.moment1[i](state_t::PS_X, state_t::PS_PY),
+        ypx += ST.moment1[i](state_t::PS_Y, state_t::PS_PX),
+        ypy += ST.moment1[i](state_t::PS_Y, state_t::PS_PY),
+        xdp += ST.moment1[i](state_t::PS_X, state_t::PS_PS)*dpdw,
+        ydp += ST.moment1[i](state_t::PS_Y, state_t::PS_PS)*dpdw;
+
+        MomentState::matrix_t edge1 = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);;
+
+        if (ent) {
+            edge1(state_t::PS_PX, state_t::PS_X) =  h0*tan1;
+            edge1(state_t::PS_PY, state_t::PS_Y) = -h0*tan1y;
+
+            edge1(state_t::PS_X,  6) = h0*(-tan2*xx + sec2*yy)/2e0;
+            edge1(state_t::PS_PX, 6) = h0*( tan2*(xpx-ypy) + h0*(tan1/2e0+tan1*tan2)*yy - tan1*xdp);
+
+            edge1(state_t::PS_Y,  6) = h0*( tan2*xy);
+            edge1(state_t::PS_PY, 6) = h0*(-tan2*xpy - sec2*ypx + (tan1-theta*(1+sqr(tan1y)))*ydp);
+
+        } else {
+            edge1(state_t::PS_PX, state_t::PS_X) =  h0*tan1;
+            edge1(state_t::PS_PY, state_t::PS_Y) = -h0*tan1y;
+
+            edge1(state_t::PS_X,  6) = h0*( tan2*xx-sec2*yy)/2e0;
+            edge1(state_t::PS_PX, 6) = h0*( h0*tan1*tan2*(xx-yy)/2e0 - tan2*(xpx-ypy) - tan1*xdp);
+
+            edge1(state_t::PS_Y,  6) = h0*(-tan2*xy);
+            edge1(state_t::PS_PY, 6) = h0*( h0*sec2*tan1*xy + tan2*xpy + sec2*ypx +(tan1-theta*(1+sqr(tan1y)))*ydp);
+        }
+
+        ST.moment0[i]    = prod(edge1, ST.moment0[i]);
+        noalias(scratch) = prod(edge1, ST.moment1[i]);
+        noalias(ST.moment1[i])      = prod(scratch, trans(edge1));
     }
 };
 
@@ -954,8 +1073,6 @@ struct ElementQuad : public MomentElementBase
             // Vertical plane.
             GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
             // Longitudinal plane.
-    //        transfer(state_t::PS_S, state_t::PS_S) = L;
-
             transfer[i](state_t::PS_S, state_t::PS_PS) =
                     -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
