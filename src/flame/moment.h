@@ -50,6 +50,8 @@ struct Particle {
         bg         = (beta != 0e0)? beta*gamma : 1e0;
         SampleIonK = 2e0*M_PI/(beta*SampleLambda);
     }
+
+    double Brho() const { return beta*IonW/(C0*IonZ); } //!< Magnetic rigidity.
 };
 
 std::ostream& operator<<(std::ostream&, const Particle&);
