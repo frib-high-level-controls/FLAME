@@ -71,10 +71,18 @@ set(PY_DATA
   data/orbit.db
   data/common.template
   data/source.template
+  data/drift.template
   data/rfcavity.template
   data/quadrupole.template
+  data/sextupole.template
+  data/sbend.template
   data/solenoid.template
+  data/edipole.template
+  data/equad.template
+  data/stripper.template
   data/bpm.template
+  data/marker.template
+  data/orbtrim.template
 )
 
 # Copy .py files to the binary dir in order to run unit-tests

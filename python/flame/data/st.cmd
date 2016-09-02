@@ -4,7 +4,7 @@ epicsEnvSet("EPICS_DB_INCLUDE_PATH", "../vaccel:.")
 dbLoadDatabase("flamedemo.dbd")
 flamedemo_registerRecordDeviceDriver(pdbbase)
 
-< vconfig
+epicsEnvSet("LATTICE", "%(latticepath)s")
 
 flamePrepare("THESIM", "$(LATTICE=input.lat)")
 dbLoadRecords("core.db", "P=TST:,SIM=THESIM")
