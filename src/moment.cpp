@@ -980,20 +980,7 @@ struct ElementSBend : public MomentElementBase
                tan1y = tan(phif-theta),
                qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ,
                d = 0e0,
-               dpdw;
-
-        if (HdipoleFitMode != 1) {
-            double dip_bg    = conf().get<double>("bg"),
-                   // Dipole reference energy.
-                   dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
-                   dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
-                   dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma));
-
-            d    = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel;
-            dpdw = 1e0/(sqr(dip_beta)*dip_gamma*ST.ref.IonEs/MeVtoeV);
-        } else {
-            dpdw = 1e0/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
-        }
+               dpdw = 1e0/(sqr(dip_beta)*dip_gamma*ST.ref.IonEs/MeVtoeV);
 
         double xx  = sqr(ST.moment0[i](state_t::PS_X)),
                xy  = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_Y),
