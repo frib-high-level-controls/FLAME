@@ -1,1 +1,82 @@
+record(ai, "$(P)X-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_env)[0]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)PX-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_env)[1]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)Y-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_env)[2]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)PY-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_env)[3]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)Z-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_env)[4]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)PZ-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_env)[5]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
 
+
+record(ai, "$(P)X_RMS-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_rms)[0]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)PX_RMS-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_rms)[1]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)Y_RMS-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_rms)[2]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)PY_RMS-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_rms)[3]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)Z_RMS-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_rms)[4]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+record(ai, "$(P)PZ_RMS-I") {
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=moment0_rms)[5]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}
+
+record(ai, "$(P)EK-I") {
+    field(DESC, "E kin. on exit")
+    field(DTYP, "FLAME State")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=IonEk)[0]")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+}

@@ -35,11 +35,10 @@ record(ai, "$(P)PZ-I") {
     field(PREC, "6")
 }
 
-
 record(ai, "$(P)EK-I") {
     field(DESC, "E kin. on exit")
     field(DTYP, "FLAME State")
-    field(INP , "@$(SIM) $(ELEM) $(ENAME=ref_IonEk)")
+    field(INP , "@$(SIM) $(ELEM) $(ENAME=IonEk)[0]")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
 }

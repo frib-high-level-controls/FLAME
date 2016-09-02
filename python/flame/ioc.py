@@ -99,7 +99,7 @@ class Generator(object):
         with open(os.path.join(self._I, 'st.cmd'), 'r') as F:
             stcmd = F.read()
 
-        stcmd = stcmd%{'nmarkers':nmarkers}
+        stcmd = stcmd%{'nmarkers':nmarkers, 'latticepath':os.path.join(os.getcwd(),self._input)}
 
         with open(os.path.join(outdir, 'st.cmd'), 'w') as F:
             F.write(stcmd)
