@@ -49,6 +49,7 @@ set(PY_DATA
   test/FE_latticeE.lat
   test/LS1FS1_latticeE.lat
   test/ALL_latticeE.lat
+  test/Arc_Ds.lat
 
   # cavity data for test lattice files
   test/data/axisData_29.txt

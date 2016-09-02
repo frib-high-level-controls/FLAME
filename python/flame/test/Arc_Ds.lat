@@ -1,0 +1,260 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+# Global parameters.
+
+# Mpultipole level: 0 only include focusing and defocusing effects,
+#                   1 include dipole terms,
+#                   2 include quadrupole terms.
+MpoleLevel = "0";
+
+# Include emittance growth from RF Cavity.
+EmitGrowth = "0";
+
+# Dipole strength adjusted to beam energy.
+HdipoleFitMode = "1";
+
+AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
+
+IonEs = AMU;           # Nucleon mass [eV/u].
+
+# Stripper down stream Charge States and amount; the latter modeled by Baron's formula.
+Stripper_IonChargeStates = [76.0/238.0, 77.0/238.0, 78.0/238.0, 79.0/238.0, 80.0/238.0];
+Stripper_NCharge         = [2660.0, 4360.0, 5300.0, 5090.0, 3230.0];
+
+# Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]. Note, units for mis-alignments are: [m] and [rad].
+
+IonEk = 16478364.1912;
+
+IonChargeStates = [0.327731092437, 0.319327731092, 0.323529411765, 0.331932773109, 0.336134453782];
+
+NCharge = [5396, 2587, 4353, 4986, 3320];
+
+BaryCenter0 = [-0.10750107947, 7.53636308185e-05, 0.421423185396, -9.97362418492e-05, -0.000919969644459, 0.00106421081524, 1.0];
+
+S0 = [3.52158873498, -0.00154442554989, -0.59396014563, 0.000134903161443, -0.00192013204687, 0.000246903257592, 0.0 ,
+      -0.00154442554989, 7.97878620613e-07, 0.000293062140577, -4.92400426496e-08, 1.29646083144e-06, -9.60385100992e-08, 0.0 ,
+      -0.59396014563, 0.000293062140577, 4.86963315859, -0.000991505763535, 0.00148131807007, -0.000350500884597, 0.0 ,
+      0.000134903161443, -4.92400426496e-08, -0.000991505763535, 3.06177572502e-07, -1.72604091179e-07, 2.58888588321e-08, 0.0 ,
+      -0.00192013204687, 1.29646083144e-06, 0.00148131807007, -1.72604091179e-07, 0.00793430309338, 5.07858752072e-05, 0.0 ,
+      0.000246903257592, -9.60385100992e-08, -0.000350500884597, 2.58888588321e-08, 5.07858752072e-05, 8.12817063339e-06, 0.0 ,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+BaryCenter1 = [-0.147440162338, 6.80713413796e-05, 0.455363076868, -6.86680321096e-05, -0.00605432250077, 0.000560900771746, 1.0];
+
+S1 = [6.30096746791, -0.00233403588971, -0.714309237949, 6.31607218028e-05, 0.00222685235921, 0.000333218266709, 0.0 ,
+      -0.00233403588971, 9.27461420867e-07, 0.00021997145571, -5.80652937017e-09, -1.13192614655e-06, -1.21075991059e-07, 0.0 ,
+      -0.714309237949, 0.00021997145571, 4.88582084196, -0.000787433720936, 0.00576876606478, -0.000100449208059, 0.0 ,
+      6.31607218028e-05, -5.80652937017e-09, -0.000787433720936, 2.26427246148e-07, -1.86024030636e-06, -4.25233845933e-08, 0.0 ,
+      0.00222685235921, -1.13192614655e-06, 0.00576876606478, -1.86024030636e-06, 0.00835813136853, -3.45320628178e-05, 0.0 ,
+      0.000333218266709, -1.21075991059e-07, -0.000100449208059, -4.25233845933e-08, -3.45320628178e-05, 8.01017784418e-06, 0.0 ,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+BaryCenter2 = [-0.138319085467, 7.98895889776e-05, 0.364617911174, -8.15524993378e-05, -0.00152121659943, 0.000818059790273, 1.0];
+
+S2 = [4.61651554716, -0.00187807248451, -0.706421040622, 0.000102733362452, 0.00238398701653, 0.000250501467964, 0.0 ,
+      -0.00187807248451, 8.51466865905e-07, 0.000270750416573, -2.60561939254e-08, -1.20861999264e-06, -7.31435830984e-08, 0.0 ,
+      -0.706421040622, 0.000270750416573, 4.76720177192, -0.000861497397886, -0.00242402000026, -0.000175618732005, 0.0 ,
+      0.000102733362452, -2.60561939254e-08, -0.000861497397886, 2.62146234189e-07, 2.92014354536e-07, -5.528592615e-08, 0.0 ,
+      0.00238398701653, -1.20861999264e-06, -0.00242402000026, 2.92014354536e-07, 0.00809007051643, 2.41917524628e-07, 0.0 ,
+      0.000250501467964, -7.31435830984e-08, -0.000175618732005, -5.528592615e-08, 2.41917524628e-07, 8.06176219084e-06, 0.0 ,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+BaryCenter3 = [-0.0617947905579, 6.71738625205e-05, 0.373949264532, -0.000123730393609, -0.00345902753009, 0.00141655373765, 1.0];
+
+S3 = [2.64954384805, -0.00114255388562, -0.431206223236, 0.000149257463367, -0.000582076518225, 0.000216581780962, 0.0 ,
+      -0.00114255388562, 6.539809519e-07, 0.000266765770884, -6.81366661817e-08, 3.04349085542e-07, -1.00156424462e-07, 0.0 ,
+      -0.431206223236, 0.000266765770884, 5.0622893077, -0.00118760294689, -0.0108112897503, -0.000514840486289, 0.0 ,
+      0.000149257463367, -6.81366661817e-08, -0.00118760294689, 3.78173476278e-07, 2.40697519643e-06, 2.01354658113e-08, 0.0 ,
+      -0.000582076518225, 3.04349085542e-07, -0.0108112897503, 2.40697519643e-06, 0.00775565424032, 9.21800451627e-05, 0.0 ,
+      0.000216581780962, -1.00156424462e-07, -0.000514840486289, 2.01354658113e-08, 9.21800451627e-05, 9.2481179932e-06, 0.0 ,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+BaryCenter4 = [-0.00878557789475, 4.3240561924e-05, 0.398740867677, -0.000148449489991, -0.00345954516258, 0.00173225427851, 1.0];
+
+S4 = [2.30367566502, -0.000893167774307, -0.24988063756, 0.00011620715023, 0.000297612190868, 0.000268972801728, 0.0 ,
+      -0.000893167774307, 5.29801658539e-07, 0.000213562068302, -7.10636108236e-08, 4.76347645101e-07, -1.0802896726e-07, 0.0 ,
+      -0.24988063756, 0.000213562068302, 5.47819477543, -0.0015541811905, -0.0046985248322, -0.000603436682789, 0.0 ,
+      0.00011620715023, -7.10636108236e-08, -0.0015541811905, 5.31305816872e-07, 1.23867942623e-06, 1.30963228947e-07, 0.0 ,
+      0.000297612190868, 4.76347645101e-07, -0.0046985248322, 1.23867942623e-06, 0.00762558228935, 0.000133050571729, 0.0 ,
+      0.000268972801728, -1.0802896726e-07, -0.000603436682789, 1.30963228947e-07, 0.000133050571729, 1.04532061342e-05, 0.0 ,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+S: source, vector_variable="BaryCenter", matrix_variable = "S";
+
+Eng_Data_Dir = dir("data");
+
+arc_drift0: drift, L=0.1422400E+00, aper=0.250000E-01;
+arc_bend0: sbend, L=0.1040653, phi=4.5, phi1=7.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend1: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend2: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend3: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend4: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend5: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend6: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend7: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend8: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend9: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=7.0, bg = 0.188914812, aper=0.02;
+arc_drift1: drift, L=0.6300000E+00, aper=0.700000E-01;
+arc_drift2: drift, L=0.9300000E+00, aper=0.700000E-01;
+arc_quad0: quadrupole, L=0.2500000E+00, B2=8.9725, aper=0.700000E-01;
+arc_drift3: drift, L=0.140, aper=0.070;
+arc_sxt0: sextupole, L=0.150, B3=11.7, dstkick=1, step=10, aper=0.700000E-01;
+arc_drift4: drift, L=0.085, aper=0.070;
+arc_drift5: drift, L=0.5300000E-01, aper=0.700000E-01;
+arc_drift6: drift, L=0.8400000E-01, aper=0.700000E-01;
+arc_drift7: drift, L=0.8800000E-01, aper=0.700000E-01;
+arc_quad1: quadrupole, L=0.2500000E+00, B2=-4.0768, aper=0.700000E-01;
+arc_drift8: drift, L=0.4032230E+00, aper=0.700000E-01;
+arc_bend10: sbend, L=0.1040653, phi=4.5, phi1=7.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend11: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend12: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend13: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend14: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend15: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend16: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend17: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend18: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend19: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=7.0, bg = 0.188914812, aper=0.02;
+arc_drift9: drift, L=0.3850000E+00, aper=0.700000E-01;
+arc_drift10: drift, L=0.3850000E+00, aper=0.700000E-01;
+arc_bend20: sbend, L=0.1040653, phi=4.5, phi1=7.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend21: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend22: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend23: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend24: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend25: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend26: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend27: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend28: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend29: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=7.0, bg = 0.188914812, aper=0.02;
+arc_drift11: drift, L=0.4032230E+00, aper=0.700000E-01;
+arc_quad2: quadrupole, L=0.2500000E+00, B2=-4.0768, aper=0.700000E-01;
+arc_drift12: drift, L=0.8800000E-01, aper=0.700000E-01;
+arc_drift13: drift, L=0.8400000E-01, aper=0.700000E-01;
+arc_drift14: drift, L=0.5300000E-01, aper=0.700000E-01;
+arc_drift15: drift, L=0.085, aper=0.070;
+arc_sxt1: sextupole, L=0.150, B3=11.7, dstkick=1, step=10, aper=0.700000E-01;
+arc_drift16: drift, L=0.140, aper=0.070;
+arc_quad3: quadrupole, L=0.2500000E+00, B2=8.9725, aper=0.700000E-01;
+arc_drift17: drift, L=0.9300000E+00, aper=0.700000E-01;
+arc_drift18: drift, L=0.6300000E+00, aper=0.700000E-01;
+arc_bend30: sbend, L=0.1040653, phi=4.5, phi1=7.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend31: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend32: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend33: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend34: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend35: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend36: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend37: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend38: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=0.0, bg = 0.188914812, aper=0.02;
+arc_bend39: sbend, L=0.1040653, phi=4.5, phi1=0.0, phi2=7.0, bg = 0.188914812, aper=0.02;
+arc_drift19: drift, L=0.1422400E+00, aper=0.250000E-01;
+
+arc: LINE = (
+    arc_drift0, arc_bend0, arc_bend1, arc_bend2, arc_bend3, 
+    arc_bend4, arc_bend5, arc_bend6, arc_bend7, arc_bend8, 
+    arc_bend9, arc_drift1, arc_drift2, arc_quad0, arc_drift3, 
+    arc_sxt0, arc_drift4, arc_drift5, arc_drift6, arc_drift7, 
+    arc_quad1, arc_drift8, arc_bend10, arc_bend11, arc_bend12, 
+    arc_bend13, arc_bend14, arc_bend15, arc_bend16, arc_bend17, 
+    arc_bend18, arc_bend19, arc_drift9, arc_drift10, arc_bend20, 
+    arc_bend21, arc_bend22, arc_bend23, arc_bend24, arc_bend25, 
+    arc_bend26, arc_bend27, arc_bend28, arc_bend29, arc_drift11, 
+    arc_quad2, arc_drift12, arc_drift13, arc_drift14, arc_drift15, 
+    arc_sxt1, arc_drift16, arc_quad3, arc_drift17, arc_drift18, 
+    arc_bend30, arc_bend31, arc_bend32, arc_bend33, arc_bend34, 
+    arc_bend35, arc_bend36, arc_bend37, arc_bend38, arc_bend39, 
+    arc_drift19
+    );
+
+ds_drift0: drift, L=0.3800000E+00, aper=0.250000E-01;
+ds_drift1: drift, L=0.9276000E-01, aper=0.250000E-01;
+ds_drift2: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_drift3: drift, L=0.1450000E+00, aper=0.250000E-01;
+ds_quad0: quadrupole, L=0.2500000E+00, B2=-5.3729, aper=0.250000E-01;
+ds_drift4: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_quad1: quadrupole, L=0.2500000E+00, B2=7.1639, aper=0.250000E-01;
+ds_drift5: drift, L=0.3800000E+00, aper=0.250000E-01;
+ds_drift6: drift, L=0.1320000E+01, aper=0.250000E-01;
+ds_drift7: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_drift8: drift, L=0.6900000E-01, aper=0.250000E-01;
+ds_drift9: drift, L=0.1370000E+00, aper=0.250000E-01;
+ds_drift10: drift, L=0.4400000E-01, aper=0.250000E-01;
+ds_quad2: quadrupole, L=0.2500000E+00, B2=-4.1206, aper=0.250000E-01;
+ds_drift11: drift, L=0.1200000E+01, aper=0.250000E-01;
+ds_drift12: drift, L=0.1000000E+01, aper=0.250000E-01;
+ds_quad3: quadrupole, L=0.2500000E+00, B2=2.4820, aper=0.250000E-01;
+ds_drift13: drift, L=0.2296000E+01, aper=0.250000E-01;
+ds_drift14: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_drift15: drift, L=0.6900000E-01, aper=0.250000E-01;
+ds_drift16: drift, L=0.1370000E+00, aper=0.250000E-01;
+ds_drift17: drift, L=0.4400000E-01, aper=0.250000E-01;
+ds_quad4: quadrupole, L=0.2500000E+00, B2=-6.8315, aper=0.250000E-01;
+ds_drift18: drift, L=0.5000000E+00, aper=0.250000E-01;
+ds_quad5: quadrupole, L=0.2500000E+00, B2=5.2644, aper=0.250000E-01;
+ds_drift19: drift, L=0.6080000E-01, aper=0.250000E-01;
+ds_drift20: drift, L=0.190000, aper=0.200000E-01;
+ds_drift21: drift, L=0.01e-10, aper=0.018;
+ds_drift22: drift, L=0.190000, aper=0.200000E-01;
+ds_drift23: drift, L=0.1368000E+00, aper=0.200000E-01;
+ds_drift24: drift, L=0.2469810E+00, aper=0.200000E-01;
+ds_cav0: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360E+00, aper = 0.017000;ds_drift25: drift, L=0.9768800E-01, aper=0.200000E-01;
+ds_cav1: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360E+00, aper = 0.017000;ds_drift26: drift, L=0.9768800E-01, aper=0.200000E-01;
+ds_cav2: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360E+00, aper = 0.017000;ds_drift27: drift, L=0.2469810E+00, aper=0.200000E-01;
+ds_drift28: drift, L=0.2550520E+00, aper=0.200000E-01;
+ds_drift29: drift, L=0.2469810E+00, aper=0.200000E-01;
+ds_cav3: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.100E-04, aper = 0.017000;ds_drift30: drift, L=0.2469810E+00, aper=0.200000E-01;
+ds_drift31: drift, L=0.1775000E+00, aper=0.250000E-01;
+ds_drift32: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_drift33: drift, L=0.2500000E+00, aper=0.250000E-01;
+ds_quad6: quadrupole, L=0.2500000E+00, B2=3.5819, aper=0.250000E-01;
+ds_drift34: drift, L=0.1000000E+01, aper=0.250000E-01;
+ds_quad7: quadrupole, L=0.2500000E+00, B2=-5.3729, aper=0.250000E-01;
+ds_drift35: drift, L=0.5500000E+00, aper=0.250000E-01;
+ds_drift36: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_drift37: drift, L=0.6900000E-01, aper=0.250000E-01;
+ds_drift38: drift, L=0.1370000E+00, aper=0.250000E-01;
+ds_drift39: drift, L=0.4400000E-01, aper=0.250000E-01;
+ds_quad8: quadrupole, L=0.2500000E+00, B2=5.3108, aper=0.250000E-01;
+ds_drift40: drift, L=0.3700000E+00, aper=0.250000E-01;
+ds_drift41: drift, L=0.3800000E+00, aper=0.250000E-01;
+ds_drift42: drift, L=0.3000000E+00, aper=0.250000E-01;
+ds_quad9: quadrupole, L=0.2500000E+00, B2=-6.9737, aper=0.250000E-01;
+ds_drift43: drift, L=0.3190000E+00, aper=0.250000E-01;
+ds_drift44: drift, L=0.3800000E+00, aper=0.250000E-01;
+ds_drift45: drift, L=0.2000000E+00, aper=0.250000E-01;
+ds_drift46: drift, L=0.6900000E-01, aper=0.250000E-01;
+ds_drift47: drift, L=0.1370000E+00, aper=0.250000E-01;
+ds_drift48: drift, L=0.4400000E-01, aper=0.250000E-01;
+ds_quad10: quadrupole, L=0.2500000E+00, B2=10.2430, aper=0.250000E-01;
+ds_drift49: drift, L=0.2500000E+00, aper=0.250000E-01;
+ds_quad11: quadrupole, L=0.2500000E+00, B2=-11.3590, aper=0.250000E-01;
+ds_drift50: drift, L=0.1200000E+00, aper=0.250000E-01;
+ds_drift51: drift, L=0.3800000E+00, aper=0.250000E-01;
+
+ds: LINE = (
+    ds_drift0, ds_drift1, ds_drift2, ds_drift3, ds_quad0, 
+    ds_drift4, ds_quad1, ds_drift5, ds_drift6, ds_drift7, 
+    ds_drift8, ds_drift9, ds_drift10, ds_quad2, ds_drift11, 
+    ds_drift12, ds_quad3, ds_drift13, ds_drift14, ds_drift15, 
+    ds_drift16, ds_drift17, ds_quad4, ds_drift18, ds_quad5, 
+    ds_drift19, ds_drift20, ds_drift21, ds_drift22, ds_drift23, 
+    ds_drift24, ds_cav0, ds_drift25, ds_cav1, ds_drift26, 
+    ds_cav2, ds_drift27, ds_drift28, ds_drift29, ds_cav3, 
+    ds_drift30, ds_drift31, ds_drift32, ds_drift33, ds_quad6, 
+    ds_drift34, ds_quad7, ds_drift35, ds_drift36, ds_drift37, 
+    ds_drift38, ds_drift39, ds_quad8, ds_drift40, ds_drift41, 
+    ds_drift42, ds_quad9, ds_drift43, ds_drift44, ds_drift45, 
+    ds_drift46, ds_drift47, ds_drift48, ds_quad10, ds_drift49, 
+    ds_quad11, ds_drift50, ds_drift51
+    );
+
+  
+cell: LINE = (
+  S, arc, ds
+);
+
+USE: cell;
