@@ -2,22 +2,26 @@ record(ao, "$(P)Phas-SP") {
     field(DTYP, "FLAME Setting")
     field(OUT , "@$(SIM) $(ELEM) phi")
     field(PREC, "6")
+    field("EGU", "degree")
 }
 record(ai, "$(P)Phas-RB") {
     field(DTYP, "FLAME Setting")
     field(INP , "@$(SIM) $(ELEM) phi")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
+    field("EGU", "degree")
 }
 
 record(ao, "$(P)Scle-SP") {
     field(DTYP, "FLAME Setting")
     field(OUT , "@$(SIM) $(ELEM) scl_fac")
     field(PREC, "6")
+    field("EGU", "1")
 }
 record(ai, "$(P)Scle-RB") {
     field(DTYP, "FLAME Setting")
     field(INP , "@$(SIM) $(ELEM) scl_fac")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
+    field("EGU", "1")
 }

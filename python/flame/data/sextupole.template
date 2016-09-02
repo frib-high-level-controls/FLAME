@@ -2,10 +2,12 @@ record(ao, "$(P)B-SP") {
     field(DTYP, "FLAME Setting")
     field(OUT , "@$(SIM) $(ELEM) B3")
     field(PREC, "6")
+    field("EGU", "T/m^2")
 }
 record(ai, "$(P)B-RB") {
     field(DTYP, "FLAME Setting")
     field(INP , "@$(SIM) $(ELEM) B3")
     field(SCAN, "I/O Intr")
     field(PREC, "6")
+    field("EGU", "T/m^2")
 }
