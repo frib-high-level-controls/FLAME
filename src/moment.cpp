@@ -74,6 +74,8 @@ MomentState::MomentState(const Config& c)
     ,moment0_rms(maxsize, 0e0)
     ,moment1_env(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
+    sim_mode = (int)c.get<double>("sim_mode", 0e0);
+
     // hack.  getArray() promises that returned pointers will remain valid for our lifetime.
     // This may not be true if std::vectors are resized.
     // Reserve for up to 10 states and hope for the best...
@@ -155,7 +157,10 @@ MomentState::MomentState(const Config& c)
             moment1[i] = boost::numeric::ublas::identity_matrix<double>(maxsize);
 
             load_storage(moment0[i].data(), c, vectorname+num);
-            load_storage(moment1[i].data(), c, matrixname+num);
+
+            if ((int)sim_mode != 2){
+                load_storage(moment1[i].data(), c, matrixname+num);
+            }
 
             real[i] = ref;
 
@@ -228,6 +233,7 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,moment0_env(o.moment0_env)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
+    ,sim_mode(o.sim_mode)
 {}
 
 void MomentState::assign(const StateBase& other)
@@ -242,6 +248,7 @@ void MomentState::assign(const StateBase& other)
     moment0_env = O->moment0_env;
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
+    sim_mode = O->sim_mode;
     StateBase::assign(other);
 }
 
@@ -490,6 +497,12 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         // Note: this array is discontigious as we reference a single member from a Particle[]
         return true;
+    } else if(idx==I++) {
+        Info.name = "sim_mode";
+        Info.ptr = &sim_mode;
+        Info.type = ArrayInfo::Sizet;
+        Info.ndim = 0;
+        return true;
     }
     return StateBase::getArray(idx-I, Info);
 }
@@ -502,6 +515,7 @@ MomentElementBase::MomentElementBase(const Config& c)
     ,yaw  (c.get<double>("yaw",   0e0))
     ,roll (c.get<double>("roll",  0e0))
     ,skipcache(c.get<double>("skipcache", 0.0)!=0.0)
+    ,strict3Dvelocity(c.get<double>("strict3Dvelocity", 0.0)!=0.0)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
 }
@@ -524,6 +538,7 @@ void MomentElementBase::assign(const ElementVoid *other)
     yaw   = O->yaw;
     roll  = O->roll;
     skipcache = O->skipcache;
+    strict3Dvelocity = O->strict3Dvelocity;
     ElementVoid::assign(other);
 }
 
@@ -585,7 +600,7 @@ void MomentElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    if ((int)ST.clng)
+    if ((int)ST.sim_mode == 1)
     {
         // limit to longitudinal run
     
@@ -624,10 +639,20 @@ void MomentElementBase::advance(StateBase& s)
 
         for(size_t k=0; k<last_real_in.size(); k++) {
 
+            if (strict3Dvelocity) {
+                double sclz3d = sqr(tan(ST.moment0[k][state_t::PS_PX])) + sqr(tan(ST.moment0[k][state_t::PS_PY])) + 1e0;
+                transfer[k](state_t::PS_S, 6) =
+                        -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*(1e0/sclz3d-1e0)*ST.real[k].IonEk/MeVtoeV*length*MtoMM;
+            }
+
             ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 
-            scratch  = prod(transfer[k], ST.moment1[k]);
-            ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            if (ST.sim_mode == 2){
+                ST.moment1[k] = prod(transfer[k], ST.moment1[k]); 
+            } else {
+                scratch  = prod(transfer[k], ST.moment1[k]);
+                ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            }
         }
 
         ST.calc_rms();
@@ -636,7 +661,7 @@ void MomentElementBase::advance(StateBase& s)
 
 bool MomentElementBase::check_cache(const state_t& ST) const
 {
-    return !skipcache
+    return !skipcache && !strict3Dvelocity
             && last_real_in.size()==ST.size()
             && last_ref_in==ST.ref
             && std::equal(last_real_in.begin(),
@@ -745,11 +770,12 @@ struct ElementDrift : public MomentElementBase
         const double L = length*MtoMM; // Convert from [m] to [mm].
 
         for(size_t i=0; i<last_real_in.size(); i++) {
+
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
             transfer[i](state_t::PS_X, state_t::PS_PX) = L;
             transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
-            transfer[i](state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+            transfer[i](state_t::PS_S, state_t::PS_PS) = 
+                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
         }
     }
 };
@@ -811,10 +837,9 @@ struct ElementSBend : public MomentElementBase
         phi1  = conf().get<double>("phi1")*M_PI/180e0;
         phi2  = conf().get<double>("phi2")*M_PI/180e0;
         K     = conf().get<double>("K", 0e0)/sqr(MtoMM);
-        Ftype  = conf().get<double>("FringeType", 2e0);
-        if ((float)(int)Ftype != Ftype)
-            throw std::runtime_error("sbend: FringeType must be an integer");
-
+        Ftype  = conf().get<double>("FringeType", 1e0);
+        if ( ((float)(int)Ftype != Ftype) or (Ftype > 2e0 or Ftype < 0e0) )
+            throw std::runtime_error("sbend: FringeType must be 0, 1, or 2");
 
     }
     virtual ~ElementSBend() {}
@@ -840,7 +865,7 @@ struct ElementSBend : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if ((int)ST.clng)
+        if ((int)ST.sim_mode == 1)
         {
             // limit to longitudinal run
         
@@ -876,28 +901,34 @@ struct ElementSBend : public MomentElementBase
             for(size_t i=0; i<last_real_in.size(); i++) {
                 double phis_temp = ST.moment0[i][state_t::PS_S];
 
-
+                /*
                 if ((int)Ftype != 2) {
                     ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
                     noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
                     noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
 
                 } else {
+                */
 
-                    // 2nd order Edge focusing.
-                    if (phi1 != 0.0){
-                        fringe2nd(true, i, phi1, ST);
-                    }
+                // 2nd order Edge focusing.
+                if ((int)Ftype == 2 and phi1 != 0.0){
+                    fringe2nd(true, i, phi1, ST);
+                }
 
-                    ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+    
+                if (ST.sim_mode == 2){
+                    ST.moment1[i] = prod(transfer[i], ST.moment1[i]); 
+                } else {
                     noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
                     noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
-
-                    if (phi2 != 0.0){
-                        fringe2nd(false, i, phi2, ST);
-                    }
-
                 }
+
+                if ((int)Ftype == 2 and phi2 != 0.0){
+                    fringe2nd(false, i, phi2, ST);
+                }
+
+                //}
 
                 double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
@@ -947,6 +978,7 @@ struct ElementSBend : public MomentElementBase
                 GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
                                ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
 
+
             if ((int)Ftype == 1) {
                 // 1st order Edge focusing.
                 double rho = L/phi;
@@ -980,7 +1012,7 @@ struct ElementSBend : public MomentElementBase
                tan1y = tan(phif-theta),
                qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ,
                d = 0e0,
-               dpdw = 1e0/(sqr(dip_beta)*dip_gamma*ST.ref.IonEs/MeVtoeV);
+               dpdw = 1e0/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
 
         double xx  = sqr(ST.moment0[i](state_t::PS_X)),
                xy  = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_Y),
@@ -1026,8 +1058,13 @@ struct ElementSBend : public MomentElementBase
         }
 
         ST.moment0[i]    = prod(edge1, ST.moment0[i]);
-        noalias(scratch) = prod(edge1, ST.moment1[i]);
-        noalias(ST.moment1[i])      = prod(scratch, trans(edge1));
+
+        if (ST.sim_mode == 2){
+            ST.moment1[i] = prod(edge1, ST.moment1[i]); 
+        } else {
+            noalias(scratch) = prod(edge1, ST.moment1[i]);
+            noalias(ST.moment1[i])      = prod(scratch, trans(edge1));
+        }
     }
 };
 
@@ -1055,6 +1092,7 @@ struct ElementQuad : public MomentElementBase
 
             double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
                    K = B2/Brho/sqr(MtoMM);
+
 
             // Horizontal plane.
             GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer[i]);
@@ -1135,6 +1173,13 @@ struct ElementSext : public MomentElementBase
 
                 transfer[k](state_t::PS_S, state_t::PS_PS) =
                         -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
+
+                if (strict3Dvelocity) {
+                    //@- introduce 3d velocity integrator
+                    double sclz3d = sqr(tan(ST.moment0[k][state_t::PS_PX])) + sqr(tan(ST.moment0[k][state_t::PS_PY])) + 1e0;
+                    transfer[k](state_t::PS_S, 6) =
+                        transfer[k](state_t::PS_S, state_t::PS_PS)*(1e0/sclz3d-1e0)*ST.real[k].IonEk/MeVtoeV;
+                }
 
                 get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
                 noalias(scratch)     = prod(transfer[k], misalign[k]);

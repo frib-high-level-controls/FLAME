@@ -18,6 +18,9 @@
 // Sampling distance [m].
 # define SampleLambda (C0/SampleFreq*MtoMM)
 
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
 //! Extra information about a bunch not encoded the vector or matrix of MomentState
 //!
 struct Particle {
@@ -124,6 +127,8 @@ struct MomentState : public StateBase
 
     inline size_t size() const { return real.size(); } //!< # of charge states
 
+    size_t sim_mode;
+
 protected:
     MomentState(const MomentState& o, clone_tag);
 };
@@ -167,6 +172,8 @@ struct MomentElementBase : public ElementVoid
 
     //! If set, check_cache() will always return false
     bool skipcache;
+
+    bool strict3Dvelocity;
 
     virtual void assign(const ElementVoid *other) =0;
 
