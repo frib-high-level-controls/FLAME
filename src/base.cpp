@@ -201,7 +201,7 @@ void Machine::reconfigure(size_t idx, const Config& c)
 
     element_builder_t *builder = eit->second;
 
-    builder->rebuild(p_elements[idx], c);
+    builder->rebuild(p_elements[idx], c, idx);
 }
 
 Machine::p_state_infos_t Machine::p_state_infos;

@@ -191,7 +191,8 @@ struct ElementVoid : public boost::noncopyable
     inline const Config& conf() const {return p_conf;}
 
     const std::string name; //!< Name of this element (unique in its Machine)
-    const size_t index; //!< Index of this element (unique in its Machine)
+
+    size_t index; //!< Index of this element (unique in its Machine)
 
     double length; //!< Longitudual length of this element (added to StateBase::pos)
 
@@ -401,20 +402,21 @@ private:
     struct element_builder_t {
         virtual ~element_builder_t() {}
         virtual ElementVoid* build(const Config& c) =0;
-        virtual void rebuild(ElementVoid *o, const Config& c) =0;
+        virtual void rebuild(ElementVoid *o, const Config& c, const size_t idx) =0;
     };
     template<typename Element>
     struct element_builder_impl : public element_builder_t {
         virtual ~element_builder_impl() {}
         ElementVoid* build(const Config& c)
         { return new Element(c); }
-        void rebuild(ElementVoid *o, const Config& c)
+        void rebuild(ElementVoid *o, const Config& c, const size_t idx)
         {
             std::auto_ptr<ElementVoid> N(build(c));
             Element *m = dynamic_cast<Element*>(o);
             if(!m)
                 throw std::runtime_error("reconfigure() can't change element type");
             m->assign(N.get());
+            m->index = idx; // copy index number
         }
     };
 
