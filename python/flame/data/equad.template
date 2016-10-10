@@ -1,0 +1,13 @@
+record(ao, "$(P)V-SP") {
+    field(DTYP, "FLAME Setting")
+    field(OUT , "@$(SIM) $(ELEM) V")
+    field(PREC, "6")
+    field("EGU", "V")
+}
+record(ai, "$(P)V-RB") {
+    field(DTYP, "FLAME Setting")
+    field(INP , "@$(SIM) $(ELEM) V")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+    field("EGU", "V")
+}
