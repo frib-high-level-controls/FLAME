@@ -203,7 +203,7 @@ struct ElementRFCavity : public MomentElementBase
                 }
             }
 
-            ST.last_caviphi0 = phi_ref *180e0/M_PI;
+            ST.last_caviphi0 = fmod(phi_ref *180e0/M_PI,360e0);
             ST.calc_rms();
         }
     }
