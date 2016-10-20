@@ -128,6 +128,7 @@ struct MomentState : public StateBase
     inline size_t size() const { return real.size(); } //!< # of charge states
 
     size_t sim_mode;
+    double last_caviphi0;
 
 protected:
     MomentState(const MomentState& o, clone_tag);

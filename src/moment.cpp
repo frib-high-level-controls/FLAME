@@ -75,6 +75,7 @@ MomentState::MomentState(const Config& c)
     ,moment1_env(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
     sim_mode = (int)c.get<double>("sim_mode", 0e0);
+    last_caviphi0 = 0e0;
 
     // hack.  getArray() promises that returned pointers will remain valid for our lifetime.
     // This may not be true if std::vectors are resized.
@@ -234,6 +235,7 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
     ,sim_mode(o.sim_mode)
+    ,last_caviphi0(o.last_caviphi0)
 {}
 
 void MomentState::assign(const StateBase& other)
@@ -249,6 +251,7 @@ void MomentState::assign(const StateBase& other)
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
     sim_mode = O->sim_mode;
+    last_caviphi0 = O->last_caviphi0;
     StateBase::assign(other);
 }
 
@@ -501,6 +504,12 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.name = "sim_mode";
         Info.ptr = &sim_mode;
         Info.type = ArrayInfo::Sizet;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "last_caviphi0";
+        Info.ptr = &last_caviphi0;
+        Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
     }
@@ -1162,8 +1171,8 @@ struct ElementSext : public MomentElementBase
                    K = B3/Brho/cube(MtoMM);
 
             for(int i=0; i<step; i++){
-                double Dx = ST.moment0[k][state_t::PS_X],
-                       Dy = ST.moment0[k][state_t::PS_Y],
+                double Dx = ST.moment0[k][state_t::PS_X] - dx,
+                       Dy = ST.moment0[k][state_t::PS_Y] - dy,
                        D2x = ST.moment1[k](state_t::PS_X, state_t::PS_X),
                        D2y = ST.moment1[k](state_t::PS_Y, state_t::PS_Y),
                        D2xy = ST.moment1[k](state_t::PS_X, state_t::PS_Y);
