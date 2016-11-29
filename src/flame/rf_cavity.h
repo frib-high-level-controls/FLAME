@@ -129,7 +129,7 @@ struct ElementRFCavity : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if ((int)ST.clng)
+        if ((int)ST.sim_mode == 1)
         {
             // limit to longitudinal run
 
@@ -182,21 +182,28 @@ struct ElementRFCavity : public MomentElementBase
 
                 ST.moment0[i] = prod(misalign_inv[i], ST.moment0[i]);
 
-                scratch  = prod(misalign[i], ST.moment1[i]);
-                ST.moment1[i] = prod(scratch, trans(misalign[i]));
+                if (ST.sim_mode == 2){
+                    scratch     = prod(transfer[i], misalign[i]);
+                    transfer[i] = prod(misalign_inv[i], scratch);
+                    ST.moment1[i] = prod(transfer[i], ST.moment1[i]);
+                } else {
+                    scratch  = prod(misalign[i], ST.moment1[i]);
+                    ST.moment1[i] = prod(scratch, trans(misalign[i]));
 
-                scratch  = prod(transfer[i], ST.moment1[i]);
-                ST.moment1[i] = prod(scratch, trans(transfer[i]));
+                    scratch  = prod(transfer[i], ST.moment1[i]);
+                    ST.moment1[i] = prod(scratch, trans(transfer[i]));
 
-                if (EmitGrowth) {
-                    calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
-                    ST.moment1[i] = scratch;
+                    if (EmitGrowth) {
+                        calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
+                        ST.moment1[i] = scratch;
+                    }
+
+                    scratch  = prod(misalign_inv[i], ST.moment1[i]);
+                    ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
                 }
-
-                scratch  = prod(misalign_inv[i], ST.moment1[i]);
-                ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
             }
 
+            ST.last_caviphi0 = fmod(phi_ref *180e0/M_PI,360e0);
             ST.calc_rms();
         }
     }

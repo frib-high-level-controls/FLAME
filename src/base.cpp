@@ -18,14 +18,12 @@ StateBase::~StateBase() {}
 StateBase::StateBase(const Config& c)
     :next_elem(0)
     ,pos(0e0)
-    ,clng(0e0)
     ,pyptr(0)
 {}
 
 StateBase::StateBase(const StateBase& o, clone_tag)
     :next_elem(0)
     ,pos(o.pos)
-    ,clng(o.clng)
     ,pyptr(0)
 {}
 
@@ -46,12 +44,6 @@ bool StateBase::getArray(unsigned idx, ArrayInfo& Info)
     } else if(idx==I++) {
         Info.name = "pos";
         Info.ptr = &pos;
-        Info.type = ArrayInfo::Double;
-        Info.ndim = 0;
-        return true;
-    } else if(idx==I++) {
-        Info.name = "clng";
-        Info.ptr = &clng;
         Info.type = ArrayInfo::Double;
         Info.ndim = 0;
         return true;
@@ -209,7 +201,7 @@ void Machine::reconfigure(size_t idx, const Config& c)
 
     element_builder_t *builder = eit->second;
 
-    builder->rebuild(p_elements[idx], c);
+    builder->rebuild(p_elements[idx], c, idx);
 }
 
 Machine::p_state_infos_t Machine::p_state_infos;

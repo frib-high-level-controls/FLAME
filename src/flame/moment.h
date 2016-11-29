@@ -18,6 +18,9 @@
 // Sampling distance [m].
 # define SampleLambda (C0/SampleFreq*MtoMM)
 
+#define sqr(x)  ((x)*(x))
+#define cube(x) ((x)*(x)*(x))
+
 //! Extra information about a bunch not encoded the vector or matrix of MomentState
 //!
 struct Particle {
@@ -50,6 +53,8 @@ struct Particle {
         bg         = (beta != 0e0)? beta*gamma : 1e0;
         SampleIonK = 2e0*M_PI/(beta*SampleLambda);
     }
+
+    double Brho() const { return beta*IonW/(C0*IonZ); } //!< Magnetic rigidity.
 };
 
 std::ostream& operator<<(std::ostream&, const Particle&);
@@ -122,6 +127,9 @@ struct MomentState : public StateBase
 
     inline size_t size() const { return real.size(); } //!< # of charge states
 
+    size_t sim_mode;
+    double last_caviphi0;
+
 protected:
     MomentState(const MomentState& o, clone_tag);
 };
@@ -165,6 +173,8 @@ struct MomentElementBase : public ElementVoid
 
     //! If set, check_cache() will always return false
     bool skipcache;
+
+    bool strict3Dvelocity;
 
     virtual void assign(const ElementVoid *other) =0;
 

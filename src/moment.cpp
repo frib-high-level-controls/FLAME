@@ -74,6 +74,9 @@ MomentState::MomentState(const Config& c)
     ,moment0_rms(maxsize, 0e0)
     ,moment1_env(boost::numeric::ublas::identity_matrix<double>(maxsize))
 {
+    sim_mode = (int)c.get<double>("sim_mode", 0e0);
+    last_caviphi0 = 0e0;
+
     // hack.  getArray() promises that returned pointers will remain valid for our lifetime.
     // This may not be true if std::vectors are resized.
     // Reserve for up to 10 states and hope for the best...
@@ -155,7 +158,10 @@ MomentState::MomentState(const Config& c)
             moment1[i] = boost::numeric::ublas::identity_matrix<double>(maxsize);
 
             load_storage(moment0[i].data(), c, vectorname+num);
-            load_storage(moment1[i].data(), c, matrixname+num);
+
+            if ((int)sim_mode != 2){
+                load_storage(moment1[i].data(), c, matrixname+num);
+            }
 
             real[i] = ref;
 
@@ -228,6 +234,8 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,moment0_env(o.moment0_env)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
+    ,sim_mode(o.sim_mode)
+    ,last_caviphi0(o.last_caviphi0)
 {}
 
 void MomentState::assign(const StateBase& other)
@@ -242,6 +250,8 @@ void MomentState::assign(const StateBase& other)
     moment0_env = O->moment0_env;
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
+    sim_mode = O->sim_mode;
+    last_caviphi0 = O->last_caviphi0;
     StateBase::assign(other);
 }
 
@@ -490,6 +500,18 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         // Note: this array is discontigious as we reference a single member from a Particle[]
         return true;
+    } else if(idx==I++) {
+        Info.name = "sim_mode";
+        Info.ptr = &sim_mode;
+        Info.type = ArrayInfo::Sizet;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
+        Info.name = "last_caviphi0";
+        Info.ptr = &last_caviphi0;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
     }
     return StateBase::getArray(idx-I, Info);
 }
@@ -502,6 +524,7 @@ MomentElementBase::MomentElementBase(const Config& c)
     ,yaw  (c.get<double>("yaw",   0e0))
     ,roll (c.get<double>("roll",  0e0))
     ,skipcache(c.get<double>("skipcache", 0.0)!=0.0)
+    ,strict3Dvelocity(c.get<double>("strict3Dvelocity", 0.0)!=0.0)
     ,scratch(state_t::maxsize, state_t::maxsize)
 {
 }
@@ -524,6 +547,7 @@ void MomentElementBase::assign(const ElementVoid *other)
     yaw   = O->yaw;
     roll  = O->roll;
     skipcache = O->skipcache;
+    strict3Dvelocity = O->strict3Dvelocity;
     ElementVoid::assign(other);
 }
 
@@ -585,7 +609,7 @@ void MomentElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    if ((int)ST.clng)
+    if ((int)ST.sim_mode == 1)
     {
         // limit to longitudinal run
     
@@ -624,10 +648,20 @@ void MomentElementBase::advance(StateBase& s)
 
         for(size_t k=0; k<last_real_in.size(); k++) {
 
+            if (strict3Dvelocity) {
+                double sclz3d = sqr(tan(ST.moment0[k][state_t::PS_PX])) + sqr(tan(ST.moment0[k][state_t::PS_PY])) + 1e0;
+                transfer[k](state_t::PS_S, 6) =
+                        -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*(1e0/sclz3d-1e0)*ST.real[k].IonEk/MeVtoeV*length*MtoMM;
+            }
+
             ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 
-            scratch  = prod(transfer[k], ST.moment1[k]);
-            ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            if (ST.sim_mode == 2){
+                ST.moment1[k] = prod(transfer[k], ST.moment1[k]); 
+            } else {
+                scratch  = prod(transfer[k], ST.moment1[k]);
+                ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            }
         }
 
         ST.calc_rms();
@@ -636,7 +670,7 @@ void MomentElementBase::advance(StateBase& s)
 
 bool MomentElementBase::check_cache(const state_t& ST) const
 {
-    return !skipcache
+    return !skipcache && !strict3Dvelocity
             && last_real_in.size()==ST.size()
             && last_ref_in==ST.ref
             && std::equal(last_real_in.begin(),
@@ -745,11 +779,12 @@ struct ElementDrift : public MomentElementBase
         const double L = length*MtoMM; // Convert from [m] to [mm].
 
         for(size_t i=0; i<last_real_in.size(); i++) {
+
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
             transfer[i](state_t::PS_X, state_t::PS_PX) = L;
             transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
-            transfer[i](state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+            transfer[i](state_t::PS_S, state_t::PS_PS) = 
+                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
         }
     }
 };
@@ -796,6 +831,8 @@ struct ElementSBend : public MomentElementBase
     typedef typename base_t::state_t state_t;
 
     unsigned HdipoleFitMode;
+    double L, phi, phi1, phi2, K, Ftype;
+
 
     ElementSBend(const Config& c) : base_t(c), HdipoleFitMode(0) {
 
@@ -803,6 +840,16 @@ struct ElementSBend : public MomentElementBase
         strm>>HdipoleFitMode;
         if(!strm.eof() && strm.fail())
             throw std::runtime_error("HdipoleFitMode must be an integer");
+
+        L     = conf().get<double>("L")*MtoMM;
+        phi   = conf().get<double>("phi")*M_PI/180e0;
+        phi1  = conf().get<double>("phi1")*M_PI/180e0;
+        phi2  = conf().get<double>("phi2")*M_PI/180e0;
+        K     = conf().get<double>("K", 0e0)/sqr(MtoMM);
+        Ftype  = conf().get<double>("FringeType", 1e0);
+        if ( ((float)(int)Ftype != Ftype) or (Ftype > 2e0 or Ftype < 0e0) )
+            throw std::runtime_error("sbend: FringeType must be 0, 1, or 2");
+
     }
     virtual ~ElementSBend() {}
     virtual const char* type_name() const {return "sbend";}
@@ -811,6 +858,12 @@ struct ElementSBend : public MomentElementBase
         base_t::assign(other);
         const self_t* O=static_cast<const self_t*>(other);
         HdipoleFitMode = O->HdipoleFitMode;
+        L = O->L;
+        phi = O->phi;
+        phi1 = O->phi1;
+        phi2 = O->phi2;
+        K   = O->K;
+        Ftype = O->Ftype;
     }
 
     virtual void advance(StateBase& s)
@@ -821,7 +874,7 @@ struct ElementSBend : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if ((int)ST.clng)
+        if ((int)ST.sim_mode == 1)
         {
             // limit to longitudinal run
         
@@ -857,26 +910,50 @@ struct ElementSBend : public MomentElementBase
             for(size_t i=0; i<last_real_in.size(); i++) {
                 double phis_temp = ST.moment0[i][state_t::PS_S];
 
-                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+                /*
+                if ((int)Ftype != 2) {
+                    ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+                    noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                    noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
 
-                noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
-                noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+                } else {
+                */
+
+                // 2nd order Edge focusing.
+                if ((int)Ftype == 2 and phi1 != 0.0){
+                    fringe2nd(true, i, phi1, ST);
+                }
+
+                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+    
+                if (ST.sim_mode == 2){
+                    ST.moment1[i] = prod(transfer[i], ST.moment1[i]); 
+                } else {
+                    noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                    noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+                }
+
+                if ((int)Ftype == 2 and phi2 != 0.0){
+                    fringe2nd(false, i, phi2, ST);
+                }
+
+                //}
 
                 double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
                 if (HdipoleFitMode != 1) {
-                    /*
-                    double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
-                    di_bg     = conf().get<double>("bg");
+
+                    //double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
+                    //di_bg     = conf().get<double>("bg");
                     // Dipole reference energy.
-                    Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
-                    gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
-                    beta00    = sqrt(1e0-1e0/sqr(gamma00));
-                    IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-                    */
+                    //Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
+                    //gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
+                    //beta00    = sqrt(1e0-1e0/sqr(gamma00));
+                    //IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
 
                     // J.B.: this is odd.
-                    // ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
+                    //ST.real[i].phis  += IonK_Bend*length*MtoMM + dphis_temp;
+                    
                     ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
                 } else
                     ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
@@ -889,12 +966,6 @@ struct ElementSBend : public MomentElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-
-        double L     = conf().get<double>("L")*MtoMM,
-               phi   = conf().get<double>("phi")*M_PI/180e0,
-               phi1  = conf().get<double>("phi1")*M_PI/180e0,
-               phi2  = conf().get<double>("phi2")*M_PI/180e0,
-               K     = conf().get<double>("K", 0e0)/sqr(MtoMM);
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             double qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ;
@@ -916,10 +987,92 @@ struct ElementSBend : public MomentElementBase
                 GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
                                ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
 
+
+            if ((int)Ftype == 1) {
+                // 1st order Edge focusing.
+                double rho = L/phi;
+
+                MomentState::matrix_t edge1, edge2;
+
+                GetEdgeMatrix(rho, phi1, edge1);
+                GetEdgeMatrix(rho, phi2, edge2);
+
+                noalias(scratch)     = prod(transfer[i], edge1);
+                noalias(transfer[i]) = prod(edge2, scratch);
+            }
+
             get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+        }
+    }
+
+    void fringe2nd(int ent, int i, double phif, state_t& ST)
+    {
+        // 2nd order Edge focusing.
+
+        double h0 = phi/L,
+               tan1 = tan(phif),
+               tan2 = sqr(tan1),
+               sec2 = tan2 + 1,
+               aper = conf().get<double>("aper")*MtoMM,
+               theta = 2e0*aper*K*h0*(1+sqr(sin(phif)))/cos(phif),
+               tan1y = tan(phif-theta),
+               qmrel = (ST.real[i].IonZ-ST.ref.IonZ)/ST.ref.IonZ,
+               d = 0e0,
+               dpdw = 1e0/(sqr(ST.ref.beta)*ST.ref.gamma*ST.ref.IonEs/MeVtoeV);
+
+        double xx  = sqr(ST.moment0[i](state_t::PS_X)),
+               xy  = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_Y),
+               yy  = sqr(ST.moment0[i](state_t::PS_Y)),
+               xpx = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_PX),
+               xpy = ST.moment0[i](state_t::PS_X)*ST.moment0[i](state_t::PS_PY),
+               ypx = ST.moment0[i](state_t::PS_Y)*ST.moment0[i](state_t::PS_PX),
+               ypy = ST.moment0[i](state_t::PS_Y)*ST.moment0[i](state_t::PS_PY),
+               xdp = ST.moment0[i](state_t::PS_X)*(ST.moment0[i](state_t::PS_PS)*dpdw +d-qmrel),
+               ydp = ST.moment0[i](state_t::PS_Y)*(ST.moment0[i](state_t::PS_PS)*dpdw +d-qmrel);
+
+        xx  += ST.moment1[i](state_t::PS_X, state_t::PS_X),
+        xy  += ST.moment1[i](state_t::PS_X, state_t::PS_Y),
+        yy  += ST.moment1[i](state_t::PS_Y, state_t::PS_Y),
+        xpx += ST.moment1[i](state_t::PS_X, state_t::PS_PX),
+        xpy += ST.moment1[i](state_t::PS_X, state_t::PS_PY),
+        ypx += ST.moment1[i](state_t::PS_Y, state_t::PS_PX),
+        ypy += ST.moment1[i](state_t::PS_Y, state_t::PS_PY),
+        xdp += ST.moment1[i](state_t::PS_X, state_t::PS_PS)*dpdw,
+        ydp += ST.moment1[i](state_t::PS_Y, state_t::PS_PS)*dpdw;
+
+        MomentState::matrix_t edge1 = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);;
+
+        if (ent) {
+            edge1(state_t::PS_PX, state_t::PS_X) =  h0*tan1;
+            edge1(state_t::PS_PY, state_t::PS_Y) = -h0*tan1y;
+
+            edge1(state_t::PS_X,  6) = h0*(-tan2*xx + sec2*yy)/2e0;
+            edge1(state_t::PS_PX, 6) = h0*( tan2*(xpx-ypy) + h0*(tan1/2e0+tan1*tan2)*yy - tan1*xdp);
+
+            edge1(state_t::PS_Y,  6) = h0*( tan2*xy);
+            edge1(state_t::PS_PY, 6) = h0*(-tan2*xpy - sec2*ypx + (tan1-theta*(1+sqr(tan1y)))*ydp);
+
+        } else {
+            edge1(state_t::PS_PX, state_t::PS_X) =  h0*tan1;
+            edge1(state_t::PS_PY, state_t::PS_Y) = -h0*tan1y;
+
+            edge1(state_t::PS_X,  6) = h0*( tan2*xx-sec2*yy)/2e0;
+            edge1(state_t::PS_PX, 6) = h0*( h0*tan1*tan2*(xx-yy)/2e0 - tan2*(xpx-ypy) - tan1*xdp);
+
+            edge1(state_t::PS_Y,  6) = h0*(-tan2*xy);
+            edge1(state_t::PS_PY, 6) = h0*( h0*sec2*tan1*xy + tan2*xpy + sec2*ypx +(tan1-theta*(1+sqr(tan1y)))*ydp);
+        }
+
+        ST.moment0[i]    = prod(edge1, ST.moment0[i]);
+
+        if (ST.sim_mode == 2){
+            ST.moment1[i] = prod(edge1, ST.moment1[i]); 
+        } else {
+            noalias(scratch) = prod(edge1, ST.moment1[i]);
+            noalias(ST.moment1[i])      = prod(scratch, trans(edge1));
         }
     }
 };
@@ -949,13 +1102,12 @@ struct ElementQuad : public MomentElementBase
             double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
                    K = B2/Brho/sqr(MtoMM);
 
+
             // Horizontal plane.
             GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer[i]);
             // Vertical plane.
             GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
             // Longitudinal plane.
-    //        transfer(state_t::PS_S, state_t::PS_S) = L;
-
             transfer[i](state_t::PS_S, state_t::PS_PS) =
                     -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
@@ -974,47 +1126,53 @@ struct ElementSext : public MomentElementBase
     typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
-    ElementSext(const Config& c) : base_t(c) {}
+    double B3, L;
+    int step;
+    bool thinlens, dstkick;
+
+    ElementSext(const Config& c) : base_t(c) {
+        B3= conf().get<double>("B3");
+        L = conf().get<double>("L")*MtoMM;
+        step = conf().get<double>("step", 1.0);
+        thinlens = conf().get<double>("thinlens", 0.0) == 1.0;
+        dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
+    }
     virtual ~ElementSext() {}
     virtual const char* type_name() const {return "sextupole";}
 
-    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
+    virtual void assign(const ElementVoid *other) {
+        base_t::assign(other);
+        const self_t* O=static_cast<const self_t*>(other);
+        B3 = O->B3;
+        L = O->L;
+        step = O->step;
+        thinlens = O->thinlens;
+        dstkick = O->dstkick;
+    }
 
     virtual void advance(StateBase& s)
     {
         state_t&  ST = static_cast<state_t&>(s);
         using namespace boost::numeric::ublas;
 
-        // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
         last_ref_in = ST.ref;
         last_real_in = ST.real;
         resize_cache(ST);
 
-        //recompute_matrix(ST); // updates transfer and last_Kenergy_out
-
-        const double B3= conf().get<double>("B3"),
-                     L = conf().get<double>("L")*MtoMM;
-        const int step = conf().get<double>("step", 1.0);
-        const bool thinlens = conf().get<double>("thinlens", 0.0) == 1.0,
-                   dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
-
         const double dL = L/step;
 
         for(size_t k=0; k<last_real_in.size(); k++) {
 
-            //--------------
-
             transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            double Brho = ST.real[k].beta*(ST.real[k].IonEk+ST.real[k].IonEs)/(C0*ST.real[k].IonZ),
+            double Brho = ST.real[k].Brho(),
                    K = B3/Brho/cube(MtoMM);
-            
 
             for(int i=0; i<step; i++){
-                double Dx = ST.moment0[k][state_t::PS_X],
-                       Dy = ST.moment0[k][state_t::PS_Y],
+                double Dx = ST.moment0[k][state_t::PS_X] - dx,
+                       Dy = ST.moment0[k][state_t::PS_Y] - dy,
                        D2x = ST.moment1[k](state_t::PS_X, state_t::PS_X),
                        D2y = ST.moment1[k](state_t::PS_Y, state_t::PS_Y),
                        D2xy = ST.moment1[k](state_t::PS_X, state_t::PS_Y);
@@ -1025,11 +1183,16 @@ struct ElementSext : public MomentElementBase
                 transfer[k](state_t::PS_S, state_t::PS_PS) =
                         -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
 
-                //get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
-                //noalias(scratch)     = prod(transfer[k], misalign[k]);
-                //noalias(transfer[k]) = prod(misalign_inv[k], scratch);
+                if (strict3Dvelocity) {
+                    //@- introduce 3d velocity integrator
+                    double sclz3d = sqr(tan(ST.moment0[k][state_t::PS_PX])) + sqr(tan(ST.moment0[k][state_t::PS_PY])) + 1e0;
+                    transfer[k](state_t::PS_S, 6) =
+                        transfer[k](state_t::PS_S, state_t::PS_PS)*(1e0/sclz3d-1e0)*ST.real[k].IonEk/MeVtoeV;
+                }
 
-                //--------------
+                get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
+                noalias(scratch)     = prod(transfer[k], misalign[k]);
+                noalias(transfer[k]) = prod(misalign_inv[k], scratch);
 
                 ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 

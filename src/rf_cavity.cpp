@@ -932,7 +932,7 @@ void ElementRFCavity::GenCavMat2(const int cavi, const double dis, const double 
     Mlon = prod(Mlon_L2, Mlon);
     Mlon = prod(Mlon_K2, Mlon);
     Mlon = prod(Mlon_L3, Mlon);
-//    std::cout<<__FUNCTION__<<" Mlon "<<Mlon<<"\n";
+    //std::cout<<__FUNCTION__<<" Mlon "<<Mlon<<"\n";
 
     // Transverse model
     // Drift-FD-Drift-LongiKick-Drift-FD-Drift-0-Drift-FD-Drift-LongiKick-Drift-FD-Drift
@@ -1206,7 +1206,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
     multip    = fRF/SampleFreq;
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
 
-    caviFy = GetCavPhase(cavi, ref, IonFys, multip);
+    caviFy = GetCavPhase(cavi, ref, IonFys, multip);  // Get driven phase from synchronous phase @+
 
     IonFy_i = multip*ref.phis + caviFy;
     phi_ref = caviFy;
