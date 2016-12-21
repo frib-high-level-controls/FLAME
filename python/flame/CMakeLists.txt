@@ -49,7 +49,12 @@ set(PY_DATA
   test/FE_latticeE.lat
   test/LS1FS1_latticeE.lat
   test/ALL_latticeE.lat
+<<<<<<< HEAD
   test/Arc_Ds.lat
+=======
+  test/LS1_Gen.lat
+  test/LS2_Gen.lat
+>>>>>>> 465d7eb... Unit test for Generic type cavity added and passed.
 
   # cavity data for test lattice files
   test/data/axisData_29.txt
@@ -64,6 +69,19 @@ set(PY_DATA
   test/data/Multipole41/CaviMlp_41.txt
   test/data/Multipole53/CaviMlp_53.txt
   test/data/Multipole85/CaviMlp_85.txt
+  test/data/cavi29test/axisData.txt
+  test/data/cavi29test/CaviMlp.txt
+  test/data/cavi29test/thinlenlon.txt
+  test/data/cavi41test/axisData.txt
+  test/data/cavi41test/CaviMlp.txt
+  test/data/cavi41test/thinlenlon.txt
+  test/data/cavi53test/axisData.txt
+  test/data/cavi53test/CaviMlp.txt
+  test/data/cavi53test/thinlenlon.txt
+  test/data/cavi85test/axisData.txt
+  test/data/cavi85test/CaviMlp.txt
+  test/data/cavi85test/thinlenlon.txt
+  
 
   # vaccel IOC template
   data/st.cmd

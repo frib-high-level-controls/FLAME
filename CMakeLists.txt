@@ -13,10 +13,14 @@ message(STATUS "Option PYTHON ${USE_PYTHON}")
 add_compile_options(-g)
 
 if(NOT CMAKE_BUILD_TYPE)
+<<<<<<< HEAD
   set(CMAKE_BUILD_TYPE DEBUG) # default to debug build
 <<<<<<< HEAD
   message(STATUS "Default to DEBUG build")
 =======
+=======
+  set(CMAKE_BUILD_TYPE RELEASE) # default to debug build
+>>>>>>> 465d7eb... Unit test for Generic type cavity added and passed.
   message(STATUS "Default to RELEASE build")
 >>>>>>> 81e73b4... New RFcavity type "Generic" development.
 endif()
