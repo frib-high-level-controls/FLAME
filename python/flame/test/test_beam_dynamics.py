@@ -869,3 +869,67 @@ class TestFE(unittest.TestCase, MomentTest):
                 [ 0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00,  0.0000000000000000e+00]
             ])
         }, max=-1)
+        
+class TestGenCavi(unittest.TestCase, MomentTest):
+    """Strategy is to test the state after the first instance of each element type.
+
+    $ ./tools/flame -N <element_name> \
+       -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
+       python/flame/test/LS1.lat
+    """
+    lattice = 'LS1_Gen.lat'
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
+
+    def test_caviGen(self):
+        "Test of LS1_Gen.lat End."
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([-6.0300982819e-02,  3.9413380699e-04,  1.6534075570e+00,  2.0865006952e-04,  2.9674962640e-03,  5.2905826468e-03,  1.0000000000e+00]),
+            'moment1_env':asfarray([
+                [ 3.5241453419e+00, -2.8291147760e-04, -2.4485924056e-01, -1.0452562023e-04,  1.0653345242e-03,  3.7210686149e-03,  0.0000000000e+00],
+                [-2.8291147760e-04,  5.4392179491e-07, -1.7269951458e-04, -1.4381863710e-07, -1.0259317269e-06, -1.8215819390e-06,  0.0000000000e+00],
+                [-2.4485924056e-01, -1.7269951458e-04,  3.6810047505e+00,  1.5610062846e-03,  2.3255312999e-03,  1.8578334391e-03,  0.0000000000e+00],
+                [-1.0452562023e-04, -1.4381863710e-07,  1.5610062846e-03,  1.2143615397e-06,  1.6439601002e-06,  1.8549543185e-06,  0.0000000000e+00],
+                [ 1.0653345242e-03, -1.0259317269e-06,  2.3255312999e-03,  1.6439601002e-06,  3.4934118288e-04,  6.3400166738e-04,  0.0000000000e+00],
+                [ 3.7210686149e-03, -1.8215819390e-06,  1.8578334391e-03,  1.8549543185e-06,  6.3400166738e-04,  1.3238205642e-03,  0.0000000000e+00],
+                [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00]
+            ])
+        }, max=-1)
+        
+class TestGenCavi2(unittest.TestCase, MomentTest):
+    """Strategy is to test the state after the first instance of each element type.
+
+    $ ./tools/flame -N <element_name> \
+       -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
+       python/flame/test/LS1.lat
+    """
+    lattice = 'LS2_Gen.lat'
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
+
+    def test_caviGen2(self):
+        "Test of LS2_Gen.lat End."
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([1.5047496359e-01,  1.0937387433e-05, -7.1566489296e-01, -3.3312224764e-05, -8.6038192098e-04,  6.5961353752e-03,  1.0000000000e+00]),
+            'moment1_env':asfarray([
+                [ 1.1093596776e+00,  7.5075468052e-05, -1.5016142757e-01, -1.9399746742e-06, -6.1536054919e-04,  1.1441323650e-03,  0.0000000000e+00],
+                [ 7.5075468052e-05,  5.2699815090e-08, -1.7583175560e-05,  1.7896596263e-09,  2.8932541916e-07, -4.1090450706e-07,  0.0000000000e+00],
+                [-1.5016142757e-01, -1.7583175560e-05,  1.3163647390e+00,  1.1673820682e-04, -1.1091901143e-03, -9.8718601791e-04,  0.0000000000e+00],
+                [-1.9399746742e-06,  1.7896596263e-09,  1.1673820682e-04,  6.6470984333e-08, -1.0209268035e-06,  4.2912014144e-07,  0.0000000000e+00],
+                [-6.1536054919e-04,  2.8932541916e-07, -1.1091901143e-03, -1.0209268035e-06,  1.2883724935e-04, -1.0053124464e-04,  0.0000000000e+00],
+                [ 1.1441323650e-03, -4.1090450706e-07, -9.8718601791e-04,  4.2912014144e-07, -1.0053124464e-04,  5.6963252348e-03,  0.0000000000e+00],
+                [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00]
+            ])
+        }, max=-1)

@@ -13,7 +13,7 @@ message(STATUS "Option PYTHON ${USE_PYTHON}")
 add_compile_options(-g)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE DEBUG) # default to debug build
+  set(CMAKE_BUILD_TYPE RELEASE) # default to debug build
   message(STATUS "Default to RELEASE build")
 endif()
 if(CMAKE_COMPILER_IS_GNUCC)
