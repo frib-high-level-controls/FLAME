@@ -1,0 +1,817 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+# Global parameters.
+
+# Mpultipole level: 0 only include focusing and defocusing effects,
+#                   1 include dipole terms,
+#                   2 include quadrupole terms.
+MpoleLevel = "2";
+
+# Dipole strength adjusted to beam energy.
+HdipoleFitMode = "1";
+
+AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
+
+IonZ  = 78.0/238.0;    # Charge state for U_238.
+IonEs = AMU;           # Nucleon mass [eV/u].
+IonEk = 16.4783e6;         # Kinetic energy [eV/u].
+
+# Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]. Note, units for mis-alignments are: [m] and [rad].
+
+IonChargeStates = [78.0/238.0, 76.0/238.0, 77.0/238.0, 79.0/238.0, 80.0/238.0];
+NCharge         = [5396.0, 2587.0, 4353.0, 4986.0, 3320.0];
+
+BaryCenter1 = [-0.0783099024314,4.57617172522e-05,0.344154423848,-8.10360224837e-05,0.0155410046377,0.000560900771746,1.0];
+BaryCenter2 = [0.020407359423,-3.81794062824e-06,0.154489960723,-8.66679792512e-05,5.80374289662e-05,0.000818059790273,1.0];
+BaryCenter0 = [0.100027473881,-5.21669602931e-05,0.0795453408605,-8.92194981835e-05,-0.00689830405664,0.00106421081524,1.0];
+BaryCenter3 = [0.133593884224,-9.77413623808e-05,-0.219679168984,-4.4797217338e-06,-0.00468171059158,0.00141655373765,1.0];
+BaryCenter4 = [0.115145925933,-0.000114417576106,-0.447857699561,0.000105676900467,0.0138769547322,0.00173225427851,1.0];
+
+# Define beam envelope parameters.
+
+S1 = [
+ 5.546160336044137829e+00,-8.736595295834216493e-04,5.940488731030227898e-01,-7.386015704093498518e-05,-7.076982519136247119e-04,-3.163860669928540161e-04,0.000000000000000000e+00,
+-8.736595295834216493e-04,2.090500455134140791e-07,-7.855718846190534288e-05,-6.523978533820971738e-09,4.362670583251311584e-07,4.372795527792448193e-08,0.000000000000000000e+00,
+5.940488731030227898e-01,-7.855718846190534288e-05,3.161078650711687921e+00,-4.880950840861143954e-04,3.287823195242192686e-03,-2.068742672812967436e-04,0.000000000000000000e+00,
+-7.386015704093498518e-05,-6.523978533820971738e-09,-4.880950840861143954e-04,2.290259958707017053e-07,-1.644541241170580878e-06,-2.702050134384659011e-08,0.000000000000000000e+00,
+-7.076982519136247119e-04,4.362670583251311584e-07,3.287823195242192686e-03,-1.644541241170580878e-06,9.039097148968271156e-03,-8.144532831098906230e-05,0.000000000000000000e+00,
+-3.163860669928540161e-04,4.372795527792448193e-08,-2.068742672812967436e-04,-2.702050134384659011e-08,-8.144532831098906230e-05,8.010177844179520665e-06,0.000000000000000000e+00,
+0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00
+];
+
+S2 = [
+  4.184288620405989256e+00,-7.960050344213273534e-04,4.994712896571374960e-01,-1.507905495772806140e-04,-9.739773943061059980e-04,-2.330536100552185199e-04,0.000000000000000000e+00,
+-7.960050344213273534e-04,2.478752904576716818e-07,-1.340397984083962764e-04,2.196244224199278703e-08,6.065828514961742070e-07,1.304016358936248760e-08,0.000000000000000000e+00,
+4.994712896571374960e-01,-1.340397984083962764e-04,3.350524948992205321e+00,-6.070037068426867603e-04,6.136120749504048568e-04,-4.435532690586635463e-04,0.000000000000000000e+00,
+-1.507905495772806140e-04,2.196244224199278703e-08,-6.070037068426867603e-04,2.614422848532820559e-07,3.629267619830534001e-07,2.875034856982952151e-08,0.000000000000000000e+00,
+-9.739773943061059980e-04,6.065828514961742070e-07,6.136120749504048568e-04,3.629267619830534001e-07,8.367116226787719643e-03,-4.714352759478261282e-05,0.000000000000000000e+00,
+-2.330536100552185199e-04,1.304016358936248760e-08,-4.435532690586635463e-04,2.875034856982952151e-08,-4.714352759478261282e-05,8.061762190842078549e-06,0.000000000000000000e+00,
+0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00
+];
+
+S0 = [
+3.140597871082222436e+00,-6.493276838148718047e-04,1.097325692856332413e-01,-1.169852484221019326e-04,3.144836452710694265e-03,-2.332108160741324493e-04,0.000000000000000000e+00,
+-6.493276838148718047e-04,2.694615190441580874e-07,-1.282757301829519315e-04,4.483125444864583794e-08,-1.076423129785292207e-06,3.867865371272157021e-08,0.000000000000000000e+00,
+1.097325692856332413e-01,-1.282757301829519315e-04,3.567590870607891151e+00,-7.825524587655499067e-04,3.377588033658969219e-03,-3.643248402250719902e-04,0.000000000000000000e+00,
+-1.169852484221019326e-04,4.483125444864583794e-08,-7.825524587655499067e-04,3.139062038050850439e-07,-1.109538416183000773e-06,1.113352305382476533e-07,0.000000000000000000e+00,
+3.144836452710694265e-03,-1.076423129785292207e-06,3.377588033658969219e-03,-1.109538416183000773e-06,7.616293975826699501e-03,2.796560263476469582e-06,0.000000000000000000e+00,
+-2.332108160741324493e-04,3.867865371272157021e-08,-3.643248402250719902e-04,1.113352305382476533e-07,2.796560263476469582e-06,8.128170633390413623e-06,0.000000000000000000e+00,
+0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00
+];
+
+S3 = [
+2.423762708934010579e+00,-3.746366921621797539e-04,-3.467410776344699297e-01,3.104583561124989063e-05,1.799820841708779000e-03,-1.948781299526323139e-04,0.000000000000000000e+00,
+-3.746366921621797539e-04,2.342826676237305156e-07,-3.408848474766977571e-05,3.323612596443057961e-08,-4.370640567554896695e-07,4.857316516915130554e-08,0.000000000000000000e+00,
+-3.467410776344699297e-01,-3.408848474766977571e-05,4.003643723849308778e+00,-1.013381275615389500e-03,2.645799349897285518e-03,-6.455918968112569220e-04,0.000000000000000000e+00,
+3.104583561124989063e-05,3.323612596443057961e-08,-1.013381275615389500e-03,3.821471994661089112e-07,5.496082427575474483e-07,2.402224469515421969e-07,0.000000000000000000e+00,
+1.799820841708779000e-03,-4.370640567554896695e-07,2.645799349897285518e-03,5.496082427575474483e-07,6.984742263906014610e-03,3.728120118122465825e-05,0.000000000000000000e+00,
+-1.948781299526323139e-04,4.857316516915130554e-08,-6.455918968112569220e-04,2.402224469515421969e-07,3.728120118122465825e-05,9.248117993201592958e-06,0.000000000000000000e+00,
+0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00
+];
+
+S4 = [
+2.532584777262676390e+00,-1.732429476025251942e-04,-4.402600218886559280e-01,1.426685742565267270e-04,8.729709922627376184e-04,-2.629475852794463018e-04,0.000000000000000000e+00,
+-1.732429476025251942e-04,1.792025502981160273e-07,7.371014425427838742e-05,-7.542198258933891550e-09,-6.991951611369918398e-07,4.436366213499210819e-08,0.000000000000000000e+00,
+-4.402600218886559280e-01,7.371014425427838742e-05,5.878677724689669759e+00,-1.748828614444186951e-03,1.287320371279643315e-03,1.340105995071768010e-05,0.000000000000000000e+00,
+1.426685742565267270e-04,-7.542198258933891550e-09,-1.748828614444186951e-03,6.042266317444612935e-07,-3.494187774652421888e-07,7.922422549018503812e-08,0.000000000000000000e+00,
+8.729709922627376184e-04,-6.991951611369918398e-07,1.287320371279643315e-03,-3.494187774652421888e-07,6.407542655490709900e-03,7.042845902534469575e-05,0.000000000000000000e+00,
+-2.629475852794463018e-04,4.436366213499210819e-08,1.340105995071768010e-05,7.922422549018503812e-08,7.042845902534469575e-05,1.045320613417261742e-05,0.000000000000000000e+00,
+0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00,0.000000000000000000e+00
+];
+
+
+S: source, vector_variable="BaryCenter", matrix_variable = "S";
+
+Eng_Data_Dir = dir("data");
+
+mrk000_313: bpm;
+drift_607: drift, L = 0.246981, aper = 0.020000;
+cvy000_109: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360000, aper = 0.017000;
+drift_608: drift, L = 0.097688, aper = 0.020000;
+cvy000_110: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360000, aper = 0.017000;
+drift_609: drift, L = 0.097688, aper = 0.020000;
+cvy000_111: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.360000, aper = 0.017000;
+drift_610: drift, L = 0.246981, aper = 0.020000;
+mrk000_314: bpm;
+drift_611: drift, L = 0.255052, aper = 0.020000;
+drift_612: drift, L = 0.246981, aper = 0.020000;
+cvy000_112: rfcavity, cavtype = "0.085QWR", L = 0.300000, f = 80.500000e6, phi = -90.000000, scl_fac = 0.000010, aper = 0.017000;
+drift_613: drift, L = 0.246981, aper = 0.020000;
+mrk000_315: bpm;
+drift_614: drift, L = 0.177500, aper = 0.025000;
+drift_615: drift, L = 0.200000, aper = 0.025000;
+drift_616: drift, L = 0.250000, aper = 0.025000;
+qua000_35: quadrupole, L = 0.250000, B2 = 3.581900, aper = 0.025000;
+drift_617: drift, L = 1.000000, aper = 0.025000;
+qua000_36: quadrupole, L = 0.250000, B2 = -5.372900, aper = 0.025000;
+drift_618: drift, L = 0.550000, aper = 0.025000;
+drift_619: drift, L = 0.200000, aper = 0.025000;
+drift_620: drift, L = 0.069000, aper = 0.025000;
+drift_621: drift, L = 0.137000, aper = 0.025000;
+drift_622: drift, L = 0.044000, aper = 0.025000;
+qua000_37: quadrupole, L = 0.250000, B2 = 5.310800, aper = 0.025000;
+drift_623: drift, L = 0.370000, aper = 0.025000;
+drift_624: drift, L = 0.380000, aper = 0.025000;
+drift_625: drift, L = 0.300000, aper = 0.025000;
+qua000_38: quadrupole, L = 0.250000, B2 = -6.973700, aper = 0.025000;
+drift_626: drift, L = 0.319000, aper = 0.025000;
+drift_627: drift, L = 0.380000, aper = 0.025000;
+drift_628: drift, L = 0.200000, aper = 0.025000;
+drift_629: drift, L = 0.069000, aper = 0.025000;
+drift_630: drift, L = 0.137000, aper = 0.025000;
+drift_631: drift, L = 0.044000, aper = 0.025000;
+qua000_39: quadrupole, L = 0.250000, B2 = 10.243000, aper = 0.025000;
+drift_632: drift, L = 0.250000, aper = 0.025000;
+qua000_40: quadrupole, L = 0.250000, B2 = -11.359000, aper = 0.025000;
+drift_633: drift, L = 0.120000, aper = 0.025000;
+drift_634: drift, L = 0.380000, aper = 0.025000;
+mrk000_316: bpm;
+drift_635: drift, L = 0.280350, aper = 0.020000;
+cvy000_113: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000001, aper = 0.020000;
+drift_636: drift, L = 0.085000, aper = 0.020000;
+cvy000_114: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000001, aper = 0.020000;
+drift_637: drift, L = 0.085000, aper = 0.020000;
+cvy000_115: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000001, aper = 0.020000;
+drift_638: drift, L = 0.100000, aper = 0.020000;
+drift_639: drift, L = 0.100000, aper = 0.020000;
+sol000_157: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+sol000_158: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+sol000_159: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+sol000_160: solenoid, L = 0.125000, B = -5.200000, aper = 0.020000;
+drift_640: drift, L = 0.100000, aper = 0.020000;
+drift_641: drift, L = 0.100000, aper = 0.020000;
+cvy000_116: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000001, aper = 0.020000;
+drift_642: drift, L = 0.085000, aper = 0.020000;
+cvy000_117: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000001, aper = 0.020000;
+drift_643: drift, L = 0.085000, aper = 0.020000;
+cvy000_118: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000001, aper = 0.020000;
+drift_644: drift, L = 0.280350, aper = 0.020000;
+drift_645: drift, L = 0.190000, aper = 0.020000;
+drift_646: drift, L = 0.000000, aper = 0.018000;
+drift_647: drift, L = 0.190000, aper = 0.020000;
+drift_648: drift, L = 0.280350, aper = 0.020000;
+cvy000_119: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_649: drift, L = 0.085000, aper = 0.020000;
+cvy000_120: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_650: drift, L = 0.085000, aper = 0.020000;
+cvy000_121: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_651: drift, L = 0.100000, aper = 0.020000;
+drift_652: drift, L = 0.100000, aper = 0.020000;
+sol000_161: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_162: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_163: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_164: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+drift_653: drift, L = 0.100000, aper = 0.020000;
+drift_654: drift, L = 0.100000, aper = 0.020000;
+cvy000_122: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_655: drift, L = 0.085000, aper = 0.020000;
+cvy000_123: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_656: drift, L = 0.085000, aper = 0.020000;
+cvy000_124: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_657: drift, L = 0.280350, aper = 0.020000;
+drift_658: drift, L = 0.190000, aper = 0.020000;
+drift_659: drift, L = 0.000000, aper = 0.018000;
+drift_660: drift, L = 0.190000, aper = 0.020000;
+drift_661: drift, L = 0.280350, aper = 0.020000;
+cvy000_125: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_662: drift, L = 0.085000, aper = 0.020000;
+cvy000_126: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_663: drift, L = 0.085000, aper = 0.020000;
+cvy000_127: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_664: drift, L = 0.100000, aper = 0.020000;
+drift_665: drift, L = 0.100000, aper = 0.020000;
+sol000_165: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+sol000_166: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+sol000_167: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+sol000_168: solenoid, L = 0.125000, B = -5.650000, aper = 0.020000;
+drift_666: drift, L = 0.100000, aper = 0.020000;
+drift_667: drift, L = 0.100000, aper = 0.020000;
+cvy000_128: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_668: drift, L = 0.085000, aper = 0.020000;
+cvy000_129: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_669: drift, L = 0.085000, aper = 0.020000;
+cvy000_130: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_670: drift, L = 0.280350, aper = 0.020000;
+drift_671: drift, L = 0.190000, aper = 0.020000;
+drift_672: drift, L = 0.000000, aper = 0.018000;
+drift_673: drift, L = 0.190000, aper = 0.020000;
+drift_674: drift, L = 0.280350, aper = 0.020000;
+cvy000_131: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_675: drift, L = 0.085000, aper = 0.020000;
+cvy000_132: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_676: drift, L = 0.085000, aper = 0.020000;
+cvy000_133: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_677: drift, L = 0.100000, aper = 0.020000;
+drift_678: drift, L = 0.100000, aper = 0.020000;
+sol000_169: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_170: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_171: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+sol000_172: solenoid, L = 0.125000, B = 5.650000, aper = 0.020000;
+drift_679: drift, L = 0.100000, aper = 0.020000;
+drift_680: drift, L = 0.100000, aper = 0.020000;
+cvy000_134: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_681: drift, L = 0.085000, aper = 0.020000;
+cvy000_135: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_682: drift, L = 0.085000, aper = 0.020000;
+cvy000_136: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_683: drift, L = 0.280350, aper = 0.020000;
+drift_684: drift, L = 0.190000, aper = 0.020000;
+drift_685: drift, L = 0.000000, aper = 0.018000;
+drift_686: drift, L = 0.190000, aper = 0.020000;
+drift_687: drift, L = 0.280350, aper = 0.020000;
+cvy000_137: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_688: drift, L = 0.085000, aper = 0.020000;
+cvy000_138: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_689: drift, L = 0.085000, aper = 0.020000;
+cvy000_139: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_690: drift, L = 0.100000, aper = 0.020000;
+drift_691: drift, L = 0.100000, aper = 0.020000;
+sol000_173: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+sol000_174: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+sol000_175: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+sol000_176: solenoid, L = 0.125000, B = -5.900000, aper = 0.020000;
+drift_692: drift, L = 0.100000, aper = 0.020000;
+drift_693: drift, L = 0.100000, aper = 0.020000;
+cvy000_140: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_694: drift, L = 0.085000, aper = 0.020000;
+cvy000_141: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_695: drift, L = 0.085000, aper = 0.020000;
+cvy000_142: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_696: drift, L = 0.280350, aper = 0.020000;
+drift_697: drift, L = 0.190000, aper = 0.020000;
+drift_698: drift, L = 0.000000, aper = 0.018000;
+drift_699: drift, L = 0.190000, aper = 0.020000;
+drift_700: drift, L = 0.280350, aper = 0.020000;
+cvy000_143: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_701: drift, L = 0.085000, aper = 0.020000;
+cvy000_144: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_702: drift, L = 0.085000, aper = 0.020000;
+cvy000_145: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_703: drift, L = 0.100000, aper = 0.020000;
+drift_704: drift, L = 0.100000, aper = 0.020000;
+sol000_177: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+sol000_178: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+sol000_179: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+sol000_180: solenoid, L = 0.125000, B = 5.900000, aper = 0.020000;
+drift_705: drift, L = 0.100000, aper = 0.020000;
+drift_706: drift, L = 0.100000, aper = 0.020000;
+cvy000_146: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_707: drift, L = 0.085000, aper = 0.020000;
+cvy000_147: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_708: drift, L = 0.085000, aper = 0.020000;
+cvy000_148: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -35.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_709: drift, L = 0.280350, aper = 0.020000;
+drift_710: drift, L = 0.190000, aper = 0.020000;
+drift_711: drift, L = 0.000000, aper = 0.018000;
+drift_712: drift, L = 0.190000, aper = 0.020000;
+drift_713: drift, L = 0.280350, aper = 0.020000;
+cvy000_149: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_714: drift, L = 0.085000, aper = 0.020000;
+cvy000_150: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_715: drift, L = 0.085000, aper = 0.020000;
+cvy000_151: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_716: drift, L = 0.100000, aper = 0.020000;
+drift_717: drift, L = 0.100000, aper = 0.020000;
+sol000_181: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+sol000_182: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+sol000_183: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+sol000_184: solenoid, L = 0.125000, B = -5.700000, aper = 0.020000;
+drift_718: drift, L = 0.100000, aper = 0.020000;
+drift_719: drift, L = 0.100000, aper = 0.020000;
+cvy000_152: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_720: drift, L = 0.085000, aper = 0.020000;
+cvy000_153: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_721: drift, L = 0.085000, aper = 0.020000;
+cvy000_154: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_722: drift, L = 0.280350, aper = 0.020000;
+drift_723: drift, L = 0.190000, aper = 0.020000;
+drift_724: drift, L = 0.000000, aper = 0.018000;
+drift_725: drift, L = 0.190000, aper = 0.020000;
+drift_726: drift, L = 0.280350, aper = 0.020000;
+cvy000_155: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_727: drift, L = 0.085000, aper = 0.020000;
+cvy000_156: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_728: drift, L = 0.085000, aper = 0.020000;
+cvy000_157: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_729: drift, L = 0.100000, aper = 0.020000;
+drift_730: drift, L = 0.100000, aper = 0.020000;
+sol000_185: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+sol000_186: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+sol000_187: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+sol000_188: solenoid, L = 0.125000, B = 5.400000, aper = 0.020000;
+drift_731: drift, L = 0.100000, aper = 0.020000;
+drift_732: drift, L = 0.100000, aper = 0.020000;
+cvy000_158: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_733: drift, L = 0.085000, aper = 0.020000;
+cvy000_159: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_734: drift, L = 0.085000, aper = 0.020000;
+cvy000_160: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_735: drift, L = 0.280350, aper = 0.020000;
+drift_736: drift, L = 0.190000, aper = 0.020000;
+drift_737: drift, L = 0.000000, aper = 0.018000;
+drift_738: drift, L = 0.190000, aper = 0.020000;
+drift_739: drift, L = 0.280350, aper = 0.020000;
+cvy000_161: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_740: drift, L = 0.085000, aper = 0.020000;
+cvy000_162: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_741: drift, L = 0.085000, aper = 0.020000;
+cvy000_163: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_742: drift, L = 0.100000, aper = 0.020000;
+drift_743: drift, L = 0.100000, aper = 0.020000;
+sol000_189: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+sol000_190: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+sol000_191: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+sol000_192: solenoid, L = 0.125000, B = -5.600000, aper = 0.020000;
+drift_744: drift, L = 0.100000, aper = 0.020000;
+drift_745: drift, L = 0.100000, aper = 0.020000;
+cvy000_164: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_746: drift, L = 0.085000, aper = 0.020000;
+cvy000_165: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_747: drift, L = 0.085000, aper = 0.020000;
+cvy000_166: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_748: drift, L = 0.280350, aper = 0.020000;
+drift_749: drift, L = 0.190000, aper = 0.020000;
+drift_750: drift, L = 0.000000, aper = 0.018000;
+drift_751: drift, L = 0.190000, aper = 0.020000;
+drift_752: drift, L = 0.280350, aper = 0.020000;
+cvy000_167: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_753: drift, L = 0.085000, aper = 0.020000;
+cvy000_168: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_754: drift, L = 0.085000, aper = 0.020000;
+cvy000_169: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_755: drift, L = 0.100000, aper = 0.020000;
+drift_756: drift, L = 0.100000, aper = 0.020000;
+sol000_193: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+sol000_194: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+sol000_195: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+sol000_196: solenoid, L = 0.125000, B = 5.550000, aper = 0.020000;
+drift_757: drift, L = 0.100000, aper = 0.020000;
+drift_758: drift, L = 0.100000, aper = 0.020000;
+cvy000_170: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_759: drift, L = 0.085000, aper = 0.020000;
+cvy000_171: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_760: drift, L = 0.085000, aper = 0.020000;
+cvy000_172: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_761: drift, L = 0.280350, aper = 0.020000;
+drift_762: drift, L = 0.190000, aper = 0.020000;
+drift_763: drift, L = 0.000000, aper = 0.018000;
+drift_764: drift, L = 0.190000, aper = 0.020000;
+drift_765: drift, L = 0.280350, aper = 0.020000;
+cvy000_173: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_766: drift, L = 0.085000, aper = 0.020000;
+cvy000_174: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_767: drift, L = 0.085000, aper = 0.020000;
+cvy000_175: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_768: drift, L = 0.100000, aper = 0.020000;
+drift_769: drift, L = 0.100000, aper = 0.020000;
+sol000_197: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+sol000_198: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+sol000_199: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+sol000_200: solenoid, L = 0.125000, B = -5.300000, aper = 0.020000;
+drift_770: drift, L = 0.100000, aper = 0.020000;
+drift_771: drift, L = 0.100000, aper = 0.020000;
+cvy000_176: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_772: drift, L = 0.085000, aper = 0.020000;
+cvy000_177: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_773: drift, L = 0.085000, aper = 0.020000;
+cvy000_178: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_774: drift, L = 0.280350, aper = 0.020000;
+drift_775: drift, L = 0.190000, aper = 0.020000;
+drift_776: drift, L = 0.000000, aper = 0.018000;
+drift_777: drift, L = 0.190000, aper = 0.020000;
+drift_778: drift, L = 0.280350, aper = 0.020000;
+cvy000_179: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_779: drift, L = 0.085000, aper = 0.020000;
+cvy000_180: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_780: drift, L = 0.085000, aper = 0.020000;
+cvy000_181: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_781: drift, L = 0.100000, aper = 0.020000;
+drift_782: drift, L = 0.100000, aper = 0.020000;
+sol000_201: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_202: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_203: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+sol000_204: solenoid, L = 0.125000, B = 5.700000, aper = 0.020000;
+drift_783: drift, L = 0.100000, aper = 0.020000;
+drift_784: drift, L = 0.100000, aper = 0.020000;
+cvy000_182: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_785: drift, L = 0.085000, aper = 0.020000;
+cvy000_183: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_786: drift, L = 0.085000, aper = 0.020000;
+cvy000_184: rfcavity, cavtype = "Generic", datapath = "cavi29test", Rm = 20.0, L = 0.300000, f = 322.000000e6, phi = -32.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_787: drift, L = 0.280350, aper = 0.020000;
+drift_788: drift, L = 0.190000, aper = 0.020000;
+drift_789: drift, L = 0.000000, aper = 0.018000;
+drift_790: drift, L = 0.190000, aper = 0.020000;
+drift_791: drift, L = 0.256550, aper = 0.020000;
+cvy000_185: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_792: drift, L = 0.075000, aper = 0.020000;
+cvy000_186: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_793: drift, L = 0.075000, aper = 0.020000;
+cvy000_187: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_794: drift, L = 0.075000, aper = 0.020000;
+cvy000_188: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_795: drift, L = 0.080000, aper = 0.020000;
+drift_796: drift, L = 0.100000, aper = 0.020000;
+sol000_205: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+sol000_206: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+sol000_207: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+sol000_208: solenoid, L = 0.125000, B = -6.000000, aper = 0.020000;
+drift_797: drift, L = 0.100000, aper = 0.020000;
+drift_798: drift, L = 0.080000, aper = 0.020000;
+cvy000_189: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_799: drift, L = 0.075000, aper = 0.020000;
+cvy000_190: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_800: drift, L = 0.075000, aper = 0.020000;
+cvy000_191: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_801: drift, L = 0.075000, aper = 0.020000;
+cvy000_192: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_802: drift, L = 0.256550, aper = 0.020000;
+drift_803: drift, L = 0.190000, aper = 0.020000;
+drift_804: drift, L = 0.000000, aper = 0.018000;
+drift_805: drift, L = 0.190000, aper = 0.020000;
+drift_806: drift, L = 0.256550, aper = 0.020000;
+cvy000_193: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_807: drift, L = 0.075000, aper = 0.020000;
+cvy000_194: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_808: drift, L = 0.075000, aper = 0.020000;
+cvy000_195: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_809: drift, L = 0.075000, aper = 0.020000;
+cvy000_196: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_810: drift, L = 0.080000, aper = 0.020000;
+drift_811: drift, L = 0.100000, aper = 0.020000;
+sol000_209: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+sol000_210: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+sol000_211: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+sol000_212: solenoid, L = 0.125000, B = 6.400000, aper = 0.020000;
+drift_812: drift, L = 0.100000, aper = 0.020000;
+drift_813: drift, L = 0.080000, aper = 0.020000;
+cvy000_197: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_814: drift, L = 0.075000, aper = 0.020000;
+cvy000_198: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_815: drift, L = 0.075000, aper = 0.020000;
+cvy000_199: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_816: drift, L = 0.075000, aper = 0.020000;
+cvy000_200: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_817: drift, L = 0.256550, aper = 0.020000;
+drift_818: drift, L = 0.190000, aper = 0.020000;
+drift_819: drift, L = 0.000000, aper = 0.018000;
+drift_820: drift, L = 0.190000, aper = 0.020000;
+drift_821: drift, L = 0.256550, aper = 0.020000;
+cvy000_201: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_822: drift, L = 0.075000, aper = 0.020000;
+cvy000_202: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_823: drift, L = 0.075000, aper = 0.020000;
+cvy000_203: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_824: drift, L = 0.075000, aper = 0.020000;
+cvy000_204: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_825: drift, L = 0.080000, aper = 0.020000;
+drift_826: drift, L = 0.100000, aper = 0.020000;
+sol000_213: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+sol000_214: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+sol000_215: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+sol000_216: solenoid, L = 0.125000, B = -6.550000, aper = 0.020000;
+drift_827: drift, L = 0.100000, aper = 0.020000;
+drift_828: drift, L = 0.080000, aper = 0.020000;
+cvy000_205: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_829: drift, L = 0.075000, aper = 0.020000;
+cvy000_206: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_830: drift, L = 0.075000, aper = 0.020000;
+cvy000_207: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_831: drift, L = 0.075000, aper = 0.020000;
+cvy000_208: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_832: drift, L = 0.256550, aper = 0.020000;
+drift_833: drift, L = 0.190000, aper = 0.020000;
+drift_834: drift, L = 0.000000, aper = 0.018000;
+drift_835: drift, L = 0.190000, aper = 0.020000;
+drift_836: drift, L = 0.256550, aper = 0.020000;
+cvy000_209: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_837: drift, L = 0.075000, aper = 0.020000;
+cvy000_210: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_838: drift, L = 0.075000, aper = 0.020000;
+cvy000_211: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_839: drift, L = 0.075000, aper = 0.020000;
+cvy000_212: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_840: drift, L = 0.080000, aper = 0.020000;
+drift_841: drift, L = 0.100000, aper = 0.020000;
+sol000_217: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_218: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_219: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+sol000_220: solenoid, L = 0.125000, B = 6.800000, aper = 0.020000;
+drift_842: drift, L = 0.100000, aper = 0.020000;
+drift_843: drift, L = 0.080000, aper = 0.020000;
+cvy000_213: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_844: drift, L = 0.075000, aper = 0.020000;
+cvy000_214: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_845: drift, L = 0.075000, aper = 0.020000;
+cvy000_215: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_846: drift, L = 0.075000, aper = 0.020000;
+cvy000_216: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_847: drift, L = 0.256550, aper = 0.020000;
+drift_848: drift, L = 0.190000, aper = 0.020000;
+drift_849: drift, L = 0.000000, aper = 0.018000;
+drift_850: drift, L = 0.190000, aper = 0.020000;
+drift_851: drift, L = 0.256550, aper = 0.020000;
+cvy000_217: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_852: drift, L = 0.075000, aper = 0.020000;
+cvy000_218: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_853: drift, L = 0.075000, aper = 0.020000;
+cvy000_219: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_854: drift, L = 0.075000, aper = 0.020000;
+cvy000_220: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_855: drift, L = 0.080000, aper = 0.020000;
+drift_856: drift, L = 0.100000, aper = 0.020000;
+sol000_221: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_222: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_223: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_224: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+drift_857: drift, L = 0.100000, aper = 0.020000;
+drift_858: drift, L = 0.080000, aper = 0.020000;
+cvy000_221: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_859: drift, L = 0.075000, aper = 0.020000;
+cvy000_222: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_860: drift, L = 0.075000, aper = 0.020000;
+cvy000_223: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_861: drift, L = 0.075000, aper = 0.020000;
+cvy000_224: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_862: drift, L = 0.256550, aper = 0.020000;
+drift_863: drift, L = 0.190000, aper = 0.020000;
+drift_864: drift, L = 0.000000, aper = 0.018000;
+drift_865: drift, L = 0.190000, aper = 0.020000;
+drift_866: drift, L = 0.256550, aper = 0.020000;
+cvy000_225: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_867: drift, L = 0.075000, aper = 0.020000;
+cvy000_226: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_868: drift, L = 0.075000, aper = 0.020000;
+cvy000_227: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_869: drift, L = 0.075000, aper = 0.020000;
+cvy000_228: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_870: drift, L = 0.080000, aper = 0.020000;
+drift_871: drift, L = 0.100000, aper = 0.020000;
+sol000_225: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_226: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_227: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_228: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+drift_872: drift, L = 0.100000, aper = 0.020000;
+drift_873: drift, L = 0.080000, aper = 0.020000;
+cvy000_229: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_874: drift, L = 0.075000, aper = 0.020000;
+cvy000_230: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_875: drift, L = 0.075000, aper = 0.020000;
+cvy000_231: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_876: drift, L = 0.075000, aper = 0.020000;
+cvy000_232: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_877: drift, L = 0.256550, aper = 0.020000;
+drift_878: drift, L = 0.190000, aper = 0.020000;
+drift_879: drift, L = 0.000000, aper = 0.018000;
+drift_880: drift, L = 0.190000, aper = 0.020000;
+drift_881: drift, L = 0.256550, aper = 0.020000;
+cvy000_233: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_882: drift, L = 0.075000, aper = 0.020000;
+cvy000_234: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_883: drift, L = 0.075000, aper = 0.020000;
+cvy000_235: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_884: drift, L = 0.075000, aper = 0.020000;
+cvy000_236: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_885: drift, L = 0.080000, aper = 0.020000;
+drift_886: drift, L = 0.100000, aper = 0.020000;
+sol000_229: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_230: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_231: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_232: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+drift_887: drift, L = 0.100000, aper = 0.020000;
+drift_888: drift, L = 0.080000, aper = 0.020000;
+cvy000_237: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_889: drift, L = 0.075000, aper = 0.020000;
+cvy000_238: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_890: drift, L = 0.075000, aper = 0.020000;
+cvy000_239: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_891: drift, L = 0.075000, aper = 0.020000;
+cvy000_240: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_892: drift, L = 0.256550, aper = 0.020000;
+drift_893: drift, L = 0.190000, aper = 0.020000;
+drift_894: drift, L = 0.000000, aper = 0.018000;
+drift_895: drift, L = 0.190000, aper = 0.020000;
+drift_896: drift, L = 0.256550, aper = 0.020000;
+cvy000_241: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_897: drift, L = 0.075000, aper = 0.020000;
+cvy000_242: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_898: drift, L = 0.075000, aper = 0.020000;
+cvy000_243: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_899: drift, L = 0.075000, aper = 0.020000;
+cvy000_244: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_900: drift, L = 0.080000, aper = 0.020000;
+drift_901: drift, L = 0.100000, aper = 0.020000;
+sol000_233: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_234: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_235: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+sol000_236: solenoid, L = 0.125000, B = 6.500000, aper = 0.020000;
+drift_902: drift, L = 0.100000, aper = 0.020000;
+drift_903: drift, L = 0.080000, aper = 0.020000;
+cvy000_245: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_904: drift, L = 0.075000, aper = 0.020000;
+cvy000_246: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_905: drift, L = 0.075000, aper = 0.020000;
+cvy000_247: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_906: drift, L = 0.075000, aper = 0.020000;
+cvy000_248: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_907: drift, L = 0.256550, aper = 0.020000;
+drift_908: drift, L = 0.190000, aper = 0.020000;
+drift_909: drift, L = 0.000000, aper = 0.018000;
+drift_910: drift, L = 0.190000, aper = 0.020000;
+drift_911: drift, L = 0.256550, aper = 0.020000;
+cvy000_249: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_912: drift, L = 0.075000, aper = 0.020000;
+cvy000_250: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_913: drift, L = 0.075000, aper = 0.020000;
+cvy000_251: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_914: drift, L = 0.075000, aper = 0.020000;
+cvy000_252: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_915: drift, L = 0.080000, aper = 0.020000;
+drift_916: drift, L = 0.100000, aper = 0.020000;
+sol000_237: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_238: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_239: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+sol000_240: solenoid, L = 0.125000, B = -6.500000, aper = 0.020000;
+drift_917: drift, L = 0.100000, aper = 0.020000;
+drift_918: drift, L = 0.080000, aper = 0.020000;
+cvy000_253: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_919: drift, L = 0.075000, aper = 0.020000;
+cvy000_254: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_920: drift, L = 0.075000, aper = 0.020000;
+cvy000_255: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_921: drift, L = 0.075000, aper = 0.020000;
+cvy000_256: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_922: drift, L = 0.256550, aper = 0.020000;
+drift_923: drift, L = 0.190000, aper = 0.020000;
+drift_924: drift, L = 0.000000, aper = 0.018000;
+drift_925: drift, L = 0.190000, aper = 0.020000;
+drift_926: drift, L = 0.256550, aper = 0.020000;
+cvy000_257: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_927: drift, L = 0.075000, aper = 0.020000;
+cvy000_258: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_928: drift, L = 0.075000, aper = 0.020000;
+cvy000_259: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_929: drift, L = 0.075000, aper = 0.020000;
+cvy000_260: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_930: drift, L = 0.080000, aper = 0.020000;
+drift_931: drift, L = 0.100000, aper = 0.020000;
+sol000_241: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+sol000_242: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+sol000_243: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+sol000_244: solenoid, L = 0.125000, B = 6.700000, aper = 0.020000;
+drift_932: drift, L = 0.100000, aper = 0.020000;
+drift_933: drift, L = 0.080000, aper = 0.020000;
+cvy000_261: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_934: drift, L = 0.075000, aper = 0.020000;
+cvy000_262: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_935: drift, L = 0.075000, aper = 0.020000;
+cvy000_263: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_936: drift, L = 0.075000, aper = 0.020000;
+cvy000_264: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_937: drift, L = 0.256550, aper = 0.020000;
+drift_938: drift, L = 0.190000, aper = 0.020000;
+drift_939: drift, L = 0.000000, aper = 0.018000;
+drift_940: drift, L = 0.190000, aper = 0.020000;
+drift_941: drift, L = 0.256550, aper = 0.020000;
+cvy000_265: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_942: drift, L = 0.075000, aper = 0.020000;
+cvy000_266: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_943: drift, L = 0.075000, aper = 0.020000;
+cvy000_267: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_944: drift, L = 0.075000, aper = 0.020000;
+cvy000_268: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_945: drift, L = 0.080000, aper = 0.020000;
+drift_946: drift, L = 0.100000, aper = 0.020000;
+sol000_245: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+sol000_246: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+sol000_247: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+sol000_248: solenoid, L = 0.125000, B = -7.500000, aper = 0.020000;
+drift_947: drift, L = 0.100000, aper = 0.020000;
+drift_948: drift, L = 0.080000, aper = 0.020000;
+cvy000_269: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_949: drift, L = 0.075000, aper = 0.020000;
+cvy000_270: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_950: drift, L = 0.075000, aper = 0.020000;
+cvy000_271: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_951: drift, L = 0.075000, aper = 0.020000;
+cvy000_272: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_952: drift, L = 0.256550, aper = 0.020000;
+drift_953: drift, L = 0.190000, aper = 0.020000;
+drift_954: drift, L = 0.000000, aper = 0.018000;
+drift_955: drift, L = 0.190000, aper = 0.020000;
+drift_956: drift, L = 0.256550, aper = 0.020000;
+cvy000_273: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_957: drift, L = 0.075000, aper = 0.020000;
+cvy000_274: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_958: drift, L = 0.075000, aper = 0.020000;
+cvy000_275: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_959: drift, L = 0.075000, aper = 0.020000;
+cvy000_276: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_960: drift, L = 0.080000, aper = 0.020000;
+drift_961: drift, L = 0.100000, aper = 0.020000;
+sol000_249: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_250: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_251: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+sol000_252: solenoid, L = 0.125000, B = 7.900000, aper = 0.020000;
+drift_962: drift, L = 0.100000, aper = 0.020000;
+drift_963: drift, L = 0.080000, aper = 0.020000;
+cvy000_277: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_964: drift, L = 0.075000, aper = 0.020000;
+cvy000_278: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_965: drift, L = 0.075000, aper = 0.020000;
+cvy000_279: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_966: drift, L = 0.075000, aper = 0.020000;
+cvy000_280: rfcavity, cavtype = "Generic", datapath = "cavi53test", Rm = 20.0, L = 0.500000, f = 322.000000e6, phi = -24.000000, scl_fac = 1.000000, aper = 0.020000;
+drift_967: drift, L = 0.256550, aper = 0.020000;
+drift_968: drift, L = 0.190000, aper = 0.020000;
+drift_969: drift, L = 0.000000, aper = 0.018000;
+drift_970: drift, L = 0.190000, aper = 0.020000;
+drift_971: drift, L = 0.600000, aper = 0.025000;
+
+cell: LINE = ( S, mrk000_313, drift_607, cvy000_109, drift_608, cvy000_110, drift_609, cvy000_111,
+  drift_610, mrk000_314, drift_611, drift_612, cvy000_112, drift_613, mrk000_315, drift_614, drift_615, 
+  drift_616, qua000_35, drift_617, qua000_36, drift_618, drift_619, drift_620, drift_621, 
+  drift_622, qua000_37, drift_623, drift_624, drift_625, qua000_38, drift_626, drift_627, 
+  drift_628, drift_629, drift_630, drift_631, qua000_39, drift_632, qua000_40, drift_633, 
+  drift_634, mrk000_316, drift_635, cvy000_113, drift_636, cvy000_114, drift_637, cvy000_115, 
+  drift_638, drift_639, sol000_157, sol000_158, sol000_159, sol000_160, drift_640, drift_641, 
+  cvy000_116, drift_642, cvy000_117, drift_643, cvy000_118, drift_644, drift_645, drift_646, 
+  drift_647, drift_648, cvy000_119, drift_649, cvy000_120, drift_650, cvy000_121, drift_651, 
+  drift_652, sol000_161, sol000_162, sol000_163, sol000_164, drift_653, drift_654, cvy000_122, 
+  drift_655, cvy000_123, drift_656, cvy000_124, drift_657, drift_658, drift_659, drift_660, 
+  drift_661, cvy000_125, drift_662, cvy000_126, drift_663, cvy000_127, drift_664, drift_665, 
+  sol000_165, sol000_166, sol000_167, sol000_168, drift_666, drift_667, cvy000_128, drift_668, 
+  cvy000_129, drift_669, cvy000_130, drift_670, drift_671, drift_672, drift_673, drift_674, 
+  cvy000_131, drift_675, cvy000_132, drift_676, cvy000_133, drift_677, drift_678, sol000_169, 
+  sol000_170, sol000_171, sol000_172, drift_679, drift_680, cvy000_134, drift_681, cvy000_135, 
+  drift_682, cvy000_136, drift_683, drift_684, drift_685, drift_686, drift_687, cvy000_137, 
+  drift_688, cvy000_138, drift_689, cvy000_139, drift_690, drift_691, sol000_173, sol000_174, 
+  sol000_175, sol000_176, drift_692, drift_693, cvy000_140, drift_694, cvy000_141, drift_695, 
+  cvy000_142, drift_696, drift_697, drift_698, drift_699, drift_700, cvy000_143, drift_701, 
+  cvy000_144, drift_702, cvy000_145, drift_703, drift_704, sol000_177, sol000_178, sol000_179, 
+  sol000_180, drift_705, drift_706, cvy000_146, drift_707, cvy000_147, drift_708, cvy000_148, 
+  drift_709, drift_710, drift_711, drift_712, drift_713, cvy000_149, drift_714, cvy000_150, 
+  drift_715, cvy000_151, drift_716, drift_717, sol000_181, sol000_182, sol000_183, sol000_184, 
+  drift_718, drift_719, cvy000_152, drift_720, cvy000_153, drift_721, cvy000_154, drift_722, 
+  drift_723, drift_724, drift_725, drift_726, cvy000_155, drift_727, cvy000_156, drift_728, 
+  cvy000_157, drift_729, drift_730, sol000_185, sol000_186, sol000_187, sol000_188, drift_731, 
+  drift_732, cvy000_158, drift_733, cvy000_159, drift_734, cvy000_160, drift_735, drift_736, 
+  drift_737, drift_738, drift_739, cvy000_161, drift_740, cvy000_162, drift_741, cvy000_163, 
+  drift_742, drift_743, sol000_189, sol000_190, sol000_191, sol000_192, drift_744, drift_745, 
+  cvy000_164, drift_746, cvy000_165, drift_747, cvy000_166, drift_748, drift_749, drift_750, 
+  drift_751, drift_752, cvy000_167, drift_753, cvy000_168, drift_754, cvy000_169, drift_755, 
+  drift_756, sol000_193, sol000_194, sol000_195, sol000_196, drift_757, drift_758, cvy000_170, 
+  drift_759, cvy000_171, drift_760, cvy000_172, drift_761, drift_762, drift_763, drift_764, 
+  drift_765, cvy000_173, drift_766, cvy000_174, drift_767, cvy000_175, drift_768, drift_769, 
+  sol000_197, sol000_198, sol000_199, sol000_200, drift_770, drift_771, cvy000_176, drift_772, 
+  cvy000_177, drift_773, cvy000_178, drift_774, drift_775, drift_776, drift_777, drift_778, 
+  cvy000_179, drift_779, cvy000_180, drift_780, cvy000_181, drift_781, drift_782, sol000_201, 
+  sol000_202, sol000_203, sol000_204, drift_783, drift_784, cvy000_182, drift_785, cvy000_183, 
+  drift_786, cvy000_184, drift_787, drift_788, drift_789, drift_790, drift_791, cvy000_185, 
+  drift_792, cvy000_186, drift_793, cvy000_187, drift_794, cvy000_188, drift_795, drift_796, 
+  sol000_205, sol000_206, sol000_207, sol000_208, drift_797, drift_798, cvy000_189, drift_799, 
+  cvy000_190, drift_800, cvy000_191, drift_801, cvy000_192, drift_802, drift_803, drift_804, 
+  drift_805, drift_806, cvy000_193, drift_807, cvy000_194, drift_808, cvy000_195, drift_809, 
+  cvy000_196, drift_810, drift_811, sol000_209, sol000_210, sol000_211, sol000_212, drift_812, 
+  drift_813, cvy000_197, drift_814, cvy000_198, drift_815, cvy000_199, drift_816, cvy000_200, 
+  drift_817, drift_818, drift_819, drift_820, drift_821, cvy000_201, drift_822, cvy000_202, 
+  drift_823, cvy000_203, drift_824, cvy000_204, drift_825, drift_826, sol000_213, sol000_214, 
+  sol000_215, sol000_216, drift_827, drift_828, cvy000_205, drift_829, cvy000_206, drift_830, 
+  cvy000_207, drift_831, cvy000_208, drift_832, drift_833, drift_834, drift_835, drift_836, 
+  cvy000_209, drift_837, cvy000_210, drift_838, cvy000_211, drift_839, cvy000_212, drift_840, 
+  drift_841, sol000_217, sol000_218, sol000_219, sol000_220, drift_842, drift_843, cvy000_213, 
+  drift_844, cvy000_214, drift_845, cvy000_215, drift_846, cvy000_216, drift_847, drift_848, 
+  drift_849, drift_850, drift_851, cvy000_217, drift_852, cvy000_218, drift_853, cvy000_219, 
+  drift_854, cvy000_220, drift_855, drift_856, sol000_221, sol000_222, sol000_223, sol000_224, 
+  drift_857, drift_858, cvy000_221, drift_859, cvy000_222, drift_860, cvy000_223, drift_861, 
+  cvy000_224, drift_862, drift_863, drift_864, drift_865, drift_866, cvy000_225, drift_867, 
+  cvy000_226, drift_868, cvy000_227, drift_869, cvy000_228, drift_870, drift_871, sol000_225, 
+  sol000_226, sol000_227, sol000_228, drift_872, drift_873, cvy000_229, drift_874, cvy000_230, 
+  drift_875, cvy000_231, drift_876, cvy000_232, drift_877, drift_878, drift_879, drift_880, 
+  drift_881, cvy000_233, drift_882, cvy000_234, drift_883, cvy000_235, drift_884, cvy000_236, 
+  drift_885, drift_886, sol000_229, sol000_230, sol000_231, sol000_232, drift_887, drift_888, 
+  cvy000_237, drift_889, cvy000_238, drift_890, cvy000_239, drift_891, cvy000_240, drift_892, 
+  drift_893, drift_894, drift_895, drift_896, cvy000_241, drift_897, cvy000_242, drift_898, 
+  cvy000_243, drift_899, cvy000_244, drift_900, drift_901, sol000_233, sol000_234, sol000_235, 
+  sol000_236, drift_902, drift_903, cvy000_245, drift_904, cvy000_246, drift_905, cvy000_247, 
+  drift_906, cvy000_248, drift_907, drift_908, drift_909, drift_910, drift_911, cvy000_249, 
+  drift_912, cvy000_250, drift_913, cvy000_251, drift_914, cvy000_252, drift_915, drift_916, 
+  sol000_237, sol000_238, sol000_239, sol000_240, drift_917, drift_918, cvy000_253, drift_919, 
+  cvy000_254, drift_920, cvy000_255, drift_921, cvy000_256, drift_922, drift_923, drift_924, 
+  drift_925, drift_926, cvy000_257, drift_927, cvy000_258, drift_928, cvy000_259, drift_929, 
+  cvy000_260, drift_930, drift_931, sol000_241, sol000_242, sol000_243, sol000_244, drift_932, 
+  drift_933, cvy000_261, drift_934, cvy000_262, drift_935, cvy000_263, drift_936, cvy000_264, 
+  drift_937, drift_938, drift_939, drift_940, drift_941, cvy000_265, drift_942, cvy000_266, 
+  drift_943, cvy000_267, drift_944, cvy000_268, drift_945, drift_946, sol000_245, sol000_246, 
+  sol000_247, sol000_248, drift_947, drift_948, cvy000_269, drift_949, cvy000_270, drift_950, 
+  cvy000_271, drift_951, cvy000_272, drift_952, drift_953, drift_954, drift_955, drift_956, 
+  cvy000_273, drift_957, cvy000_274, drift_958, cvy000_275, drift_959, cvy000_276, drift_960, 
+  drift_961, sol000_249, sol000_250, sol000_251, sol000_252, drift_962, drift_963, cvy000_277, 
+  drift_964, cvy000_278, drift_965, cvy000_279, drift_966, cvy000_280, drift_967, drift_968, 
+  drift_969, drift_970, drift_971
+);
+
+USE: cell;
