@@ -164,7 +164,6 @@ struct ElementRFCavity : public MomentElementBase
 
         ST.pos += length;
 
-<<<<<<< HEAD
         for(size_t i=0; i<last_real_in.size(); i++) {
             ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
 
@@ -173,15 +172,6 @@ struct ElementRFCavity : public MomentElementBase
             x0[1]  = ST.moment0[i][state_t::PS_Y];
             x2[0]  = ST.moment1[i](0, 0);
             x2[1]  = ST.moment1[i](2, 2);
-=======
-                // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
-                x0[0]  = ST.moment0[i][state_t::PS_X];
-                x0[1]  = ST.moment0[i][state_t::PS_Y];
-                x2[0]  = ST.moment1[i](0, 0);
-                x2[1]  = ST.moment1[i](2, 2);
-		
-                ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
->>>>>>> 81e73b4... New RFcavity type "Generic" development.
 
             ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
 

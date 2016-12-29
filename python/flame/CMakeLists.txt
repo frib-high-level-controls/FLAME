@@ -49,12 +49,9 @@ set(PY_DATA
   test/FE_latticeE.lat
   test/LS1FS1_latticeE.lat
   test/ALL_latticeE.lat
-<<<<<<< HEAD
   test/Arc_Ds.lat
-=======
   test/LS1_Gen.lat
   test/LS2_Gen.lat
->>>>>>> 465d7eb... Unit test for Generic type cavity added and passed.
 
   # cavity data for test lattice files
   test/data/axisData_29.txt

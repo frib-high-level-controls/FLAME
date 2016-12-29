@@ -1488,13 +1488,8 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
 
     multip    = fRF/SampleFreq;
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
-<<<<<<< HEAD
-
-    caviFy = GetCavPhase(cavi, ref, IonFys, multip);
-=======
         
     caviFy = GetCavPhase(cavi, ref, IonFys, multip, SynAccTab);  // Get driven phase from synchronous phase @+
->>>>>>> 81e73b4... New RFcavity type "Generic" development.
 
     IonFy_i = multip*ref.phis + caviFy;
     phi_ref = caviFy;
