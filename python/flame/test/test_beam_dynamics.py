@@ -871,12 +871,6 @@ class TestFE(unittest.TestCase, MomentTest):
         }, max=-1)
 
 class TestArc(unittest.TestCase, MomentTest):
-	"""Strategy is to test the state after the first instance of each element type.
-
-    $ ./tools/flame -N <element_name> \
-       -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
-       python/flame/test/LS1.lat
-    """
 
     lattice = 'Arc_Ds.lat'
 
