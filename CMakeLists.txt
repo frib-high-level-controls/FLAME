@@ -10,8 +10,6 @@ option(NEED_DEMOIOC  "build flamedemo IOC executable" ON)
 
 message(STATUS "Option PYTHON ${USE_PYTHON}")
 
-add_compile_options(-g)
-
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE DEBUG) # default to debug build
   message(STATUS "Default to DEBUG build")
