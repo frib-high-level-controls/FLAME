@@ -1276,7 +1276,7 @@ void ElementRFCavity::GetCavMatGeneric(Particle &real, const double EfieldScl, c
     }*/
    
     // Transverse followed
-    IonW=IonW0;gamma=gamma0;beta=beta0;IonFy=IonFy0;kfac=kfac0;
+    //IonW=IonW0;gamma=gamma0;beta=beta0;IonFy=IonFy0;kfac=kfac0;
     //int seg=0;
     for(unsigned n=0; n<lattice.size(); n++) {
         const RawParams& P = lattice[n];
