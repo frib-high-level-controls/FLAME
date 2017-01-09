@@ -50,6 +50,7 @@ struct ElementRFCavity : public MomentElementBase
     struct RawParams {
         std::string name, type;
         double length, aperature, E0;
+        // vector Tfit and Sfit always have ten elements
         std::vector<double> Tfit, Sfit;
     };
     std::vector<RawParams> lattice; // from axisData_*.txt
@@ -60,7 +61,7 @@ struct ElementRFCavity : public MomentElementBase
     std::string DataPath;
     std::vector<double> SynAccTab;
     double cRm;
-    double calFitPow(double kfac, std::vector<double> Tfit) const;
+    double calFitPow(double kfac, const std::vector<double>& Tfit) const;
 
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
     double fRF,    // RF frequency [Hz]
