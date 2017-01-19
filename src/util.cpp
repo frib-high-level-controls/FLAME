@@ -12,15 +12,15 @@
 
 void numeric_table::readvec(std::vector<double> vec, int numcol)
 {
-	value_t table(int(vec.size()/numcol),numcol);
+	value_t tabletmp(int(vec.size()/numcol),numcol);
 	for (unsigned i=0; i < vec.size(); i++)
 	{
 		int ii,jj;
 		jj=i%numcol;
 		ii=int((i-jj)/numcol);
-		table(ii, jj) = vec[i];
+		tabletmp(ii, jj) = vec[i];
     }
-    this->table.swap(table);
+    this->table.swap(tabletmp);
 }
 
 void numeric_table::read(std::istream &strm)
