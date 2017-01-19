@@ -10,6 +10,19 @@
 
 #include "flame/util.h"
 
+void numeric_table::readvec(std::vector<double> vec, int numcol)
+{
+	value_t table(int(vec.size()/numcol),numcol);
+	for (unsigned i=0; i < vec.size(); i++)
+	{
+		int ii,jj;
+		jj=i%numcol;
+		ii=int((i-jj)/numcol);
+		table(ii, jj) = vec[i];
+    }
+    this->table.swap(table);
+}
+
 void numeric_table::read(std::istream &strm)
 {
     typedef boost::numeric::ublas::vector<double> vector_t;

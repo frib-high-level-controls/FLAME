@@ -7,6 +7,7 @@
 #include "flame/moment.h"
 #include "flame/moment_sup.h"
 #include "flame/rf_cavity.h"
+#include "flame/config.h"
 
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
@@ -618,6 +619,9 @@ double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, con
     case 0:
         Fyc = P[0]*pow(IonEk,P[1])- P[2];
         break;
+    case -10:
+        Fyc = P[0]*pow(IonEk,P[1])- P[2];
+        break;
     default:
         std::ostringstream strm;
         strm << "*** GetCavPhase: undef. cavity type" << "\n";
@@ -704,103 +708,168 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         fldmap  += "/"+DataPath+"/axisData.txt";
         cavfile += "/"+DataPath+"/thinlenlon.txt";
         mlpfile += "/"+DataPath+"/CaviMlp.txt";
+    } else if (CavType == "Generic2") {
+        DataFile = cavfile+"/"+c.get<std::string>("datafile");
+        cavi = -10;
     } else {
         throw std::runtime_error(SB()<<"*** InitRFCav: undef. cavity type: " << CavType);
     }
+    
+    if (cavi != -10)
+	{
+		numeric_table_cache *cache = numeric_table_cache::get();
 
-    numeric_table_cache *cache = numeric_table_cache::get();
+		try{
+		    numeric_table_cache::table_pointer ent = cache->fetch(fldmap);
+		    CavData = *ent;
+		    if(CavData.table.size1()==0 || CavData.table.size2()<2)
+		        throw std::runtime_error("field map needs 2+ columns");
+		}catch(std::exception& e){
+		    throw std::runtime_error(SB()<<"Error parsing '"<<fldmap<<"' : "<<e.what());
+		}
 
-    try{
-        numeric_table_cache::table_pointer ent = cache->fetch(fldmap);
-        CavData = *ent;
-        if(CavData.table.size1()==0 || CavData.table.size2()<2)
-            throw std::runtime_error("field map needs 2+ columns");
-    }catch(std::exception& e){
-        throw std::runtime_error(SB()<<"Error parsing '"<<fldmap<<"' : "<<e.what());
-    }
+		try{
+		    numeric_table_cache::table_pointer ent = cache->fetch(mlpfile);
+		    mlptable = *ent;
+		    if(mlptable.table.size1()==0 || mlptable.table.size2()<7)
+		        throw std::runtime_error("CaviMlp needs 7+ columns");
+		}catch(std::exception& e){
+		    throw std::runtime_error(SB()<<"Error parsing '"<<mlpfile<<"' : "<<e.what());
+		}
 
-    try{
-        numeric_table_cache::table_pointer ent = cache->fetch(mlpfile);
-        mlptable = *ent;
-        if(mlptable.table.size1()==0 || mlptable.table.size2()<7)
-            throw std::runtime_error("CaviMlp needs 7+ columns");
-    }catch(std::exception& e){
-        throw std::runtime_error(SB()<<"Error parsing '"<<mlpfile<<"' : "<<e.what());
-    }
+		{
+		    std::ifstream fstrm(cavfile.c_str());
 
-    {
-        std::ifstream fstrm(cavfile.c_str());
+		    std::string rawline;
+		    unsigned line=0;
+		    while(std::getline(fstrm, rawline)) {
+		        line++;
 
-        std::string rawline;
-        unsigned line=0;
-        while(std::getline(fstrm, rawline)) {
-            line++;
+		        size_t cpos = rawline.find_first_not_of(" \t");
+		        if(cpos==rawline.npos || rawline[cpos]=='%')
+		            continue; // skip blank and comment lines
 
-            size_t cpos = rawline.find_first_not_of(" \t");
-            if(cpos==rawline.npos || rawline[cpos]=='%')
-                continue; // skip blank and comment lines
+		        cpos = rawline.find_last_not_of("\r\n");
+		        if(cpos!=rawline.npos)
+		            rawline = rawline.substr(0, cpos+1);
 
-            cpos = rawline.find_last_not_of("\r\n");
-            if(cpos!=rawline.npos)
-                rawline = rawline.substr(0, cpos+1);
+		        std::istringstream lstrm(rawline);
+		        RawParams params;
+		        
+		        bool formatNew = CavType == "Generic";
+		        if (formatNew)
+		        {
+		            lstrm >> params.type >> params.name >> params.length;
+		            bool notdrift = params.type!="drift";
+		            if(notdrift)
+		            {
+		                lstrm >> params.E0;
+		                double temp=0;
+		                for(int i=0; i<10; i++)
+		                {
+		                    lstrm >> temp;
+		                    params.Tfit.push_back(temp);
+		                }
+		                for(int i=0; i<10; i++)
+		                {
+		                    lstrm >> temp;
+		                    params.Sfit.push_back(temp);
+		                }
+		            }          
+		            bool needSynAccTab = params.type=="AccGap";
+		            // SynAccTab should only update once
+		            if(needSynAccTab && SynAccTab.size()==0)
+		            {
+		                double temp=0;
+		                for(int i=0; i<3; i++)
+		                {
+		                    lstrm >> temp;
+		                    SynAccTab.push_back(temp);
+		                }
+		             }
+		        }
+		        else
+		        {
+		        lstrm >> params.type >> params.name >> params.length >> params.aperature;
+		        bool needE0 = params.type!="drift" && params.type!="AccGap";
+		        
+		        if(needE0)
+		            lstrm >> params.E0;
+		        else
+		            params.E0 = 0.0;
+		        }
 
-            std::istringstream lstrm(rawline);
-            RawParams params;
-            
-            bool formatNew = CavType == "Generic";
-            if (formatNew)
+		        if(lstrm.fail() && !lstrm.eof()) {
+		            throw std::runtime_error(SB()<<"Error parsing line '"<<line<<"' in '"<<cavfile<<"'");
+		        }
+
+		        lattice.push_back(params);
+		    }
+
+		    if(fstrm.fail() && !fstrm.eof()) {
+		        throw std::runtime_error(SB()<<"Error, extra chars at end of file (line "<<line<<") in '"<<cavfile<<"'");
+		    }
+		}
+	}
+	else
+	{
+		std::auto_ptr<Config> conf;
+		try {
+
+			try {
+				GLPSParser P;
+				conf.reset(P.parse_file(DataFile.c_str()));
+			}catch(std::exception& e){
+				std::cerr<<"Parse error: "<<e.what()<<"\n";
+			}
+			
+		}catch(std::exception& e){
+			std::cerr<<"Error: "<<e.what()<<"\n";
+		}
+		
+		typedef Config::vector_t elements_t;
+	    elements_t Es(conf->get<elements_t>("elements"));
+	    for(elements_t::iterator it=Es.begin(), end=Es.end(); it!=end; ++it)
+		{
+		    const Config& EC = *it;
+		    const std::string& etype(EC.get<std::string>("type"));
+		    const double elength(EC.get<double>("L"));
+		    // fill in the lattice
+		    RawParams params;
+		    params.type = etype;
+			params.length = elength;
+			std::vector<double> attrs;
+            bool notdrift = etype!="drift";
+            if(notdrift)
             {
-                lstrm >> params.type >> params.name >> params.length;
-                bool notdrift = params.type!="drift";
-                if(notdrift)
-                {
-                    lstrm >> params.E0;
-                    double temp=0;
-                    for(int i=0; i<10; i++)
-                    {
-                        lstrm >> temp;
-                        params.Tfit.push_back(temp);
-                    }
-                    for(int i=0; i<10; i++)
-                    {
-                        lstrm >> temp;
-                        params.Sfit.push_back(temp);
-                    }
-                }          
-                bool needSynAccTab = params.type=="AccGap";
-                // SynAccTab should only update once
-                if(needSynAccTab && SynAccTab.size()==0)
-                {
-                    double temp=0;
-                    for(int i=0; i<3; i++)
-                    {
-                        lstrm >> temp;
-                        SynAccTab.push_back(temp);
-                    }
-                 }
-            }
-            else
+            	const double eV0(EC.get<double>("V0"));
+            	params.E0 = eV0;
+				EC.tryGet<std::vector<double> >("attr", attrs);
+	            for(int i=0; i<10; i++)
+	            {
+	                params.Tfit.push_back(attrs[i]);
+	            }
+	            for(int i=0; i<10; i++)
+	            {
+	                params.Sfit.push_back(attrs[i+10]);
+	            }
+            }          
+            bool needSynAccTab = params.type=="AccGap";
+            // SynAccTab should only update once
+            if(needSynAccTab && SynAccTab.size()==0)
             {
-            lstrm >> params.type >> params.name >> params.length >> params.aperature;
-            bool needE0 = params.type!="drift" && params.type!="AccGap";
-            
-            if(needE0)
-                lstrm >> params.E0;
-            else
-                params.E0 = 0.0;
-            }
-
-            if(lstrm.fail() && !lstrm.eof()) {
-                throw std::runtime_error(SB()<<"Error parsing line '"<<line<<"' in '"<<cavfile<<"'");
-            }
-
-            lattice.push_back(params);
-        }
-
-        if(fstrm.fail() && !fstrm.eof()) {
-            throw std::runtime_error(SB()<<"Error, extra chars at end of file (line "<<line<<") in '"<<cavfile<<"'");
-        }
-    }
+                for(int i=0; i<3; i++)
+                {
+                    SynAccTab.push_back(attrs[i+20]);
+                }
+             }		    
+		    lattice.push_back(params);
+		}
+		std::vector<double> Ez;
+		conf->tryGet<std::vector<double> >("Ez", Ez);
+		CavData.readvec(Ez,2);
+		conf->tryGet<double>("Rm",cRm);
+	}
 }
 
 void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double CaviIonK[],
@@ -1237,9 +1306,11 @@ void ElementRFCavity::GetCavMatGeneric(Particle &real, const double EfieldScl, c
     
     double IonW=IonW0,gamma=gamma0,beta=beta0,IonFy=IonFy0,kfac=kfac0;
     
+    assert(cRm>0);
+    
     for(unsigned n=0; n<lattice.size(); n++) {
         const RawParams& P = lattice[n];
-
+        
         dis+=lattice[n].length;
 
         if (false)
@@ -1274,6 +1345,7 @@ void ElementRFCavity::GetCavMatGeneric(Particle &real, const double EfieldScl, c
             Mprob(1, 0) = kfdx;
             Mprob(3, 2) = kfdy;
             Mtrans      = prod(Mprob, Mtrans);
+            
         } else if (P.type == "EDipole") {
             if (MpoleLevel >= 1) {
                 V0  = P.E0*EfieldScl;
@@ -1544,13 +1616,16 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
         // 5 Cell elliptical.
         cavilabel  = 53;
         Rm         = 20e0;
-    } else if (cavi <= 0) {
+    } else if (cavi == 0) {
         // Generic
         cavilabel  = 0;
         Rm         = cRm;
         if (Rm==0.0){
             throw std::logic_error(SB()<<"*** InitRFCav: undef. cRm causing Rm equal 0.0");
         }
+    } else if (cavi == -10) {
+        // Generic2
+        cavilabel  = -10;
     } else {
         throw std::logic_error(SB()<<"*** InitRFCav: undef. cavity type: after ctor");
     }

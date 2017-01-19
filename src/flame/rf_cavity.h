@@ -53,12 +53,13 @@ struct ElementRFCavity : public MomentElementBase
         // vector Tfit and Sfit always have ten elements
         std::vector<double> Tfit, Sfit;
     };
-    std::vector<RawParams> lattice; // from axisData_*.txt
+    std::vector<RawParams> lattice; // from thinlenlon_*.txt
 
     numeric_table mlptable, // from CaviMlp_*.txt
-                  CavData; // from thinlenlon_*.txt
+                  CavData; // from axisData_*.txt
     // Harry MLP Up
     std::string DataPath;
+    std::string DataFile;
     std::vector<double> SynAccTab;
     double cRm;
     double calFitPow(double kfac, const std::vector<double>& Tfit) const;
