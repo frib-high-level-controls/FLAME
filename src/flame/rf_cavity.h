@@ -57,12 +57,13 @@ struct ElementRFCavity : public MomentElementBase
 
     numeric_table mlptable, // from CaviMlp_*.txt
                   CavData; // from axisData_*.txt
-    // Harry MLP Up
+           
     std::string DataPath;
     std::string DataFile;
     std::vector<double> SynAccTab;
     double cRm;
     double calFitPow(double kfac, const std::vector<double>& Tfit) const;
+    static std::map<std::string,boost::shared_ptr<Config> > CavConfMap;
 
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
     double fRF,    // RF frequency [Hz]

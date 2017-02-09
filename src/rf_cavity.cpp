@@ -12,6 +12,8 @@
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
 
+std::map<std::string,boost::shared_ptr<Config> > ElementRFCavity::CavConfMap;
+
 // RF Cavity beam dynamics functions.
 
 static double ipow(double base, int exp)
@@ -813,19 +815,25 @@ ElementRFCavity::ElementRFCavity(const Config& c)
 	}
 	else
 	{
-		std::auto_ptr<Config> conf;
-		try {
-
+		boost::shared_ptr<Config> conf;
+		if ( CavConfMap.find(DataFile.c_str()) == CavConfMap.end() ) {
+		  	// not found in CavConfMap
 			try {
-				GLPSParser P;
-				conf.reset(P.parse_file(DataFile.c_str()));
-			}catch(std::exception& e){
-				std::cerr<<"Parse error: "<<e.what()<<"\n";
-			}
+				try {
+					GLPSParser P;
+					conf.reset(P.parse_file(DataFile.c_str()));
+				}catch(std::exception& e){
+					std::cerr<<"Parse error: "<<e.what()<<"\n";
+				}
 			
-		}catch(std::exception& e){
-			std::cerr<<"Error: "<<e.what()<<"\n";
-		}
+			}catch(std::exception& e){
+				std::cerr<<"Error: "<<e.what()<<"\n";
+			}
+			CavConfMap.insert(std::make_pair(DataFile.c_str(), conf));
+		} else {
+		  	// found in CavConfMap
+		  	conf=CavConfMap[DataFile.c_str()];
+		}		
 		
 		typedef Config::vector_t elements_t;
 	    elements_t Es(conf->get<elements_t>("elements"));
