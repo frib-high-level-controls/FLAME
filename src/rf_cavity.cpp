@@ -621,9 +621,6 @@ double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, con
     case 0:
         Fyc = P[0]*pow(IonEk,P[1])- P[2];
         break;
-    case -10:
-        Fyc = P[0]*pow(IonEk,P[1])- P[2];
-        break;
     default:
         std::ostringstream strm;
         strm << "*** GetCavPhase: undef. cavity type" << "\n";
@@ -705,19 +702,13 @@ ElementRFCavity::ElementRFCavity(const Config& c)
         cavfile += "/Multipole53/thinlenlon_53.txt";
         mlpfile += "/Multipole53/CaviMlp_53.txt";
     } else if (CavType == "Generic") {
-        DataPath = c.get<std::string>("datapath");
-        cavi = 0;
-        fldmap  += "/"+DataPath+"/axisData.txt";
-        cavfile += "/"+DataPath+"/thinlenlon.txt";
-        mlpfile += "/"+DataPath+"/CaviMlp.txt";
-    } else if (CavType == "Generic2") {
         DataFile = cavfile+"/"+c.get<std::string>("datafile");
-        cavi = -10;
+        cavi = 0;
     } else {
         throw std::runtime_error(SB()<<"*** InitRFCav: undef. cavity type: " << CavType);
     }
     
-    if (cavi != -10)
+    if (cavi != 0)
 	{
 		numeric_table_cache *cache = numeric_table_cache::get();
 
@@ -757,54 +748,16 @@ ElementRFCavity::ElementRFCavity(const Config& c)
 
 		        std::istringstream lstrm(rawline);
 		        RawParams params;
-		        
-		        bool formatNew = CavType == "Generic";
-		        if (formatNew)
-		        {
-		            lstrm >> params.type >> params.name >> params.length;
-		            bool notdrift = params.type!="drift";
-		            if(notdrift)
-		            {
-		                lstrm >> params.E0;
-		                double temp=0;
-		                for(int i=0; i<10; i++)
-		                {
-		                    lstrm >> temp;
-		                    params.Tfit.push_back(temp);
-		                }
-		                for(int i=0; i<10; i++)
-		                {
-		                    lstrm >> temp;
-		                    params.Sfit.push_back(temp);
-		                }
-		            }          
-		            bool needSynAccTab = params.type=="AccGap";
-		            // SynAccTab should only update once
-		            if(needSynAccTab && SynAccTab.size()==0)
-		            {
-		                double temp=0;
-		                for(int i=0; i<3; i++)
-		                {
-		                    lstrm >> temp;
-		                    SynAccTab.push_back(temp);
-		                }
-		             }
-		        }
-		        else
-		        {
 		        lstrm >> params.type >> params.name >> params.length >> params.aperature;
 		        bool needE0 = params.type!="drift" && params.type!="AccGap";
-		        
 		        if(needE0)
 		            lstrm >> params.E0;
 		        else
 		            params.E0 = 0.0;
-		        }
 
 		        if(lstrm.fail() && !lstrm.eof()) {
 		            throw std::runtime_error(SB()<<"Error parsing line '"<<line<<"' in '"<<cavfile<<"'");
 		        }
-
 		        lattice.push_back(params);
 		    }
 
@@ -1625,15 +1578,8 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
         cavilabel  = 53;
         Rm         = 20e0;
     } else if (cavi == 0) {
-        // Generic
-        cavilabel  = 0;
-        Rm         = cRm;
-        if (Rm==0.0){
-            throw std::logic_error(SB()<<"*** InitRFCav: undef. cRm causing Rm equal 0.0");
-        }
-    } else if (cavi == -10) {
         // Generic2
-        cavilabel  = -10;
+        cavilabel  = 0;
     } else {
         throw std::logic_error(SB()<<"*** InitRFCav: undef. cavity type: after ctor");
     }
