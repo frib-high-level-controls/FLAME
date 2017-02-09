@@ -1,5 +1,7 @@
 
 #include <fstream>
+#include <sys/stat.h>
+#include <time.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -769,7 +771,15 @@ ElementRFCavity::ElementRFCavity(const Config& c)
 	else
 	{
 		boost::shared_ptr<Config> conf;
-		if ( CavConfMap.find(DataFile.c_str()) == CavConfMap.end() ) {
+		struct tm *tmtab;
+		struct stat attrib;
+		stat(DataFile.c_str(), &attrib);
+		tmtab = gmtime(&(attrib.st_mtime));
+		std::string key = DataFile.c_str();
+		std::ostringstream stm ;
+	    stm << tmtab->tm_year << tmtab->tm_mon << tmtab->tm_mday << tmtab->tm_hour << tmtab->tm_min << tmtab->tm_sec;
+		key+=stm.str();
+		if ( CavConfMap.find(key) == CavConfMap.end() ) {
 		  	// not found in CavConfMap
 			try {
 				try {
@@ -782,10 +792,10 @@ ElementRFCavity::ElementRFCavity(const Config& c)
 			}catch(std::exception& e){
 				std::cerr<<"Error: "<<e.what()<<"\n";
 			}
-			CavConfMap.insert(std::make_pair(DataFile.c_str(), conf));
+			CavConfMap.insert(std::make_pair(key, conf));
 		} else {
 		  	// found in CavConfMap
-		  	conf=CavConfMap[DataFile.c_str()];
+		  	conf=CavConfMap[key];
 		}		
 		
 		typedef Config::vector_t elements_t;
