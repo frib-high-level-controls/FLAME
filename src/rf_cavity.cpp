@@ -1,9 +1,8 @@
 
 #include <fstream>
-#include <sys/stat.h>
-#include <time.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 
 #include "flame/constants.h"
 #include "flame/moment.h"
@@ -771,14 +770,7 @@ ElementRFCavity::ElementRFCavity(const Config& c)
 	else
 	{
 		boost::shared_ptr<Config> conf;
-		struct tm *tmtab;
-		struct stat attrib;
-		stat(DataFile.c_str(), &attrib);
-		tmtab = gmtime(&(attrib.st_mtime));
-		std::string key = DataFile.c_str();
-		std::ostringstream stm ;
-	    stm << tmtab->tm_year << tmtab->tm_mon << tmtab->tm_mday << tmtab->tm_hour << tmtab->tm_min << tmtab->tm_sec;
-		key+=stm.str();
+		std::string key(SB()<<DataFile<<"|"<<boost::filesystem::last_write_time(DataFile));
 		if ( CavConfMap.find(key) == CavConfMap.end() ) {
 		  	// not found in CavConfMap
 			try {
