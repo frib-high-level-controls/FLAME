@@ -109,6 +109,8 @@ struct MomentState : public StateBase
     vector_t moment0_env, moment0_rms;
     matrix_t moment1_env;
 
+    double last_caviphi0;
+
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
     virtual MomentState* clone() const {

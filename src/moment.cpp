@@ -180,6 +180,7 @@ MomentState::MomentState(const Config& c)
         load_storage(moment1[0].data(), c, matrixname, false);
     }
 
+    last_caviphi0 = 0e0;
     calc_rms();
 }
 
@@ -228,6 +229,7 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,moment0_env(o.moment0_env)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
+    ,last_caviphi0(o.last_caviphi0)
 {}
 
 void MomentState::assign(const StateBase& other)
@@ -242,6 +244,7 @@ void MomentState::assign(const StateBase& other)
     moment0_env = O->moment0_env;
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
+    last_caviphi0 = O->last_caviphi0;
     StateBase::assign(other);
 }
 
@@ -489,6 +492,13 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.dim   [0] = real.size();
         Info.stride[0] = sizeof(real[0]);
         // Note: this array is discontigious as we reference a single member from a Particle[]
+        return true;
+    } else if(idx==I++) {
+        Info.name = "last_caviphi0";
+        Info.ptr = &last_caviphi0;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        // driven phase [degree]
         return true;
     }
     return StateBase::getArray(idx-I, Info);
