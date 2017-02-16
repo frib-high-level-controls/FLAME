@@ -60,11 +60,10 @@ struct ElementRFCavity : public MomentElementBase
     double fRF,    // RF frequency [Hz]
            IonFys, // Synchrotron phase [rad].
            phi_ref;
-    int MpoleLevel;
     int cavi;
     bool forcettfcalc;
 
-    unsigned EmitGrowth;
+    unsigned MpoleLevel,EmitGrowth;
 
     ElementRFCavity(const Config& c);
 

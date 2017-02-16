@@ -143,6 +143,8 @@ struct MomentElementBase : public ElementVoid
 
     void get_misalign(const state_t& ST, const Particle& real, value_t& M, value_t& IM) const;
 
+    unsigned get_flag(const Config& c, const std::string& name, const unsigned& def_value);
+
     virtual void advance(StateBase& s);
 
     //! Return true if previously calculated 'transfer' matricies may be reused
