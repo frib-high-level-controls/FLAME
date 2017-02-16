@@ -139,7 +139,7 @@ struct PyScopedObserver
     std::vector<size_t> observed;
     PyScopedObserver(Machine *m) : machine(m) {}
     ~PyScopedObserver() {
-        for(size_t i=0; i<observed.size(); i++) {
+        for(size_t i=0; i<machine->size(); i++) {
             (*machine)[i]->set_observer(NULL);
         }
     }
@@ -147,8 +147,6 @@ struct PyScopedObserver
     {
         if(i>=machine->size())
             throw std::runtime_error("element index out of range");
-        if((*machine)[i]->observer())
-            throw std::runtime_error("element already observed");
         observed.push_back(i);
         (*machine)[i]->set_observer(o);
     }
