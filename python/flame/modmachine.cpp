@@ -230,7 +230,7 @@ PyObject *PyMachine_find(PyObject *raw, PyObject *args, PyObject *kws)
         std::pair<Machine::lookup_iterator, Machine::lookup_iterator> range;
 
         if(ename && etype) {
-            return PyErr_Format(PyExc_ValueError, "only one of 'ename' or 'etype' may be given");
+            return PyErr_Format(PyExc_ValueError, "only one of 'name' or 'type' may be given");
         } else if(ename) {
             range = machine->machine->equal_range(ename);
         } else if(etype) {
@@ -283,7 +283,7 @@ static PyMethodDef PyMachine_methods[] = {
      "reconfigure(index, {'variable':int|str})\n"
      "Change the configuration of an element."},
     {"find", (PyCFunction)&PyMachine_find, METH_VARARGS|METH_KEYWORDS,
-    "find(ename=None, etype=None) -> [int]\n"
+    "find(name=None, type=None) -> [int]\n"
     "Return a list of element indices for element name or type matching the given string."},
     {NULL, NULL, 0, NULL}
 };
