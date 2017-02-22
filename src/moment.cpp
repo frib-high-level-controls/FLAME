@@ -180,6 +180,7 @@ MomentState::MomentState(const Config& c)
         load_storage(moment1[0].data(), c, matrixname, false);
     }
 
+    last_caviphi0 = 0e0;
     calc_rms();
 }
 
@@ -228,6 +229,7 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,moment0_env(o.moment0_env)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
+    ,last_caviphi0(o.last_caviphi0)
 {}
 
 void MomentState::assign(const StateBase& other)
@@ -242,6 +244,7 @@ void MomentState::assign(const StateBase& other)
     moment0_env = O->moment0_env;
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
+    last_caviphi0 = O->last_caviphi0;
     StateBase::assign(other);
 }
 
@@ -490,6 +493,13 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         // Note: this array is discontigious as we reference a single member from a Particle[]
         return true;
+    } else if(idx==I++) {
+        Info.name = "last_caviphi0";
+        Info.ptr = &last_caviphi0;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        // driven phase [degree]
+        return true;
     }
     return StateBase::getArray(idx-I, Info);
 }
@@ -575,6 +585,32 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
     IM = prod(R_inv, IM);
     IM = prod(T_inv, IM);
     IM = prod(scl_inv, IM);
+}
+
+unsigned MomentElementBase::get_flag(const Config& c, const std::string& name, const unsigned& def_value)
+{
+    unsigned read_value;
+    double check_value;
+
+    try {
+        check_value = boost::lexical_cast<double>(c.get<std::string>(name));
+    }catch (std::exception&){
+        try {
+            check_value = c.get<double>(name);
+        }catch (std::exception&){
+            check_value = boost::lexical_cast<double>(def_value);
+        }
+    }
+
+    //Check the value is an unsigned integer
+    try {
+        read_value = boost::lexical_cast<unsigned>(check_value);
+        if (boost::lexical_cast<double>(read_value) != check_value)
+            throw std::runtime_error(SB()<< name << " must be an unsigned integer");
+    }catch (std::exception&){
+        throw  std::runtime_error(SB()<< name << " must be an unsigned integer");
+    }
+    return read_value;
 }
 
 void MomentElementBase::advance(StateBase& s)
@@ -789,10 +825,9 @@ struct ElementSBend : public MomentElementBase
 
     ElementSBend(const Config& c) : base_t(c), HdipoleFitMode(0) {
 
-        std::istringstream strm(c.get<std::string>("HdipoleFitMode", "1"));
-        strm>>HdipoleFitMode;
-        if(!strm.eof() && strm.fail())
-            throw std::runtime_error("HdipoleFitMode must be an integer");
+        HdipoleFitMode = get_flag(c, "HdipoleFitMode", 1);
+        if (HdipoleFitMode != 0 && HdipoleFitMode != 1)
+            throw std::runtime_error(SB()<< "Undefined HdipoleFitMode: " << HdipoleFitMode);
     }
     virtual ~ElementSBend() {}
     virtual const char* type_name() const {return "sbend";}
@@ -844,7 +879,7 @@ struct ElementSBend : public MomentElementBase
 
             double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
-            if (HdipoleFitMode != 1) {
+            if (!HdipoleFitMode) {
                 /*
                 double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
                 di_bg     = conf().get<double>("bg");
@@ -880,7 +915,7 @@ struct ElementSBend : public MomentElementBase
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            if (HdipoleFitMode != 1) {
+            if (!HdipoleFitMode) {
                 double dip_bg    = conf().get<double>("bg"),
                        // Dipole reference energy.
                        dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,

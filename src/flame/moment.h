@@ -109,6 +109,8 @@ struct MomentState : public StateBase
     vector_t moment0_env, moment0_rms;
     matrix_t moment1_env;
 
+    double last_caviphi0;
+
     virtual bool getArray(unsigned idx, ArrayInfo& Info);
 
     virtual MomentState* clone() const {
@@ -140,6 +142,8 @@ struct MomentElementBase : public ElementVoid
     virtual ~MomentElementBase();
 
     void get_misalign(const state_t& ST, const Particle& real, value_t& M, value_t& IM) const;
+
+    unsigned get_flag(const Config& c, const std::string& name, const unsigned& def_value);
 
     virtual void advance(StateBase& s);
 
