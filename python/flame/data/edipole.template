@@ -1,0 +1,13 @@
+record(ao, "$(P)Angle-SP") {
+    field(DTYP, "FLAME Setting")
+    field(OUT , "@$(SIM) $(ELEM) phi")
+    field(PREC, "6")
+    field("EGU", "degree")   
+}
+record(ai, "$(P)Angle-RB") {
+    field(DTYP, "FLAME Setting")
+    field(INP , "@$(SIM) $(ELEM) phi")
+    field(SCAN, "I/O Intr")
+    field(PREC, "6")
+    field("EGU", "degree")    
+}

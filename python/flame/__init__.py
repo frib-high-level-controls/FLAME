@@ -47,3 +47,5 @@ __all__ = ['Machine',
     'GLPSPrinter',
     'GLPSParser',
 ]
+
+__version__ = '1.1.0'

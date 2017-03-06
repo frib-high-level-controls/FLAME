@@ -925,7 +925,7 @@ struct ElementQuad : public MomentElementBase
             // Re-initialize transport matrix.
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
+            double Brho = ST.real[i].Brho(),
                    K = B2/Brho/sqr(MtoMM);
 
             // Horizontal plane.
@@ -943,6 +943,96 @@ struct ElementQuad : public MomentElementBase
             noalias(scratch)     = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
         }
+    }
+};
+
+struct ElementSext : public MomentElementBase
+{
+    // Transport matrix for Sextupole; K = B3/Brho.
+    typedef ElementSext              self_t;
+    typedef MomentElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    double B3, L;
+    int step;
+    bool thinlens, dstkick;
+
+    ElementSext(const Config& c) : base_t(c) {
+        B3= conf().get<double>("B3");
+        L = conf().get<double>("L")*MtoMM;
+        step = conf().get<double>("step", 1.0);
+        thinlens = conf().get<double>("thinlens", 0.0) == 1.0;
+        dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
+    }
+    virtual ~ElementSext() {}
+    virtual const char* type_name() const {return "sextupole";}
+
+    virtual void assign(const ElementVoid *other) {
+        base_t::assign(other);
+        const self_t* O=static_cast<const self_t*>(other);
+        B3 = O->B3;
+        L = O->L;
+        step = O->step;
+        thinlens = O->thinlens;
+        dstkick = O->dstkick;
+    }
+
+    virtual void advance(StateBase& s)
+    {
+        state_t&  ST = static_cast<state_t&>(s);
+        using namespace boost::numeric::ublas;
+
+        ST.recalc();
+
+        last_ref_in = ST.ref;
+        last_real_in = ST.real;
+        resize_cache(ST);
+
+        const double dL = L/step;
+
+        for(size_t k=0; k<last_real_in.size(); k++) {
+
+            transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+            double Brho = ST.real[k].Brho(),
+                   K = B3/Brho/cube(MtoMM);
+
+            for(int i=0; i<step; i++){
+                double Dx = ST.moment0[k][state_t::PS_X],
+                       Dy = ST.moment0[k][state_t::PS_Y],
+                       D2x = ST.moment1[k](state_t::PS_X, state_t::PS_X),
+                       D2y = ST.moment1[k](state_t::PS_Y, state_t::PS_Y),
+                       D2xy = ST.moment1[k](state_t::PS_X, state_t::PS_Y);
+
+
+                GetSextMatrix(dL,  K, Dx, Dy, D2x, D2y, D2xy, thinlens, dstkick, transfer[k]);
+
+                transfer[k](state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
+
+                get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
+                noalias(scratch)     = prod(transfer[k], misalign[k]);
+                noalias(transfer[k]) = prod(misalign_inv[k], scratch);
+
+                ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
+
+                scratch  = prod(transfer[k], ST.moment1[k]);
+                ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            }
+        }
+
+        ST.recalc();
+
+        for(size_t k=0; k<last_real_in.size(); k++)
+            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
+
+        last_ref_out = ST.ref;
+        last_real_out = ST.real;
+
+        ST.pos += length;
+
+        ST.calc_rms();
     }
 };
 
@@ -968,7 +1058,7 @@ struct ElementSolenoid : public MomentElementBase
             // Re-initialize transport matrix.
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
+            double Brho = ST.real[i].Brho(),
                    K    = B/(2e0*Brho)/MtoMM;
 
             GetSolMatrix(L, K, transfer[i]);
@@ -1080,7 +1170,7 @@ struct ElementEQuad : public MomentElementBase
             // V0 [V] electrode voltage and R [m] electrode half-distance.
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            double Brho = ST.real[i].beta*(ST.real[i].IonEk+ST.real[i].IonEs)/(C0*ST.real[i].IonZ),
+            double Brho = ST.real[i].Brho(),
                    K    = 2e0*V0/(C0*ST.real[i].beta*sqr(R))/Brho/sqr(MtoMM);
 
             // Horizontal plane.
@@ -1120,6 +1210,8 @@ void registerMoment()
     Machine::registerElement<ElementSBend                  >("MomentMatrix", "sbend");
 
     Machine::registerElement<ElementQuad                   >("MomentMatrix", "quadrupole");
+
+    Machine::registerElement<ElementSext                   >("MomentMatrix", "sextupole");
 
     Machine::registerElement<ElementSolenoid               >("MomentMatrix", "solenoid");
 
