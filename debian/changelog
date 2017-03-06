@@ -1,3 +1,10 @@
+flame (1.1.0-1) unstable; urgency=medium
+
+  * Merged github master branch
+  * Add python-flame version meta information
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Mon, 06 Mar 2017 12:02:52 -0500
+
 flame (1.0.0-1) unstable; urgency=medium
 
   * Initial release
