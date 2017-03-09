@@ -14,8 +14,7 @@ double Gaussian(double in, const double Q_ave, const double d)
 }
 
 
-static
-void StripperCharge(const double beta, double &Q_ave, double &d)
+void ElementStripper::StripperCharge(const double beta, double &Q_ave, double &d)
 {
     // Baron's formula for carbon foil.
     double Q_ave1, Y;
@@ -27,8 +26,7 @@ void StripperCharge(const double beta, double &Q_ave, double &d)
 }
 
 
-static
-void ChargeStripper(const double beta, const std::vector<double>& ChgState, std::vector<double>& chargeAmount_Baron)
+void ElementStripper::ChargeStripper(const double beta, const std::vector<double>& ChgState, std::vector<double>& chargeAmount_Baron)
 {
     unsigned    k;
     double Q_ave, d;
@@ -39,8 +37,7 @@ void ChargeStripper(const double beta, const std::vector<double>& ChgState, std:
 }
 
 
-static
-void Stripper_Propagate_ref(Particle &ref)
+void ElementStripper::Stripper_Propagate_ref(Particle &ref)
 {
 
     // Change reference particle charge state.
@@ -54,7 +51,7 @@ void Stripper_Propagate_ref(Particle &ref)
     ref.recalc();
 }
 
-void Stripper_GetMat(const Config &conf,
+void ElementStripper::Stripper_GetMat(const Config &conf,
                      MomentState &ST)
 {
     unsigned               k, n;
@@ -63,7 +60,7 @@ void Stripper_GetMat(const Config &conf,
     Particle               ref;
     state_t                *StatePtr = &ST;
     MomentState::matrix_t  tmpmat;
-    std::vector<double>    chargeAmount_Baron;
+    std::vector<double>    chargeAmount_Set;
 
     // Evaluate beam parameter recombination.
 
@@ -119,7 +116,15 @@ void Stripper_GetMat(const Config &conf,
     const std::vector<double>& ChgState = conf.get<std::vector<double> >("IonChargeStates");
     const std::vector<double>& NChg = conf.get<std::vector<double> >("NCharge");
     n = ChgState.size();
-    assert(NChg.size()==n);
+    const std::string chrgmdl = conf.get<std::string>("charge_model", "baron");
+	if(chrgmdl=="off" )
+		if (ChgState.size()!=NChg.size())
+			throw std::runtime_error("charge stripper requires that IonChargeStates[] and NCharge[] have the same length");
+		else{
+			for (k = 0; k < n; k++) chargeAmount_Set.push_back(NChg[k]);
+		}
+	else
+		ChargeStripper(StatePtr->real[0].beta, ChgState, chargeAmount_Set);
 
     // Propagate reference particle.
     ref = ST.ref;
@@ -136,11 +141,10 @@ void Stripper_GetMat(const Config &conf,
 
     StatePtr->ref = ref;
 
-    ChargeStripper(StatePtr->real[0].beta, ChgState, chargeAmount_Baron);
 
     for (k = 0; k < n; k++) {
         StatePtr->real[k].IonZ  = ChgState[k];
-        StatePtr->real[k].IonQ  = chargeAmount_Baron[k];
+        StatePtr->real[k].IonQ  = chargeAmount_Set[k];
         StatePtr->real[k].IonEs = ref.IonEs;
         StatePtr->real[k].IonEk = Ek_recomb;
         StatePtr->real[k].recalc();
