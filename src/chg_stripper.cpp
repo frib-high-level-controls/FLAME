@@ -75,10 +75,10 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
         throw std::runtime_error("charge_model key word unknown, only \"baron\" and \"off\" supported by now");
 
     Stripper_IonZ = conf.get<double>("Stripper_IonZ", Stripper_IonZ_default);
-    Stripper_IonMass = conf.get<double>("Stripper_IonZ", Stripper_IonMass_default);
-    Stripper_IonProton = conf.get<double>("Stripper_IonZ", Stripper_IonProton_default);
+    Stripper_IonMass = conf.get<double>("Stripper_IonMass", Stripper_IonMass_default);
+    Stripper_IonProton = conf.get<double>("Stripper_IonProton", Stripper_IonProton_default);
     Stripper_E1Para = conf.get<double>("Stripper_E1Para", Stripper_E1Para_default);
-    Stripper_lambda = conf.get<double>("Stripper_E1Para", Stripper_lambda_default);
+    Stripper_lambda = conf.get<double>("Stripper_lambda", Stripper_lambda_default);
     Stripper_upara = conf.get<double>("Stripper_upara", Stripper_upara_default);
 
     const std::vector<double> p1_default(Stripper_Para_default, Stripper_Para_default+3),
