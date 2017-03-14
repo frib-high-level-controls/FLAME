@@ -1,3 +1,13 @@
+flame (1.1.1-1) unstable; urgency=medium
+
+  * Version update: python-flame 1.1.1
+  * Fix - segmentation fault when re-observing happens
+  * Fix - inconsistent between machine.find() signature and docstring
+  * Fix - reset indice to be 0 after observing
+  * New - driven phase output attribute of machine state
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Tue, 14 Mar 2017 12:33:13 -0400
+
 flame (1.1.0-1) unstable; urgency=medium
 
   * Merged github master branch
