@@ -628,33 +628,21 @@ void EvalGapModel(const double dis, const double IonW0, const Particle &real, co
               + real.IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-real.IonEs)/MeVtoeV);
 }
 
-int get_MpoleLevel(const Config &conf)
-{
-    int MpoleLevel = 0;
-
-    std::string str = conf.get<std::string>("MpoleLevel", "2");
-    if (str == "0")
-        MpoleLevel = 0;
-    else if (str == "1")
-        MpoleLevel = 1;
-    else if (str == "2")
-        MpoleLevel = 2;
-    else {
-        throw std::runtime_error(SB()<< "get_MpoleLevel: undef. MpoleLevel " << MpoleLevel);
-    }
-
-    return MpoleLevel;
-}
-
 ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
     ,fRF(conf().get<double>("f"))
     ,IonFys(conf().get<double>("phi")*M_PI/180e0)
     ,phi_ref(std::numeric_limits<double>::quiet_NaN())
-    ,MpoleLevel(get_MpoleLevel(c))
     ,forcettfcalc(c.get<double>("forcettfcalc", 0.0)!=0.0)
-    ,EmitGrowth(boost::lexical_cast<unsigned>(c.get<std::string>("EmitGrowth", "0")))
+    ,MpoleLevel(get_flag(c, "MpoleLevel", 2))
+    ,EmitGrowth(get_flag(c, "EmitGrowth", 0))
 {
+    if (MpoleLevel != 0 && MpoleLevel != 1 && MpoleLevel != 2)
+        throw std::runtime_error(SB()<< "Undefined MpoleLevel: " << MpoleLevel);
+
+    if (EmitGrowth != 0 && EmitGrowth != 1)
+        throw std::runtime_error(SB()<< "Undefined EmitGrowth: " << EmitGrowth);
+
     std::string CavType      = c.get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", "")),
                 fldmap(cavfile),

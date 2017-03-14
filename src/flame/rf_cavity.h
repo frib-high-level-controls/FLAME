@@ -60,11 +60,10 @@ struct ElementRFCavity : public MomentElementBase
     double fRF,    // RF frequency [Hz]
            IonFys, // Synchrotron phase [rad].
            phi_ref;
-    int MpoleLevel;
     int cavi;
     bool forcettfcalc;
 
-    unsigned EmitGrowth;
+    unsigned MpoleLevel,EmitGrowth;
 
     ElementRFCavity(const Config& c);
 
@@ -186,6 +185,7 @@ struct ElementRFCavity : public MomentElementBase
             ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
         }
 
+        ST.last_caviphi0 = fmod(phi_ref*180e0/M_PI, 360e0); // driven phase [degree]
         ST.calc_rms();
     }
 
