@@ -960,3 +960,35 @@ class TestGenCavi2_glps(unittest.TestCase, MomentTest):
                 [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00]
             ])
         }, max=-1)
+        
+class TestRTReb_glps(unittest.TestCase, MomentTest):
+    """Strategy is to test the state after the first instance of each element type.
+
+    $ ./tools/flame -N <element_name> \
+       -F utest,next_elem,moment0,moment1_env,ref_IonQ,ref_IonZ,ref_IonEs,ref_IonEk,ref_phis,IonQ,IonZ,IonEs,IonEk,phis \
+       python/flame/test/LS1.lat
+    """
+    lattice = 'Test7GapCav.lat'
+    
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
+            
+    def test_caviGen2(self):
+        "Test of Test7GapCav.lat End."
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([-7.3317650743e-02, -1.2277994705e-04,  2.6868450772e-01,  1.6677921595e-05, -2.6562331030e-03,  2.0027348375e-04,  1.0000000000e+00]),
+            'moment1_env':asfarray([
+                [ 9.2713328756e-01,  4.4148713646e-04, -1.3883773111e-01, -3.2240070775e-05,  3.8069472061e-04,  3.4044621010e-05,  0.0000000000e+00],
+      			[ 4.4148713646e-04,  5.6690598387e-07, -1.0033877979e-04,  2.1974741373e-08,  4.6249982165e-07, -4.0169557804e-08,  0.0000000000e+00],
+		     	[-1.3883773111e-01, -1.0033877979e-04,  1.4550401801e+00,  1.3251066119e-04,  4.7203854425e-04,  1.3052680866e-04,  0.0000000000e+00],
+     			[-3.2240070775e-05,  2.1974741373e-08,  1.3251066119e-04,  2.4081326464e-07,  2.5058169485e-07,  8.9186024283e-08,  0.0000000000e+00],
+			    [ 3.8069472061e-04,  4.6249982165e-07,  4.7203854425e-04,  2.5058169485e-07,  3.6128880945e-04,  3.1433333130e-06,  0.0000000000e+00],
+		      	[ 3.4044621010e-05, -4.0169557804e-08,  1.3052680866e-04,  8.9186024283e-08,  3.1433333130e-06,  3.9854055707e-06,  0.0000000000e+00],
+		        [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00]
+            ])
+        }, max=-1)

@@ -52,6 +52,7 @@ set(PY_DATA
   test/Arc_Ds.lat
   test/LS1_Gen.lat
   test/LS2_Gen.lat
+  test/Test7GapCav.lat
 
   # cavity data for test lattice files
   test/data/axisData_29.txt
@@ -62,6 +63,7 @@ set(PY_DATA
   test/data/thinlenlon_41.lat
   test/data/thinlenlon_53.lat
   test/data/thinlenlon_85.lat
+  test/data/thinlenlon_7g.lat
   test/data/Multipole29/thinlenlon_29.txt
   test/data/Multipole41/thinlenlon_41.txt
   test/data/Multipole53/thinlenlon_53.txt
