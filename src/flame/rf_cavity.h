@@ -50,11 +50,20 @@ struct ElementRFCavity : public MomentElementBase
     struct RawParams {
         std::string name, type;
         double length, aperature, E0;
+        // vector Tfit and Sfit always have ten elements
+        std::vector<double> Tfit, Sfit;
     };
-    std::vector<RawParams> lattice; // from axisData_*.txt
+    std::vector<RawParams> lattice; // from thinlenlon_*.txt
 
     numeric_table mlptable, // from CaviMlp_*.txt
-                  CavData; // from thinlenlon_*.txt
+                  CavData; // from axisData_*.txt
+           
+    std::string DataPath;
+    std::string DataFile;
+    std::vector<double> SynAccTab;
+    double cRm;
+    double calFitPow(double kfac, const std::vector<double>& Tfit) const;
+    static std::map<std::string,boost::shared_ptr<Config> > CavConfMap;
 
     std::vector<CavTLMLineType> CavTLMLineTab; // from lattice, for each charge state
     double fRF,    // RF frequency [Hz]
@@ -76,6 +85,9 @@ struct ElementRFCavity : public MomentElementBase
                    const double EfieldScl, const double IonFyi_s,
                    const double IonEk_s, state_t::matrix_t &M,
                    CavTLMLineType &linetab) const;
+                   
+    void GetCavMatGeneric(Particle &real, const double EfieldScl, const double IonFyi_s,
+                                const double IonEk_s, state_t::matrix_t &M, CavTLMLineType &linetab) const;
 
     void GenCavMat2(const int cavi, const double dis, const double EfieldScl, const double TTF_tab[],
                    const double beta_tab[], const double gamma_tab[], const double Lambda,
