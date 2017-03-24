@@ -62,9 +62,44 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
     MomentState::matrix_t  tmpmat;
     std::vector<double>    chargeAmount_Set;
 
-    // Evaluate beam parameter recombination.
-
     //std::cout<<"In "<<__FUNCTION__<<"\n";
+
+    // Get new charge states and stripper parameters.
+    const std::vector<double>& ChgState = conf.get<std::vector<double> >("IonChargeStates");
+    const std::vector<double>& NChg = conf.get<std::vector<double> >("NCharge");
+    const std::string chrgmdl = conf.get<std::string>("charge_model", "baron");
+
+    if(chrgmdl=="off" && ChgState.size()!=NChg.size())
+        throw std::runtime_error("charge stripper requires that IonChargeStates[] and NCharge[] have the same length");
+    if(chrgmdl!="off" && chrgmdl!="baron")
+        throw std::runtime_error("charge_model key word unknown, only \"baron\" and \"off\" supported by now");
+
+    Stripper_IonZ = conf.get<double>("Stripper_IonZ", Stripper_IonZ_default);
+    Stripper_IonMass = conf.get<double>("Stripper_IonMass", Stripper_IonMass_default);
+    Stripper_IonProton = conf.get<double>("Stripper_IonProton", Stripper_IonProton_default);
+    Stripper_E1Para = conf.get<double>("Stripper_E1Para", Stripper_E1Para_default);
+    Stripper_lambda = conf.get<double>("Stripper_lambda", Stripper_lambda_default);
+    Stripper_upara = conf.get<double>("Stripper_upara", Stripper_upara_default);
+
+    const std::vector<double> p1_default(Stripper_Para_default, Stripper_Para_default+3),
+                              p2_default(Stripper_E0Para_default, Stripper_E0Para_default+3);
+
+    Stripper_Para = conf.get<std::vector<double> >("Stripper_Para", p1_default);
+    Stripper_E0Para = conf.get<std::vector<double> >("Stripper_E0Para", p2_default);
+
+    n = ChgState.size();
+
+    if(chrgmdl=="off" )
+        if (ChgState.size()!=NChg.size())
+            throw std::runtime_error("charge stripper requires that IonChargeStates[] and NCharge[] have the same length");
+        else{
+            for (k = 0; k < n; k++) chargeAmount_Set.push_back(NChg[k]);
+        }
+    else
+        ChargeStripper(StatePtr->real[0].beta, ChgState, chargeAmount_Set);
+
+
+    // Evaluate beam parameter recombination.
 
     tmptotCharge  = 0e0;
     Fy_abs_recomb = 0e0;
@@ -113,18 +148,7 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
     }
 
     // Get new charge states.
-    const std::vector<double>& ChgState = conf.get<std::vector<double> >("IonChargeStates");
-    const std::vector<double>& NChg = conf.get<std::vector<double> >("NCharge");
-    n = ChgState.size();
-    const std::string chrgmdl = conf.get<std::string>("charge_model", "baron");
-	if(chrgmdl=="off" )
-		if (ChgState.size()!=NChg.size())
-			throw std::runtime_error("charge stripper requires that IonChargeStates[] and NCharge[] have the same length");
-		else{
-			for (k = 0; k < n; k++) chargeAmount_Set.push_back(NChg[k]);
-		}
-	else
-		ChargeStripper(StatePtr->real[0].beta, ChgState, chargeAmount_Set);
+
 
     // Propagate reference particle.
     ref = ST.ref;
