@@ -1131,7 +1131,7 @@ struct ElementEDipole : public MomentElementBase
         bool   ver         = conf().get<double>("ver") == 1.0;
         double L           = conf().get<double>("L")*MtoMM,
                phi         = conf().get<double>("phi")*M_PI/180e0,
-               // fit to TLM unit.            
+               // fit to TLM unit.
                fringe_x    = conf().get<double>("fringe_x", 0e0)/MtoMM,
                fringe_y    = conf().get<double>("fringe_y", 0e0)/MtoMM,
                kappa       = conf().get<double>("asym_fac", 0e0),
@@ -1141,8 +1141,16 @@ struct ElementEDipole : public MomentElementBase
                // magnetic - 0, electrostatic - 1.
                h           = 1e0,
                Ky          = spher/sqr(rho),
-               dip_beta    = conf().get<double>("beta"),
-               dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta));
+               dip_beta    = conf().get<double>("beta");
+
+        unsigned HdipoleFitMode = get_flag(conf(), "HdipoleFitMode", 1);
+
+        if (HdipoleFitMode != 0 && HdipoleFitMode != 1)
+            throw std::runtime_error(SB()<< "Undefined HdipoleFitMode: " << HdipoleFitMode);
+
+        if (HdipoleFitMode) dip_beta = ST.ref.beta;
+
+        double dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta));
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             double eta0        = (ST.real[i].gamma-1e0)/2e0,
