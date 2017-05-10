@@ -1,5 +1,5 @@
 Source: flame
-Section: science
+Section: devel
 Priority: optional
 Maintainer: Tong Zhang <zhangt@frib.msu.edu>
 Build-Depends: debhelper (>=9),
@@ -19,6 +19,7 @@ Description: Fast Linac Accelerator Model Engine -- executable
  for fast modeling linac in the high-level contorls system.
 
 Package: libflame
+Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, 
 Description: Fast Linac Accelerator Model Engine -- library
