@@ -232,7 +232,7 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
         sx = sin(sqrt(Kx)*L)/(rho*sqrt(Kx));
     } else {
         dx = (1e0-cosh(sqrt(-Kx)*L))/(rho*Kx);
-        sx = sin(sqrt(Kx)*L)/(rho*sqrt(Kx));
+        sx = sin(sqrt(-Kx)*L)/(rho*sqrt(-Kx));
     }
 
     M(state_t::PS_X,  state_t::PS_PS) = dx/(sqr(dip_beta)*dip_gamma*IonEs/MeVtoeV);
