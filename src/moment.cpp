@@ -915,25 +915,27 @@ struct ElementSBend : public MomentElementBase
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            if (!HdipoleFitMode) {
-                double dip_bg    = conf().get<double>("bg"),
-                       // Dipole reference energy.
-                       dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
-                       dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
-                       dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
-                       d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
-                       dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
+            if (L != 0.0) {
+                if (!HdipoleFitMode) {
+                    double dip_bg    = conf().get<double>("bg"),
+                           // Dipole reference energy.
+                           dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
+                           dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
+                           dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
+                           d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
+                           dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
 
-                GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
-                               dip_beta, dip_gamma, d, dip_IonK, transfer[i]);
-            } else
-                GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
-                               ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
+                    GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                                   dip_beta, dip_gamma, d, dip_IonK, transfer[i]);
+                } else
+                    GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                                   ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
 
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
         }
     }
 };
@@ -1160,31 +1162,33 @@ struct ElementEDipole : public MomentElementBase
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real[i].gamma,
-                           eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer[i]);
+            if (L != 0e0) {
+                GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real[i].gamma,
+                               eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer[i]);
 
-            if (ver) {
-                // Rotate transport matrix by 90 degrees.
-                value_t
-                R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-                R(state_t::PS_X,  state_t::PS_X)   =  0e0;
-                R(state_t::PS_PX, state_t::PS_PX)  =  0e0;
-                R(state_t::PS_Y,  state_t::PS_Y)   =  0e0;
-                R(state_t::PS_PY, state_t::PS_PY)  =  0e0;
-                R(state_t::PS_X,  state_t::PS_Y)   = -1e0;
-                R(state_t::PS_PX, state_t::PS_PY)  = -1e0;
-                R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
-                R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
+                if (ver) {
+                    // Rotate transport matrix by 90 degrees.
+                    value_t
+                    R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                    R(state_t::PS_X,  state_t::PS_X)   =  0e0;
+                    R(state_t::PS_PX, state_t::PS_PX)  =  0e0;
+                    R(state_t::PS_Y,  state_t::PS_Y)   =  0e0;
+                    R(state_t::PS_PY, state_t::PS_PY)  =  0e0;
+                    R(state_t::PS_X,  state_t::PS_Y)   = -1e0;
+                    R(state_t::PS_PX, state_t::PS_PY)  = -1e0;
+                    R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
+                    R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
 
-                noalias(scratch)     = prod(R, transfer[i]);
-                noalias(transfer[i]) = prod(scratch, trans(R));
-                //TODO: no-op code?  results are unconditionally overwritten
+                    noalias(scratch)     = prod(R, transfer[i]);
+                    noalias(transfer[i]) = prod(scratch, trans(R));
+                    //TODO: no-op code?  results are unconditionally overwritten
+                }
+
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
             }
-
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
-
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
         }
     }
 };
