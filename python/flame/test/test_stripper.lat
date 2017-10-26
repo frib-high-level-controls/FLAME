@@ -1,0 +1,74 @@
+# Beam envelope simulation.
+
+sim_type = "MomentMatrix";
+
+# Global parameters.
+
+# Mpultipole level: 0 only include focusing and defocusing effects,
+#                   1 include dipole terms,
+#                   2 include quadrupole terms.
+MpoleLevel = "2";
+
+# Include emittance growth from RF Cavity.
+EmitGrowth = "0";
+
+# Dipole strength adjusted to beam energy.
+HdipoleFitMode = "1";
+
+AMU   = 931.49432e6;   # Atomic mass unit [eV/c^2].
+
+IonEs = AMU;           # Nucleon mass [eV/u].
+IonEk = 16.6e6;         # Kinetic energy at LS1 entrance [eV/u].
+
+# Define Initial Conditions for the Charge States.
+# Units are: [mm, rad, mm, rad, rad, MeV/u]. Note, units for mis-alignments are: [m] and [rad].
+
+IonChargeStates = [33.0/238.0];
+NCharge         = [10111.0];
+
+#BaryCenter0 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+#BaryCenter1 = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+
+BaryCenter0 = [-0.0007886,   1.08371e-05,  0.01337343,   6.678534e-06,  -0.0001847729, 0.000309995, 1.0];
+
+# Define beam envelope parameters.
+
+S0 = [
+  2.76309450173216,     -0.000428247336601120,  0.0158178569170548,    2.15594190999033e-05,  0.000186380506020608, -2.99394486972954e-05, 0.0,
+ -0.000428247336601120,  3.84946606786835e-06, -1.38385440065569e-06, -1.85409877831153e-08,  1.06777952235670e-07,  5.28564015969982e-09, 0.0,
+  0.0158178569170548,   -1.38385440065569e-06,  2.36251225995801,     -0.000669320459982719, -0.000580099938581586,  6.71651534058884e-06, 0.0,
+  2.15594190999033e-05, -1.85409877831153e-08, -0.000669320459982719,  4.89711389179344e-06, -5.01614882231616e-07,  5.57484221804692e-08, 0.0,
+  0.000186380506020608,  1.06777952235670e-07, -0.000580099938581586, -5.01614882231616e-07,  0.000671687184532941, -1.23223341528590e-05, 0.0,
+ -2.99394486972954e-05,  5.28564015969982e-09,  6.71651534058884e-06,  5.57484221804692e-08, -1.23223341528590e-05,  1.99524668993273e-06, 0.0,
+  0.0,                   0.0,                   0.0,                   0.0,                   0.0,                   0.0,                  0.0
+];
+
+S: source, vector_variable="BaryCenter", matrix_variable = "S";
+
+Eng_Data_Dir = dir("data");
+
+drift_511: drift, L = 0.099000, aper = 0.020000;
+drift_512: drift, L = 0.072000, aper = 0.020000;
+drift_513: drift, L = 0.928000, aper = 0.020000;
+fs1_strl_strip_d2237_164_1: stripper, Stripper_IonZ = 55.0/238.0, IonChargeStates=[55.0/238.0, 56.0/238.0], NCharge=[1.0,1.0], charge_model = "off";
+fs1_strl_strip_d2237_164_2: stripper, IonChargeStates=[76.0/238.0, 77.0/238.0, 78.0/238.0, 79.0/238.0, 80.0/238.0], Stripper_E0Para= [16.048e6, 1.00547, -0.10681], Stripper_Para = [3.0, 10.0, 16.623e6];
+drift_514: drift, L = 0.928000, aper = 0.020000;
+drift_515: drift, L = 0.072000, aper = 0.020000;
+drift_516: drift, L = 0.116000, aper = 0.020000;
+fs1_css_dh_d2293_21: sbend, L = 0.20000, phi = -18.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_22: sbend, L = 0.20000, phi = -18.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_23: sbend, L = 0.20000, phi = -18.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_24: sbend, L = 0.20000, phi = -18.000000, phi1 = 0.000000, phi2 =  0.000000, bg = 0.188787, aper = 0.020000;
+fs1_css_dh_d2293_25: sbend, L = 0.20000, phi = -18.000000, phi1 = 0.000000, phi2 = -5.000000, bg = 0.188787, aper = 0.020000;
+
+cell1: LINE = (
+  drift_511,drift_512,drift_513,fs1_strl_strip_d2237_164_1,drift_514,drift_515,drift_516,fs1_css_dh_d2293_21,fs1_css_dh_d2293_22,fs1_css_dh_d2293_23,fs1_css_dh_d2293_24,fs1_css_dh_d2293_25
+);
+
+cell2: LINE = (
+  drift_511,drift_512,drift_513,fs1_strl_strip_d2237_164_2,drift_514,drift_515,drift_516,fs1_css_dh_d2293_21,fs1_css_dh_d2293_22,fs1_css_dh_d2293_23,fs1_css_dh_d2293_24,fs1_css_dh_d2293_25
+);
+
+cell: LINE = (S, cell1, cell2);
+
+USE: cell;
