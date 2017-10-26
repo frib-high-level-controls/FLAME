@@ -1,4 +1,4 @@
-flame (1.2.0-1) UNRELEASED; urgency=medium
+flame (1.2.0-1) unstable; urgency=medium
 
   * New - cavity type: 'Generic'
   * Fix - bugs
