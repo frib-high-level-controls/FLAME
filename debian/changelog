@@ -1,3 +1,10 @@
+flame (1.2.0-1) UNRELEASED; urgency=medium
+
+  * New - cavity type: 'Generic'
+  * Fix - bugs
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 26 Oct 2017 09:15:38 -0400
+
 flame (1.1.1-2) unstable; urgency=medium
 
   * Fix - debian section.
