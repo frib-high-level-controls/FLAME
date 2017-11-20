@@ -990,32 +990,21 @@ struct ElementSext : public MomentElementBase
     typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
-    double B3, L;
-    int step;
-    bool thinlens, dstkick;
+    ElementSext(const Config& c) : base_t(c) {}
 
-    ElementSext(const Config& c) : base_t(c) {
-        B3= conf().get<double>("B3");
-        L = conf().get<double>("L")*MtoMM;
-        step = conf().get<double>("step", 1.0);
-        thinlens = conf().get<double>("thinlens", 0.0) == 1.0;
-        dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
-    }
     virtual ~ElementSext() {}
     virtual const char* type_name() const {return "sextupole";}
 
-    virtual void assign(const ElementVoid *other) {
-        base_t::assign(other);
-        const self_t* O=static_cast<const self_t*>(other);
-        B3 = O->B3;
-        L = O->L;
-        step = O->step;
-        thinlens = O->thinlens;
-        dstkick = O->dstkick;
-    }
+    virtual void assign(const ElementVoid *other) {base_t::assign(other); }
 
     virtual void advance(StateBase& s)
     {
+        const double B3= conf().get<double>("B3"),
+                     L = conf().get<double>("L")*MtoMM;
+        const int    step = conf().get<double>("step", 1.0);
+        const bool   thinlens = conf().get<double>("thinlens", 0.0) == 1.0,
+                     dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
+
         state_t&  ST = static_cast<state_t&>(s);
         using namespace boost::numeric::ublas;
 
