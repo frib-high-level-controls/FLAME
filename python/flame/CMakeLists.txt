@@ -48,6 +48,7 @@ set(PY_DATA
   test/to_chg_str_err.lat
   test/FE_latticeE.lat
   test/LS1FS1_latticeE.lat
+  test/ALL_lattice.lat
   test/ALL_latticeE.lat
   test/Arc_Ds.lat
   test/LS1_Gen.lat

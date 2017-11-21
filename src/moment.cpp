@@ -798,6 +798,15 @@ struct ElementOrbTrim : public MomentElementBase
         // Re-initialize transport matrix.
         double theta_x = conf().get<double>("theta_x", 0e0),
                theta_y = conf().get<double>("theta_y", 0e0);
+        const double tm_xkick = conf().get<double>("tm_xkick", 0e0),
+                     tm_ykick = conf().get<double>("tm_ykick", 0e0);
+        const bool   realpara = conf().get<double>("realpara", 0e0) == 1e0;
+
+        if (realpara) {
+            double ecpi = ST.ref.IonZ*C0/sqrt(sqr(ST.ref.IonW) - sqr(ST.ref.IonEs));
+            theta_x = tm_xkick*ecpi;
+            theta_y = tm_ykick*ecpi;
+        }
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
