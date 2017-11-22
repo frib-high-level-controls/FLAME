@@ -799,7 +799,8 @@ struct ElementOrbTrim : public MomentElementBase
         double theta_x = conf().get<double>("theta_x", 0e0),
                theta_y = conf().get<double>("theta_y", 0e0);
         const double tm_xkick = conf().get<double>("tm_xkick", 0e0),
-                     tm_ykick = conf().get<double>("tm_ykick", 0e0);
+                     tm_ykick = conf().get<double>("tm_ykick", 0e0),
+                     xyrotate = conf().get<double>("xyrotate", 0e0)*M_PI/180e0;
         const bool   realpara = conf().get<double>("realpara", 0e0) == 1e0;
 
         if (realpara) {
@@ -817,6 +818,14 @@ struct ElementOrbTrim : public MomentElementBase
 
             noalias(scratch)  = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+
+            if (xyrotate != 0e0) {
+                state_t::matrix_t R;
+                RotMat(0e0, 0e0, 0e0, 0e0, xyrotate, R);
+                noalias(scratch)  = transfer[i];
+                noalias(transfer[i]) = prod(R, scratch);
+            }
+
         }
     }
 };
