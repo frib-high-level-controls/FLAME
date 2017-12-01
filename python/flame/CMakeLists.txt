@@ -72,7 +72,6 @@ set(PY_DATA
   test/data/Multipole41/CaviMlp_41.txt
   test/data/Multipole53/CaviMlp_53.txt
   test/data/Multipole85/CaviMlp_85.txt
-  
 
   # vaccel IOC template
   data/st.cmd
@@ -117,7 +116,7 @@ add_custom_target(pyfiles ALL
 if(HAVE_NOSE)
   add_test(
     NAME nosetest
-    COMMAND ${PYTHON_EXECUTABLE} -m nose.core flame
+    COMMAND ${PYTHON_EXECUTABLE} -m nose.core --exe flame
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
   )
 endif()
