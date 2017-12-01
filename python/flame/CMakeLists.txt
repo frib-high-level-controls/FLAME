@@ -48,14 +48,22 @@ set(PY_DATA
   test/to_chg_str_err.lat
   test/FE_latticeE.lat
   test/LS1FS1_latticeE.lat
+  test/ALL_lattice.lat
   test/ALL_latticeE.lat
   test/Arc_Ds.lat
+  test/LS1_Gen.lat
+  test/LS2_Gen.lat
+  test/test_stripper.lat
 
   # cavity data for test lattice files
   test/data/axisData_29.txt
   test/data/axisData_41.txt
   test/data/axisData_53.txt
   test/data/axisData_85.txt
+  test/data/thinlenlon_29.lat
+  test/data/thinlenlon_41.lat
+  test/data/thinlenlon_53.lat
+  test/data/thinlenlon_85.lat
   test/data/Multipole29/thinlenlon_29.txt
   test/data/Multipole41/thinlenlon_41.txt
   test/data/Multipole53/thinlenlon_53.txt
@@ -108,7 +116,7 @@ add_custom_target(pyfiles ALL
 if(HAVE_NOSE)
   add_test(
     NAME nosetest
-    COMMAND ${PYTHON_EXECUTABLE} -m nose.core flame
+    COMMAND ${PYTHON_EXECUTABLE} -m nose.core --exe flame
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
   )
 endif()

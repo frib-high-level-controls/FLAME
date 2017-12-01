@@ -180,6 +180,7 @@ MomentState::MomentState(const Config& c)
         load_storage(moment1[0].data(), c, matrixname, false);
     }
 
+    last_caviphi0 = 0e0;
     calc_rms();
 }
 
@@ -228,6 +229,7 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,moment0_env(o.moment0_env)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
+    ,last_caviphi0(o.last_caviphi0)
 {}
 
 void MomentState::assign(const StateBase& other)
@@ -242,6 +244,7 @@ void MomentState::assign(const StateBase& other)
     moment0_env = O->moment0_env;
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
+    last_caviphi0 = O->last_caviphi0;
     StateBase::assign(other);
 }
 
@@ -490,6 +493,13 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(real[0]);
         // Note: this array is discontigious as we reference a single member from a Particle[]
         return true;
+    } else if(idx==I++) {
+        Info.name = "last_caviphi0";
+        Info.ptr = &last_caviphi0;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        // driven phase [degree]
+        return true;
     }
     return StateBase::getArray(idx-I, Info);
 }
@@ -575,6 +585,32 @@ void MomentElementBase::get_misalign(const state_t &ST, const Particle &real, va
     IM = prod(R_inv, IM);
     IM = prod(T_inv, IM);
     IM = prod(scl_inv, IM);
+}
+
+unsigned MomentElementBase::get_flag(const Config& c, const std::string& name, const unsigned& def_value)
+{
+    unsigned read_value;
+    double check_value;
+
+    try {
+        check_value = boost::lexical_cast<double>(c.get<std::string>(name));
+    }catch (std::exception&){
+        try {
+            check_value = c.get<double>(name);
+        }catch (std::exception&){
+            check_value = boost::lexical_cast<double>(def_value);
+        }
+    }
+
+    //Check the value is an unsigned integer
+    try {
+        read_value = boost::lexical_cast<unsigned>(check_value);
+        if (boost::lexical_cast<double>(read_value) != check_value)
+            throw std::runtime_error(SB()<< name << " must be an unsigned integer");
+    }catch (std::exception&){
+        throw  std::runtime_error(SB()<< name << " must be an unsigned integer");
+    }
+    return read_value;
 }
 
 void MomentElementBase::advance(StateBase& s)
@@ -762,6 +798,16 @@ struct ElementOrbTrim : public MomentElementBase
         // Re-initialize transport matrix.
         double theta_x = conf().get<double>("theta_x", 0e0),
                theta_y = conf().get<double>("theta_y", 0e0);
+        const double tm_xkick = conf().get<double>("tm_xkick", 0e0),
+                     tm_ykick = conf().get<double>("tm_ykick", 0e0),
+                     xyrotate = conf().get<double>("xyrotate", 0e0)*M_PI/180e0;
+        const bool   realpara = conf().get<double>("realpara", 0e0) == 1e0;
+
+        if (realpara) {
+            double ecpi = ST.ref.IonZ*C0/sqrt(sqr(ST.ref.IonW) - sqr(ST.ref.IonEs));
+            theta_x = tm_xkick*ecpi;
+            theta_y = tm_ykick*ecpi;
+        }
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
@@ -772,6 +818,14 @@ struct ElementOrbTrim : public MomentElementBase
 
             noalias(scratch)  = prod(transfer[i], misalign[i]);
             noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+
+            if (xyrotate != 0e0) {
+                state_t::matrix_t R;
+                RotMat(0e0, 0e0, 0e0, 0e0, xyrotate, R);
+                noalias(scratch)  = transfer[i];
+                noalias(transfer[i]) = prod(R, scratch);
+            }
+
         }
     }
 };
@@ -789,10 +843,9 @@ struct ElementSBend : public MomentElementBase
 
     ElementSBend(const Config& c) : base_t(c), HdipoleFitMode(0) {
 
-        std::istringstream strm(c.get<std::string>("HdipoleFitMode", "1"));
-        strm>>HdipoleFitMode;
-        if(!strm.eof() && strm.fail())
-            throw std::runtime_error("HdipoleFitMode must be an integer");
+        HdipoleFitMode = get_flag(c, "HdipoleFitMode", 1);
+        if (HdipoleFitMode != 0 && HdipoleFitMode != 1)
+            throw std::runtime_error(SB()<< "Undefined HdipoleFitMode: " << HdipoleFitMode);
     }
     virtual ~ElementSBend() {}
     virtual const char* type_name() const {return "sbend";}
@@ -844,7 +897,7 @@ struct ElementSBend : public MomentElementBase
 
             double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
-            if (HdipoleFitMode != 1) {
+            if (!HdipoleFitMode) {
                 /*
                 double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
                 di_bg     = conf().get<double>("bg");
@@ -880,25 +933,27 @@ struct ElementSBend : public MomentElementBase
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            if (HdipoleFitMode != 1) {
-                double dip_bg    = conf().get<double>("bg"),
-                       // Dipole reference energy.
-                       dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
-                       dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
-                       dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
-                       d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
-                       dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
+            if (L != 0.0) {
+                if (!HdipoleFitMode) {
+                    double dip_bg    = conf().get<double>("bg"),
+                           // Dipole reference energy.
+                           dip_Ek    = (sqrt(sqr(dip_bg)+1e0)-1e0)*ST.ref.IonEs,
+                           dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
+                           dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
+                           d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
+                           dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
 
-                GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
-                               dip_beta, dip_gamma, d, dip_IonK, transfer[i]);
-            } else
-                GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
-                               ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
+                    GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                                   dip_beta, dip_gamma, d, dip_IonK, transfer[i]);
+                } else
+                    GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
+                                   ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
 
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
         }
     }
 };
@@ -953,32 +1008,21 @@ struct ElementSext : public MomentElementBase
     typedef MomentElementBase       base_t;
     typedef typename base_t::state_t state_t;
 
-    double B3, L;
-    int step;
-    bool thinlens, dstkick;
+    ElementSext(const Config& c) : base_t(c) {}
 
-    ElementSext(const Config& c) : base_t(c) {
-        B3= conf().get<double>("B3");
-        L = conf().get<double>("L")*MtoMM;
-        step = conf().get<double>("step", 1.0);
-        thinlens = conf().get<double>("thinlens", 0.0) == 1.0;
-        dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
-    }
     virtual ~ElementSext() {}
     virtual const char* type_name() const {return "sextupole";}
 
-    virtual void assign(const ElementVoid *other) {
-        base_t::assign(other);
-        const self_t* O=static_cast<const self_t*>(other);
-        B3 = O->B3;
-        L = O->L;
-        step = O->step;
-        thinlens = O->thinlens;
-        dstkick = O->dstkick;
-    }
+    virtual void assign(const ElementVoid *other) {base_t::assign(other); }
 
     virtual void advance(StateBase& s)
     {
+        const double B3= conf().get<double>("B3"),
+                     L = conf().get<double>("L")*MtoMM;
+        const int    step = conf().get<double>("step", 1.0);
+        const bool   thinlens = conf().get<double>("thinlens", 0.0) == 1.0,
+                     dstkick = conf().get<double>("dstkick", 1.0) == 1.0;
+
         state_t&  ST = static_cast<state_t&>(s);
         using namespace boost::numeric::ublas;
 
@@ -1096,7 +1140,7 @@ struct ElementEDipole : public MomentElementBase
         bool   ver         = conf().get<double>("ver") == 1.0;
         double L           = conf().get<double>("L")*MtoMM,
                phi         = conf().get<double>("phi")*M_PI/180e0,
-               // fit to TLM unit.            
+               // fit to TLM unit.
                fringe_x    = conf().get<double>("fringe_x", 0e0)/MtoMM,
                fringe_y    = conf().get<double>("fringe_y", 0e0)/MtoMM,
                kappa       = conf().get<double>("asym_fac", 0e0),
@@ -1106,8 +1150,16 @@ struct ElementEDipole : public MomentElementBase
                // magnetic - 0, electrostatic - 1.
                h           = 1e0,
                Ky          = spher/sqr(rho),
-               dip_beta    = conf().get<double>("beta"),
-               dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta));
+               dip_beta    = conf().get<double>("beta");
+
+        unsigned HdipoleFitMode = get_flag(conf(), "HdipoleFitMode", 1);
+
+        if (HdipoleFitMode != 0 && HdipoleFitMode != 1)
+            throw std::runtime_error(SB()<< "Undefined HdipoleFitMode: " << HdipoleFitMode);
+
+        if (HdipoleFitMode) dip_beta = ST.ref.beta;
+
+        double dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta));
 
         for(size_t i=0; i<last_real_in.size(); i++) {
             double eta0        = (ST.real[i].gamma-1e0)/2e0,
@@ -1117,31 +1169,33 @@ struct ElementEDipole : public MomentElementBase
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real[i].gamma,
-                           eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer[i]);
+            if (L != 0e0) {
+                GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real[i].gamma,
+                               eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer[i]);
 
-            if (ver) {
-                // Rotate transport matrix by 90 degrees.
-                value_t
-                R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
-                R(state_t::PS_X,  state_t::PS_X)   =  0e0;
-                R(state_t::PS_PX, state_t::PS_PX)  =  0e0;
-                R(state_t::PS_Y,  state_t::PS_Y)   =  0e0;
-                R(state_t::PS_PY, state_t::PS_PY)  =  0e0;
-                R(state_t::PS_X,  state_t::PS_Y)   = -1e0;
-                R(state_t::PS_PX, state_t::PS_PY)  = -1e0;
-                R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
-                R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
+                if (ver) {
+                    // Rotate transport matrix by 90 degrees.
+                    value_t
+                    R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                    R(state_t::PS_X,  state_t::PS_X)   =  0e0;
+                    R(state_t::PS_PX, state_t::PS_PX)  =  0e0;
+                    R(state_t::PS_Y,  state_t::PS_Y)   =  0e0;
+                    R(state_t::PS_PY, state_t::PS_PY)  =  0e0;
+                    R(state_t::PS_X,  state_t::PS_Y)   = -1e0;
+                    R(state_t::PS_PX, state_t::PS_PY)  = -1e0;
+                    R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
+                    R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
 
-                noalias(scratch)     = prod(R, transfer[i]);
-                noalias(transfer[i]) = prod(scratch, trans(R));
-                //TODO: no-op code?  results are unconditionally overwritten
+                    noalias(scratch)     = prod(R, transfer[i]);
+                    noalias(transfer[i]) = prod(scratch, trans(R));
+                    //TODO: no-op code?  results are unconditionally overwritten
+                }
+
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
             }
-
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
-
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
         }
     }
 };
