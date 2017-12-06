@@ -24,6 +24,12 @@ if(CMAKE_COMPILER_IS_GNUCC)
 endif()
 message(STATUS "Build type ${CMAKE_BUILD_TYPE}")
 
+#Default path for rf cavity data
+if(DEF_PATH)
+  add_definitions(-DDEFPATH=\"${DEF_PATH}\")
+  message(STATUS "Set default rf cavity data path: ${DEF_PATH}")
+endif()
+
 # see if git submodule is actually checked out
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake4epics/cmake/FindEPICS.cmake)
   list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake4epics/cmake)
