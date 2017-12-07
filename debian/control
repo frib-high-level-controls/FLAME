@@ -41,3 +41,9 @@ Depends: libflame (=${binary:Version}),
 Description: Fast Linac Accelerator Model Engine -- Python module
  Python interface for FLAME (C++).
 
+Package: flame-data
+Section: misc
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Description: Fast Linac Accelerator Model Engine -- data
+ This package contains the cavity data files (FRIB) for FLAME runtime.

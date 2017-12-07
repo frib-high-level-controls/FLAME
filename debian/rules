@@ -25,7 +25,7 @@ override_dh_auto_configure:
 		-DNEED_DEMOIOC:BOOL=OFF \
 		-DNEED_EPICS:BOOL=OFF \
 		-DCMAKE_BUILD_TYPE:STRING=RELEASE \
-		-DDEF_PATH:STRING=/etc/flame
+		-DDEF_PATH:STRING=/etc/flame/cavity_data
 
 override_dh_auto_install:
 	dh_python2

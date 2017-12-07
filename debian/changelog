@@ -1,3 +1,10 @@
+flame (1.4.0-2) unstable; urgency=medium
+
+  * New package for cavity data: flame-data
+  * Default path for cavity data: /etc/flame/cavity_data
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 07 Dec 2017 14:23:58 -0500
+
 flame (1.4.0-1) unstable; urgency=medium
 
   * Add default path for rf cavity data
