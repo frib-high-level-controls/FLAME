@@ -1,3 +1,14 @@
+flame (1.4.0-1) unstable; urgency=medium
+
+  * Add default path for rf cavity data
+  * Add API documentation
+  * Support nosetest in VirtualBox share folder
+  * Add xyrotate flag for OrbTrim element
+  * Add T*m input for OrbTrim (steering magnet) element
+  * Bugfix: handling with zero length sbend and ebend
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 07 Dec 2017 11:32:07 -0500
+
 flame (1.2.0-1) unstable; urgency=medium
 
   * New - cavity type: 'Generic'
