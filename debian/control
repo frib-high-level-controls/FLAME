@@ -13,7 +13,9 @@ Vcs-Browser: https://stash.frib.msu.edu/scm/phyapp/flame.git
 
 Package: flame
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, 
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         flame-data (=${binary:Version}),
+Suggests: python-flame
 Description: Fast Linac Accelerator Model Engine -- executable
  C++ code to model ion accelerator like FRIB, initially, FLAME is created
  for fast modeling linac in the high-level contorls system.
@@ -36,7 +38,7 @@ Description: Fast Linac Accelerator Model Engine -- headers
 Package: python-flame
 Section: python
 Architecture: any
-Depends: libflame (=${binary:Version}), 
+Depends: libflame (=${binary:Version}), flame-data (=${binary:Version}),
          ${python:Depends}, ${shlibs:Depends}, ${misc:Depends},
 Description: Fast Linac Accelerator Model Engine -- Python module
  Python interface for FLAME (C++).
