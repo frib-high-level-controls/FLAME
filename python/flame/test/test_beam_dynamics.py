@@ -896,7 +896,7 @@ class TestArc(unittest.TestCase, MomentTest):
                 [ 0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]
             ])
         }, max=-1)
-        
+
 class TestGenCavi_glps(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
@@ -928,7 +928,7 @@ class TestGenCavi_glps(unittest.TestCase, MomentTest):
                 [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00]
             ])
         }, max=-1)
-        
+
 class TestGenCavi2_glps(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
@@ -937,13 +937,13 @@ class TestGenCavi2_glps(unittest.TestCase, MomentTest):
        python/flame/test/LS1.lat
     """
     lattice = 'LS2_Gen.lat'
-    
+
     def setUp(self):
         with open(os.path.join(datadir, self.lattice), 'rb') as F:
             self.M = Machine(F)
             F.seek(0)
             self.ICM = Machine(F, extra={'skipcache':1.0})
-            
+
     def test_caviGen2(self):
         "Test of LS2_Gen.lat End."
 
@@ -960,7 +960,7 @@ class TestGenCavi2_glps(unittest.TestCase, MomentTest):
                 [ 0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00,  0.0000000000e+00]
             ])
         }, max=-1)
-        
+
 class TestGenStripper(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
@@ -969,18 +969,18 @@ class TestGenStripper(unittest.TestCase, MomentTest):
        python/flame/test/LS1.lat
     """
     lattice = 'test_stripper.lat'
-    
+
     def setUp(self):
         with open(os.path.join(datadir, self.lattice), 'rb') as F:
             self.M = Machine(F)
             F.seek(0)
             self.ICM = Machine(F, extra={'skipcache':1.0})
-            
+
     def test_GenStr(self):
         "Test of generic stripper function."
 
         self.checkPropagate(0, {}, {
-            'moment0_env': 
+            'moment0_env':
                 asfarray([6.367165644268e+00,  -4.229354153834e-02,   4.092096492792e-02, -3.733734078735e-06,  -3.461780272412e-01,   3.099950000000e-04, 1.000000000000e+00]),
             'moment1_env':asfarray([
                 [ 1.668090792171e+02,  -1.880298682742e-01,  -2.455448682566e-01, 9.970020125331e-06,  -3.226964115745e+00,  -6.776427468998e-02, 0.000000000000e+00],
@@ -991,6 +991,58 @@ class TestGenStripper(unittest.TestCase, MomentTest):
                 [ -6.776427468998e-02,   1.604923898822e-04,   8.444805902978e-03, -2.387113989044e-07,  -8.025527186395e-04,   1.729925819210e-03, 0.000000000000e+00],
                 [  0.000000000000e+00,   0.000000000000e+00,   0.000000000000e+00, 0.000000000000e+00,   0.000000000000e+00,   0.000000000000e+00, 0.000000000000e+00]])
         }, max=-1)
-        
-        
 
+class TestTmOrbTrim(unittest.TestCase, MomentTest):
+
+    lattice = 'ALL_lattice.lat'
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
+
+    def test_tmorbtrim(self):
+        "Test of T*m input for OrbTrim"
+        self.assertEqual(self.M.find(name='mrk000_2')[0], 3)
+        self.M.reconfigure(3, {'realpara':1,'tm_xkick':0.001,'tm_ykick':0.001})
+        self.ICM.reconfigure(3, {'realpara':1,'tm_xkick':0.001,'tm_ykick':0.001})
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([ -1.62912326750143e-02,  1.55853433277013e-03,  7.80358713654603e-03, -3.40062900623992e-04,  3.91311081664573e-02, -5.65673153637328e-02,  1.00000000000000e+00]),
+            'moment1_env':asfarray([
+                [  4.79274024884486e-01,  8.32452521447247e-04, -1.66021348816870e-02, -6.05685901649634e-05,  6.13907858271048e-02, -1.12067716517050e-01, 0.00000000000000e+00],
+                [  8.32452521447243e-04,  1.09431336431166e-05, -6.24543639046207e-04,  3.16026663983417e-07,  2.29663744147813e-04, -3.80378206803644e-04, 0.00000000000000e+00],
+                [ -1.66021348816829e-02, -6.24543639046205e-04,  1.18614829282714e-01,  1.07302719223271e-04, -1.24071198585457e-02,  2.06810054159813e-02, 0.00000000000000e+00],
+                [ -6.05685901649633e-05,  3.16026663983413e-07,  1.07302719223267e-04,  3.16898371495851e-06, -4.50740942991329e-05,  9.48172504667258e-05, 0.00000000000000e+00],
+                [  6.13907858271047e-02,  2.29663744147813e-04, -1.24071198585457e-02, -4.50740942991330e-05,  1.85510348612645e-02, -3.29249158981130e-02, 0.00000000000000e+00],
+                [ -1.12067716517050e-01, -3.80378206803644e-04,  2.06810054159813e-02,  9.48172504667260e-05, -3.29249158981130e-02,  5.90204391076841e-02, 0.00000000000000e+00],
+                [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00, 0.00000000000000e+00]])
+        }, max=-1)
+
+        self.M.reconfigure(3, {'realpara':0,'tm_xkick':0.0,'tm_ykick':0.0})
+        self.ICM.reconfigure(3, {'realpara':0,'tm_xkick':0.0,'tm_ykick':0.0})
+
+
+        def test_xyrotorbtrim(self):
+            "Test of transeverse rotation for OrbTrim"
+            self.assertEqual(self.M.find(name='mrk000_2')[0], 3)
+            self.M.reconfigure(3, {'xyrotate':90.0})
+            self.ICM.reconfigure(3, {'xyrotate':90.0})
+
+            self.checkPropagate(0, {}, {
+                'moment0_env':
+                    asfarray([ -2.94875405322850e-02,  1.54571722384743e-03,  3.95135988609975e-02, -1.98956270631563e-04,  3.91668777878322e-02, -5.66486030759374e-02,  1.00000000000000e+00]),
+                'moment1_env':asfarray([
+                    [  3.98956507654997e-01,  4.94380406596968e-04,  1.20078595553900e-02, -1.21472111150604e-04,  5.89170851171485e-02, -1.08606396971247e-01,  0.00000000000000e+00],
+                    [  4.94380406596965e-04,  7.02244442775973e-06, -3.56586102754068e-04,  8.89160633941441e-07,  1.64852946011011e-04, -2.74513999139156e-04,  0.00000000000000e+00],
+                    [  1.20078595553890e-02, -3.56586102754065e-04,  1.07795794739632e-01,  8.35991118067530e-05, -8.22437108922699e-03,  1.33898887916764e-02,  0.00000000000000e+00],
+                    [ -1.21472111150596e-04,  8.89160633941451e-07,  8.35991118067514e-05,  2.89095520653810e-06, -1.63981861224415e-05,  4.57966051528006e-05,  0.00000000000000e+00],
+                    [  5.89170851171485e-02,  1.64852946011012e-04, -8.22437108922694e-03, -1.63981861224419e-05,  1.85693296184749e-02, -3.29554366366480e-02,  0.00000000000000e+00],
+                    [ -1.08606396971247e-01, -2.74513999139156e-04,  1.33898887916764e-02,  4.57966051528011e-05, -3.29554366366479e-02,  5.90681169156298e-02,  0.00000000000000e+00],
+                    [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]])
+            }, max=-1)
+
+            self.M.reconfigure(3, {'xyrotate':0.0})
+            self.ICM.reconfigure(3, {'xyrotate':0.0})
