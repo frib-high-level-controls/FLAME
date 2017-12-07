@@ -1,3 +1,9 @@
+flame (1.4.0-3) unstable; urgency=medium
+
+  * Update installation rule of flame and python-flame
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 07 Dec 2017 15:40:57 -0500
+
 flame (1.4.0-2) unstable; urgency=medium
 
   * New package for cavity data: flame-data
