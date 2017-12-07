@@ -24,7 +24,8 @@ override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DNEED_DEMOIOC:BOOL=OFF \
 		-DNEED_EPICS:BOOL=OFF \
-		-DCMAKE_BUILD_TYPE:STRING=RELEASE
+		-DCMAKE_BUILD_TYPE:STRING=RELEASE \
+		-DDEF_PATH:STRING=/etc/flame
 
 override_dh_auto_install:
 	dh_python2
