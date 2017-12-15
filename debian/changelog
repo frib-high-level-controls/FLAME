@@ -1,3 +1,10 @@
+flame (1.4.1-1) unstable; urgency=medium
+
+  * Fix make compatibility on macOS.
+  * Apply patch to import flame utils package.
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Fri, 15 Dec 2017 15:16:54 -0500
+
 flame (1.4.0-3) unstable; urgency=medium
 
   * Update installation rule of flame and python-flame
