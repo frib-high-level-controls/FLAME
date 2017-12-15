@@ -121,9 +121,9 @@ init_internal(void)
 #endif
 
         // python API version
-        PyModule_AddIntConstant(mod, "version", 0);
+        PyModule_AddIntConstant(mod, "_pyapi_version", 0);
         // C API version
-        PyModule_AddIntConstant(mod, "cversion", FLAME_API_VERSION);
+        PyModule_AddIntConstant(mod, "_capi_version", FLAME_API_VERSION);
 
         PyModule_AddIntMacro(mod, FLAME_ERROR);
         PyModule_AddIntMacro(mod, FLAME_WARN);
