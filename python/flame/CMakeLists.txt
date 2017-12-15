@@ -3,6 +3,7 @@ include_directories(
   ${Python_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../../src
 )
+find_package(PythonLibs REQUIRED)
 
 add_library(_internal SHARED
   modmain.cpp
@@ -17,11 +18,13 @@ install(TARGETS _internal
 
 target_link_libraries(_internal
   flame_core
+  ${PYTHON_LIBRARIES}
 )
 
 set_target_properties(_internal
   PROPERTIES
     PREFIX ""
+    SUFFIX ".so"
     NO_SONAME YES
 )
 
