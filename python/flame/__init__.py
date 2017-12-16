@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 from ._internal import (Machine as MachineBase,
                         GLPSPrinter, _GLPSParse,
-                        version, cversion,
+                        _pyapi_version, _capi_version,
                         FLAME_ERROR, FLAME_WARN,
                         FLAME_INFO, FLAME_DEBUG,
                         setLogLevel)
