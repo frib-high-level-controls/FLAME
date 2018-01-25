@@ -1,3 +1,40 @@
+flame (1.4.1-2) unstable; urgency=medium
+
+  * Fix patches.
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Fri, 15 Dec 2017 16:09:58 -0500
+
+flame (1.4.1-1) unstable; urgency=medium
+
+  * Fix make compatibility on macOS.
+  * Apply patch to import flame utils package.
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Fri, 15 Dec 2017 15:16:54 -0500
+
+flame (1.4.0-3) unstable; urgency=medium
+
+  * Update installation rule of flame and python-flame
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 07 Dec 2017 15:40:57 -0500
+
+flame (1.4.0-2) unstable; urgency=medium
+
+  * New package for cavity data: flame-data
+  * Default path for cavity data: /etc/flame/cavity_data
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 07 Dec 2017 14:23:58 -0500
+
+flame (1.4.0-1) unstable; urgency=medium
+
+  * Add default path for rf cavity data
+  * Add API documentation
+  * Support nosetest in VirtualBox share folder
+  * Add xyrotate flag for OrbTrim element
+  * Add T*m input for OrbTrim (steering magnet) element
+  * Bugfix: handling with zero length sbend and ebend
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 07 Dec 2017 11:32:07 -0500
+
 flame (1.2.0-1) unstable; urgency=medium
 
   * New - cavity type: 'Generic'
