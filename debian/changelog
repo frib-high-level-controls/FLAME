@@ -1,3 +1,16 @@
+flame (1.2.0-1) unstable; urgency=medium
+
+  * New - cavity type: 'Generic'
+  * Fix - bugs
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Thu, 26 Oct 2017 09:15:38 -0400
+
+flame (1.1.1-2) unstable; urgency=medium
+
+  * Fix - debian section.
+
+ -- Tong Zhang <zhangt@frib.msu.edu>  Wed, 10 May 2017 14:29:29 -0400
+
 flame (1.1.1-1) unstable; urgency=medium
 
   * Version update: python-flame 1.1.1
