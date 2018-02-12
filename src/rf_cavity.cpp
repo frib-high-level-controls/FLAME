@@ -1461,7 +1461,7 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
 {
     double      multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
-    bool        fsync = conf().get<double>("fsync", 1.0) == 1.0;
+    bool        fsync = conf().get<double>("syncflag", 1.0) == 1.0;
 
     multip    = fRF/SampleFreq;
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.

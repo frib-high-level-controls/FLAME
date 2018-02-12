@@ -287,8 +287,8 @@ class TestToStrl(unittest.TestCase, MomentTest):
     def test_rfcav_41_flagsync(self):
         # ls1_ca01_cav1_d1127  cavtype = "0.041QWR"
         self.assertEqual(self.M.find(name='ls1_ca01_cav1_d1127')[0], 3)
-        self.M.reconfigure(3, {'fsync':0})
-        self.ICM.reconfigure(3, {'fsync':0})
+        self.M.reconfigure(3, {'syncflag':0})
+        self.ICM.reconfigure(3, {'syncflag':0})
         self.checkPropagate(0, {}, {
             'next_elem':4,
             'moment0_env':asfarray(
@@ -315,8 +315,8 @@ class TestToStrl(unittest.TestCase, MomentTest):
             'phis':asfarray([ 2.28698462399129951e+01,  2.28509671941663015e+01]),
         }, max=4)
 
-        self.M.reconfigure(3, {'fsync':1})
-        self.ICM.reconfigure(3, {'fsync':1})
+        self.M.reconfigure(3, {'syncflag':1})
+        self.ICM.reconfigure(3, {'syncflag':1})
 
     def test_rfcav_41_freqjump(self):
         # ls1_ca01_cav1_d1127  cavtype = "0.041QWR"
