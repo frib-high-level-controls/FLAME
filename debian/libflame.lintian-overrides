@@ -1,0 +1,6 @@
+libflame binary: new-package-should-close-itp-bug
+libflame binary: extended-description-is-probably-too-short
+libflame binary: no-symbols-control-file
+libflame binary: non-dev-pkg-with-shlib-symlink
+libflame binary: spelling-error-in-binary
+libflame binary: package-name-doesnt-match-sonames
