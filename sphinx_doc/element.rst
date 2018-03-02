@@ -124,8 +124,8 @@ After writing down the all lattice elements, user need to specify the lattice ce
       - Marker element.
     * - :cpp:type:`stripper`
       - Chage stripper element.
-    * - :cpp:type:`generic`
-      - Generic transfer matrix input.
+    * - :cpp:type:`tmatrix`
+      - User input transfer matrix.
     * - :cpp:type:`orbtrim`
       - Orbit trim element.
     * - :cpp:type:`drift`
@@ -196,11 +196,11 @@ Special element
                     | Stripper foil parameters.
                     | [Thickness, Thickness_variation, reference_energy] with [um, %, eV/u]
 
-.. cpp:type:: generic
+.. cpp:type:: tmatrix
 
-    Generic transfer matrix element.
+    User input transfer matrix element.
 
-    :parameter: **transfer**: vector[49]
+    :parameter: **matrix**: vector[49]
 
                     | Flattened :math:`7 \times 7` transfer matrix.
 
