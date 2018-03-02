@@ -1245,6 +1245,27 @@ struct ElementEQuad : public MomentElementBase
     }
 };
 
+struct ElementTMatrix : public MomentElementBase
+{
+    // Transport matrix by user input
+    typedef ElementTMatrix          self_t;
+    typedef MomentElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    ElementTMatrix(const Config& c) : base_t(c) {}
+    virtual ~ElementTMatrix() {}
+    virtual const char* type_name() const {return "tmatrix";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        for(size_t i=0; i<last_real_in.size(); i++) {
+            load_storage(transfer[i].data(), conf(), "matrix");
+        }
+    }
+};
+
 } // namespace
 
 void registerMoment()
@@ -1276,4 +1297,6 @@ void registerMoment()
     Machine::registerElement<ElementEDipole                >("MomentMatrix", "edipole");
 
     Machine::registerElement<ElementEQuad                  >("MomentMatrix", "equad");
+
+    Machine::registerElement<ElementTMatrix                >("MomentMatrix", "tmatrix");
 }
