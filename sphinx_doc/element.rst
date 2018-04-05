@@ -231,7 +231,7 @@ Optical element
                     | Magnetic field strength for the horizontal beam kick. [T*m]
 
 
-                 **tm_xkick**: float
+                 **tm_ykick**: float
 
                     | Magnetic field strength for the vertical beam kick. [T*m]
 
@@ -420,7 +420,7 @@ Optical element
 
                  **syncflag**: int
 
-                    | Flag for synchronous phase input (**phi**).
+                    | Flag for synchronous phase input (for above parameter **phi**).
                     |    **0** for driven phase input. 
                     |    **1** for synchronous phase input. (default)
 
