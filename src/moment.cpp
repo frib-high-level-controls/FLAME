@@ -1150,7 +1150,7 @@ struct ElementEDipole : public MomentElementBase
                // magnetic - 0, electrostatic - 1.
                h           = 1e0,
                Ky          = spher/sqr(rho),
-               dip_beta    = conf().get<double>("beta");
+               dip_beta    = conf().get<double>("beta", ST.ref.beta);
 
         unsigned HdipoleFitMode = get_flag(conf(), "HdipoleFitMode", 1);
 
