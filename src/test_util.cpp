@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(parse_table3)
     std::istringstream strm(table3);
 
     numeric_table tbl;
-    BOOST_CHECK_THROW(tbl.read(strm), std::runtime_error)
+    BOOST_CHECK_THROW(tbl.read(strm), std::runtime_error);
 }
 
 static const char table4[] = {
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(parse_table4)
     std::istringstream strm(table4);
 
     numeric_table tbl;
-    BOOST_CHECK_THROW(tbl.read(strm), std::runtime_error)
+    BOOST_CHECK_THROW(tbl.read(strm), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(test_ndindex_iterate)

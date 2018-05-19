@@ -2,7 +2,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${HDF5_CXX_INCLUDE_DIR}
+  # ${HDF5_CXX_INCLUDE_DIR}
 )
 
 add_custom_command(
@@ -46,8 +46,8 @@ set(inst_HEADERS
   flame/rf_cavity.h
   flame/chg_stripper.h
 
-  flame/h5loader.h
-  flame/h5writer.h
+  # flame/h5loader.h
+  # flame/h5writer.h
 )
 install(FILES ${inst_HEADERS}
   DESTINATION include/flame
@@ -70,8 +70,8 @@ add_library(flame_core SHARED
 
   util.cpp
 
-  h5loader.cpp
-  h5writer.cpp
+  # h5loader.cpp
+  # h5writer.cpp
 
   ${inst_HEADERS}
 )
@@ -79,7 +79,7 @@ target_link_libraries(flame_core
   ${Boost_THREAD_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
-  ${HDF5_LIBRARIES}
+  # ${HDF5_LIBRARIES}
 )
 set_target_properties(flame_core
   PROPERTIES
@@ -133,12 +133,12 @@ target_link_libraries(test_util
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 
-add_executable(h5_loader
-  h5loadertest.cpp
-)
-target_link_libraries(h5_loader
-  flame_core
-)
+# add_executable(h5_loader
+#   h5loadertest.cpp
+# )
+# target_link_libraries(h5_loader
+#  flame_core
+# )
 
 if(UNIX)
 
