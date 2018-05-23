@@ -15,8 +15,6 @@
 #include "flame/rf_cavity.h"
 #include "flame/chg_stripper.h"
 
-#include "flame/h5loader.h"
-
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
 

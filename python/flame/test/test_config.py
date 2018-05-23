@@ -251,6 +251,7 @@ class testScopeDict(unittest.TestCase):
         M = Machine(L)
         self.assertEqual(M.conf(0)['phi'], 2.0)
 
+@unittest.skip("Disable HDF5")
 class testHDF5(unittest.TestCase):
     def test_good_explicit(self):
         P = GLPSParser()

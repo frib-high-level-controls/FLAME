@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <fstream>
 #include <list>
@@ -16,8 +15,11 @@
 #include <flame/base.h>
 #include <flame/state/vector.h>
 #include <flame/state/matrix.h>
-#include <flame/h5writer.h>
 #include <flame/moment.h>
+
+#ifdef USE_HDF5
+#include <flame/h5writer.h>
+#endif
 
 namespace po = boost::program_options;
 
@@ -60,8 +62,10 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                 "Input lattice file")
             ("max,M", po::value<std::string>()->value_name("NUM"),
                 "Maximum number of elements propagate through. (default is all)")
+#ifdef USE_HDF5
             ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
                 "output format (txt or hdf5)")
+#endif
             ("select-all,A", "Select all elements for output")
             ("select-type,T", po::value<std::vector<std::string> >()->composing()->value_name("ETYPE"),
                 "Select all elements of the given type for output")
@@ -87,9 +91,11 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                    "\n"
                    " utest - Print selected output states to screen as a python checkPropagate()\n"
                    "\n"
+#ifdef USE_HDF5
                    " hdf5 - Write selected output states to an HDF5 file.\n"
                    "        eg. '--format hdf5,file=out.h5'\n"
                    "\n"
+#endif
                    "Definitions:\n\n"
                    " Variable defintions made by arguments must specify a name, type, and value\n"
                    " The type may be: 'str'' or 'double', which may be abbreviated as 'S' or 'D'.\n"
@@ -288,6 +294,7 @@ struct StreamObserver : public Observer
     };
 };
 
+#ifdef USE_HDF5
 struct H5Observer : public Observer
 {
     H5StateWriter *writer;
@@ -336,6 +343,7 @@ struct H5Observer : public Observer
         writer->append(state);
     }
 };
+#endif
 
 struct Timer {
     timespec ts;
@@ -381,7 +389,11 @@ try {
 
     int verb = args["verbose"].as<int>();
     if(verb<=2)
+#ifdef USE_HDF5
         H5StateWriter::dontPrint();
+#else
+        printf("HDF5 feature is disabled.\n");
+#endif
     if(verb>2)
         Machine::log_detail=(FLAME_ERROR-10*(verb-2));
     {
@@ -462,8 +474,10 @@ try {
             exit(1);
         } else if(fmt[0]=="txt") {
             ofact.reset(new StreamObserver::Factory(fmt));
+#ifdef USE_HDF5
         } else if(fmt[0]=="hdf5") {
             ofact.reset(new H5Observer::Factory(fmt));
+#endif
         } else if(fmt[0]=="utest") {
             ofact.reset(new UnitTestObserver::Factory(fmt));
         } else {
