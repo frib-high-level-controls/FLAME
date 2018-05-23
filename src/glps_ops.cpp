@@ -168,39 +168,39 @@ int unary_file(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
     return 0;
 }
 
+#ifdef USE_HDF5
+int unary_h5file(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
+{
+    using namespace boost::filesystem;
+    const std::string& inp = boost::get<std::string>(A[0]->value);
 
-// int unary_h5file(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
-// {
-//     using namespace boost::filesystem;
-//     const std::string& inp = boost::get<std::string>(A[0]->value);
-// 
-//     /* The provided spec may contain both file path and group(s)
-//      * seperated by '/' which is ambigious as the file path
-//      * may contain '/' as well...
-//      * so do as h5ls does and strip off from the right hand side until
-//      * and try to open while '/' remain.
-//      */
-//     size_t sep = inp.npos;
-// 
-//     while(true) {
-//         sep = inp.find_last_of('/', sep-1);
-// 
-//         path fname(absolute(inp.substr(0, sep), ctxt->cwd));
-// 
-//         if(exists(fname)) {
-//             *R = canonical(fname).native() + inp.substr(sep);
-//             return 0;
-//         } else if(sep==inp.npos) {
-//             break;
-//         }
-//     }
-// 
-//     std::ostringstream strm;
-//     strm<<"\""<<inp<<"\" does not exist";
-//     ctxt->last_error = strm.str();
-//     return 1;
-// }
+    /* The provided spec may contain both file path and group(s)
+     * seperated by '/' which is ambigious as the file path
+     * may contain '/' as well...
+     * so do as h5ls does and strip off from the right hand side until
+     * and try to open while '/' remain.
+     */
+    size_t sep = inp.npos;
 
+    while(true) {
+        sep = inp.find_last_of('/', sep-1);
+
+        path fname(absolute(inp.substr(0, sep), ctxt->cwd));
+
+        if(exists(fname)) {
+            *R = canonical(fname).native() + inp.substr(sep);
+            return 0;
+        } else if(sep==inp.npos) {
+            break;
+        }
+    }
+
+    std::ostringstream strm;
+    strm<<"\""<<inp<<"\" does not exist";
+  ctxt->last_error = strm.str();
+  return 1;
+}
+#endif
 
 } // namespace
 
@@ -240,7 +240,9 @@ parse_context::parse_context(const char *path)
     addop("parse", &unary_parse, glps_expr_config, 1, glps_expr_string);
     addop("file", &unary_file, glps_expr_string, 1, glps_expr_string);
     addop("dir", &unary_file, glps_expr_string, 1, glps_expr_string);
-//    addop("h5file", &unary_h5file, glps_expr_string, 1, glps_expr_string);
+#ifdef USE_HDF5
+    addop("h5file", &unary_h5file, glps_expr_string, 1, glps_expr_string);
+#endif
 }
 
 parse_context::~parse_context()

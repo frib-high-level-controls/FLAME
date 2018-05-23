@@ -15,8 +15,11 @@
 #include <flame/base.h>
 #include <flame/state/vector.h>
 #include <flame/state/matrix.h>
-// #include <flame/h5writer.h>
 #include <flame/moment.h>
+
+#ifdef USE_HDF5
+#include <flame/h5writer.h>
+#endif
 
 namespace po = boost::program_options;
 
@@ -59,8 +62,10 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                 "Input lattice file")
             ("max,M", po::value<std::string>()->value_name("NUM"),
                 "Maximum number of elements propagate through. (default is all)")
-//            ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
-//                "output format (txt or hdf5)")
+#ifdef USE_HDF5
+            ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
+                "output format (txt or hdf5)")
+#endif
             ("select-all,A", "Select all elements for output")
             ("select-type,T", po::value<std::vector<std::string> >()->composing()->value_name("ETYPE"),
                 "Select all elements of the given type for output")
@@ -86,9 +91,11 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                    "\n"
                    " utest - Print selected output states to screen as a python checkPropagate()\n"
                    "\n"
-//                   " hdf5 - Write selected output states to an HDF5 file.\n"
-//                   "        eg. '--format hdf5,file=out.h5'\n"
-//                   "\n"
+#ifdef USE_HDF5
+                   " hdf5 - Write selected output states to an HDF5 file.\n"
+                   "        eg. '--format hdf5,file=out.h5'\n"
+                   "\n"
+#endif
                    "Definitions:\n\n"
                    " Variable defintions made by arguments must specify a name, type, and value\n"
                    " The type may be: 'str'' or 'double', which may be abbreviated as 'S' or 'D'.\n"
@@ -287,54 +294,56 @@ struct StreamObserver : public Observer
     };
 };
 
-// struct H5Observer : public Observer
-// {
-//     H5StateWriter *writer;
-//     H5Observer(H5StateWriter *writer) : writer(writer) {}
-//     virtual ~H5Observer() {}
-// 
-//     struct Factory : public ObserverFactory
-//     {
-//         virtual ~Factory() {}
-//         std::auto_ptr<H5StateWriter> writer;
-//         Factory(const strvect& fmt)
-//         {
-//             assert(!fmt.empty() && fmt[0]=="hdf5");
-// 
-//             for(strvect::const_iterator it=fmt.begin()+1, end=fmt.end(); it!=end; ++it)
-//             {
-//                 const std::string& cmd = *it;
-//                 if(cmd.substr(0,5)=="file=") {
-//                     writer.reset(new H5StateWriter(cmd.substr(5)));
-//                 } else {
-//                     std::cerr<<"Warning: -F "<<fmt[0]<<" includes unknown option "<<cmd<<"\n";
-//                 }
-//             }
-//             if(!writer.get()) {
-//                 std::cerr<<"Warning: hdf5 output format requires file=...\n";
-//             }
-//         }
-//         virtual Observer *observe(Machine &M, ElementVoid *E)
-//         {
-//             if(!writer.get()) return NULL;
-//             else              return new H5Observer(writer.get());
-//         }
-//         virtual void before_sim(Machine & M)
-//         {
-//             if(writer.get()) writer->setAttr("sim_type", M.simtype());
-//         }
-//         virtual void after_sim(Machine&)
-//         {
-//             if(writer.get()) writer->close();
-//             writer.reset();
-//         }
-//     };
-// 
-//     virtual void view(const ElementVoid *, const StateBase *state)
-//     {
-//         writer->append(state);
-//     }
-// };
+#ifdef USE_HDF5
+struct H5Observer : public Observer
+{
+    H5StateWriter *writer;
+    H5Observer(H5StateWriter *writer) : writer(writer) {}
+    virtual ~H5Observer() {}
+
+    struct Factory : public ObserverFactory
+    {
+        virtual ~Factory() {}
+        std::auto_ptr<H5StateWriter> writer;
+        Factory(const strvect& fmt)
+        {
+            assert(!fmt.empty() && fmt[0]=="hdf5");
+
+            for(strvect::const_iterator it=fmt.begin()+1, end=fmt.end(); it!=end; ++it)
+            {
+                const std::string& cmd = *it;
+                if(cmd.substr(0,5)=="file=") {
+                    writer.reset(new H5StateWriter(cmd.substr(5)));
+                } else {
+                    std::cerr<<"Warning: -F "<<fmt[0]<<" includes unknown option "<<cmd<<"\n";
+                }
+            }
+            if(!writer.get()) {
+                std::cerr<<"Warning: hdf5 output format requires file=...\n";
+            }
+        }
+        virtual Observer *observe(Machine &M, ElementVoid *E)
+        {
+            if(!writer.get()) return NULL;
+            else              return new H5Observer(writer.get());
+        }
+        virtual void before_sim(Machine & M)
+        {
+            if(writer.get()) writer->setAttr("sim_type", M.simtype());
+        }
+        virtual void after_sim(Machine&)
+        {
+            if(writer.get()) writer->close();
+            writer.reset();
+        }
+    };
+
+    virtual void view(const ElementVoid *, const StateBase *state)
+    {
+        writer->append(state);
+    }
+};
+#endif
 
 struct Timer {
     timespec ts;
@@ -380,8 +389,11 @@ try {
 
     int verb = args["verbose"].as<int>();
     if(verb<=2)
+#ifdef USE_HDF5
+        H5StateWriter::dontPrint();
+#else
         printf("HDF5 feature is disabled.\n");
-//        H5StateWriter::dontPrint();
+#endif
     if(verb>2)
         Machine::log_detail=(FLAME_ERROR-10*(verb-2));
     {
@@ -462,8 +474,10 @@ try {
             exit(1);
         } else if(fmt[0]=="txt") {
             ofact.reset(new StreamObserver::Factory(fmt));
-//        } else if(fmt[0]=="hdf5") {
-//            ofact.reset(new H5Observer::Factory(fmt));
+#ifdef USE_HDF5
+        } else if(fmt[0]=="hdf5") {
+            ofact.reset(new H5Observer::Factory(fmt));
+#endif
         } else if(fmt[0]=="utest") {
             ofact.reset(new UnitTestObserver::Factory(fmt));
         } else {

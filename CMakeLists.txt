@@ -4,11 +4,13 @@ project("flame" C CXX)
 
 option(USE_WERROR "Treat warnings as errors" OFF)
 option(USE_PYTHON "Build python support" ON)
+option(USE_HDF5 "HDF5 output support" OFF)
 option(NEED_PYTHON "Require python support" OFF)
 option(NEED_EPICS  "Require EPICS support" OFF)
 option(NEED_DEMOIOC  "build flamedemo IOC executable" ON)
 
 message(STATUS "Option PYTHON ${USE_PYTHON}")
+message(STATUS "Option HDF5 ${USE_HDF5}")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE RELEASE) # default to debug build
@@ -47,7 +49,10 @@ find_package(Boost 1.52.0 REQUIRED COMPONENTS
 
 # respects -DHDF5_USE_STATIC_LIBRARIES=YES
 # and environment variable HDF5_ROOT
-#find_package(HDF5 REQUIRED COMPONENTS C CXX)
+if(USE_HDF5)
+  find_package(HDF5 REQUIRED COMPONENTS C CXX)
+  add_definitions(-DUSE_HDF5)
+endif()
 
 find_program(LEX_EXECUTABLE flex
   DOC "Location of lexer genereator"
