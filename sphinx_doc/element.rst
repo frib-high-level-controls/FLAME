@@ -198,13 +198,14 @@ Special element
                  **Stripper_upara**: float (optional, default is **2.6903**)
 
                     | Momentum spread factor :math:`U` of the charge stripper. [1]
+                    | The momentum spread is defined as :math:`\sqrt(U/\lambda^2)` [mrad].
 
-                 **Stripper_E0Para**: vector[3] (optional, default is **[3.0, 20.0, 16.623e6]**)
+                 **Stripper_E0Para**: vector[3] (optional, default is **[16.348e6, 1.00547, -0.10681]**)
 
                     | Energy loss parameters due to the ionization.
                     | [Constant_part, Energy_dependence, Thickness_depenedence] with [eV/u, 1, 1]
 
-                 **Stripper_Para**: vector[3] (optional, default is **[16.348e6, 1.00547, -0.10681]**)
+                 **Stripper_Para**: vector[3] (optional, default is **[3.0, 20.0, 16.623e6]**)
 
                     | Stripper foil parameters.
                     | [Thickness, Thickness_variation, reference_energy] with [um, %, eV/u]
