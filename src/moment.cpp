@@ -15,8 +15,6 @@
 #include "flame/rf_cavity.h"
 #include "flame/chg_stripper.h"
 
-#include "flame/h5loader.h"
-
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
 
@@ -1150,7 +1148,7 @@ struct ElementEDipole : public MomentElementBase
                // magnetic - 0, electrostatic - 1.
                h           = 1e0,
                Ky          = spher/sqr(rho),
-               dip_beta    = conf().get<double>("beta");
+               dip_beta    = conf().get<double>("beta", ST.ref.beta);
 
         unsigned HdipoleFitMode = get_flag(conf(), "HdipoleFitMode", 1);
 
@@ -1245,6 +1243,27 @@ struct ElementEQuad : public MomentElementBase
     }
 };
 
+struct ElementTMatrix : public MomentElementBase
+{
+    // Transport matrix by user input
+    typedef ElementTMatrix          self_t;
+    typedef MomentElementBase       base_t;
+    typedef typename base_t::state_t state_t;
+
+    ElementTMatrix(const Config& c) : base_t(c) {}
+    virtual ~ElementTMatrix() {}
+    virtual const char* type_name() const {return "tmatrix";}
+
+    virtual void assign(const ElementVoid *other) { base_t::assign(other); }
+
+    virtual void recompute_matrix(state_t& ST)
+    {
+        for(size_t i=0; i<last_real_in.size(); i++) {
+            load_storage(transfer[i].data(), conf(), "matrix");
+        }
+    }
+};
+
 } // namespace
 
 void registerMoment()
@@ -1276,4 +1295,6 @@ void registerMoment()
     Machine::registerElement<ElementEDipole                >("MomentMatrix", "edipole");
 
     Machine::registerElement<ElementEQuad                  >("MomentMatrix", "equad");
+
+    Machine::registerElement<ElementTMatrix                >("MomentMatrix", "tmatrix");
 }

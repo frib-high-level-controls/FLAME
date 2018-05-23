@@ -1,5 +1,4 @@
-
-#  include <cmath>
+#include <cmath>
 
 #include <sstream>
 #include <limits>
@@ -169,6 +168,7 @@ int unary_file(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
     return 0;
 }
 
+#ifdef USE_HDF5
 int unary_h5file(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
 {
     using namespace boost::filesystem;
@@ -197,9 +197,10 @@ int unary_h5file(parse_context* ctxt, expr_value_t *R, const expr_t * const *A)
 
     std::ostringstream strm;
     strm<<"\""<<inp<<"\" does not exist";
-    ctxt->last_error = strm.str();
-    return 1;
+  ctxt->last_error = strm.str();
+  return 1;
 }
+#endif
 
 } // namespace
 
@@ -239,7 +240,9 @@ parse_context::parse_context(const char *path)
     addop("parse", &unary_parse, glps_expr_config, 1, glps_expr_string);
     addop("file", &unary_file, glps_expr_string, 1, glps_expr_string);
     addop("dir", &unary_file, glps_expr_string, 1, glps_expr_string);
+#ifdef USE_HDF5
     addop("h5file", &unary_h5file, glps_expr_string, 1, glps_expr_string);
+#endif
 }
 
 parse_context::~parse_context()

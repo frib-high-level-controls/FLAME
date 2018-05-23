@@ -125,7 +125,7 @@ Run simulation up to the target element.
 >>> ini
 0.853489750615018
 >>> SA = M.allocState({})
->>> rA = M.propagate(SA, 0, 22, observe=range(len(M))) # propagate from 0 to the entrance of 22th element
+>>> rA = M.propagate(SA, 0, 22, observe=range(len(M))) # propagate 22 elements from 0
 
 Scan parameters by using simple loop.
 

@@ -57,6 +57,7 @@ set(PY_DATA
   test/LS1_Gen.lat
   test/LS2_Gen.lat
   test/test_stripper.lat
+  test/TMtest.lat
 
   # cavity data for test lattice files
   test/data/axisData_29.txt
