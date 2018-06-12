@@ -64,7 +64,10 @@ void getargs(int argc, char *argv[], po::variables_map& args)
                 "Maximum number of elements propagate through. (default is all)")
 #ifdef USE_HDF5
             ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
-                "output format (txt or hdf5)")
+            "output format (txt or hdf5)")
+#else
+            ("format,F", po::value<std::string>()->value_name("FMT")->default_value("txt"),
+            "output format (txt)")
 #endif
             ("select-all,A", "Select all elements for output")
             ("select-type,T", po::value<std::vector<std::string> >()->composing()->value_name("ETYPE"),
@@ -391,8 +394,6 @@ try {
     if(verb<=2)
 #ifdef USE_HDF5
         H5StateWriter::dontPrint();
-#else
-        printf("HDF5 feature is disabled.\n");
 #endif
     if(verb>2)
         Machine::log_detail=(FLAME_ERROR-10*(verb-2));

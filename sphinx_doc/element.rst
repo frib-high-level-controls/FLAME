@@ -23,8 +23,8 @@ Basic format of the general parameters are,
       - | description
     * - | **sim_type**
       - | "MomentMatrix"
-      - | Simulation mode. FRIB simulation uses the particular
-        | mode "MomentMatrix".
+      - | Simulation mode. FRIB simulation uses
+        | the particular mode "MomentMatrix".
     * - | **MpoleLevel**
       - | "0", "1", or "2"
       - | Multipole term controller for the rf cavities.
@@ -41,7 +41,6 @@ Basic format of the general parameters are,
       - | Flag for auto-adjustment of bending element
         | "0" - use "bg" or "beta" for the bending strength
         | "1" - auto-adjust the bending strength
-
 
 Beam parameter
 --------------
@@ -72,6 +71,7 @@ Basic format of the beam parameters are,
     * - | **IonChargeStates**
       - | list of float
       - | List of charge to mass ratios of the all charge states. [1]
+        | The first element is used as the reference beam.
     * - | **NCharge**
       - | list of float
       - | List of macro weights of the all charge states. [1]
@@ -166,32 +166,46 @@ Special element
 
     Stripper element.
 
-    :parameters: **IonChargeStates**: list of float (optional)
+    :parameters: **IonChargeStates**: list of float
 
                     | List of charge to mass ratios after the charge stripper. [1]
 
-                 **NCharge**: list of float (optional)
+                 **NCharge**: list of float
 
                     | List of macro weights after the charge stripper. [1]
+                    | This list length must be same as the ``IonChargeStates``
 
-                 **Stripper_E1Para**: float (optional)
+                 **Stripper_IonZ**: float (optional, default is **78.0/238.0**)
+
+                    | Charge to mass ratio of the reference beam. [1]
+
+                 **Stripper_IonMass**: float (optional, default is **238.0**)
+
+                    | Ion mass of the reference beam. [amu]
+
+                 **Stripper_IonProton**: float (optional, default is **92.0**)
+
+                    | Proton number of the reference beam. [1]
+
+                 **Stripper_E1Para**: float (optional, default is **2.8874e-3**)
 
                     | Constant part of the energy struggling parameter of the charge stripper. [MeV/u]
 
-                 **Stripper_lambda**: float (optional)
+                 **Stripper_lambda**: float (optional, default is **5.5740**)
 
                     | Momentum spread factor :math:`\lambda` of the charge stripper. [1]
 
-                 **Stripper_upara**: float (optional)
+                 **Stripper_upara**: float (optional, default is **2.6903**)
 
                     | Momentum spread factor :math:`U` of the charge stripper. [1]
+                    | The momentum spread is defined as :math:`\sqrt(U/\lambda^2)` [mrad].
 
-                 **Stripper_E0Para**: vector[3]
+                 **Stripper_E0Para**: vector[3] (optional, default is **[16.348e6, 1.00547, -0.10681]**)
 
                     | Energy loss parameters due to the ionization.
                     | [Constant_part, Energy_dependence, Thickness_depenedence] with [eV/u, 1, 1]
 
-                 **Stripper_Para**: vector[3]
+                 **Stripper_Para**: vector[3] (optional, default is **[3.0, 20.0, 16.623e6]**)
 
                     | Stripper foil parameters.
                     | [Thickness, Thickness_variation, reference_energy] with [um, %, eV/u]
@@ -421,7 +435,7 @@ Optical element
                  **syncflag**: int
 
                     | Flag for synchronous phase input (for above parameter **phi**).
-                    |    **0** for driven phase input. 
+                    |    **0** for driven phase input.
                     |    **1** for synchronous phase input. (default)
 
                  **scl_fac**: float
