@@ -109,8 +109,15 @@ MomentState::MomentState(const Config& c)
         if(nchg.size()!=ics.size())
             throw std::invalid_argument("NCharge[] and IonChargeStates[] must have equal length");
 
-        ref.IonZ = ics[0];
-        ref.IonQ = nchg[0];
+        bool have_ionz = c.tryGet<double>("IonZ", ref.IonZ);
+        if(!have_ionz) {
+            ref.IonZ = ics[0];
+        }
+
+        bool have_ionq = c.tryGet<double>("IonQ", ref.IonQ);
+        if(!have_ionq) {
+            ref.IonQ = nchg[0];
+        }
     }
 
     /* Possible configurations
