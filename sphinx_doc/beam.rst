@@ -41,7 +41,7 @@ State Class
             * - :py:attr:`ref_SampleIonK`
               - Phase speed [rad]
             * - :py:attr:`last_caviphi0`
-              - Synchronous phase of the last rf cavity [deg]
+              - Driven phase of the last rf cavity [deg]
 
     - **Attributes - actual beam**
 
@@ -71,13 +71,13 @@ State Class
             * - :py:attr:`moment0`
               - Centroids of the all charge states.
             * - :py:attr:`moment0_env`
-              - Total centroid of the all charge states.
+              - Weighted average of centroids for the all charge states.
             * - :py:attr:`moment0_rms`
-              - Total rms size of the all charge states.
+              - Weighted average of rms size for the all charge states.
             * - :py:attr:`moment1`
               - Envelope matrixes of the all charge states.
             * - :py:attr:`moment1_env`
-              - Total envelope matrixes of the all charge states.
+              - Weighted average of envelope matrixes for the all charge states.
 
     .. py:attribute:: pos
 
@@ -125,7 +125,7 @@ State Class
 
     .. py:attribute:: last_caviphi0
 
-        **float**: Synchronous phase of the last rf cavity. [deg]
+        **float**: Driven phase of the last rf cavity. [deg]
 
 
     .. py:attribute:: beta
@@ -176,13 +176,13 @@ State Class
 
     .. py:attribute:: moment0_env
 
-        Total centroid of  the all charge states.
+        Weighted average of centroids for all charge states.
 
         **vector[7]**: :math:`[x, x', y, y', \phi, E_k, 1]` with [mm, rad, mm, rad, rad, MeV/u, 1].
 
     .. py:attribute:: moment0_rms
 
-        Total rms size (2nd order moments) of the all charge states.
+        Weighted average of rms beam envelopes (2nd order moments) for the all charge states.
 
         **vector[7]**: rms of :math:`[x, x', y, y', \phi, E_k, 1]` with [mm, rad, mm, rad, rad, MeV/u, 1].
 
@@ -196,7 +196,7 @@ State Class
 
     .. py:attribute:: moment1_env
 
-        Total envelope matrix of the all charge states.
+        Weighted average of envelope matrixes for the all charge states.
 
         **matrix[7,7]**:
 

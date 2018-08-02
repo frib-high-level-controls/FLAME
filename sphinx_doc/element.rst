@@ -170,10 +170,17 @@ Special element
 
                     | List of charge to mass ratios after the charge stripper. [1]
 
+                 **charge_model**: string
+
+                    | Macro weight model for stripper.
+                    | - **"baron" (default)**: Use Baron formula for the macro weights.
+                    | - **"off"**: Use ``NCharge`` parameter for the macro weights.
+
                  **NCharge**: list of float
 
                     | List of macro weights after the charge stripper. [1]
                     | This list length must be same as the ``IonChargeStates``
+                    | This parameter is used only in the case of ``charge_model = "baron"``.
 
                  **Stripper_IonZ**: float (optional, default is **78.0/238.0**)
 
