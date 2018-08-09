@@ -76,6 +76,10 @@ set(PY_DATA
   test/data/Multipole41/CaviMlp_41.txt
   test/data/Multipole53/CaviMlp_53.txt
   test/data/Multipole85/CaviMlp_85.txt
+  test/data/thinlenlon_29_p.lat
+  test/data/thinlenlon_41_p.lat
+  test/data/thinlenlon_53_p.lat
+  test/data/thinlenlon_85_p.lat
 
   # vaccel IOC template
   data/st.cmd

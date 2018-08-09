@@ -639,6 +639,29 @@ double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, con
 
 
 static
+double GetCavPhaseComplex(const Particle& ref, const double IonFys, const double scale,
+                          const double multip, const std::vector<double>& P)
+{
+    double Ek, Fyc;
+    size_t npoly =  P.size()/5;
+
+    if (P.size()%5 != 0) {
+        throw std::runtime_error(SB()<<"*** Size of fitting parameter for the synchronous phase must be 5*n.");
+    }
+
+    Ek = (ref.IonW-ref.IonEs)/MeVtoeV;
+
+    Fyc = 0.0;
+    for (size_t i=0; i<npoly; i++){
+        Fyc += (P[5*i]*pow(Ek,P[5*i+1]) + P[5*i+2]*log(Ek) + P[5*i+3]*exp(-Ek) + P[5*i+4])
+                *ipow(scale, static_cast<int>(i));
+    }
+
+    return IonFys - Fyc - ref.phis*multip;
+}
+
+
+static
 void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
                   const double k, const double Lambda, const double Ecen,
                   const double T, const double S, const double Tp, const double Sp, const double V0,
@@ -655,23 +678,31 @@ void EvalGapModel(const double dis, const double IonW0, const Particle &real, co
               + real.IonZ*V0*k*(Tp*sin(IonFy0+k*Ecen)+Sp*cos(IonFy0+k*Ecen))/(2e0*(IonW0-real.IonEs)/MeVtoeV);
 }
 
+
 ElementRFCavity::ElementRFCavity(const Config& c)
     :base_t(c)
-    ,fRF(c.get<double>("f"))
-    ,IonFys(c.get<double>("phi")*M_PI/180e0)
-    ,phi_ref(std::numeric_limits<double>::quiet_NaN())
-    ,cRm(c.get<double>("Rm", 0.0))
-    ,forcettfcalc(c.get<double>("forcettfcalc", 0.0)!=0.0)
-    ,MpoleLevel(get_flag(c, "MpoleLevel", 2))
-    ,EmitGrowth(get_flag(c, "EmitGrowth", 0))
 {
+    ElementRFCavity::LoadCavityFile(c);
+}
+
+
+void  ElementRFCavity::LoadCavityFile(const Config& c)
+{
+    fRF = c.get<double>("f");
+    IonFys = c.get<double>("phi")*M_PI/180e0;
+    phi_ref = std::numeric_limits<double>::quiet_NaN();
+    cRm = c.get<double>("Rm", 0.0);
+    forcettfcalc = c.get<double>("forcettfcalc", 0.0)!=0.0;
+    MpoleLevel = get_flag(c, "MpoleLevel", 2);
+    EmitGrowth = get_flag(c, "EmitGrowth", 0);
+
     if (MpoleLevel != 0 && MpoleLevel != 1 && MpoleLevel != 2)
         throw std::runtime_error(SB()<< "Undefined MpoleLevel: " << MpoleLevel);
 
     if (EmitGrowth != 0 && EmitGrowth != 1)
         throw std::runtime_error(SB()<< "Undefined EmitGrowth: " << EmitGrowth);
 
-    std::string CavType      = c.get<std::string>("cavtype");
+    CavType = c.get<std::string>("cavtype");
     std::string cavfile(c.get<std::string>("Eng_Data_Dir", defpath)),
                 fldmap(cavfile),
                 mlpfile(cavfile);
@@ -704,112 +735,112 @@ ElementRFCavity::ElementRFCavity(const Config& c)
     }
 
     if (cavi != 0)
-	{
-		numeric_table_cache *cache = numeric_table_cache::get();
+    {
+        numeric_table_cache *cache = numeric_table_cache::get();
 
-		try{
-		    numeric_table_cache::table_pointer ent = cache->fetch(fldmap);
-		    CavData = *ent;
-		    if(CavData.table.size1()==0 || CavData.table.size2()<2)
-		        throw std::runtime_error("field map needs 2+ columns");
-		}catch(std::exception& e){
-		    throw std::runtime_error(SB()<<"Error parsing '"<<fldmap<<"' : "<<e.what());
-		}
+        try{
+            numeric_table_cache::table_pointer ent = cache->fetch(fldmap);
+            CavData = *ent;
+            if(CavData.table.size1()==0 || CavData.table.size2()<2)
+                throw std::runtime_error("field map needs 2+ columns");
+        }catch(std::exception& e){
+            throw std::runtime_error(SB()<<"Error parsing '"<<fldmap<<"' : "<<e.what());
+        }
 
-		try{
-		    numeric_table_cache::table_pointer ent = cache->fetch(mlpfile);
-		    mlptable = *ent;
-		    if(mlptable.table.size1()==0 || mlptable.table.size2()<7)
-		        throw std::runtime_error("CaviMlp needs 7+ columns");
-		}catch(std::exception& e){
-		    throw std::runtime_error(SB()<<"Error parsing '"<<mlpfile<<"' : "<<e.what());
-		}
+        try{
+            numeric_table_cache::table_pointer ent = cache->fetch(mlpfile);
+            mlptable = *ent;
+            if(mlptable.table.size1()==0 || mlptable.table.size2()<7)
+                throw std::runtime_error("CaviMlp needs 7+ columns");
+        }catch(std::exception& e){
+            throw std::runtime_error(SB()<<"Error parsing '"<<mlpfile<<"' : "<<e.what());
+        }
 
-		{
-		    std::ifstream fstrm(cavfile.c_str());
+        {
+            std::ifstream fstrm(cavfile.c_str());
 
-		    std::string rawline;
-		    unsigned line=0;
-		    while(std::getline(fstrm, rawline)) {
-		        line++;
+            std::string rawline;
+            unsigned line=0;
+            while(std::getline(fstrm, rawline)) {
+                line++;
 
-		        size_t cpos = rawline.find_first_not_of(" \t");
-		        if(cpos==rawline.npos || rawline[cpos]=='%')
-		            continue; // skip blank and comment lines
+                size_t cpos = rawline.find_first_not_of(" \t");
+                if(cpos==rawline.npos || rawline[cpos]=='%')
+                    continue; // skip blank and comment lines
 
-		        cpos = rawline.find_last_not_of("\r\n");
-		        if(cpos!=rawline.npos)
-		            rawline = rawline.substr(0, cpos+1);
+                cpos = rawline.find_last_not_of("\r\n");
+                if(cpos!=rawline.npos)
+                    rawline = rawline.substr(0, cpos+1);
 
-		        std::istringstream lstrm(rawline);
-		        RawParams params;
-		        lstrm >> params.type >> params.name >> params.length >> params.aperature;
-		        bool needE0 = params.type!="drift" && params.type!="AccGap";
-		        if(needE0)
-		            lstrm >> params.E0;
-		        else
-		            params.E0 = 0.0;
+                std::istringstream lstrm(rawline);
+                RawParams params;
+                lstrm >> params.type >> params.name >> params.length >> params.aperature;
+                bool needE0 = params.type!="drift" && params.type!="AccGap";
+                if(needE0)
+                    lstrm >> params.E0;
+                else
+                    params.E0 = 0.0;
 
-		        if(lstrm.fail() && !lstrm.eof()) {
-		            throw std::runtime_error(SB()<<"Error parsing line '"<<line<<"' in '"<<cavfile<<"'");
-		        }
-		        lattice.push_back(params);
-		    }
+                if(lstrm.fail() && !lstrm.eof()) {
+                    throw std::runtime_error(SB()<<"Error parsing line '"<<line<<"' in '"<<cavfile<<"'");
+                }
+                lattice.push_back(params);
+            }
 
-		    if(fstrm.fail() && !fstrm.eof()) {
-		        throw std::runtime_error(SB()<<"Error, extra chars at end of file (line "<<line<<") in '"<<cavfile<<"'");
-		    }
-		}
-	}
-	else
-	{
-		boost::shared_ptr<Config> conf;
-		std::string key(SB()<<DataFile<<"|"<<boost::filesystem::last_write_time(DataFile));
-		if ( CavConfMap.find(key) == CavConfMap.end() ) {
-		  	// not found in CavConfMap
-			try {
-				try {
-					GLPSParser P;
-					conf.reset(P.parse_file(DataFile.c_str()));
-				}catch(std::exception& e){
-					std::cerr<<"Parse error: "<<e.what()<<"\n";
-				}
+            if(fstrm.fail() && !fstrm.eof()) {
+                throw std::runtime_error(SB()<<"Error, extra chars at end of file (line "<<line<<") in '"<<cavfile<<"'");
+            }
+        }
+    }
+    else
+    {
+        boost::shared_ptr<Config> conf;
+        std::string key(SB()<<DataFile<<"|"<<boost::filesystem::last_write_time(DataFile));
+        if ( CavConfMap.find(key) == CavConfMap.end() ) {
+            // not found in CavConfMap
+            try {
+                try {
+                    GLPSParser P;
+                    conf.reset(P.parse_file(DataFile.c_str()));
+                }catch(std::exception& e){
+                    std::cerr<<"Parse error: "<<e.what()<<"\n";
+                }
 
-			}catch(std::exception& e){
-				std::cerr<<"Error: "<<e.what()<<"\n";
-			}
-			CavConfMap.insert(std::make_pair(key, conf));
-		} else {
-		  	// found in CavConfMap
-		  	conf=CavConfMap[key];
-		}
+            }catch(std::exception& e){
+                std::cerr<<"Error: "<<e.what()<<"\n";
+            }
+            CavConfMap.insert(std::make_pair(key, conf));
+        } else {
+            // found in CavConfMap
+            conf=CavConfMap[key];
+        }
 
-		typedef Config::vector_t elements_t;
-	    elements_t Es(conf->get<elements_t>("elements"));
-	    for(elements_t::iterator it=Es.begin(), end=Es.end(); it!=end; ++it)
-		{
-		    const Config& EC = *it;
-		    const std::string& etype(EC.get<std::string>("type"));
-		    const double elength(EC.get<double>("L"));
-		    // fill in the lattice
-		    RawParams params;
-		    params.type = etype;
-			params.length = elength;
-			std::vector<double> attrs;
+        typedef Config::vector_t elements_t;
+        elements_t Es(conf->get<elements_t>("elements"));
+        for(elements_t::iterator it=Es.begin(), end=Es.end(); it!=end; ++it)
+        {
+            const Config& EC = *it;
+            const std::string& etype(EC.get<std::string>("type"));
+            const double elength(EC.get<double>("L"));
+            // fill in the lattice
+            RawParams params;
+            params.type = etype;
+            params.length = elength;
+            std::vector<double> attrs;
             bool notdrift = etype!="drift";
             if(notdrift)
             {
-            	const double eV0(EC.get<double>("V0"));
-            	params.E0 = eV0;
-				EC.tryGet<std::vector<double> >("attr", attrs);
-	            for(int i=0; i<10; i++)
-	            {
-	                params.Tfit.push_back(attrs[i]);
-	            }
-	            for(int i=0; i<10; i++)
-	            {
-	                params.Sfit.push_back(attrs[i+10]);
-	            }
+                const double eV0(EC.get<double>("V0"));
+                params.E0 = eV0;
+                EC.tryGet<std::vector<double> >("attr", attrs);
+                for(int i=0; i<10; i++)
+                {
+                    params.Tfit.push_back(attrs[i]);
+                }
+                for(int i=0; i<10; i++)
+                {
+                    params.Sfit.push_back(attrs[i+10]);
+                }
             }
             bool needSynAccTab = params.type=="AccGap";
             // SynAccTab should only update once
@@ -820,13 +851,19 @@ ElementRFCavity::ElementRFCavity(const Config& c)
                     SynAccTab.push_back(attrs[i+20]);
                 }
              }
-		    lattice.push_back(params);
-		}
-		std::vector<double> Ez;
-		conf->tryGet<std::vector<double> >("Ez", Ez);
-		CavData.readvec(Ez,2);
-		conf->tryGet<double>("Rm",cRm);
-	}
+            lattice.push_back(params);
+        }
+
+        std::vector<double> Ez;
+        bool checker = conf->tryGet<std::vector<double> >("Ez", Ez);
+        if (!checker) throw std::runtime_error(SB()<<"'Ez' is missing in RF cavity file.\n");
+        CavData.readvec(Ez,2);
+        conf->tryGet<double>("Rm",cRm);
+        have_RefScl = conf->tryGet<double>("RefScale", RefScl);
+        have_SynComplex = conf->tryGet<std::vector<double> >("SyncFit", SynComplex);
+        have_EkLim = conf->tryGet<std::vector<double> >("EnergyLimit", EkLim);
+        have_NsLim = conf->tryGet<std::vector<double> >("ScaleLimit", NsLim);
+    }
 }
 
 void  ElementRFCavity::GetCavMatParams(const int cavi, const double beta_tab[], const double gamma_tab[], const double CaviIonK[],
@@ -1437,7 +1474,7 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
              <<"\n";
     IonFy = IonFy0;
     // Sample rate is different for RF Cavity; due to different RF frequencies.
-	// IonK  = state.SampleIonK;
+    // IonK  = state.SampleIonK;
     double CaviIonK = 2e0*M_PI*fRF/(state.beta*C0*MtoMM);
     for (size_t k = 0; k < n-1; k++) {
         double IonFylast = IonFy;
@@ -1460,14 +1497,32 @@ void ElementRFCavity::GetCavBoost(const numeric_table &CavData, Particle &state,
 
 void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
 {
-    double      multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
-    bool        fsync = conf().get<double>("syncflag", 1.0) == 1.0;
+    double multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
+    double fsync = conf().get<double>("syncflag", 1.0);
 
     multip    = fRF/SampleFreq;
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
 
-    if (fsync) {
-        caviFy = GetCavPhase(cavi, ref, IonFys, multip, SynAccTab);  // Get driven phase from synchronous phase @+
+    if (cavi == 0 && have_EkLim) {
+        if (ref.IonEk/MeVtoeV < EkLim[0] || ref.IonEk/MeVtoeV > EkLim[1])
+            FLAME_LOG(WARN)<< "Warning: RF cavity incident energy (" << ref.IonEk/MeVtoeV
+                << " [MeV]) is out of range (" << EkLim[0] << " ~ " << EkLim[1] << ").\n";
+    }
+
+    if (fsync >= 1.0) {
+        if (cavi == 0 && have_RefScl && have_SynComplex && fsync == 1.0) {
+            // Get driven phase from synchronous phase based on peak position
+            double NormScl = EfieldScl*ref.IonZ/RefScl;
+            if (have_NsLim) {
+                if (NormScl < NsLim[0] || NormScl > NsLim[1])
+                    FLAME_LOG(WARN)<< "Warning: RF cavity normalized scale (" << NormScl
+                        << ") is out of range (" << NsLim[0] << " ~ " << NsLim[1] << ").\n";
+            }
+            caviFy = GetCavPhaseComplex(ref, IonFys, NormScl, multip, SynComplex);
+        } else {
+            // Get driven phase from synchronous phase based on sin fit model
+            caviFy = GetCavPhase(cavi, ref, IonFys, multip, SynAccTab);
+        }
     } else {
         caviFy = conf().get<double>("phi")*M_PI/180e0;
     }

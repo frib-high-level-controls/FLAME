@@ -9,8 +9,13 @@
 #include "util.h"
 
 // Phase space dimension; including vector for orbit/1st moment.
-# define PS_Dim MomentState::maxsize // Set to 7; to include orbit.
+#define PS_Dim MomentState::maxsize // Set to 7; to include orbit.
 
+#ifdef DEFPATH
+    #define defpath DEFPATH
+#else
+    #define defpath "."
+#endif
 
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
@@ -58,9 +63,22 @@ struct ElementRFCavity : public MomentElementBase
     numeric_table mlptable, // from CaviMlp_*.txt
                   CavData; // from axisData_*.txt
 
-    std::string DataPath;
-    std::string DataFile;
+    std::string CavType,
+                DataPath,
+                DataFile;
+
     std::vector<double> SynAccTab;
+
+    bool have_RefScl, // referance scale factor q0*1.0/m0
+         have_SynComplex, // Model coefficients
+         have_EkLim, // limits for incident energy
+         have_NsLim; // limits for normalized scale factor q*scl/m
+
+    double RefScl;
+
+    std::vector<double> SynComplex,
+                        EkLim,
+                        NsLim;
 
     double calFitPow(double kfac, const std::vector<double>& Tfit) const;
     static std::map<std::string,boost::shared_ptr<Config> > CavConfMap;
@@ -77,6 +95,8 @@ struct ElementRFCavity : public MomentElementBase
              EmitGrowth;
 
     ElementRFCavity(const Config& c);
+
+    void LoadCavityFile(const Config& c);
 
     void GetCavMatParams(const int cavi,
                          const double beta_tab[], const double gamma_tab[], const double IonK[],
@@ -149,6 +169,21 @@ struct ElementRFCavity : public MomentElementBase
             resize_cache(ST);
             // need to re-calculate energy dependent terms
 
+            std::string newtype = conf().get<std::string>("cavtype");
+            if (CavType != newtype){
+                lattice.clear();
+                SynAccTab.clear();
+                LoadCavityFile(conf());
+            } else if (CavType == "Generic") {
+                std::string newfile = conf().get<std::string>("Eng_Data_Dir", defpath);
+                newfile += "/" + conf().get<std::string>("datafile");
+                if (DataFile != newfile) {
+                    lattice.clear();
+                    SynAccTab.clear();
+                    LoadCavityFile(conf());
+                }
+            }
+
             recompute_matrix(ST); // updates transfer and last_Kenergy_out
 
             for(size_t i=0; i<last_real_in.size(); i++)
@@ -220,7 +255,6 @@ struct ElementRFCavity : public MomentElementBase
 
             // J.B. Bug in TLM.
             double SampleIonK = ST.real[i].SampleIonK;
-
 
             InitRFCav(ST.real[i], transfer[i], CavTLMLineTab[i]);
 

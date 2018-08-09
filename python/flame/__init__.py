@@ -6,7 +6,7 @@ from ._internal import (Machine as MachineBase,
                         _pyapi_version, _capi_version,
                         FLAME_ERROR, FLAME_WARN,
                         FLAME_INFO, FLAME_DEBUG,
-                        setLogLevel)
+                        setLogLevel, getLoggerName)
 
 def _list2odict(L):
     'Recursively turn list of tuples into OrderedDict'
@@ -41,7 +41,7 @@ class Machine(MachineBase):
 
 # by default pass all but DEBUG to python logger.
 # May set to FLAME_WARN for performance
-setLogLevel(FLAME_INFO)
+setLogLevel(FLAME_WARN)
 
 __all__ = ['Machine',
     'GLPSPrinter',
