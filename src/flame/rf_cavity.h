@@ -69,16 +69,16 @@ struct ElementRFCavity : public MomentElementBase
 
     std::vector<double> SynAccTab;
 
-    bool have_RefScl, // referance scale factor q0*1.0/m0
+    bool have_RefNrm, // referance scale factor q0*1.0/m0
          have_SynComplex, // Model coefficients
          have_EkLim, // limits for incident energy
-         have_NsLim; // limits for normalized scale factor q*scl/m
+         have_NrLim; // limits for normalization factor q*scl/m
 
-    double RefScl;
+    double RefNrm;
 
     std::vector<double> SynComplex,
                         EkLim,
-                        NsLim;
+                        NrLim;
 
     double calFitPow(double kfac, const std::vector<double>& Tfit) const;
     static std::map<std::string,boost::shared_ptr<Config> > CavConfMap;

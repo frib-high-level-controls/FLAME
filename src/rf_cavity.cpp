@@ -859,10 +859,10 @@ void  ElementRFCavity::LoadCavityFile(const Config& c)
         if (!checker) throw std::runtime_error(SB()<<"'Ez' is missing in RF cavity file.\n");
         CavData.readvec(Ez,2);
         conf->tryGet<double>("Rm",cRm);
-        have_RefScl = conf->tryGet<double>("RefScale", RefScl);
+        have_RefNrm = conf->tryGet<double>("RefNorm", RefNrm);
         have_SynComplex = conf->tryGet<std::vector<double> >("SyncFit", SynComplex);
         have_EkLim = conf->tryGet<std::vector<double> >("EnergyLimit", EkLim);
-        have_NsLim = conf->tryGet<std::vector<double> >("ScaleLimit", NsLim);
+        have_NrLim = conf->tryGet<std::vector<double> >("NormLimit", NrLim);
     }
 }
 
@@ -1510,13 +1510,13 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
     }
 
     if (fsync >= 1.0) {
-        if (cavi == 0 && have_RefScl && have_SynComplex && fsync == 1.0) {
+        if (cavi == 0 && have_RefNrm && have_SynComplex && fsync == 1.0) {
             // Get driven phase from synchronous phase based on peak position
-            double NormScl = EfieldScl*ref.IonZ/RefScl;
-            if (have_NsLim) {
-                if (NormScl < NsLim[0] || NormScl > NsLim[1])
+            double NormScl = EfieldScl*ref.IonZ/RefNrm;
+            if (have_NrLim) {
+                if (NormScl < NrLim[0] || NormScl > NrLim[1])
                     FLAME_LOG(WARN)<< "Warning: RF cavity normalized scale (" << NormScl
-                        << ") is out of range (" << NsLim[0] << " ~ " << NsLim[1] << ").\n";
+                        << ") is out of range (" << NrLim[0] << " ~ " << NrLim[1] << ").\n";
             }
             caviFy = GetCavPhaseComplex(ref, IonFys, NormScl, multip, SynComplex);
         } else {
