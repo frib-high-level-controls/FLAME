@@ -51,6 +51,7 @@ def print_state(S):
         if i != n1-1: sys.stdout.write(', ')
       sys.stdout.write(']\n')
 
+
 class MomentTest(object):
     'Helper for testing moment2 sim'
 
@@ -102,7 +103,6 @@ class MomentTest(object):
             else:
                 self.assertAlmostEqual(v, getattr(actual, k), places=decimal, msg="%s %s doesn't match"%(msg or "",k))
 
-
     def checkPropagate(self, elem, instate, outstate, max=1):
         '''Pass given input state through the named element
 
@@ -134,6 +134,7 @@ class MomentTest(object):
 
         self.assertStateEqual(outstate, S1, 'third pass')
         self.assertStateEqual(outstate, S2, 'fourth pass')
+
 
 class TestToStrl(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
@@ -590,6 +591,7 @@ class TestToStrl(unittest.TestCase, MomentTest):
             'phis':asfarray([2.0236417753279932e+03, 2.0236356660500376e+03, 2.0236326008320109e+03, 2.0236318853736768e+03, 2.0236328811007140e+03]),
         }, max=-1)
 
+
 class TestToChgStrErr(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
@@ -907,6 +909,7 @@ class TestFE(unittest.TestCase, MomentTest):
             ]),
         }, max=-1)
 
+
 class TestArc(unittest.TestCase, MomentTest):
 
     lattice = 'Arc_Ds.lat'
@@ -933,6 +936,7 @@ class TestArc(unittest.TestCase, MomentTest):
                 [ 0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]
             ])
         }, max=-1)
+
 
 class TestGenCavi_glps(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
@@ -966,6 +970,7 @@ class TestGenCavi_glps(unittest.TestCase, MomentTest):
             ])
         }, max=-1)
 
+
 class TestGenCavi2_glps(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
@@ -998,6 +1003,7 @@ class TestGenCavi2_glps(unittest.TestCase, MomentTest):
             ])
         }, max=-1)
 
+
 class TestGenStripper(unittest.TestCase, MomentTest):
     """Strategy is to test the state after the first instance of each element type.
 
@@ -1028,6 +1034,7 @@ class TestGenStripper(unittest.TestCase, MomentTest):
                 [ -6.776427468998e-02,   1.604923898822e-04,   8.444805902978e-03, -2.387113989044e-07,  -8.025527186395e-04,   1.729925819210e-03, 0.000000000000e+00],
                 [  0.000000000000e+00,   0.000000000000e+00,   0.000000000000e+00, 0.000000000000e+00,   0.000000000000e+00,   0.000000000000e+00, 0.000000000000e+00]])
         }, max=-1)
+
 
 class TestTmOrbTrim(unittest.TestCase, MomentTest):
 
@@ -1084,6 +1091,7 @@ class TestTmOrbTrim(unittest.TestCase, MomentTest):
         self.M.reconfigure(3, {'xyrotate':0.0})
         self.ICM.reconfigure(3, {'xyrotate':0.0})
 
+
 class TestTMatrix(unittest.TestCase, MomentTest):
 
     lattice = 'TMtest.lat'
@@ -1109,3 +1117,98 @@ class TestTMatrix(unittest.TestCase, MomentTest):
                 [ -1.45968494132151e-05, -1.55860513541139e-08, -1.57622699729789e-07, -2.13693266727837e-08, -9.92141850977563e-05,  2.63143434813980e-06,  0.00000000000000e+00],
                 [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]])
         }, max=-1)
+
+
+class TestCavityComplex(unittest.TestCase, MomentTest):
+
+    lattice = 'LS1_Gen.lat'
+
+    def setUp(self):
+        with open(os.path.join(datadir, self.lattice), 'rb') as F:
+            self.M = Machine(F)
+            F.seek(0)
+            self.ICM = Machine(F, extra={'skipcache':1.0})
+
+    def test_cavity41(self):
+        "Test of beta = 0.041 cavity with complex synchronous phase definition."
+        self.M.reconfigure(0, {"IonEk":0.5e6})
+        self.M.reconfigure(3, {'f':80.5e6, 'datafile':'thinlenlon_41_p.lat'})
+
+        self.ICM.reconfigure(0, {"IonEk":0.5e6})
+        self.ICM.reconfigure(3, {'f':80.5e6, 'datafile':'thinlenlon_41_p.lat'})
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([ 4.23605155153869e-03,  1.28121200436505e-05,  6.36162289348725e-03, -1.53134843550140e-04, -5.89826448764086e-03,  1.26404983758926e-04,  1.00000000000000e+00]),
+            'moment1_env':asfarray([
+                [  3.67916029046276e+00,  4.08684515202615e-03,  2.50427513616188e-02,  3.25508442867734e-05,  7.67039930224078e-04, -2.93047534714539e-06,  0.00000000000000e+00],
+                [  4.08684515202615e-03,  7.09782491239286e-06,  1.08874212718585e-05,  4.67995286657294e-09,  5.94991394949667e-07,  2.90093282524971e-09,  0.00000000000000e+00],
+                [  2.50427513616188e-02,  1.08874212718585e-05,  3.22456322798118e+00,  3.91385338705698e-03, -1.32624458596185e-03, -1.79947946807807e-05,  0.00000000000000e+00],
+                [  3.25508442867734e-05,  4.67995286657294e-09,  3.91385338705698e-03,  7.85579533258181e-06, -2.30366894380426e-06, -1.05270215498364e-08,  0.00000000000000e+00],
+                [  7.67039930224078e-04,  5.94991394949667e-07, -1.32624458596185e-03, -2.30366894380427e-06,  1.50141865113147e-03,  8.71376388849764e-06,  0.00000000000000e+00],
+                [ -2.93047534714540e-06,  2.90093282524971e-09, -1.79947946807807e-05, -1.05270215498364e-08,  8.71376388849763e-06,  8.42246970099947e-07,  0.00000000000000e+00],
+                [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]])
+        }, max=4)
+
+    def test_cavity85(self):
+        "Test of beta = 0.085 cavity with complex synchronous phase definition."
+        self.M.reconfigure(0, {"IonEk":1.5e6})
+        self.M.reconfigure(3, {'f':80.5e6, 'datafile':'thinlenlon_85_p.lat'})
+
+        self.ICM.reconfigure(0, {"IonEk":1.5e6})
+        self.ICM.reconfigure(3, {'f':80.5e6, 'datafile':'thinlenlon_85_p.lat'})
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([ 4.79113001312505e-03,  1.15371176292635e-05, -3.61085655383099e-02, -4.24123000959171e-04, -1.55554774364042e-03, 2.48251216769218e-04,  1.00000000000000e+00]),
+            'moment1_env':asfarray([
+                [  3.61528179341784e+00,  2.58919618867232e-03,  2.36990807884232e-02,  1.77470939783782e-05,  3.47246209779196e-04, -7.84481786212721e-06,  0.00000000000000e+00],
+                [  2.58919618867232e-03,  4.56679049229316e-06, -2.63516374913577e-06, -1.24017505609098e-08,  1.74806706851301e-07,  7.71595958803648e-09,  0.00000000000000e+00],
+                [  2.36990807884232e-02, -2.63516374913577e-06,  3.26277615501889e+00,  2.48179926439447e-03, -9.24013911571920e-04, -2.55986274875836e-05,  0.00000000000000e+00],
+                [  1.77470939783782e-05, -1.24017505609098e-08,  2.48179926439447e-03,  5.08545308042313e-06, -8.54531177256084e-07,  6.69446385525592e-09,  0.00000000000000e+00],
+                [  3.47246209779196e-04,  1.74806706851301e-07, -9.24013911571920e-04, -8.54531177256084e-07,  6.40273501266676e-04,  2.39278995377648e-05,  0.00000000000000e+00],
+                [ -7.84481786212721e-06,  7.71595958803648e-09, -2.55986274875836e-05,  6.69446385525592e-09,  2.39278995377648e-05,  2.75029205732428e-06,  0.00000000000000e+00],
+                [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]])
+        }, max=4)
+
+    def test_cavity29(self):
+        "Test of beta = 0.29 cavity with complex synchronous phase definition."
+        self.M.reconfigure(0, {"IonEk":20.0e6})
+        self.M.reconfigure(3, {'f':322.0e6, 'datafile':'thinlenlon_29_p.lat'})
+
+        self.ICM.reconfigure(0, {"IonEk":20.0e6})
+        self.ICM.reconfigure(3, {'f':322.0e6, 'datafile':'thinlenlon_29_p.lat'})
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([ 4.71572373487639e-03,  1.09175994688004e-05,  1.68468180858860e-02,  7.18225939530333e-06, -2.13260866920528e-04,  2.38860361099243e-04,  1.00000000000000e+00]),
+            'moment1_env':asfarray([
+                [  3.34734875026061e+00,  1.63291666611452e-03,  2.15046556118054e-02,  1.28514173108473e-05,  2.41296485728979e-04,  5.77204625866051e-05,  0.00000000000000e+00],
+                [  1.63291666611452e-03,  3.89967979608267e-06, -9.96737747930656e-06, -1.81299526863406e-08,  1.12640394737368e-07,  4.42214371613898e-08,  0.00000000000000e+00],
+                [  2.15046556118054e-02, -9.96737747930656e-06,  2.97141591602863e+00,  1.89971995228467e-03, -8.31528797944698e-04, -2.58986976838753e-04,  0.00000000000000e+00],
+                [  1.28514173108473e-05, -1.81299526863406e-08,  1.89971995228467e-03,  4.93379376691203e-06, -5.24265907259838e-07, -1.28557032643293e-07,  0.00000000000000e+00],
+                [  2.41296485728979e-04,  1.12640394737368e-07, -8.31528797944698e-04, -5.24265907259838e-07,  6.57422474757487e-04,  2.20336964604507e-04,  0.00000000000000e+00],
+                [  5.77204625866051e-05,  4.42214371613898e-08, -2.58986976838753e-04, -1.28557032643293e-07,  2.20336964604507e-04,  7.56541265290424e-05,  0.00000000000000e+00],
+                [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]])
+        }, max=4)
+
+    def test_cavity53(self):
+        "Test of beta = 0.53 cavity with complex synchronous phase definition."
+        self.M.reconfigure(0, {"IonEk":60.0e6})
+        self.M.reconfigure(3, {'f':322.0e6, 'datafile':'thinlenlon_53_p.lat'})
+
+        self.ICM.reconfigure(0, {"IonEk":60.0e6})
+        self.ICM.reconfigure(3, {'f':322.0e6, 'datafile':'thinlenlon_53_p.lat'})
+
+        self.checkPropagate(0, {}, {
+            'moment0_env':
+                asfarray([ 6.88099188515172e-03,  1.08669409776906e-05,  1.81406276334134e-02,  6.77380822302804e-06, -1.91473382751717e-04,  2.15218053817749e-04,  1.00000000000000e+00]),
+            'moment1_env':asfarray([
+                [  4.10186615052641e+00,  2.33313177282479e-03,  2.09514518968606e-02,  8.60886591882508e-06,  2.61444778685620e-04,  1.06208903663361e-04,  0.00000000000000e+00],
+                [  2.33313177282479e-03,  3.86755963629572e-06, -1.41929446477670e-05, -1.83669292724116e-08,  1.08482972291994e-07,  6.00409920909211e-08,  0.00000000000000e+00],
+                [  2.09514518968606e-02, -1.41929446477670e-05,  3.87924588021082e+00,  2.80823798120667e-03, -9.31583232147397e-04, -4.26276935801133e-04,  0.00000000000000e+00],
+                [  8.60886591882509e-06, -1.83669292724116e-08,  2.80823798120667e-03,  4.89097634186676e-06, -5.03779357222618e-07, -1.99470923869964e-07,  0.00000000000000e+00],
+                [  2.61444778685620e-04,  1.08482972291994e-07, -9.31583232147397e-04, -5.03779357222618e-07,  6.63063143896152e-04,  3.24135738437175e-04,  0.00000000000000e+00],
+                [  1.06208903663361e-04,  6.00409920909211e-08, -4.26276935801133e-04, -1.99470923869964e-07,  3.24135738437175e-04,  1.60244651133033e-04,  0.00000000000000e+00],
+                [  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00,  0.00000000000000e+00]])
+        }, max=4)

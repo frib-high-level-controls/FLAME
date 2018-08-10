@@ -170,10 +170,17 @@ Special element
 
                     | List of charge to mass ratios after the charge stripper. [1]
 
+                 **charge_model**: string
+
+                    | Macro weight model for stripper.
+                    | - **"baron" (default)**: Use Baron formula for the macro weights.
+                    | - **"off"**: Use ``NCharge`` parameter for the macro weights.
+
                  **NCharge**: list of float
 
                     | List of macro weights after the charge stripper. [1]
                     | This list length must be same as the ``IonChargeStates``
+                    | This parameter is used only in the case of ``charge_model = "baron"``.
 
                  **Stripper_IonZ**: float (optional, default is **78.0/238.0**)
 
@@ -436,7 +443,8 @@ Optical element
 
                     | Flag for synchronous phase input (for above parameter **phi**).
                     |    **0** for driven phase input.
-                    |    **1** for synchronous phase input. (default)
+                    |    **1** for synchronous phase input with complex fit model. (default)
+                    |    **2** for synchronous phase input with sinusoidal fit model.
 
                  **scl_fac**: float
 
@@ -532,6 +540,23 @@ The basic format of the rf cavity data is similar to the main lattice file,
       - | On axis :math:`E_z` data.
         | The odd index (1,3,5,...) is z position. [mm]
         | The even index (2,4,6,...) is Electric field strength. [V/m]
+    * - | **RefNorm**
+      - | float
+      - | Reference normalization factor for complex synchronous phase definition.
+        | This value is defined by :math:`q A/m` where :math:`A` is the scaling factor of the 3D EM field.
+        | If **RefNorm** or **SyncFit** are not defined, sinusoidal model is used for the synchronous phase definition.
+    * - | **SyncFit**
+      - | vector[5*n]
+      - | Fitting parameters for complex synchronous phase definition.
+        | The fitting model is shown :ref:`here <ttfnote>`.
+    * - | **EnergyLimit**
+      - | vector[2]
+      - | Lower and higher limit for incident energy. [MeV]
+        | This value is used for warning signs only.
+    * - | **NormLimit**
+      - | vector[2]
+      - | Lower and higher limit for normalization factor.
+        | This value is used for warning signs only.
 
 Lattice element for the rf cavity data
 """"""""""""""""""""""""""""""""""""""""""
@@ -634,14 +659,25 @@ Drift space is the same format as the main lattice but unit of ``L`` is [mm] - :
 
         T(k), S(k) = \sum^9_{n=0} p_n k^{(9-n)}.
 
-    The driven-phase calculation is also boosted by similar method.
-    The phase transferring factor :math:`\varphi_c` is fitted by :math:`p_{i = 0, 1, 2}`
+    The driven-phase calculation is also boosted by using fitting model for the energy gain curve.
+
+    For the sinusoidal fitting model, the phase transferring factor :math:`\varphi_c` is fitted by using
 
     .. math::
 
         \varphi_c = p_0 E^{p_1} + p_2.
 
-    Here, :math:`E` is the kinetic energy. The driven phase :math:`\varphi_d` is calculated by using :math:`\varphi_c`,
+    Here, :math:`E` is the kinetic energy and :math:`p_{i = 0, 1, 2}` are the fitting parameters.
+
+    For other complex models (e.g. peak-base model), the phase transferring factor depends on the normalization factor :math:`g = q A/m` where :math:`A` is the scaling factor of the 3D EM field. The fitting model for :math:`\varphi_c` is,
+
+    .. math::
+
+        \varphi_c = \sum_{i=0}^n (p_{5i} E^{p_{5i+1}} + p_{5i+2} \ln(E) + p_{5i+3}e^E + p_{5i+4})\times g^i .
+
+    Here, user can determine :math:`n` value corresponds to the size of **SyncFit**.
+
+    The driven phase :math:`\varphi_d` is calculated by using :math:`\varphi_c`,
 
     .. math::
 
