@@ -37,15 +37,6 @@ static double ipow(double base, int exp)
     return result;
 }
 
-static
-void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
-                  const double k, const double Lambda, const double Ecen,
-                  const double T, const double S, const double Tp, const double Sp, const double V0,
-                  double &IonW_f, double &IonFy_f);
-
-static
-double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip , const std::vector<double>& P);
-
 
 void CavDataType::show(std::ostream& strm, const int k) const
 {
@@ -859,6 +850,8 @@ void  ElementRFCavity::LoadCavityFile(const Config& c)
         if (!checker) throw std::runtime_error(SB()<<"'Ez' is missing in RF cavity file.\n");
         CavData.readvec(Ez,2);
         conf->tryGet<double>("Rm",cRm);
+
+        // Get extra parameters for complex synchronous phase definition
         have_RefNrm = conf->tryGet<double>("RefNorm", RefNrm);
         have_SynComplex = conf->tryGet<std::vector<double> >("SyncFit", SynComplex);
         have_EkLim = conf->tryGet<std::vector<double> >("EnergyLimit", EkLim);

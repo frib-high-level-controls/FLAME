@@ -17,6 +17,26 @@
     #define defpath "."
 #endif
 
+
+static
+// Evaluate the beam energy and phase in the acceleration gap.
+void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
+                  const double k, const double Lambda, const double Ecen,
+                  const double T, const double S, const double Tp, const double Sp, const double V0,
+                  double &IonW_f, double &IonFy_f);
+
+
+static
+// Calculate driven phase from synchronous phase which defined by sinusoidal fitting.
+double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip, const std::vector<double>& P);
+
+
+static
+// Calculate driven phase from synchronous phase which defined by complex fitting (e.g. peak-base model).
+double GetCavPhaseComplex(const Particle& ref, const double IonFys, const double scale,
+                          const double multip, const std::vector<double>& P);
+
+
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
 public:
@@ -69,16 +89,16 @@ struct ElementRFCavity : public MomentElementBase
 
     std::vector<double> SynAccTab;
 
-    bool have_RefNrm, // referance scale factor q0*1.0/m0
-         have_SynComplex, // Model coefficients
-         have_EkLim, // limits for incident energy
-         have_NrLim; // limits for normalization factor q*scl/m
+    bool have_RefNrm,
+         have_SynComplex,
+         have_EkLim,
+         have_NrLim;
 
-    double RefNrm;
+    double RefNrm; // Reference scale factor q0*1.0/m0
 
-    std::vector<double> SynComplex,
-                        EkLim,
-                        NrLim;
+    std::vector<double> SynComplex, // Fitting model coefficients
+                        EkLim,      // Limits for incident energy
+                        NrLim;      // Limits for normalization factor q*scl/m
 
     double calFitPow(double kfac, const std::vector<double>& Tfit) const;
     static std::map<std::string,boost::shared_ptr<Config> > CavConfMap;
