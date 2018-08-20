@@ -902,22 +902,7 @@ struct ElementSBend : public MomentElementBase
 
             double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
-            if (!HdipoleFitMode) {
-                /*
-                double    di_bg, Ek00, beta00, gamma00, IonK_Bend;
-                di_bg     = conf().get<double>("bg");
-                // Dipole reference energy.
-                Ek00      = (sqrt(sqr(di_bg)+1e0)-1e0)*ST.ref.IonEs;
-                gamma00   = (Ek00+ST.ref.IonEs)/ST.ref.IonEs;
-                beta00    = sqrt(1e0-1e0/sqr(gamma00));
-                IonK_Bend = 2e0*M_PI/(beta00*SampleLambda);
-                */
-
-                // J.B.: this is odd.
-    //            ST.real.phis  += IonK_Bend*length*MtoMM + dphis_temp;
-                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
-            } else
-                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+            ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
         }
 
         ST.calc_rms();

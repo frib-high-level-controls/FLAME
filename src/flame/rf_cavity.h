@@ -18,25 +18,6 @@
 #endif
 
 
-static
-// Evaluate the beam energy and phase in the acceleration gap.
-void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
-                  const double k, const double Lambda, const double Ecen,
-                  const double T, const double S, const double Tp, const double Sp, const double V0,
-                  double &IonW_f, double &IonFy_f);
-
-
-static
-// Calculate driven phase from synchronous phase which defined by sinusoidal fitting.
-double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip, const std::vector<double>& P);
-
-
-static
-// Calculate driven phase from synchronous phase which defined by complex fitting (e.g. peak-base model).
-double GetCavPhaseComplex(const Particle& ref, const double IonFys, const double scale,
-                          const double multip, const std::vector<double>& P);
-
-
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
 public:
