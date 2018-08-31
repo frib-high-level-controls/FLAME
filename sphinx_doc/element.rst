@@ -134,6 +134,8 @@ After writing down the all lattice elements, user need to specify the lattice ce
       - Solenoid magnet element.
     * - :cpp:type:`quadrupole`
       - Magnetic quadrupole element.
+    * - :cpp:type:`sextupole`
+      - Magnetic sextupole element.
     * - :cpp:type:`equad`
       - Electrostatic quadrupole element.
     * - :cpp:type:`sbend`
@@ -317,6 +319,32 @@ Optical element
 
                     | Quadrupole field gradient. [T/m]
                     | Positive value means horizontal focusing.
+
+                 **dx**, **dy**, **pitch**, **yaw**, **roll**: float
+
+                    | Misalignment parameters. See :cpp:type:`solenoid` case.
+
+.. cpp:type:: sextupole
+
+    Magnetic sextupole element.
+
+    :parameters: **L**: float
+
+                    | Length of the lattice element. [m]
+
+                 **B3**: float
+
+                    | Sextupole field gradient. [T/m^2]
+                    | Positive value means horizontal focusing.
+
+                 **dstkick**: bool
+
+                    | On/off flag to calculate the centroid shift due to the 3rd order effect.
+                    | Default is **1** (on).
+
+                 **step**: int
+
+                    | Step number for the sextupole element. Default is **1**.
 
                  **dx**, **dy**, **pitch**, **yaw**, **roll**: float
 
