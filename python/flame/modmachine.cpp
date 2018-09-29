@@ -1,4 +1,4 @@
-
+#include <climits>
 #include <sstream>
 
 #include "flame/base.h"
@@ -158,7 +158,8 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
 
     TRY {
         PyObject *state, *toobserv = Py_None;
-        unsigned long start = 0, max = (unsigned long)-1;
+        unsigned long start = 0;
+        int max = INT_MAX;
         const char *pnames[] = {"state", "start", "max", "observe", NULL};
         if(!PyArg_ParseTupleAndKeywords(args, kws, "O|kkO", (char**)pnames, &state, &start, &max, &toobserv))
             return NULL;
@@ -270,8 +271,8 @@ static PyMethodDef PyMachine_methods[] = {
      "Allocate a new State based on this Machine's configuration."
      "  Optionally provide additional configuration"},
     {"propagate", (PyCFunction)&PyMachine_propagate, METH_VARARGS|METH_KEYWORDS,
-     "propagate(State, start=0, max=-1, observe=None)\n"
-     "propagate(State, start=0, max=-1, observe=[1,4,...]) -> [(index,State), ...]\n"
+     "propagate(State, start=0, max=INT_MAX, observe=None)\n"
+     "propagate(State, start=0, max=INT_MAX, observe=[1,4,...]) -> [(index,State), ...]\n"
      "Propagate the provided State through the simulation.\n"
      "\n"
      "start and max selects through which element the State will be passed.\n"

@@ -3,6 +3,7 @@
 #include <list>
 #include <vector>
 #include <typeinfo>
+#include <climits>
 
 #include <time.h>
 
@@ -455,9 +456,13 @@ try {
         std::cout<<"\n";
     }
 
-    size_t maxelem = (size_t)-1;
+    //size_t maxelem = (size_t)-1;
+    //if(args.count("max")) {
+    //    maxelem = boost::lexical_cast<size_t>(args["max"].as<std::string>());
+    //}
+    int maxelem = INT_MAX;
     if(args.count("max")) {
-        maxelem = boost::lexical_cast<size_t>(args["max"].as<std::string>());
+        maxelem = boost::lexical_cast<int>(args["max"].as<std::string>());
     }
 
     // register state and element types

@@ -12,13 +12,12 @@
 
 void numeric_table::readvec(std::vector<double> vec, int numcol)
 {
-	value_t tabletmp(int(vec.size()/numcol),numcol);
-	for (unsigned i=0; i < vec.size(); i++)
-	{
-		int ii,jj;
-		jj=i%numcol;
-		ii=int((i-jj)/numcol);
-		tabletmp(ii, jj) = vec[i];
+    value_t tabletmp(int(vec.size()/numcol),numcol);
+    for (unsigned i=0; i < vec.size(); i++){
+        int ii,jj;
+        jj=i%numcol;
+        ii=int((i-jj)/numcol);
+        tabletmp(ii, jj) = vec[i];
     }
     this->table.swap(tabletmp);
 }

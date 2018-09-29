@@ -105,14 +105,23 @@ Check new parameter of the solenoid.
 
 .. image:: figs/atob.png
 
-User can input *start-point index* and *end-point index* to :py:func:`propagate <Machine.propagate>`.
+User can input *start-point index* and *propagation number* to :py:func:`propagate <Machine.propagate>`.
 
->>> M.propagate(S, 0, 10) # simulate from 0th to the entrance of 10th element
+>>> M.propagate(S, 0, 10) # simulate from 0th to 9th element
 >>> S1 = S.clone() # clone the beam state
->>> M.propagate(S1, 10, -1) # simulate from 10th to the last element
+>>> M.propagate(S1, 10) # simulate from 10th to the last element
 
 In this case, "S" has the beam state after the 9th element, and
 "S1" has the finite beam state.
+
+If user input *propagation number* as negative number, it returns "backward" propagation result.
+
+>>> M.propagate(S, 0, 101) # forward simulation from 0th to 100th element
+>>> S1 = S.clone() # clone the beam state
+
+Here, user can change beam state "S1" except the beam energy and the charge state.
+
+>>> M.propagate(S1, 100, -100) # backward simulation from 100th to the first element
 
 4. Example: Quadrupole scan
 ---------------------------

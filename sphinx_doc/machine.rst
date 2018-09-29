@@ -38,7 +38,7 @@ Machine class
 
                       | Beam state object (see here)
 
-    .. py:function:: propagate(state, start=0, max=-1, observe=None)
+    .. py:function:: propagate(state, start=0, max=INT_MAX, observe=None)
 
         Run envelope tracking simulation.
 
@@ -52,7 +52,8 @@ Machine class
 
                     **max**: int (optional)
 
-                        | Index of the max (ending) lattice element. It propagates to the entrance of the max-th element.
+                        | Number of elements to advance. Negative value works as backward propagation.
+                          (E.g. start = 5 and max = 10 mean propagate from 5th element to 14th element.)
 
                     **observe**: list of int (optional)
 

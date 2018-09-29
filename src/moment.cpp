@@ -151,6 +151,7 @@ MomentState::MomentState(const Config& c)
         real.resize(ics.size());
         moment0.resize(ics.size());
         moment1.resize(ics.size());
+        transmat.resize(ics.size());
 
         for(size_t i=0; i<ics.size(); i++) {
             std::string num(boost::lexical_cast<std::string>(icstate+i));
@@ -158,6 +159,8 @@ MomentState::MomentState(const Config& c)
             moment0[i].resize(maxsize);
             moment1[i].resize(maxsize, maxsize);
             moment1[i] = boost::numeric::ublas::identity_matrix<double>(maxsize);
+            transmat[i].resize(maxsize, maxsize);
+            transmat[i] = boost::numeric::ublas::identity_matrix<double>(maxsize);
 
             load_storage(moment0[i].data(), c, vectorname+num);
             load_storage(moment1[i].data(), c, matrixname+num);
@@ -178,11 +181,14 @@ MomentState::MomentState(const Config& c)
 
         moment0.resize(1);
         moment1.resize(1);
+        transmat.resize(1);
         moment0[0].resize(maxsize);
         moment1[0].resize(maxsize, maxsize);
+        transmat[0].resize(maxsize, maxsize);
 
         load_storage(moment0[0].data(), c, vectorname, false);
         load_storage(moment1[0].data(), c, matrixname, false);
+        transmat[0] = boost::numeric::ublas::identity_matrix<double>(maxsize);
     }
 
     last_caviphi0 = 0e0;
@@ -231,6 +237,7 @@ MomentState::MomentState(const MomentState& o, clone_tag t)
     ,real(o.real)
     ,moment0(o.moment0)
     ,moment1(o.moment1)
+    ,transmat(o.transmat)
     ,moment0_env(o.moment0_env)
     ,moment0_rms(o.moment0_rms)
     ,moment1_env(o.moment1_env)
@@ -246,6 +253,7 @@ void MomentState::assign(const StateBase& other)
     real    = O->real;
     moment0 = O->moment0;
     moment1 = O->moment1;
+    transmat = O->transmat;
     moment0_env = O->moment0_env;
     moment0_rms = O->moment0_rms;
     moment1_env = O->moment1_env;
@@ -326,6 +334,20 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.stride[0] = sizeof(double)*moment1_env.size2();
         Info.stride[1] = sizeof(double);
         Info.stride[2] = sizeof(moment1[0]);
+        return true;
+    } else if(idx==I++) {
+        static_assert(sizeof(transmat[0])>=sizeof(double)*maxsize*maxsize,
+                      "storage assumption violated");
+        Info.name = "transfer";
+        Info.ptr = &transmat[0](0,0);
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 3;
+        Info.dim[0] = transmat[0].size1();
+        Info.dim[1] = transmat[0].size2();
+        Info.dim[2] = transmat.size();
+        Info.stride[0] = sizeof(double)*moment1_env.size2();
+        Info.stride[1] = sizeof(double);
+        Info.stride[2] = sizeof(transmat[0]);
         return true;
     } else if(idx==I++) {
         Info.name = "moment0_env";
@@ -626,10 +648,8 @@ void MomentElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    if(!check_cache(ST))
-    {
+    if(!check_cache(ST) && !ST.retreat){
         // need to re-calculate energy dependent terms
-
         last_ref_in = ST.ref;
         last_real_in = ST.real;
         resize_cache(ST);
@@ -638,12 +658,21 @@ void MomentElementBase::advance(StateBase& s)
 
         ST.recalc();
 
+        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
         for(size_t k=0; k<last_real_in.size(); k++)
             ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
-        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
 
         last_ref_out = ST.ref;
         last_real_out = ST.real;
+    } else if(ST.retreat){
+        if (!check_backward(ST))
+            throw std::runtime_error(SB()<<
+                "Backward propagation error at " << ST.next_elem << ": beam state does not match to the previous propagation.");
+
+        ST.ref.phis -= (last_ref_out.phis - last_ref_in.phis);
+        for(size_t k=0; k<last_real_in.size(); k++)
+            ST.real[k].phis -= (last_real_out[k].phis - last_real_in[k].phis);
+
     } else {
         ST.ref = last_ref_out;
         assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
@@ -652,14 +681,33 @@ void MomentElementBase::advance(StateBase& s)
                   ST.real.begin());
     }
 
-    ST.pos += length;
+    if(!ST.retreat){
+        // Forward propagation
+        ST.pos += length;
 
-    for(size_t k=0; k<last_real_in.size(); k++) {
+        for(size_t k=0; k<last_real_in.size(); k++) {
+            ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 
-        ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
+            scratch = prod(transfer[k], ST.moment1[k]);
+            ST.moment1[k] = prod(scratch, trans(transfer[k]));
 
-        scratch  = prod(transfer[k], ST.moment1[k]);
-        ST.moment1[k] = prod(scratch, trans(transfer[k]));
+            ST.transmat[k] = transfer[k];
+        }
+    } else {
+        // Backward propagation
+        ST.pos -= length;
+
+        value_t invmat = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        for(size_t k=0; k<last_real_in.size(); k++) {
+            inverse(invmat, transfer[k]);
+
+            ST.moment0[k] = prod(invmat, ST.moment0[k]);
+
+            scratch = prod(invmat, ST.moment1[k]);
+            ST.moment1[k] = prod(scratch, trans(invmat));
+
+            ST.transmat[k] = invmat;
+        }
     }
 
     ST.calc_rms();
@@ -673,6 +721,21 @@ bool MomentElementBase::check_cache(const state_t& ST) const
             && std::equal(last_real_in.begin(),
                           last_real_in.end(),
                           ST.real.begin());
+}
+
+bool MomentElementBase::check_backward(const state_t& ST) const
+{
+    bool reals = true;
+    if (last_real_out.size()==ST.size()) {
+        reals = last_ref_out<=ST.ref;
+        for(size_t k=0; k<last_real_out.size(); k++) {
+            reals &= last_real_out[k]<=ST.real[k];
+        }
+    } else {
+        reals = false;
+    }
+
+    return reals;
 }
 
 void MomentElementBase::resize_cache(const state_t& ST)
@@ -704,8 +767,9 @@ struct ElementSource : public MomentElementBase
     virtual void advance(StateBase& s)
     {
         state_t& ST = static_cast<state_t&>(s);
-        // Replace state with our initial values
-        ST.assign(istate);
+        if (!ST.retreat)
+            // Replace state with our initial values
+            ST.assign(istate);
     }
 
     virtual void show(std::ostream& strm, int level) const
@@ -869,7 +933,7 @@ struct ElementSBend : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if(!check_cache(ST)) {
+        if(!check_cache(ST) && !ST.retreat) {
             // need to re-calculate energy dependent terms
             last_ref_in = ST.ref;
             last_real_in = ST.real;
@@ -880,6 +944,10 @@ struct ElementSBend : public MomentElementBase
             ST.recalc();
             last_ref_out = ST.ref;
             last_real_out = ST.real;
+        } else if(ST.retreat){
+            if (!check_backward(ST))
+                throw std::runtime_error(SB()<<
+                    "Backward propagation error at " << ST.next_elem << ": beam state does not match to the previous propagation.");
         } else {
             ST.ref = last_ref_out;
             assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
@@ -888,21 +956,44 @@ struct ElementSBend : public MomentElementBase
                       ST.real.begin());
         }
 
-        ST.pos += length;
+        if(!ST.retreat){
+            // Forward propagation
+            ST.pos += length;
+            ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
 
-        ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double phis_temp = ST.moment0[i][state_t::PS_S];
 
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            double phis_temp = ST.moment0[i][state_t::PS_S];
+                ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
 
-            ST.moment0[i]          = prod(transfer[i], ST.moment0[i]);
+                noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
+                noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
 
-            noalias(scratch)       = prod(transfer[i], ST.moment1[i]);
-            noalias(ST.moment1[i]) = prod(scratch, trans(transfer[i]));
+                double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
 
-            double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
+                ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+                ST.transmat[i] = transfer[i];
+            }
+        } else {
+            // Backward propagation
+            ST.pos -= length;
+            ST.ref.phis -= ST.ref.SampleIonK*length*MtoMM;
 
-            ST.real[i].phis  += ST.real[i].SampleIonK*length*MtoMM + dphis_temp;
+            value_t invmat = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double phis_temp = ST.moment0[i][state_t::PS_S];
+
+                inverse(invmat, transfer[i]);
+                ST.moment0[i]          = prod(invmat, ST.moment0[i]);
+
+                noalias(scratch)       = prod(invmat, ST.moment1[i]);
+                noalias(ST.moment1[i]) = prod(scratch, trans(invmat));
+
+                double dphis_temp = ST.moment0[i][state_t::PS_S] - phis_temp;
+
+                ST.real[i].phis  -= ST.real[i].SampleIonK*length*MtoMM - dphis_temp;
+                ST.transmat[i] = invmat;
+            }
         }
 
         ST.calc_rms();
@@ -1022,11 +1113,15 @@ struct ElementSext : public MomentElementBase
         last_real_in = ST.real;
         resize_cache(ST);
 
+        if(ST.retreat) throw std::runtime_error(SB()<<
+            "Backward propagation error: Backward propagation does not support sextupole.");
+
         const double dL = L/step;
 
         for(size_t k=0; k<last_real_in.size(); k++) {
 
             transfer[k] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            ST.transmat[k] = transfer[k];
 
             double Brho = ST.real[k].Brho(),
                    K = B3/Brho/cube(MtoMM);
@@ -1052,6 +1147,8 @@ struct ElementSext : public MomentElementBase
 
                 scratch  = prod(transfer[k], ST.moment1[k]);
                 ST.moment1[k] = prod(scratch, trans(transfer[k]));
+
+                ST.transmat[k] = prod(transfer[k], ST.transmat[k]);
             }
         }
 

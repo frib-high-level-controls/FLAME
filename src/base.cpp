@@ -18,12 +18,14 @@ StateBase::~StateBase() {}
 StateBase::StateBase(const Config& c)
     :next_elem(0)
     ,pos(0e0)
+    ,retreat(false)
     ,pyptr(0)
 {}
 
 StateBase::StateBase(const StateBase& o, clone_tag)
     :next_elem(0)
     ,pos(o.pos)
+    ,retreat(false)
     ,pyptr(0)
 {}
 
@@ -164,17 +166,24 @@ Machine::~Machine()
 }
 
 void
-Machine::propagate(StateBase* S, size_t start, size_t max) const
+Machine::propagate(StateBase* S, size_t start, int max) const
 {
     const size_t nelem = p_elements.size();
 
     S->next_elem = start;
-    for(size_t i=0; S->next_elem<nelem && i<max; i++)
+    S->retreat = std::signbit(max);
+
+    for(int i=0; S->next_elem<nelem && i<abs(max); i++)
     {
         size_t n = S->next_elem;
         ElementVoid* E = p_elements[n];
-        S->next_elem++;
+        if(S->retreat) {
+            S->next_elem--;
+        } else {
+            S->next_elem++;
+        }
         E->advance(*S);
+
         if(E->p_observe)
             E->p_observe->view(E, S);
         if(p_trace)
