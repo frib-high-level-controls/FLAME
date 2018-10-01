@@ -111,8 +111,6 @@ class MomentTest(object):
         The repeat with 'transfer' caching disabled
         '''
 
-        if max is None: max = len(self.M)
-
         S1 = self.M.allocState(instate, inherit=False)
         S2 = self.M.allocState(instate, inherit=False)
 
@@ -120,8 +118,6 @@ class MomentTest(object):
         self.assertConsistent(S1)
         self.M.propagate(state=S2, start=elem, max=max)
         self.assertConsistent(S2)
-
-#        print_state(S1)
 
         self.assertStateEqual(outstate, S1, 'first pass')
         self.assertStateEqual(outstate, S2, 'second pass') # fails if some Element has a caching problem...

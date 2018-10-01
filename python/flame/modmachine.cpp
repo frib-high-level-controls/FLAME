@@ -157,12 +157,14 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
 {
 
     TRY {
-        PyObject *state, *toobserv = Py_None;
+        PyObject *state, *toobserv = Py_None, *pymax = Py_None;
         unsigned long start = 0;
         int max = INT_MAX;
         const char *pnames[] = {"state", "start", "max", "observe", NULL};
-        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|kkO", (char**)pnames, &state, &start, &max, &toobserv))
+        if(!PyArg_ParseTupleAndKeywords(args, kws, "O|kOO", (char**)pnames, &state, &start, &pymax, &toobserv))
             return NULL;
+
+        if (pymax!=Py_None) max = (int) PyLong_AsLong(pymax);
 
         PyStoreObserver observer;
         PyScopedObserver observing(machine->machine);
@@ -174,7 +176,6 @@ PyObject *PyMachine_propagate(PyObject *raw, PyObject *args, PyObject *kws)
                 Py_ssize_t num = PyNumber_AsSsize_t(item.py(), PyExc_ValueError);
                 if(PyErr_Occurred())
                     throw std::runtime_error(""); // caller will get active python exception
-
                 observing.observe(num, &observer);
 
             }
