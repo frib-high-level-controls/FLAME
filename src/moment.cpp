@@ -648,7 +648,7 @@ void MomentElementBase::advance(StateBase& s)
     // IonEk is Es + E_state; the latter is set by user.
     ST.recalc();
 
-    if(!check_cache(ST) && !ST.retreat){
+    if(!check_cache(ST)){
         // need to re-calculate energy dependent terms
         last_ref_in = ST.ref;
         last_real_in = ST.real;
@@ -658,21 +658,18 @@ void MomentElementBase::advance(StateBase& s)
 
         ST.recalc();
 
-        ST.ref.phis   += ST.ref.SampleIonK*length*MtoMM;
-        for(size_t k=0; k<last_real_in.size(); k++)
-            ST.real[k].phis  += ST.real[k].SampleIonK*length*MtoMM;
+        if(!ST.retreat){
+            ST.ref.phis += ST.ref.SampleIonK*length*MtoMM;
+            for(size_t k=0; k<last_real_in.size(); k++)
+                ST.real[k].phis += ST.real[k].SampleIonK*length*MtoMM;
+        } else {
+            ST.ref.phis -= ST.ref.SampleIonK*length*MtoMM;
+            for(size_t k=0; k<last_real_in.size(); k++)
+                ST.real[k].phis -= ST.real[k].SampleIonK*length*MtoMM;
+        }
 
         last_ref_out = ST.ref;
         last_real_out = ST.real;
-    } else if(ST.retreat){
-        if (!check_backward(ST))
-            throw std::runtime_error(SB()<<
-                "Backward propagation error at " << ST.next_elem << ": beam state does not match to the previous propagation.");
-
-        ST.ref.phis -= (last_ref_out.phis - last_ref_in.phis);
-        for(size_t k=0; k<last_real_in.size(); k++)
-            ST.real[k].phis -= (last_real_out[k].phis - last_real_in[k].phis);
-
     } else {
         ST.ref = last_ref_out;
         assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
@@ -933,7 +930,7 @@ struct ElementSBend : public MomentElementBase
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if(!check_cache(ST) && !ST.retreat) {
+        if(!check_cache(ST)) {
             // need to re-calculate energy dependent terms
             last_ref_in = ST.ref;
             last_real_in = ST.real;
@@ -944,10 +941,6 @@ struct ElementSBend : public MomentElementBase
             ST.recalc();
             last_ref_out = ST.ref;
             last_real_out = ST.real;
-        } else if(ST.retreat){
-            if (!check_backward(ST))
-                throw std::runtime_error(SB()<<
-                    "Backward propagation error at " << ST.next_elem << ": beam state does not match to the previous propagation.");
         } else {
             ST.ref = last_ref_out;
             assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
