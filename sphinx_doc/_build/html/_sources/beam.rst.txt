@@ -42,7 +42,7 @@ State Class
               - Phase speed [rad]
             * - :py:attr:`last_caviphi0`
               - Driven phase of the last rf cavity [deg]
-            * - :py:attr:`transfer`
+            * - :py:attr:`transmat`
               - Transfer matrix of the last element
 
     - **Attributes - actual beam**
@@ -129,7 +129,7 @@ State Class
 
         **float**: Driven phase of the last rf cavity. [deg]
 
-    .. py:attribute:: transfer
+    .. py:attribute:: transmat
 
         **list of matrix[7,7]**: Transfer matrix of the last element. This matrix is applied to moment0 and moment1 directly.
 

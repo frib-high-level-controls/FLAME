@@ -338,7 +338,7 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
     } else if(idx==I++) {
         static_assert(sizeof(transmat[0])>=sizeof(double)*maxsize*maxsize,
                       "storage assumption violated");
-        Info.name = "transfer";
+        Info.name = "transmat";
         Info.ptr = &transmat[0](0,0);
         Info.type = ArrayInfo::Double;
         Info.ndim = 3;
