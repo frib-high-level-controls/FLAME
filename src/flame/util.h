@@ -80,7 +80,7 @@ struct numeric_table {
     value_t table;
 
     void read(std::istream&);
-	void readvec(std::vector<double> vec, int numrow);
+    void readvec(std::vector<double> vec, int numrow);
 };
 
 class numeric_table_cache {

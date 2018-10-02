@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 
+#include <climits>
 #include <ostream>
 #include <string>
 #include <map>
@@ -34,6 +35,8 @@ struct StateBase : public boost::noncopyable
     size_t next_elem;
 
     double pos;        //!< absolute longitudinal position at end of Element
+
+    bool retreat;      //!< retreat (backward) simulation flag
 
     //! virtual equivalent to operator=()
     //! Should only be used with another State originating from the same Machine
@@ -246,7 +249,7 @@ struct Machine : public boost::noncopyable
      */
     void propagate(StateBase* S,
                    size_t start=0,
-                   size_t max=-1) const;
+                   int max=INT_MAX) const;
 
     /** @brief Allocate (with "operator new") an appropriate State object
      *

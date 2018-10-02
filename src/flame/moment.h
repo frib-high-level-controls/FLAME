@@ -69,6 +69,13 @@ inline bool operator!=(const Particle& lhs, const Particle& rhs)
     return !(lhs==rhs);
 }
 
+inline bool operator<=(const Particle& lhs, const Particle& rhs)
+{
+    // compare only independent variables.
+    return lhs.IonEk==rhs.IonEk && lhs.IonEs==rhs.IonEs
+            && lhs.IonZ==rhs.IonZ && lhs.IonQ==rhs.IonQ;
+}
+
 /** State for sim_type=MomentMatrix
  *
  * Represents a set of charge states
@@ -105,6 +112,7 @@ struct MomentState : public StateBase
     std::vector<Particle> real;
     std::vector<vector_t> moment0;
     std::vector<matrix_t> moment1;
+    std::vector<matrix_t> transmat;
 
     vector_t moment0_env, moment0_rms;
     matrix_t moment1_env;
@@ -151,6 +159,10 @@ struct MomentElementBase : public ElementVoid
     //! Should compare new input state against values used when 'transfer' was
     //! last computed
     virtual bool check_cache(const state_t& S) const;
+
+    //! Check input state for backward propagation
+    virtual bool check_backward(const state_t& S) const;
+
     //! Helper to resize our std::vector s to match the # of charge states
     //! in the provided new input state.
     void resize_cache(const state_t& ST);

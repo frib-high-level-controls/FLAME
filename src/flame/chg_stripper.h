@@ -45,9 +45,9 @@ const double Stripper_IonZ_default      = 78.0/238.0,
              Stripper_lambda_default    = 5.5740,
              // U after stripper.
              Stripper_upara_default     = 2.6903,
-			 // Thickness [microns], thickness variation [%], reference energy [eV/u].
+             // Thickness [microns], thickness variation [%], reference energy [eV/u].
              Stripper_Para_default[] = {3.0, 20.0, 16.623e6},
-			 // E0 after stripper [eV/u], energy dependance, gap dependance. Unit for last parameter ???
+             // E0 after stripper [eV/u], energy dependance, gap dependance. Unit for last parameter ???
              Stripper_E0Para_default[] = {16.348e6, 1.00547, -0.10681};
 
 
@@ -60,14 +60,14 @@ struct ElementStripper : public MomentElementBase
 
 
     double  Stripper_IonZ,
-			Stripper_IonMass,
-			Stripper_IonProton,
-			// E1 after stripper; Gaussian distribution.
-			Stripper_E1Para,
-			// Theta after stripper.
-			Stripper_lambda,
-			// U after stripper.
-			Stripper_upara;
+            Stripper_IonMass,
+            Stripper_IonProton,
+            // E1 after stripper; Gaussian distribution.
+            Stripper_E1Para,
+            // Theta after stripper.
+            Stripper_lambda,
+            // U after stripper.
+            Stripper_upara;
 
     // Thickness [microns], thickness variation [%], reference energy [eV/u].
     // E0 after stripper [eV/u], energy dependance, gap dependance. Unit for last parameter ???

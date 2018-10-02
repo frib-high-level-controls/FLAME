@@ -18,25 +18,6 @@
 #endif
 
 
-static
-// Evaluate the beam energy and phase in the acceleration gap.
-void EvalGapModel(const double dis, const double IonW0, const Particle &real, const double IonFy0,
-                  const double k, const double Lambda, const double Ecen,
-                  const double T, const double S, const double Tp, const double Sp, const double V0,
-                  double &IonW_f, double &IonFy_f);
-
-
-static
-// Calculate driven phase from synchronous phase which defined by sinusoidal fitting.
-double GetCavPhase(const int cavi, const Particle& ref, const double IonFys, const double multip, const std::vector<double>& P);
-
-
-static
-// Calculate driven phase from synchronous phase which defined by complex fitting (e.g. peak-base model).
-double GetCavPhaseComplex(const Particle& ref, const double IonFys, const double scale,
-                          const double multip, const std::vector<double>& P);
-
-
 class CavDataType {
 // Cavity on-axis longitudinal electric field vs. s.
 public:
@@ -69,7 +50,7 @@ struct ElementRFCavity : public MomentElementBase
 {
     // Transport matrix for an RF Cavity.
     typedef ElementRFCavity          self_t;
-    typedef MomentElementBase       base_t;
+    typedef MomentElementBase        base_t;
     typedef typename base_t::state_t state_t;
 
     struct RawParams {
@@ -178,12 +159,12 @@ struct ElementRFCavity : public MomentElementBase
         state_t&  ST = static_cast<state_t&>(s);
         using namespace boost::numeric::ublas;
 
-        double x0[2], x2[2];
+        double x0[2], x2[2], s0[2];
 
         // IonEk is Es + E_state; the latter is set by user.
         ST.recalc();
 
-        if(!check_cache(ST)) {
+        if(!check_cache(ST) && !ST.retreat) {
             last_ref_in = ST.ref;
             last_real_in = ST.real;
             resize_cache(ST);
@@ -213,6 +194,21 @@ struct ElementRFCavity : public MomentElementBase
 
             last_ref_out = ST.ref;
             last_real_out = ST.real;
+        } else if(ST.retreat){
+            if (!check_backward(ST))
+                throw std::runtime_error(SB()<<
+                    "Backward propagation error at " << ST.next_elem << ": beam state does not match to the previous propagation.");
+
+            ST.ref.phis -= (last_ref_out.phis - last_ref_in.phis);
+            ST.ref.IonEk = last_ref_in.IonEk;
+            for(size_t k=0; k<last_real_in.size(); k++) {
+                ST.real[k].phis -= (last_real_out[k].phis - last_real_in[k].phis);
+                ST.real[k].IonEk = last_real_in[k].IonEk;
+                get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
+            }
+
+            ST.recalc();
+
         } else {
             ST.ref = last_ref_out;
             assert(last_real_out.size()==ST.real.size()); // should be true if check_cache() -> true
@@ -222,37 +218,71 @@ struct ElementRFCavity : public MomentElementBase
         }
         // note that calRFcaviEmitGrowth() assumes real[] isn't changed after this point
 
-        ST.pos += length;
+        if(!ST.retreat){
+            // Forward propagation
+            ST.pos += length;
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
 
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            ST.moment0[i] = prod(misalign[i], ST.moment0[i]);
+                // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
+                x0[0]  = ST.moment0[i][state_t::PS_X];
+                x0[1]  = ST.moment0[i][state_t::PS_Y];
+                x2[0]  = ST.moment1[i](0, 0);
+                x2[1]  = ST.moment1[i](2, 2);
 
-            // Inconsistency in TLM; orbit at entrace should be used to evaluate emittance growth.
-            x0[0]  = ST.moment0[i][state_t::PS_X];
-            x0[1]  = ST.moment0[i][state_t::PS_Y];
-            x2[0]  = ST.moment1[i](0, 0);
-            x2[1]  = ST.moment1[i](2, 2);
+                // reset extra parameters in transfer matrix
+                transfer[i](state_t::PS_S, 6) = 0.0;
+                transfer[i](state_t::PS_PS, 6) = 0.0;
 
-            ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
+                ST.moment0[i] = prod(transfer[i], ST.moment0[i]);
 
-            ST.moment0[i][state_t::PS_S]  = ST.real[i].phis - ST.ref.phis;
-            ST.moment0[i][state_t::PS_PS] = (ST.real[i].IonEk-ST.ref.IonEk)/MeVtoeV;
+                // combine new z and zp centroid to transfer matrix for backward propagation
+                s0[0] = (ST.real[i].phis - ST.ref.phis);
+                s0[1] = (ST.real[i].IonEk - ST.ref.IonEk)/MeVtoeV;
+                transfer[i](state_t::PS_S, 6) = - ST.moment0[i][state_t::PS_S] + s0[0];
+                transfer[i](state_t::PS_PS, 6) = - ST.moment0[i][state_t::PS_PS] + s0[1];
 
-            ST.moment0[i] = prod(misalign_inv[i], ST.moment0[i]);
+                // insert new z and zp centroid
+                ST.moment0[i][state_t::PS_S]  = s0[0];
+                ST.moment0[i][state_t::PS_PS] = s0[1];
 
-            scratch  = prod(misalign[i], ST.moment1[i]);
-            ST.moment1[i] = prod(scratch, trans(misalign[i]));
+                ST.moment0[i] = prod(misalign_inv[i], ST.moment0[i]);
 
-            scratch  = prod(transfer[i], ST.moment1[i]);
-            ST.moment1[i] = prod(scratch, trans(transfer[i]));
+                scratch = prod(misalign[i], ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(misalign[i]));
 
-            if (EmitGrowth) {
-                calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
-                ST.moment1[i] = scratch;
+                scratch = prod(transfer[i], ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(transfer[i]));
+
+                if (EmitGrowth) {
+                    calRFcaviEmitGrowth(ST.moment1[i], ST.ref, i, ST.real[i].beta, ST.real[i].gamma, x2[0], x0[0], x2[1], x0[1], scratch);
+                    ST.moment1[i] = scratch;
+                }
+
+                scratch = prod(misalign_inv[i], ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
+
+                scratch = prod(transfer[i], misalign[i]);
+                scratch = prod(misalign_inv[i], scratch);
+                ST.transmat[i] = scratch;
+            }
+        } else {
+            // Backward propagation
+            ST.pos -= length;
+            value_t invmat = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                scratch = prod(transfer[i], misalign[i]);
+                scratch = prod(misalign_inv[i], scratch);
+
+                inverse(invmat, scratch);
+
+                ST.moment0[i] = prod(invmat, ST.moment0[i]);
+
+                scratch  = prod(invmat, ST.moment1[i]);
+                ST.moment1[i] = prod(scratch, trans(invmat));
+                ST.transmat[i] = invmat;
             }
 
-            scratch  = prod(misalign_inv[i], ST.moment1[i]);
-            ST.moment1[i] = prod(scratch, trans(misalign_inv[i]));
         }
 
         ST.last_caviphi0 = fmod(phi_ref*180e0/M_PI, 360e0); // driven phase [degree]

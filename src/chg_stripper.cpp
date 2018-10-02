@@ -159,6 +159,7 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
     ST.real.resize(n);
     ST.moment0.resize(n);
     ST.moment1.resize(n);
+    ST.transmat.resize(n);
 
     // Length is zero.
     StatePtr->pos = s;
@@ -175,6 +176,7 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
         StatePtr->real[k].phis  = Fy_abs_recomb;
         StatePtr->moment0[k]    = ST.moment0_env;
         StatePtr->moment1[k]    = tmpmat;
+        StatePtr->transmat[k]   = boost::numeric::ublas::identity_matrix<double>(PS_Dim);
     }
 
     ST.calc_rms();
@@ -186,6 +188,10 @@ void ElementStripper::advance(StateBase &s)
 
     ST.recalc();
     ST.calc_rms(); // paranoia in case someone (python) has made moment0_env inconsistent
+
+    if(ST.retreat) throw std::runtime_error(SB()<<
+        "Backward propagation error: Backward propagation does not support charge stripper.");
+
 
     Stripper_GetMat(conf(), ST);
 }
