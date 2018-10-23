@@ -262,7 +262,7 @@ public:
      * @arg fname File name to open.  If NULL or '-' then parse stdin     *
      *            If stdin is parsed then it is not closed.
      */
-    Config *parse_file(const char *fname);
+    Config *parse_file(const char *fname, const bool have_lattice=true);
     /** @brief Parse from open FILE
      *
      * @arg fp an open file descriptor
@@ -271,7 +271,7 @@ public:
      * @returns New Config, which the caller must delete.
      * @throws std::runtime_error For various error conditions
      */
-    Config *parse_file(FILE *fp, const char *path=NULL);
+    Config *parse_file(const bool have_lattice, FILE *fp, const char *path=NULL);
     /** @brief Parse from byte buffer
      *
      * @arg s Byte array
@@ -279,6 +279,7 @@ public:
      * @args path A directory to use to expand relative paths when parsing
      * @returns New Config or NULL
      */
+
     Config *parse_byte(const char* s, size_t len, const char *path=NULL);
     /** @brief Parse from std::string
      *

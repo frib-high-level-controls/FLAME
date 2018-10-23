@@ -1,4 +1,6 @@
 
+#include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 
 #include "flame/constants.h"
@@ -6,6 +8,14 @@
 
 #define sqr(x)  ((x)*(x))
 #define cube(x) ((x)*(x)*(x))
+
+#ifdef DEFPATH
+    #define defpath DEFPATH
+#else
+    #define defpath "."
+#endif
+
+std::map<std::string,boost::shared_ptr<Config> > CurveMap;
 
 // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
 // by LU-decomposition.
@@ -374,4 +384,57 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
     // Longitudinal plane.
     // For total path length.
     //        M(state_t::PS_S,  state_t::PS_S) = L;
+}
+
+void GetCurveData(const Config &c, const unsigned ncurve, std::vector<double> &Scales,
+                  std::vector<std::vector<double> > &Curves)
+{
+    boost::shared_ptr<Config> conf;
+
+    std::string filename;
+    bool checker = c.tryGet<std::string>("CurveFile", filename);
+
+    if (checker){
+        std::string CurveFile =  c.get<std::string>("Eng_Data_Dir", defpath);
+        CurveFile += "/" + filename;
+        std::string key(SB()<<CurveFile<<"|"<<boost::filesystem::last_write_time(CurveFile));
+        if ( CurveMap.find(key) == CurveMap.end() ) {
+            // not found in CurveMap
+            try {
+                try {
+                    GLPSParser P;
+                    conf.reset(P.parse_file(CurveFile.c_str(), false));
+                }catch(std::exception& e){
+                    throw std::runtime_error(SB()<<"Parse error: "<<e.what()<<"\n");
+                }
+
+            }catch(std::exception& e){
+                throw std::runtime_error(SB()<<"Error: "<<e.what()<<"\n");
+            }
+            CurveMap.insert(std::make_pair(key, conf));
+        } else {
+            // found in CurveMap
+            conf=CurveMap[key];
+        }
+    }
+
+    size_t prev_size = 0;
+    for (unsigned n=0; n<ncurve; n++) {
+        std::string num(boost::lexical_cast<std::string>(n));
+        std::vector<double> cv;
+        bool cvchecker;
+        if (checker){
+            cvchecker = conf->tryGet<std::vector<double> >("curve"+num, cv);
+        } else {
+            cvchecker = c.tryGet<std::vector<double> >("curve"+num, cv);
+        }
+        if (!cvchecker)throw std::runtime_error(SB()<<"'curve" << num << "' is missing in lattice file.\n");
+        Curves.push_back(cv);
+        if (n != 0 and prev_size != cv.size())
+            throw std::runtime_error(SB()<<"Size of 'curve" << n << "' (" << cv.size() <<") and 'curve" << n-1 <<
+                                           "' (" << prev_size <<") are inconsistent.  All curves must have the same size.\n");
+        prev_size = cv.size();
+
+        Scales.push_back(c.get<double>("scl_fac"+num, 0.0));
+    }
 }
