@@ -755,11 +755,17 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 </div>
 </div></blockquote>
 <p><strong>CurveFile</strong>: string</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">External file name for the curves, the file format is the same as <strong>curve${n}</strong>.</div>
 <div class="line">e.g. <cite>curve0 = [1.0, 2.0, …];</cite></div>
-<div class="line">If CurveFile is available, it overrrides the <strong>curve${n}</strong>.</div>
+<div class="line">If CurveFile is available, it overrides the <strong>curve${n}</strong>.</div>
+</div>
+</div></blockquote>
+<p><strong>use_range</strong>: vector[2]</p>
+<blockquote class="last">
+<div><div class="line-block">
+<div class="line">Use range of <a href="#id1"><span class="problematic" id="id2">**</span></a>curve${n}**s. Format is [start_id, end_id].</div>
 </div>
 </div></blockquote>
 </td>
@@ -795,7 +801,7 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 <div class="line">Misalignment parameters. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
 </div>
 </div></blockquote>
-<p><strong>ncurve</strong>, <strong>scl_fac${n}</strong>, <strong>curve${n}</strong>, <strong>CurveFile</strong></p>
+<p><strong>ncurve</strong>, <strong>scl_fac${n}</strong>, <strong>curve${n}</strong>, <strong>CurveFile</strong>, <strong>use_range</strong></p>
 <blockquote class="last">
 <div><div class="line-block">
 <div class="line">Curve inputs for slanted and overlapped field. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
@@ -887,7 +893,7 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 <div class="line">Misalignment parameters. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
 </div>
 </div></blockquote>
-<p><strong>ncurve</strong>, <strong>scl_fac${n}</strong>, <strong>curve${n}</strong>, <strong>CurveFile</strong></p>
+<p><strong>ncurve</strong>, <strong>scl_fac${n}</strong>, <strong>curve${n}</strong>, <strong>CurveFile</strong>, <strong>use_range</strong></p>
 <blockquote class="last">
 <div><div class="line-block">
 <div class="line">Curve inputs for slanted and overlapped field. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>

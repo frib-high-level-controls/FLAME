@@ -1256,11 +1256,11 @@ class TestCurveInput(unittest.TestCase, MomentTest):
 
         self.M.reconfigure(15, {'ncurve':3, 'scl_fac0':0.6, 'scl_fac1':0.3, 'scl_fac2':0.2, 'CurveFile':'curve_sample.lat'})
         self.M.reconfigure(44, {'ncurve':1, 'scl_fac0':-60000.0, 'curve0':asfarray([1.0, 1.0, 0.6])})
-        self.M.reconfigure(56, {'ncurve':1, 'scl_fac0':0.304, 'curve0':asfarray([1.0])})
+        self.M.reconfigure(56, {'ncurve':1, 'scl_fac0':0.304, 'curve0':asfarray([1.0, 1.0, 2.0]), 'use_range':asfarray([0, 2])})
 
         self.ICM.reconfigure(15, {'ncurve':3, 'scl_fac0':0.6, 'scl_fac1':0.3, 'scl_fac2':0.2, 'CurveFile':'curve_sample.lat'})
         self.ICM.reconfigure(44, {'ncurve':1, 'scl_fac0':-60000.0, 'curve0':asfarray([1.0, 1.0, 0.6])})
-        self.ICM.reconfigure(56, {'ncurve':1, 'scl_fac0':0.304, 'curve0':asfarray([1.0])})
+        self.ICM.reconfigure(56, {'ncurve':1, 'scl_fac0':0.304, 'curve0':asfarray([1.0, 1.0, 2.0]), 'use_range':asfarray([0, 2])})
 
         self.checkPropagate(0, {}, {
             'moment0_env':

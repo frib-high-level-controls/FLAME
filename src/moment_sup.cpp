@@ -392,7 +392,9 @@ void GetCurveData(const Config &c, const unsigned ncurve, std::vector<double> &S
     boost::shared_ptr<Config> conf;
 
     std::string filename;
-    bool checker = c.tryGet<std::string>("CurveFile", filename);
+    std::vector<double> range;
+    bool checker = c.tryGet<std::string>("CurveFile", filename),
+         rngchecker = c.tryGet<std::vector<double> >("use_range", range);
 
     if (checker){
         std::string CurveFile =  c.get<std::string>("Eng_Data_Dir", defpath);
@@ -429,7 +431,23 @@ void GetCurveData(const Config &c, const unsigned ncurve, std::vector<double> &S
             cvchecker = c.tryGet<std::vector<double> >("curve"+num, cv);
         }
         if (!cvchecker)throw std::runtime_error(SB()<<"'curve" << num << "' is missing in lattice file.\n");
-        Curves.push_back(cv);
+
+        if (rngchecker){
+            unsigned start, end;
+            if (range.size() != 2)
+                throw std::runtime_error(SB()<<"Size of 'use_range' must be 2.\n");
+            start = static_cast<unsigned>(range[0]);
+            end   = static_cast<unsigned>(range[1]);
+
+            if (start > cv.size() or end > cv.size())
+                throw std::runtime_error(SB()<<"'use_range' is out of curve size.\n");
+
+            std::vector<double> part(cv.begin()+start, cv.begin()+end);
+            Curves.push_back(part);
+        } else {
+            Curves.push_back(cv);
+        }
+
         if (n != 0 and prev_size != cv.size())
             throw std::runtime_error(SB()<<"Size of 'curve" << n << "' (" << cv.size() <<") and 'curve" << n-1 <<
                                            "' (" << prev_size <<") are inconsistent.  All curves must have the same size.\n");

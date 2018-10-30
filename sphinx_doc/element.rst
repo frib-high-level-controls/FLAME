@@ -325,7 +325,11 @@ Optical element
 
                     | External file name for the curves, the file format is the same as **curve${n}**.
                     | e.g. `curve0 = [1.0, 2.0, ...];`
-                    | If CurveFile is available, it overrrides the **curve${n}**.
+                    | If CurveFile is available, it overrides the **curve${n}**.
+
+                 **use_range**: vector[2]
+
+                    | Use range of **curve${n}**s. Format is [start_id, end_id].
 
 .. cpp:type:: quadrupole
 
@@ -344,7 +348,7 @@ Optical element
 
                     | Misalignment parameters. See :cpp:type:`solenoid` case.
 
-                 **ncurve**, **scl_fac${n}**, **curve${n}**, **CurveFile**
+                 **ncurve**, **scl_fac${n}**, **curve${n}**, **CurveFile**, **use_range**
 
                     | Curve inputs for slanted and overlapped field. See :cpp:type:`solenoid` case.
                     | Unit of scl_fac${n}\*curve${n} is [T/m].
@@ -396,7 +400,7 @@ Optical element
 
                     | Misalignment parameters. See :cpp:type:`solenoid` case.
 
-                 **ncurve**, **scl_fac${n}**, **curve${n}**, **CurveFile**
+                 **ncurve**, **scl_fac${n}**, **curve${n}**, **CurveFile**, **use_range**
 
                     | Curve inputs for slanted and overlapped field. See :cpp:type:`solenoid` case.
                     | Unit of scl_fac${n}\*curve${n} is [V/m^2].
