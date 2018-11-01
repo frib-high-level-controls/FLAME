@@ -5,6 +5,8 @@
 #include "base.h"
 #include "moment.h"
 
+static std::map<std::string,boost::shared_ptr<Config> > CurveMap;
+
 void inverse(MomentElementBase::value_t& out, const MomentElementBase::value_t& in);
 
 void RotMat(const double dx, const double dy,
@@ -30,5 +32,7 @@ void GetSolMatrix(const double L, const double K, typename MomentElementBase::va
 void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa, const double Kx, const double Ky,
                     const double IonEs, const double ref_beta, const double real_gamma, const double eta0, const double h, const double dip_beta,
                     const double dip_gamma, const double delta_KZ, const double SampleIonK, typename MomentElementBase::value_t &M);
+
+void GetCurveData(const Config &c, const unsigned ncurve, std::vector<double> &Scales, std::vector<std::vector<double> > &Curves);
 
 #endif // MOMENT2_SUP_H

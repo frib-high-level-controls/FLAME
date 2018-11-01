@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lattice File &mdash; FLAME 1.5.1 documentation</title>
+  <title>Lattice File &mdash; FLAME 1.8.1 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="FLAME 1.5.1 documentation" href="index.html"/>
+    <link rel="top" title="FLAME 1.8.1 documentation" href="index.html"/>
         <link rel="next" title="Class Library" href="classlib.html"/>
         <link rel="prev" title="Tutorial" href="tutorial.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                1.5.1
+                1.8.1
               </div>
             
           
@@ -729,9 +729,46 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 </div>
 </div></blockquote>
 <p><strong>roll</strong>: float (default: 0.0)</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">Misaglignment of roll angle. [rad]</div>
+</div>
+</div></blockquote>
+<p><strong>ncurve</strong>: int (default: 0)</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Number of curves for slanted and overlapped field.</div>
+<div class="line">(0 means hard-edge fringe model)</div>
+</div>
+</div></blockquote>
+<p><strong>scl_fac${n}</strong>: float (default: 0)</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">Scaling factor of the <em>n</em>-th curve (<em>n</em> start from 0).</div>
+<div class="line">Unit of scl_fac${n}*curve${n} is [T].</div>
+</div>
+</div></blockquote>
+<p><strong>curve${n}</strong>: vector</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line"><em>n</em>-th Curve information (<em>n</em> start from 0).</div>
+<div class="line">Each curve vector must have the same size.
+The vector elements should be defined by the scaled strength of the element at the step.
+Also, the step size is defined by “<strong>L</strong> divided by the size of <strong>curve${n}</strong>”.</div>
+</div>
+</div></blockquote>
+<p><strong>CurveFile</strong>: string</p>
+<blockquote>
+<div><div class="line-block">
+<div class="line">External file name for the curves, the file format is the same as <strong>curve${n}</strong>.</div>
+<div class="line">e.g. <cite>curve0 = [1.0, 2.0, …];</cite></div>
+<div class="line">If CurveFile is available, it overrides the <strong>curve${n}</strong>.</div>
+</div>
+</div></blockquote>
+<p><strong>use_range</strong>: vector[2]</p>
+<blockquote class="last">
+<div><div class="line-block">
+<div class="line">Use range of <strong>curve${n}</strong>. Format is [start_id, end_id].</div>
 </div>
 </div></blockquote>
 </td>
@@ -762,9 +799,16 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 </div>
 </div></blockquote>
 <p><strong>dx</strong>, <strong>dy</strong>, <strong>pitch</strong>, <strong>yaw</strong>, <strong>roll</strong>: float</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">Misalignment parameters. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
+</div>
+</div></blockquote>
+<p><strong>ncurve</strong>, <strong>scl_fac${n}</strong>, <strong>curve${n}</strong>, <strong>CurveFile</strong>, <strong>use_range</strong></p>
+<blockquote class="last">
+<div><div class="line-block">
+<div class="line">Curve inputs for slanted and overlapped field. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
+<div class="line">Unit of scl_fac${n}*curve${n} is [T/m].</div>
 </div>
 </div></blockquote>
 </td>
@@ -847,9 +891,16 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 </div>
 </div></blockquote>
 <p><strong>dx</strong>, <strong>dy</strong>, <strong>pitch</strong>, <strong>yaw</strong>, <strong>roll</strong>: float</p>
-<blockquote class="last">
+<blockquote>
 <div><div class="line-block">
 <div class="line">Misalignment parameters. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
+</div>
+</div></blockquote>
+<p><strong>ncurve</strong>, <strong>scl_fac${n}</strong>, <strong>curve${n}</strong>, <strong>CurveFile</strong>, <strong>use_range</strong></p>
+<blockquote class="last">
+<div><div class="line-block">
+<div class="line">Curve inputs for slanted and overlapped field. See <a class="reference internal" href="#_CPPv28solenoid" title="solenoid"><code class="xref cpp cpp-type docutils literal"><span class="pre">solenoid</span></code></a> case.</div>
+<div class="line">Unit of scl_fac${n}*curve${n} is [V/m^2].</div>
 </div>
 </div></blockquote>
 </td>
@@ -1442,7 +1493,7 @@ is absolute phase in front of the rf cavity, and <span class="math">\(m\)</span>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'1.5.1',
+            VERSION:'1.8.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

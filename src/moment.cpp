@@ -1047,30 +1047,58 @@ struct ElementQuad : public MomentElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        const double B2= conf().get<double>("B2"),
-                     L = conf().get<double>("L")*MtoMM;
+        const double L = conf().get<double>("L")*MtoMM;
+        const unsigned ncurve = get_flag(conf(), "ncurve", 0);
 
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            // Re-initialize transport matrix.
-            transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        if (ncurve != 0) {
+            std::vector<std::vector<double> > Curves;
+            std::vector<double> Scales;
+            GetCurveData(conf(), ncurve, Scales, Curves);
 
-            double Brho = ST.real[i].Brho(),
-                   K = B2/Brho/sqr(MtoMM);
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double K;
+                double dL = L/double(Curves[0].size()),
+                       Brho = ST.real[i].Brho();
+                transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                for (size_t j=0; j<Curves[0].size(); j++){
+                    K = 0.0;
+                    for (size_t n=0; n<Curves.size(); n++) K += Scales[n]*Curves[n][j]/Brho/sqr(MtoMM);
+                    value_t tmstep = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                    GetQuadMatrix(dL,  K, (unsigned)state_t::PS_X, tmstep);
+                    GetQuadMatrix(dL, -K, (unsigned)state_t::PS_Y, tmstep);
 
-            // Horizontal plane.
-            GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer[i]);
-            // Vertical plane.
-            GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
-            // Longitudinal plane.
-    //        transfer(state_t::PS_S, state_t::PS_S) = L;
+                    tmstep(state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
 
-            transfer[i](state_t::PS_S, state_t::PS_PS) =
-                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                    transfer[i] = prod(tmstep, transfer[i]);
+                }
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
 
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+        } else {
+            const double B2= conf().get<double>("B2");
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                // Re-initialize transport matrix.
+                transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+                double Brho = ST.real[i].Brho(),
+                       K = B2/Brho/sqr(MtoMM);
+
+                // Horizontal plane.
+                GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer[i]);
+                // Vertical plane.
+                GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
+                // Longitudinal plane.
+
+                transfer[i](state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
         }
     }
 };
@@ -1175,25 +1203,54 @@ struct ElementSolenoid : public MomentElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        const double B = conf().get<double>("B"),
-                     L = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
+        const double L = conf().get<double>("L")*MtoMM;      // Convert from [m] to [mm].
+        const unsigned ncurve = get_flag(conf(), "ncurve", 0);
 
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            // Re-initialize transport matrix.
-            transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        if (ncurve != 0) {
+            std::vector<std::vector<double> > Curves;
+            std::vector<double> Scales;
+            GetCurveData(conf(), ncurve, Scales, Curves);
 
-            double Brho = ST.real[i].Brho(),
-                   K    = B/(2e0*Brho)/MtoMM;
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double K;
+                double dL = L/double(Curves[0].size()),
+                       Brho = ST.real[i].Brho();
+                transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                for (size_t j=0; j<Curves[0].size(); j++){
+                    K = 0.0;
+                    for (size_t n=0; n<Curves.size(); n++) K += Scales[n]*Curves[n][j]/(2e0*Brho)/MtoMM;
+                    value_t tmstep = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            GetSolMatrix(L, K, transfer[i]);
+                    GetSolMatrix(dL, K, tmstep);
 
-            transfer[i](state_t::PS_S, state_t::PS_PS) =
-                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                    tmstep(state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
 
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                    transfer[i] = prod(tmstep, transfer[i]);
+                }
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
+        } else {
+            const double B = conf().get<double>("B");
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                // Re-initialize transport matrix.
+                transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+                double Brho = ST.real[i].Brho(),
+                       K    = B/(2e0*Brho)/MtoMM;
+
+                GetSolMatrix(L, K, transfer[i]);
+
+                transfer[i](state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
         }
     }
 };
@@ -1295,32 +1352,63 @@ struct ElementEQuad : public MomentElementBase
 
     virtual void recompute_matrix(state_t& ST)
     {
-        const double V0   = conf().get<double>("V"),
-                     R    = conf().get<double>("radius"),
-                     L    = conf().get<double>("L")*MtoMM;
+        const double   L      = conf().get<double>("L")*MtoMM;
+        const unsigned ncurve = get_flag(conf(), "ncurve", 0);
 
-        for(size_t i=0; i<last_real_in.size(); i++) {
-            // Re-initialize transport matrix.
-            // V0 [V] electrode voltage and R [m] electrode half-distance.
-            transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+        if (ncurve != 0) {
+            std::vector<std::vector<double> > Curves;
+            std::vector<double> Scales;
+            GetCurveData(conf(), ncurve, Scales, Curves);
 
-            double Brho = ST.real[i].Brho(),
-                   K    = 2e0*V0/(C0*ST.real[i].beta*sqr(R))/Brho/sqr(MtoMM);
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                double K;
+                double dL = L/double(Curves[0].size()),
+                       Brho = ST.real[i].Brho();
+                transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                for (size_t j=0; j<Curves[0].size(); j++){
+                    K = 0.0;
+                    for (size_t n=0; n<Curves.size(); n++) K += 2e0*Scales[n]*Curves[n][j]/(C0*ST.real[i].beta)/Brho/sqr(MtoMM);
+                    value_t tmstep = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                    GetQuadMatrix(dL,  K, (unsigned)state_t::PS_X, tmstep);
+                    GetQuadMatrix(dL, -K, (unsigned)state_t::PS_Y, tmstep);
 
-            // Horizontal plane.
-            GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer[i]);
-            // Vertical plane.
-            GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
-            // Longitudinal plane.
-            //        transfer(state_t::PS_S, state_t::PS_S) = L;
+                    tmstep(state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
 
-            transfer[i](state_t::PS_S, state_t::PS_PS) =
-                    -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                    transfer[i] = prod(tmstep, transfer[i]);
+                }
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
 
-            get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+        } else {
+            const double V0 = conf().get<double>("V"),
+                         R  = conf().get<double>("radius");
 
-            noalias(scratch)     = prod(transfer[i], misalign[i]);
-            noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            for(size_t i=0; i<last_real_in.size(); i++) {
+                // Re-initialize transport matrix.
+                // V0 [V] electrode voltage and R [m] electrode half-distance.
+                transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+
+                double Brho = ST.real[i].Brho(),
+                       K    = 2e0*V0/(C0*ST.real[i].beta*sqr(R))/Brho/sqr(MtoMM);
+
+                // Horizontal plane.
+                GetQuadMatrix(L,  K, (unsigned)state_t::PS_X, transfer[i]);
+                // Vertical plane.
+                GetQuadMatrix(L, -K, (unsigned)state_t::PS_Y, transfer[i]);
+                // Longitudinal plane.
+                //        transfer(state_t::PS_S, state_t::PS_S) = L;
+
+                transfer[i](state_t::PS_S, state_t::PS_PS) =
+                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+
+                get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
+
+                noalias(scratch)     = prod(transfer[i], misalign[i]);
+                noalias(transfer[i]) = prod(misalign_inv[i], scratch);
+            }
         }
     }
 };

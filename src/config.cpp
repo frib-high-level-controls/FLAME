@@ -261,7 +261,7 @@ struct GLPSParser::Pvt {
         }
     }
 
-    Config* fill_context(parse_context& ctxt)
+    Config* fill_context(parse_context& ctxt, const bool lattice=true)
     {
         std::auto_ptr<Config> ret(new Config);
         ret->reserve(ctxt.vars.size()+2);
@@ -273,68 +273,70 @@ struct GLPSParser::Pvt {
             assign_expr_to_Config(*ret, it->name, it->expr);
         }
 
-        if(ctxt.line.size()==0)
-            throw std::runtime_error("No beamlines defined by this file");
+        if(lattice){
+            if(ctxt.line.size()==0)
+                throw std::runtime_error("No beamlines defined by this file");
 
-        parse_line *line = NULL;
+            parse_line *line = NULL;
 
-        {
-            // find the magic "USE" element.  eg "USE: linename;"
-            parse_context::map_idx_t::const_iterator it=ctxt.element_idx.find("USE");
-            if(it!=ctxt.element_idx.end()) {
-                parse_element &elem = ctxt.elements[it->second];
-                parse_context::map_idx_t::const_iterator lit = ctxt.line_idx.find(elem.etype);
-
-                if(lit!=ctxt.line_idx.end()) {
-                    line = &ctxt.line[lit->second];
-                } else {
-                    std::ostringstream strm;
-                    strm<<"\"USE: "<<elem.etype<<";\" references undefined beamline";
-                    throw std::runtime_error(strm.str());
-                }
-            } else {
-                // no magic USE, default to last line
-                line = &ctxt.line.back();
-            }
-        }
-
-        assert(line);
-
-        if(line->names.size()==0) {
-            std::ostringstream strm;
-            strm<<"Beamline '"<<line->label<<"' has no elements";
-            throw std::runtime_error(strm.str());
-        }
-
-        Config::vector_t elements;
-        elements.resize(line->names.size());
-
-        // copy in elements
-        size_t i = 0;
-        for(strlist_t::list_t::const_iterator it=line->names.begin(), end=line->names.end();
-            it!=end; ++it)
-        {
-            Config next(ret->new_scope()); // inhiert global scope
-            const parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
-
-            next.reserve(elem.props.size()+2);
-
-            // push elements properties
-            for(kvlist_t::map_t::const_iterator itx=elem.props.begin(), endx=elem.props.end();
-                itx!=endx; ++itx)
             {
-                assign_expr_to_Config(next, itx->first, itx->second);
+                // find the magic "USE" element.  eg "USE: linename;"
+                parse_context::map_idx_t::const_iterator it=ctxt.element_idx.find("USE");
+                if(it!=ctxt.element_idx.end()) {
+                    parse_element &elem = ctxt.elements[it->second];
+                    parse_context::map_idx_t::const_iterator lit = ctxt.line_idx.find(elem.etype);
+
+                    if(lit!=ctxt.line_idx.end()) {
+                        line = &ctxt.line[lit->second];
+                    } else {
+                        std::ostringstream strm;
+                        strm<<"\"USE: "<<elem.etype<<";\" references undefined beamline";
+                        throw std::runtime_error(strm.str());
+                    }
+                } else {
+                    // no magic USE, default to last line
+                    line = &ctxt.line.back();
+                }
             }
 
-            // special properties
-            assert(!elem.etype.empty() && !elem.label.empty());
-            next.set<std::string>("type", elem.etype);
-            next.set<std::string>("name", elem.label);
-            elements[i++].swap(next);
-        }
+            assert(line);
 
-        ret->swap<std::string>("name", line->label);
-        ret->swap<Config::vector_t>("elements", elements);
+            if(line->names.size()==0) {
+                std::ostringstream strm;
+                strm<<"Beamline '"<<line->label<<"' has no elements";
+                throw std::runtime_error(strm.str());
+            }
+
+            Config::vector_t elements;
+            elements.resize(line->names.size());
+
+            // copy in elements
+            size_t i = 0;
+            for(strlist_t::list_t::const_iterator it=line->names.begin(), end=line->names.end();
+                it!=end; ++it)
+            {
+                Config next(ret->new_scope()); // inhiert global scope
+                const parse_element& elem = ctxt.elements[ctxt.element_idx[*it]];
+
+                next.reserve(elem.props.size()+2);
+
+                // push elements properties
+                for(kvlist_t::map_t::const_iterator itx=elem.props.begin(), endx=elem.props.end();
+                    itx!=endx; ++itx)
+                {
+                    assign_expr_to_Config(next, itx->first, itx->second);
+                }
+
+                // special properties
+                assert(!elem.etype.empty() && !elem.label.empty());
+                next.set<std::string>("type", elem.etype);
+                next.set<std::string>("name", elem.label);
+                elements[i++].swap(next);
+            }
+
+            ret->swap<std::string>("name", line->label);
+            ret->swap<Config::vector_t>("elements", elements);
+        }
 
         return ret.release();
     }
@@ -359,7 +361,7 @@ GLPSParser::setPrinter(std::ostream* strm)
 }
 
 Config*
-GLPSParser::parse_file(const char *fname)
+GLPSParser::parse_file(const char *fname, const bool have_lattice)
 {
     boost::filesystem::path fpath;
     if(fname) {
@@ -380,7 +382,7 @@ GLPSParser::parse_file(const char *fname)
         throw std::runtime_error(strm.str());
     }
     try{
-        Config *ret = parse_file(fp, fpath.native().c_str());
+        Config *ret = parse_file(have_lattice, fp, fpath.native().c_str());
         if(closeme) fclose(fp);
         return ret;
     }catch(...){
@@ -390,13 +392,13 @@ GLPSParser::parse_file(const char *fname)
 }
 
 Config*
-GLPSParser::parse_file(FILE *fp, const char *path)
+GLPSParser::parse_file(const bool have_lattice, FILE *fp, const char *path)
 {
     parse_context ctxt(path);
     ctxt.printer = priv->printer;
     priv->fill_vars(ctxt);
     ctxt.parse(fp);
-    return priv->fill_context(ctxt);
+    return priv->fill_context(ctxt, have_lattice);
 }
 
 Config*

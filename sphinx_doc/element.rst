@@ -307,6 +307,33 @@ Optical element
 
                     | Misaglignment of roll angle. [rad]
 
+                 **ncurve**: int (default: 0)
+
+                    | Number of curves for slanted and overlapped field.
+                    | (0 means hard-edge fringe model)
+
+                 **scl_fac${n}**: float (default: 0)
+
+                    | Scaling factor of the *n*-th curve (*n* start from 0).
+                    | Unit of scl_fac${n}\*curve${n} is [T].
+
+                 **curve${n}**: vector
+
+                    | *n*-th Curve information (*n* start from 0).
+                    | Each curve vector must have the same size.
+                      The vector elements should be defined by the scaled strength of the element at the step.
+                      Also, the step size is defined by "**L** divided by the size of **curve${n}**".
+
+                 **CurveFile**: string
+
+                    | External file name for the curves, the file format is the same as **curve${n}**.
+                    | e.g. `curve0 = [1.0, 2.0, ...];`
+                    | If CurveFile is available, it overrides the **curve${n}**.
+
+                 **use_range**: vector[2]
+
+                    | Use range of **curve${n}**. Format is [start_id, end_id].
+
 .. cpp:type:: quadrupole
 
     Magnetic quadrupole element.
@@ -323,6 +350,11 @@ Optical element
                  **dx**, **dy**, **pitch**, **yaw**, **roll**: float
 
                     | Misalignment parameters. See :cpp:type:`solenoid` case.
+
+                 **ncurve**, **scl_fac${n}**, **curve${n}**, **CurveFile**, **use_range**
+
+                    | Curve inputs for slanted and overlapped field. See :cpp:type:`solenoid` case.
+                    | Unit of scl_fac${n}\*curve${n} is [T/m].
 
 .. cpp:type:: sextupole
 
@@ -370,6 +402,11 @@ Optical element
                  **dx**, **dy**, **pitch**, **yaw**, **roll**: float
 
                     | Misalignment parameters. See :cpp:type:`solenoid` case.
+
+                 **ncurve**, **scl_fac${n}**, **curve${n}**, **CurveFile**, **use_range**
+
+                    | Curve inputs for slanted and overlapped field. See :cpp:type:`solenoid` case.
+                    | Unit of scl_fac${n}\*curve${n} is [V/m^2].
 
 .. cpp:type:: sbend
 

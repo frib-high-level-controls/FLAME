@@ -80,6 +80,7 @@ set(PY_DATA
   test/data/thinlenlon_41_p.lat
   test/data/thinlenlon_53_p.lat
   test/data/thinlenlon_85_p.lat
+  test/data/curve_sample.lat
 
   # vaccel IOC template
   data/st.cmd
