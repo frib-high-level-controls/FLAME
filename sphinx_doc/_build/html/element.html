@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Lattice File &mdash; FLAME 1.5.1 documentation</title>
+  <title>Lattice File &mdash; FLAME 1.8.1 documentation</title>
   
 
   
@@ -35,7 +35,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="FLAME 1.5.1 documentation" href="index.html"/>
+    <link rel="top" title="FLAME 1.8.1 documentation" href="index.html"/>
         <link rel="next" title="Class Library" href="classlib.html"/>
         <link rel="prev" title="Tutorial" href="tutorial.html"/> 
 
@@ -66,7 +66,7 @@
             
             
               <div class="version">
-                1.5.1
+                1.8.1
               </div>
             
           
@@ -752,6 +752,9 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 <blockquote>
 <div><div class="line-block">
 <div class="line"><em>n</em>-th Curve information (<em>n</em> start from 0).</div>
+<div class="line">Each curve vector must have the same size.
+The vector elements should be defined by the scaled strength of the element at the step.
+Also, the step size is defined by “<strong>L</strong> divided by the size of <strong>curve${n}</strong>”.</div>
 </div>
 </div></blockquote>
 <p><strong>CurveFile</strong>: string</p>
@@ -765,7 +768,7 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 <p><strong>use_range</strong>: vector[2]</p>
 <blockquote class="last">
 <div><div class="line-block">
-<div class="line">Use range of <a href="#id1"><span class="problematic" id="id2">**</span></a>curve${n}**s. Format is [start_id, end_id].</div>
+<div class="line">Use range of <strong>curve${n}</strong>. Format is [start_id, end_id].</div>
 </div>
 </div></blockquote>
 </td>
@@ -1490,7 +1493,7 @@ is absolute phase in front of the rf cavity, and <span class="math">\(m\)</span>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'1.5.1',
+            VERSION:'1.8.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,

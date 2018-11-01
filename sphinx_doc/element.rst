@@ -320,6 +320,9 @@ Optical element
                  **curve${n}**: vector
 
                     | *n*-th Curve information (*n* start from 0).
+                    | Each curve vector must have the same size.
+                      The vector elements should be defined by the scaled strength of the element at the step.
+                      Also, the step size is defined by "**L** divided by the size of **curve${n}**".
 
                  **CurveFile**: string
 
@@ -329,7 +332,7 @@ Optical element
 
                  **use_range**: vector[2]
 
-                    | Use range of **curve${n}**s. Format is [start_id, end_id].
+                    | Use range of **curve${n}**. Format is [start_id, end_id].
 
 .. cpp:type:: quadrupole
 
