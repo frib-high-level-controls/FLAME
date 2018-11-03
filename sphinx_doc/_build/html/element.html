@@ -363,7 +363,7 @@ keyword2 = [value2, value3]; # list input
 <td><div class="first last line-block">
 <div class="line">Initial centroid vector of the <strong>n</strong>-th charge state.</div>
 <div class="line"><em>${vector_variable}</em> is defined in <a class="reference internal" href="#_CPPv26source" title="source"><code class="xref cpp cpp-type docutils literal"><span class="pre">source</span></code></a>.</div>
-<div class="line"><span class="math">\([x, x', y, y', \phi, E_k, 1]\)</span> with</div>
+<div class="line"><img class="math" src="_images/math/09d424e4af2028b34dfce5dc2c14763b0e41785d.png" alt="[x, x', y, y', \phi, E_k, 1]"/> with</div>
 <div class="line">[mm, rad, mm, rad, rad, MeV/u, 1]</div>
 </div>
 </td>
@@ -379,8 +379,8 @@ keyword2 = [value2, value3]; # list input
 <td><div class="first last line-block">
 <div class="line">Flattened initial envelope matrix of the <strong>n</strong>-th charge state.</div>
 <div class="line"><em>${matrix_variable}</em> is defined in <a class="reference internal" href="#_CPPv26source" title="source"><code class="xref cpp cpp-type docutils literal"><span class="pre">source</span></code></a>.</div>
-<div class="line">Cartisan product of <span class="math">\([x, x', y, y', \phi, E_k, 1]^2\)</span> with</div>
-<div class="line">[mm, rad, mm, rad, rad, MeV/u, 1] <span class="math">\(^2\)</span></div>
+<div class="line">Cartisan product of <img class="math" src="_images/math/79ec2fb77a7424ab0f05a766b9a10deeed91841a.png" alt="[x, x', y, y', \phi, E_k, 1]^2"/> with</div>
+<div class="line">[mm, rad, mm, rad, rad, MeV/u, 1] <img class="math" src="_images/math/81d4e21093a294aaab4f441ff172923d688c9b7e.png" alt="^2"/></div>
 </div>
 </td>
 </tr>
@@ -558,14 +558,14 @@ USE: name_of_cell;
 <p><strong>Stripper_lambda</strong>: float (optional, default is <strong>5.5740</strong>)</p>
 <blockquote>
 <div><div class="line-block">
-<div class="line">Momentum spread factor <span class="math">\(\lambda\)</span> of the charge stripper. [1]</div>
+<div class="line">Momentum spread factor <img class="math" src="_images/math/76f1d8ace30435987c01a00ca53a71cba1f40e6c.png" alt="\lambda"/> of the charge stripper. [1]</div>
 </div>
 </div></blockquote>
 <p><strong>Stripper_upara</strong>: float (optional, default is <strong>2.6903</strong>)</p>
 <blockquote>
 <div><div class="line-block">
-<div class="line">Momentum spread factor <span class="math">\(U\)</span> of the charge stripper. [1]</div>
-<div class="line">The momentum spread is defined as <span class="math">\(\sqrt(U/\lambda^2)\)</span> [mrad].</div>
+<div class="line">Momentum spread factor <img class="math" src="_images/math/169c982b5e649cd1bd6445df5583affe427ea269.png" alt="U"/> of the charge stripper. [1]</div>
+<div class="line">The momentum spread is defined as <img class="math" src="_images/math/aeb420e4f4d8c2882563a5bdaa4640cc564c0c35.png" alt="\sqrt(U/\lambda^2)"/> [mrad].</div>
 </div>
 </div></blockquote>
 <p><strong>Stripper_E0Para</strong>: vector[3] (optional, default is <strong>[16.348e6, 1.00547, -0.10681]</strong>)</p>
@@ -598,7 +598,7 @@ USE: name_of_cell;
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameter:</th><td class="field-body"><p class="first"><strong>matrix</strong>: vector[49]</p>
 <div class="last line-block">
-<div class="line">Flattened <span class="math">\(7 \times 7\)</span> transfer matrix.</div>
+<div class="line">Flattened <img class="math" src="_images/math/62d221d64c862f10f88294d421ffcc733665e6b9.png" alt="7 \times 7"/> transfer matrix.</div>
 </div>
 </td>
 </tr>
@@ -701,7 +701,7 @@ the process order is, beam kick -&gt; transverse rotation. In other words, the b
 <p><strong>B</strong>: float</p>
 <blockquote>
 <div><div class="line-block">
-<div class="line">Solenoid strength (<span class="math">\(B_z\)</span>). [T]</div>
+<div class="line">Solenoid strength (<img class="math" src="_images/math/5e65087a6fe77c147e41b1d12c9ef4f4ce818e4c.png" alt="B_z"/>). [T]</div>
 </div>
 </div></blockquote>
 <p><strong>dx</strong>: float (default: 0.0)</p>
@@ -944,7 +944,7 @@ Also, the step size is defined by “<strong>L</strong> divided by the size of <
 <p><strong>bg</strong>: float (optional: Used in the case of <a class="reference internal" href="#genpara"><span class="std std-ref">“HdipoleFitMode”</span></a> is <strong>0</strong>.)</p>
 <blockquote>
 <div><div class="line-block">
-<div class="line">Lorentz <span class="math">\(\beta \gamma\)</span> for the reference beam. [1]</div>
+<div class="line">Lorentz <img class="math" src="_images/math/3182a2039f450e374c557c56b438f32a7174e271.png" alt="\beta \gamma"/> for the reference beam. [1]</div>
 <div class="line">This parameter is correspond to the bend field strength.</div>
 </div>
 </div></blockquote>
@@ -983,7 +983,7 @@ Also, the step size is defined by “<strong>L</strong> divided by the size of <
 <p><strong>beta</strong>: float (optional: Used in the case of <a class="reference internal" href="#genpara"><span class="std std-ref">“HdipoleFitMode”</span></a> is <strong>0</strong>.)</p>
 <blockquote>
 <div><div class="line-block">
-<div class="line">Lorentz <span class="math">\(\beta\)</span> for the reference beam. [1]</div>
+<div class="line">Lorentz <img class="math" src="_images/math/410a9d0df9c135dd73b269cba7ef04dcfd932b1f.png" alt="\beta"/> for the reference beam. [1]</div>
 <div class="line">This parameter is correspond to the bend field strength.</div>
 </div>
 </div></blockquote>
@@ -1220,7 +1220,7 @@ USE: cell;
 </div>
 </td>
 <td><div class="first last line-block">
-<div class="line">On axis <span class="math">\(E_z\)</span> data.</div>
+<div class="line">On axis <img class="math" src="_images/math/f04edc8d5ad19598d160666a6f837725177992ef.png" alt="E_z"/> data.</div>
 <div class="line">The odd index (1,3,5,…) is z position. [mm]</div>
 <div class="line">The even index (2,4,6,…) is Electric field strength. [V/m]</div>
 </div>
@@ -1236,7 +1236,7 @@ USE: cell;
 </td>
 <td><div class="first last line-block">
 <div class="line">Reference normalization factor for complex synchronous phase definition.</div>
-<div class="line">This value is defined by <span class="math">\(q A/m\)</span> where <span class="math">\(A\)</span> is the scaling factor of the 3D EM field.</div>
+<div class="line">This value is defined by <img class="math" src="_images/math/1cbacb32c133b1b20e79addf8d0a16eacb0c36f6.png" alt="q A/m"/> where <img class="math" src="_images/math/0043fe6507e9b1d112e07a2801e24927e267dd50.png" alt="A"/> is the scaling factor of the 3D EM field.</div>
 <div class="line">If <strong>RefNorm</strong> or <strong>SyncFit</strong> are not defined, sinusoidal model is used for the synchronous phase definition.</div>
 </div>
 </td>
@@ -1313,8 +1313,8 @@ USE: cell;
 <blockquote class="last">
 <div><div class="line-block">
 <div class="line">TTF fitting parameter. <a class="reference internal" href="#ttfnote"><span class="std std-ref">(see here)</span></a></div>
-<div class="line">1 to 10 - fitting parameter for <span class="math">\(T\)</span></div>
-<div class="line">11 to 20 - fitting parameter for <span class="math">\(S\)</span></div>
+<div class="line">1 to 10 - fitting parameter for <img class="math" src="_images/math/f2d283a2071f9d043c9e0b0f794a8880fa0d3ce9.png" alt="T"/></div>
+<div class="line">11 to 20 - fitting parameter for <img class="math" src="_images/math/1dbc400fcc213305415872f9f625cd2828f97a00.png" alt="S"/></div>
 </div>
 </div></blockquote>
 </td>
@@ -1362,8 +1362,8 @@ USE: cell;
 <blockquote class="last">
 <div><div class="line-block">
 <div class="line">TTF fitting parameter. <a class="reference internal" href="#ttfnote"><span class="std std-ref">(see here)</span></a></div>
-<div class="line">1 to 10 - fitting parameter for <span class="math">\(T\)</span></div>
-<div class="line">11 to 20 - fitting parameter for <span class="math">\(S\)</span></div>
+<div class="line">1 to 10 - fitting parameter for <img class="math" src="_images/math/f2d283a2071f9d043c9e0b0f794a8880fa0d3ce9.png" alt="T"/></div>
+<div class="line">11 to 20 - fitting parameter for <img class="math" src="_images/math/1dbc400fcc213305415872f9f625cd2828f97a00.png" alt="S"/></div>
 </div>
 </div></blockquote>
 </td>
@@ -1411,8 +1411,8 @@ USE: cell;
 <blockquote class="last">
 <div><div class="line-block">
 <div class="line">TTF fitting parameter. <a class="reference internal" href="#ttfnote"><span class="std std-ref">(see here)</span></a></div>
-<div class="line">1 to 10 - fitting parameter for <span class="math">\(T\)</span></div>
-<div class="line">11 to 20 - fitting parameter for <span class="math">\(S\)</span></div>
+<div class="line">1 to 10 - fitting parameter for <img class="math" src="_images/math/f2d283a2071f9d043c9e0b0f794a8880fa0d3ce9.png" alt="T"/></div>
+<div class="line">11 to 20 - fitting parameter for <img class="math" src="_images/math/1dbc400fcc213305415872f9f625cd2828f97a00.png" alt="S"/></div>
 <div class="line">21 to 23 - fitting parameter for the synchronous phase</div>
 </div>
 </div></blockquote>
@@ -1425,24 +1425,24 @@ USE: cell;
 <div class="admonition note" id="ttfnote">
 <p class="first admonition-title">Note</p>
 <p>FLAME is using TTF-calculation acceleration technique to boost cavity modeling speed.
-TTF factor <span class="math">\(T\)</span> and <span class="math">\(S\)</span> are pre-calculated and fitted using 9th order polynomial function according
-to different particle phase speed <span class="math">\(k\)</span>. <span class="math">\(n\)</span>-th fitting parameter <span class="math">\(p_n\)</span> is listed as,</p>
+TTF factor <img class="math" src="_images/math/f2d283a2071f9d043c9e0b0f794a8880fa0d3ce9.png" alt="T"/> and <img class="math" src="_images/math/1dbc400fcc213305415872f9f625cd2828f97a00.png" alt="S"/> are pre-calculated and fitted using 9th order polynomial function according
+to different particle phase speed <img class="math" src="_images/math/0b7c1e16a3a8a849bb8ffdcdbf86f65fd1f30438.png" alt="k"/>. <img class="math" src="_images/math/e11f2701c4a39c7fe543a6c4150b421d50f1c159.png" alt="n"/>-th fitting parameter <img class="math" src="_images/math/66b30555c6212f4bfbe96c9a9dfceb59d818aef6.png" alt="p_n"/> is listed as,</p>
 <div class="math">
-\[T(k), S(k) = \sum^9_{n=0} p_n k^{(9-n)}.\]</div>
-<p>The driven-phase calculation is also boosted by using fitting model for the energy gain curve.</p>
-<p>For the sinusoidal fitting model, the phase transferring factor <span class="math">\(\varphi_c\)</span> is fitted by using</p>
+<p><img src="_images/math/69e5b7037fef6e7d10922e4f275ab3eb05bf946c.png" alt="T(k), S(k) = \sum^9_{n=0} p_n k^{(9-n)}."/></p>
+</div><p>The driven-phase calculation is also boosted by using fitting model for the energy gain curve.</p>
+<p>For the sinusoidal fitting model, the phase transferring factor <img class="math" src="_images/math/c5da64a5ce128ba6f5cbe97f2cbe03ae83756b55.png" alt="\varphi_c"/> is fitted by using</p>
 <div class="math">
-\[\varphi_c = p_0 E^{p_1} + p_2.\]</div>
-<p>Here, <span class="math">\(E\)</span> is the kinetic energy and <span class="math">\(p_{i = 0, 1, 2}\)</span> are the fitting parameters.</p>
-<p>For other complex models (e.g. peak-base model), the phase transferring factor depends on the normalization factor <span class="math">\(g = q A/m\)</span> where <span class="math">\(A\)</span> is the scaling factor of the 3D EM field. The fitting model for <span class="math">\(\varphi_c\)</span> is,</p>
+<p><img src="_images/math/5e0768c30c9fdfc1d3fdebb087f1252ad13aabfa.png" alt="\varphi_c = p_0 E^{p_1} + p_2."/></p>
+</div><p>Here, <img class="math" src="_images/math/4b6222b865b812d2a59368cd1629eed6b54454d5.png" alt="E"/> is the kinetic energy and <img class="math" src="_images/math/4f5615fd744e58021353f4c8bbd98bbb9c766678.png" alt="p_{i = 0, 1, 2}"/> are the fitting parameters.</p>
+<p>For other complex models (e.g. peak-base model), the phase transferring factor depends on the normalization factor <img class="math" src="_images/math/85ce28456b1e68f92420a11046ef2c191a17866b.png" alt="g = q A/m"/> where <img class="math" src="_images/math/0043fe6507e9b1d112e07a2801e24927e267dd50.png" alt="A"/> is the scaling factor of the 3D EM field. The fitting model for <img class="math" src="_images/math/c5da64a5ce128ba6f5cbe97f2cbe03ae83756b55.png" alt="\varphi_c"/> is,</p>
 <div class="math">
-\[\varphi_c = \sum_{i=0}^n (p_{5i} E^{p_{5i+1}} + p_{5i+2} \ln(E) + p_{5i+3}e^E + p_{5i+4})\times g^i .\]</div>
-<p>Here, user can determine <span class="math">\(n\)</span> value corresponds to the size of <strong>SyncFit</strong>.</p>
-<p>The driven phase <span class="math">\(\varphi_d\)</span> is calculated by using <span class="math">\(\varphi_c\)</span>,</p>
+<p><img src="_images/math/24085050fe910a4f189e19c7ff28740edda298c2.png" alt="\varphi_c = \sum_{i=0}^n (p_{5i} E^{p_{5i+1}} + p_{5i+2} \ln(E) + p_{5i+3}e^E + p_{5i+4})\times g^i ."/></p>
+</div><p>Here, user can determine <img class="math" src="_images/math/e11f2701c4a39c7fe543a6c4150b421d50f1c159.png" alt="n"/> value corresponds to the size of <strong>SyncFit</strong>.</p>
+<p>The driven phase <img class="math" src="_images/math/5c83d15adf8048ff5d3ed7c1dfb577ca3cdaec33.png" alt="\varphi_d"/> is calculated by using <img class="math" src="_images/math/c5da64a5ce128ba6f5cbe97f2cbe03ae83756b55.png" alt="\varphi_c"/>,</p>
 <div class="math">
-\[\varphi_d = \varphi_s - \varphi_c - m \varphi_\text{abs}\]</div>
-<p class="last">where, <span class="math">\(\varphi_s\)</span> is the synchronous phase in input, <span class="math">\(\varphi_\text{abs}\)</span>
-is absolute phase in front of the rf cavity, and <span class="math">\(m\)</span> is the harmonic number.</p>
+<p><img src="_images/math/06af7b7ec84c8abe4bb503c472353f4ca13bcdf3.png" alt="\varphi_d = \varphi_s - \varphi_c - m \varphi_\text{abs}"/></p>
+</div><p class="last">where, <img class="math" src="_images/math/21610278bac65dacc7c26e19217d5bde6bcb06bc.png" alt="\varphi_s"/> is the synchronous phase in input, <img class="math" src="_images/math/9061be1cf36f9d2a7ac58506e718ca5f71f53f23.png" alt="\varphi_\text{abs}"/>
+is absolute phase in front of the rf cavity, and <img class="math" src="_images/math/edba97b4c0d864d26e92ea7ea73767fa38eef3f7.png" alt="m"/> is the harmonic number.</p>
 </div>
 </div>
 </div>
@@ -1503,7 +1503,6 @@ is absolute phase in front of the rf cavity, and <span class="math">\(m\)</span>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
