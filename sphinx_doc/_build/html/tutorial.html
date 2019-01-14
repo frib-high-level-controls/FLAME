@@ -24,27 +24,19 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="FLAME 1.8.1 documentation" href="index.html"/>
-        <link rel="next" title="Lattice File" href="element.html"/>
-        <link rel="prev" title="Installation" href="installation.html"/> 
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Lattice File" href="element.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -113,7 +105,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">FLAME</a>
@@ -121,9 +113,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -168,46 +161,46 @@
 <div class="section" id="basic-usage">
 <h2>1. Basic usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
 <p>In Python interface (include IPython-notebook), user can import flame <cite>Machine</cite> class.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">flame</span> <span class="k">import</span> <span class="n">Machine</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">flame</span> <span class="k">import</span> <span class="n">Machine</span>
 </pre></div>
 </div>
-<p>Create <a class="reference internal" href="machine.html#Machine" title="Machine"><code class="xref py py-class docutils literal"><span class="pre">Machine</span></code></a> object with input file.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;lattice_file.lat&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span> <span class="p">:</span>
+<p>Create <a class="reference internal" href="machine.html#Machine" title="Machine"><code class="xref py py-class docutils literal notranslate"><span class="pre">Machine</span></code></a> object with input file.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;lattice_file.lat&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span> <span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">M</span> <span class="o">=</span> <span class="n">Machine</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Allocate the beam state. - <a class="reference internal" href="machine.html#Machine.allocState" title="Machine.allocState"><code class="xref py py-func docutils literal"><span class="pre">Machine.allocState()</span></code></a>, <a class="reference internal" href="beam.html#State" title="State"><code class="xref py py-class docutils literal"><span class="pre">State</span></code></a></p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">S</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">allocState</span><span class="p">({})</span>
+<p>Allocate the beam state. - <a class="reference internal" href="machine.html#Machine.allocState" title="Machine.allocState"><code class="xref py py-func docutils literal notranslate"><span class="pre">Machine.allocState()</span></code></a>, <a class="reference internal" href="beam.html#State" title="State"><code class="xref py py-class docutils literal notranslate"><span class="pre">State</span></code></a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">S</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">allocState</span><span class="p">({})</span>
 </pre></div>
 </div>
-<p>Run envelope tracking simulation. - <a class="reference internal" href="machine.html#Machine.propagate" title="Machine.propagate"><code class="xref py py-func docutils literal"><span class="pre">Machine.propagate()</span></code></a></p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
+<p>Run envelope tracking simulation. - <a class="reference internal" href="machine.html#Machine.propagate" title="Machine.propagate"><code class="xref py py-func docutils literal notranslate"><span class="pre">Machine.propagate()</span></code></a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The beam state has the finite state beam information. - <a class="reference internal" href="beam.html#State" title="State"><code class="xref py py-func docutils literal"><span class="pre">State()</span></code></a></p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">S</span>            <span class="c1"># centroid vector</span>
+<p>The beam state has the finite state beam information. - <a class="reference internal" href="beam.html#State" title="State"><code class="xref py py-func docutils literal notranslate"><span class="pre">State()</span></code></a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">S</span>            <span class="c1"># centroid vector</span>
 <span class="go">State: moment0 mean=[7](3.18839,0.00871355,-12.0779,-0.00254204,-35.2039,0.000489827,1)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">S</span><span class="o">.</span><span class="n">ref_IonEk</span>  <span class="c1"># reference energy</span>
 <span class="go">11969.995341581</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="beam.html#beamstate"><span class="std std-ref">The attribute list of the beam state can be found here.</span></a></p>
-<p>User can observe the beam state history by using <code class="docutils literal"><span class="pre">observe</span></code> keyword in <a class="reference internal" href="machine.html#Machine.propagate" title="Machine.propagate"><code class="xref py py-func docutils literal"><span class="pre">propagate()</span></code></a>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">observe</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">M</span><span class="p">)))</span> <span class="c1"># observe the beam state in all elements</span>
+<p>User can observe the beam state history by using <code class="docutils literal notranslate"><span class="pre">observe</span></code> keyword in <a class="reference internal" href="machine.html#Machine.propagate" title="Machine.propagate"><code class="xref py py-func docutils literal notranslate"><span class="pre">propagate()</span></code></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">observe</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">M</span><span class="p">)))</span> <span class="c1"># observe the beam state in all elements</span>
 </pre></div>
 </div>
 <p>It returns enumerated list of the beam state.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">result</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
 <span class="go">(3, State: moment0 mean=[7](2.2532,0.00489827,2.2532,0.00489827,-2.7162,0.000489827,1))</span>
 </pre></div>
 </div>
 <p>User can generate the history data from the list of beam states,</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span> <span class="c1"># reference beam position history</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">z</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span> <span class="c1"># reference beam position history</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">moment0_env</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span> <span class="c1"># x centroid history</span>
 </pre></div>
 </div>
 <p>and plot.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;x centroid [mm]&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;z [m]&#39;</span><span class="p">)</span>
@@ -218,8 +211,8 @@
 </div>
 <div class="section" id="lattice-parameter-control">
 <h2>2. Lattice parameter control<a class="headerlink" href="#lattice-parameter-control" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference internal" href="machine.html#Machine.conf" title="Machine.conf"><code class="xref py py-func docutils literal"><span class="pre">conf()</span></code></a> returns initial machine parameter.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">()</span>
+<p><a class="reference internal" href="machine.html#Machine.conf" title="Machine.conf"><code class="xref py py-func docutils literal notranslate"><span class="pre">conf()</span></code></a> returns initial machine parameter.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">()</span>
 <span class="go">OrderedDict([(&#39;AMU&#39;, 931494320.0),</span>
 <span class="go">             (&#39;BaryCenter0&#39;,</span>
 <span class="go">              array([ 0.1  ,  0.01 ,  0.1  ,  0.01 ,  0.001,  0.001,  1.   ])),</span>
@@ -238,26 +231,26 @@
 <span class="gp">...</span>
 </pre></div>
 </div>
-<p>User can <a class="reference internal" href="machine.html#Machine.find" title="Machine.find"><code class="xref py py-func docutils literal"><span class="pre">find</span></code></a> the element index by <em>element type</em> or <em>element name</em>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;solenoid&#39;</span><span class="p">)</span>
+<p>User can <a class="reference internal" href="machine.html#Machine.find" title="Machine.find"><code class="xref py py-func docutils literal notranslate"><span class="pre">find</span></code></a> the element index by <em>element type</em> or <em>element name</em>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;solenoid&#39;</span><span class="p">)</span>
 <span class="go">[15, 16, 18, 19, 21, 22, 27, 28, 30, 31, 33, 34]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;q1h_1&#39;</span><span class="p">)</span>
 <span class="go">[15]</span>
 </pre></div>
 </div>
-<p><a class="reference internal" href="machine.html#Machine.conf" title="Machine.conf"><code class="xref py py-func docutils literal"><span class="pre">conf(index)</span></code></a> returns all parameters of the element.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="c1"># parameter keywords</span>
+<p><a class="reference internal" href="machine.html#Machine.conf" title="Machine.conf"><code class="xref py py-func docutils literal notranslate"><span class="pre">conf(index)</span></code></a> returns all parameters of the element.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="c1"># parameter keywords</span>
 <span class="go">[&#39;AMU&#39;, &#39;B2&#39;, &#39;BaryCenter0&#39;, &#39;BaryCenter1&#39;, &#39;IonChargeStates&#39;, &#39;IonEk&#39;, &#39;IonEs&#39;, &#39;IonW&#39;, &#39;IonZ&#39;, &#39;L&#39;, &#39;NCharge&#39;, &#39;S0&#39;, &#39;S1&#39;, &#39;aper&#39;, &#39;name&#39;, &#39;sim_type&#39;, &#39;type&#39;]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="mi">15</span><span class="p">)[</span><span class="s1">&#39;B2&#39;</span><span class="p">]</span> <span class="c1"># quadrupole strength</span>
 <span class="go">0.942438547187938</span>
 </pre></div>
 </div>
-<p>Change the parameter by using <a class="reference internal" href="machine.html#Machine.reconfigure" title="Machine.reconfigure"><code class="xref py py-func docutils literal"><span class="pre">reconfigure()</span></code></a>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">reconfigure</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;B2&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">})</span>
+<p>Change the parameter by using <a class="reference internal" href="machine.html#Machine.reconfigure" title="Machine.reconfigure"><code class="xref py py-func docutils literal notranslate"><span class="pre">reconfigure()</span></code></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">reconfigure</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;B2&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">})</span>
 </pre></div>
 </div>
 <p>Check new parameter of the solenoid.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="mi">15</span><span class="p">)[</span><span class="s1">&#39;B2&#39;</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="mi">15</span><span class="p">)[</span><span class="s1">&#39;B2&#39;</span><span class="p">]</span>
 <span class="go">0.8</span>
 </pre></div>
 </div>
@@ -265,8 +258,8 @@
 <div class="section" id="run-for-the-selected-section">
 <h2>3. Run for the selected section<a class="headerlink" href="#run-for-the-selected-section" title="Permalink to this headline">¶</a></h2>
 <img alt="_images/atob.png" src="_images/atob.png" />
-<p>User can input <em>start-point index</em> and <em>propagation number</em> to <a class="reference internal" href="machine.html#Machine.propagate" title="Machine.propagate"><code class="xref py py-func docutils literal"><span class="pre">propagate</span></code></a>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="c1"># simulate from 0th to 9th element</span>
+<p>User can input <em>start-point index</em> and <em>propagation number</em> to <a class="reference internal" href="machine.html#Machine.propagate" title="Machine.propagate"><code class="xref py py-func docutils literal notranslate"><span class="pre">propagate</span></code></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="c1"># simulate from 0th to 9th element</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">S1</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="c1"># clone the beam state</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="c1"># simulate from 10th to the last element</span>
 </pre></div>
@@ -274,19 +267,19 @@
 <p>In this case, “S” has the beam state after the 9th element, and
 “S1” has the finite beam state.</p>
 <p>If user input <em>propagation number</em> as negative number, it returns “backward” propagation result.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span> <span class="c1"># forward simulation from 0th to 100th element</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span> <span class="c1"># forward simulation from 0th to 100th element</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">S1</span> <span class="o">=</span> <span class="n">S</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span> <span class="c1"># clone the beam state</span>
 </pre></div>
 </div>
 <p>Here, user can change beam state “S1” except the beam energy and the charge state.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># backward simulation from 100th to the first element</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">propagate</span><span class="p">(</span><span class="n">S1</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="o">-</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># backward simulation from 100th to the first element</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="example-quadrupole-scan">
 <h2>4. Example: Quadrupole scan<a class="headerlink" href="#example-quadrupole-scan" title="Permalink to this headline">¶</a></h2>
 <p>Run simulation up to the target element.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;q3h_6&#39;</span><span class="p">)</span> <span class="c1"># get index of the target element</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">M</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;q3h_6&#39;</span><span class="p">)</span> <span class="c1"># get index of the target element</span>
 <span class="go">[22]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ini</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="mi">22</span><span class="p">)[</span><span class="s1">&#39;B2&#39;</span><span class="p">]</span> <span class="c1"># store the initial quadrupole strength</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ini</span>
@@ -296,7 +289,7 @@
 </pre></div>
 </div>
 <p>Scan parameters by using simple loop.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b2lst</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">b2lst</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rlst</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">b2</span> <span class="ow">in</span> <span class="n">b2lst</span><span class="p">:</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="n">SB</span> <span class="o">=</span> <span class="n">SA</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
@@ -306,7 +299,7 @@
 </pre></div>
 </div>
 <p>Plot the scan result.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">zA</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">rA</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">zA</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">rA</span><span class="p">]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">xA</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">moment0_rms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">rA</span><span class="p">]</span> <span class="c1"># get the x rms size</span>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">b2</span><span class="p">,</span><span class="n">rt</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">b2lst</span><span class="p">,</span><span class="n">rlst</span><span class="p">):</span>
@@ -326,9 +319,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -346,11 +337,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Kei Fukushima.
+        &copy; Copyright 2017, Kei Fukushima
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -365,35 +356,33 @@
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'1.8.1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'1.8.1',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

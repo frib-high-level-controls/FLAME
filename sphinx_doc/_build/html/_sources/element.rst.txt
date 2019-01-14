@@ -265,7 +265,7 @@ Optical element
     .. Note::
 
         In the case of user puts both "beam kick information" and "transverse rotation angle" to the ONE orbtrim element,
-        the process order is, beam kick -> transverse rotation. In other words, the beam kick is effected BEFORE the transverse rotation.
+        the process order is, transverse rotation -> beam kick. In other words, the beam kick is effected AFTER the transverse rotation.
 
 .. cpp:type:: drift
 
