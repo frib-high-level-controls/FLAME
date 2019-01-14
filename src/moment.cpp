@@ -889,7 +889,7 @@ struct ElementOrbTrim : public MomentElementBase
                 state_t::matrix_t R;
                 RotMat(0e0, 0e0, 0e0, 0e0, xyrotate, R);
                 noalias(scratch)  = transfer[i];
-                noalias(transfer[i]) = prod(R, scratch);
+                noalias(transfer[i]) = prod(scratch, R);
             }
 
         }
