@@ -29,9 +29,9 @@ void GetSBendMatrix(const double L, const double phi, const double phi1, const d
 void GetSolMatrix(const double L, const double K, typename MomentElementBase::value_t &M);
 
 
-void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa, const double Kx, const double Ky,
-                    const double IonEs, const double ref_beta, const double real_gamma, const double eta0, const double h, const double dip_beta,
-                    const double dip_gamma, const double delta_KZ, const double SampleIonK, typename MomentElementBase::value_t &M);
+void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa,
+                    const double Kx, const double Ky, const double IonEs, const double real_gamma, const double eta0, const double h,
+                    const double delta_K, const double delta_KZ, const double SampleIonK, typename MomentElementBase::value_t &M);
 
 void GetCurveData(const Config &c, const unsigned ncurve, std::vector<double> &Scales, std::vector<std::vector<double> > &Curves);
 

@@ -1283,10 +1283,8 @@ struct ElementEDipole : public MomentElementBase
                kappa       = conf().get<double>("asym_fac", 0e0),
                // spher: cylindrical - 0, spherical - 1.
                spher       = conf().get<double>("spher"),
-               rho         = L/phi,
                // magnetic - 0, electrostatic - 1.
                h           = 1e0,
-               Ky          = spher/sqr(rho),
                dip_beta    = conf().get<double>("beta", ST.ref.beta);
 
         unsigned HdipoleFitMode = get_flag(conf(), "HdipoleFitMode", 1);
@@ -1296,19 +1294,23 @@ struct ElementEDipole : public MomentElementBase
 
         if (HdipoleFitMode) dip_beta = ST.ref.beta;
 
-        double dip_gamma   = 1e0/sqrt(1e0-sqr(dip_beta));
-
         for(size_t i=0; i<last_real_in.size(); i++) {
-            double eta0        = (ST.real[i].gamma-1e0)/2e0,
+            double eta0        = (1e0/sqrt(1e0 - sqr(dip_beta)) - 1e0)/2e0,
+                   Erho        = sqr(ST.real[i].beta)/ST.real[i].IonZ,
+                   Erho0       = sqr(dip_beta)/ST.ref.IonZ,
+                   eL          = Erho/Erho0*L,
+                   rho         = eL/phi,
                    Kx          = (1e0-spher+sqr(1e0+2e0*eta0))/sqr(rho),
-                   delta_KZ    = ST.real[i].IonZ/ST.ref.IonZ - 1e0,
+                   Ky          = spher/sqr(rho),
+                   delta_K     = (Erho/Erho0 - 1e0) - (ST.real[i].IonEk - ST.ref.IonEk)/ST.real[i].IonEk,
+                   delta_KZ    = ST.ref.IonZ/ST.real[i].IonZ - 1e0,
                    SampleIonK  = 2e0*M_PI/(ST.real[i].beta*SampleLambda);
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
             if (L != 0e0) {
-                GetEBendMatrix(L, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.ref.beta, ST.real[i].gamma,
-                               eta0, h, dip_beta, dip_gamma, delta_KZ, SampleIonK, transfer[i]);
+                GetEBendMatrix(eL, phi, fringe_x, fringe_y, kappa, Kx, Ky, ST.ref.IonEs, ST.real[i].gamma,
+                               eta0, h, delta_K, delta_KZ, SampleIonK, transfer[i]);
 
                 if (ver) {
                     // Rotate transport matrix by 90 degrees.

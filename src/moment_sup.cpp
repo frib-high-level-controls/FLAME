@@ -320,9 +320,9 @@ void GetSolMatrix(const double L, const double K, typename MomentElementBase::va
 }
 
 
-void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa, const double Kx, const double Ky,
-                    const double IonEs, const double ref_beta, const double real_gamma, const double eta0, const double h,
-                    const double dip_beta, const double dip_gamma, const double delta_KZ, const double SampleIonK, typename MomentElementBase::value_t &M)
+void GetEBendMatrix(const double L, const double phi, const double fringe_x, const double fringe_y, const double kappa,
+                    const double Kx, const double Ky, const double IonEs, const double real_gamma, const double eta0, const double h,
+                    const double delta_K, const double delta_KZ, const double SampleIonK, typename MomentElementBase::value_t &M)
 {
     typedef typename MomentElementBase::state_t state_t;
 
@@ -366,12 +366,8 @@ void GetEBendMatrix(const double L, const double phi, const double fringe_x, con
     M(state_t::PS_S,  state_t::PS_PS) = -tzp*SampleIonK/scl;
 
     // Add dipole terms.
-    double delta_K = sqr(ref_beta/dip_beta) - 1e0;
-
-//    M(state_t::PS_X,  6) = dx*Nk*(delta_K+delta_KZ);
-//    M(state_t::PS_PX, 6) = sx/rho*Nk*(delta_K+delta_KZ);
-
     double Nkz = (1e0+2e0*eta0-h)/(2e0*(1e0+eta0)*(1e0+2e0*eta0));
+
     M(state_t::PS_X,  6) = dx*(Nk*delta_K+Nkz*delta_KZ);
     M(state_t::PS_PX, 6) = sx/rho*(Nk*delta_K+Nkz*delta_KZ);
 
