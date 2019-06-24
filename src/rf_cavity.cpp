@@ -1512,7 +1512,7 @@ void ElementRFCavity::PropagateLongRFCav(Particle &ref, double& phi_ref) const
     double multip, EfieldScl, caviFy, IonFy_i, IonFy_o;
     double fsync = conf().get<double>("syncflag", 1.0);
 
-    multip    = fRF/SampleFreq;
+    multip    = fRF/ref.SampleFreq;
     EfieldScl = conf().get<double>("scl_fac");         // Electric field scale factor.
 
     if (cavi == 0 && have_EkLim) {
@@ -1653,7 +1653,7 @@ void ElementRFCavity::InitRFCav(Particle &real, state_t::matrix_t &M, CavTLMLine
         throw std::logic_error(SB()<<"*** InitRFCav: undef. cavity type: after ctor");
     }
 
-    multip    = fRF/SampleFreq;
+    multip    = fRF/real.SampleFreq;
 
     IonFy_i   = multip*real.phis + phi_ref;
     Ek_i      = real.IonEk;

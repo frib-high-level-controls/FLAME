@@ -170,6 +170,7 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
     for (k = 0; k < n; k++) {
         StatePtr->real[k].IonZ  = ChgState[k];
         StatePtr->real[k].IonQ  = chargeAmount_Set[k];
+        StatePtr->real[k].SampleFreq = ref.SampleFreq;
         StatePtr->real[k].IonEs = ref.IonEs;
         StatePtr->real[k].IonEk = Ek_recomb;
         StatePtr->real[k].recalc();
