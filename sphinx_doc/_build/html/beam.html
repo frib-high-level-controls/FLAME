@@ -217,13 +217,16 @@
 <tr class="row-even"><td><a class="reference internal" href="#ref_phis" title="ref_phis"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ref_phis</span></code></a></td>
 <td>Absolute phase [rad]</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#ref_SampleIonK" title="ref_SampleIonK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ref_SampleIonK</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#ref_SampleFreq" title="ref_SampleFreq"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ref_SampleFreq</span></code></a></td>
+<td>Sampling frequency [Hz]</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#ref_SampleIonK" title="ref_SampleIonK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ref_SampleIonK</span></code></a></td>
 <td>Phase speed [rad]</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#last_caviphi0" title="last_caviphi0"><code class="xref py py-attr docutils literal notranslate"><span class="pre">last_caviphi0</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#last_caviphi0" title="last_caviphi0"><code class="xref py py-attr docutils literal notranslate"><span class="pre">last_caviphi0</span></code></a></td>
 <td>Driven phase of the last rf cavity [deg]</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#transmat" title="transmat"><code class="xref py py-attr docutils literal notranslate"><span class="pre">transmat</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#transmat" title="transmat"><code class="xref py py-attr docutils literal notranslate"><span class="pre">transmat</span></code></a></td>
 <td>Transfer matrix of the last element</td>
 </tr>
 </tbody>
@@ -265,22 +268,25 @@
 <tr class="row-odd"><td><a class="reference internal" href="#phis" title="phis"><code class="xref py py-attr docutils literal notranslate"><span class="pre">phis</span></code></a></td>
 <td>Absolute phase [rad]</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#SampleIonK" title="SampleIonK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SampleIonK</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#SampleFreq" title="SampleFreq"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SampleFreq</span></code></a></td>
+<td>Sampling frequency [Hz]</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#SampleIonK" title="SampleIonK"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SampleIonK</span></code></a></td>
 <td>Phase speed [rad]</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#moment0" title="moment0"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment0</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#moment0" title="moment0"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment0</span></code></a></td>
 <td>Centroids of the all charge states.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#moment0_env" title="moment0_env"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment0_env</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#moment0_env" title="moment0_env"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment0_env</span></code></a></td>
 <td>Weighted average of centroids for the all charge states.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#moment0_rms" title="moment0_rms"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment0_rms</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#moment0_rms" title="moment0_rms"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment0_rms</span></code></a></td>
 <td>Weighted average of rms size for the all charge states.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#moment1" title="moment1"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment1</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="#moment1" title="moment1"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment1</span></code></a></td>
 <td>Envelope matrixes of the all charge states.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#moment1_env" title="moment1_env"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment1_env</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="#moment1_env" title="moment1_env"><code class="xref py py-attr docutils literal notranslate"><span class="pre">moment1_env</span></code></a></td>
 <td>Weighted average of envelope matrixes for the all charge states.</td>
 </tr>
 </tbody>
@@ -346,6 +352,12 @@
 <dt id="ref_phis">
 <code class="descname">ref_phis</code><a class="headerlink" href="#ref_phis" title="Permalink to this definition">¶</a></dt>
 <dd><p><strong>float</strong>: Absolute synchrotron phase of the reference beam. [rad]</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ref_SampleFreq">
+<code class="descname">ref_SampleFreq</code><a class="headerlink" href="#ref_SampleFreq" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>float</strong>: Sampling frequency of the reference beam. [Hz]</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -418,6 +430,12 @@
 <dt id="phis">
 <code class="descname">phis</code><a class="headerlink" href="#phis" title="Permalink to this definition">¶</a></dt>
 <dd><p><strong>list of float</strong>: Absolute synchrotron phase of the all charge states. [rad]</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SampleFreq">
+<code class="descname">SampleFreq</code><a class="headerlink" href="#SampleFreq" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>list of float</strong>: Sampling frequency of the all charge states. [Hz]</p>
 </dd></dl>
 
 <dl class="attribute">
