@@ -38,6 +38,8 @@ State Class
               - Charge to mass ratio [1]
             * - :py:attr:`ref_phis`
               - Absolute phase [rad]
+            * - :py:attr:`ref_SampleFreq`
+              - Sampling frequency [Hz]
             * - :py:attr:`ref_SampleIonK`
               - Phase speed [rad]
             * - :py:attr:`last_caviphi0`
@@ -68,6 +70,8 @@ State Class
               - Charge to mass ratio [1]
             * - :py:attr:`phis`
               - Absolute phase [rad]
+            * - :py:attr:`SampleFreq`
+              - Sampling frequency [Hz]
             * - :py:attr:`SampleIonK`
               - Phase speed [rad]
             * - :py:attr:`moment0`
@@ -121,6 +125,10 @@ State Class
 
         **float**: Absolute synchrotron phase of the reference beam. [rad]
 
+    .. py:attribute:: ref_SampleFreq
+
+        **float**: Sampling frequency of the reference beam. [Hz]
+
     .. py:attribute:: ref_SampleIonK
 
         **float**: Phase speed of the reference beam. [rad]
@@ -169,6 +177,10 @@ State Class
     .. py:attribute:: phis
 
         **list of float**: Absolute synchrotron phase of the all charge states. [rad]
+
+    .. py:attribute:: SampleFreq
+
+        **list of float**: Sampling frequency of the all charge states. [Hz]
 
     .. py:attribute:: SampleIonK
 

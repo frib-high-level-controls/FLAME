@@ -13,30 +13,31 @@
 
 #include "constants.h"
 
-// Long. sampling frequency [Hz]; must be set to RF Cavity frequency.
-# define SampleFreq   80.5e6
-// Sampling distance [m].
-# define SampleLambda (C0/SampleFreq*MtoMM)
+// Default sampling frequency [Hz].
+# define SampleFreqDefault   80.5e6
 
 //! Extra information about a bunch not encoded the vector or matrix of MomentState
 //!
 struct Particle {
-    double IonZ,        //!< Charge state.
-           IonQ,        //!< Ion Charge
-           IonEs,       //!< Rest energy.
-           IonW,        //!< Total energy. (dependent)
-           gamma,       //!< Gamma for ion. (dependent)
-           beta,        //!< Beta for ion. (dependent)
-           bg,          //!< Beta*gamma. (dependent)
-           SampleIonK,  //!< Sample rate; different RF Cavity due to RF frequenies. (dependent)
-           phis,        //!< Absolute synchrotron phase [rad].
-           IonEk;       //!< Kinetic energy.
+    double IonZ,         //!< Charge state.
+           IonQ,         //!< Ion Charge
+           IonEs,        //!< Rest energy.
+           IonW,         //!< Total energy. (dependent)
+           gamma,        //!< Gamma for ion. (dependent)
+           beta,         //!< Beta for ion. (dependent)
+           bg,           //!< Beta*gamma. (dependent)
+           SampleFreq,   //!< Sampling frequency [Hz].
+           SampleLambda, //!< Sampling distance [m].
+           SampleIonK,   //!< Sample rate; different RF Cavity due to RF frequenies. (dependent)
+           phis,         //!< Absolute synchrotron phase [rad].
+           IonEk;        //!< Kinetic energy.
 
     Particle() {
         phis = 0.0;
         // initially spoil
         IonZ = IonQ = IonEs = IonW
         = gamma = beta = bg
+        = SampleFreq = SampleLambda
         = SampleIonK = IonEk
         = std::numeric_limits<double>::quiet_NaN();
     }
@@ -48,7 +49,8 @@ struct Particle {
         gamma      = (IonEs != 0e0)? IonW/IonEs : 1e0;
         beta       = sqrt(1e0-1e0/(gamma*gamma));
         bg         = (beta != 0e0)? beta*gamma : 1e0;
-        SampleIonK = 2e0*M_PI/(beta*SampleLambda);
+        SampleLambda = C0/SampleFreq*MtoMM;
+        SampleIonK   = 2e0*M_PI/(beta*SampleLambda);
     }
 
     double Brho() const { return beta*IonW/(C0*IonZ); } //!< Magnetic rigidity.
@@ -61,7 +63,7 @@ inline bool operator==(const Particle& lhs, const Particle& rhs)
     // compare only independent variables.
     return lhs.IonEk==rhs.IonEk && lhs.IonEs==rhs.IonEs
             && lhs.IonZ==rhs.IonZ && lhs.IonQ==rhs.IonQ
-            && lhs.phis==rhs.phis;
+            && lhs.phis==rhs.phis && lhs.SampleFreq==rhs.SampleFreq;
 }
 
 inline bool operator!=(const Particle& lhs, const Particle& rhs)
@@ -73,7 +75,8 @@ inline bool operator<=(const Particle& lhs, const Particle& rhs)
 {
     // compare only independent variables.
     return lhs.IonEk==rhs.IonEk && lhs.IonEs==rhs.IonEs
-            && lhs.IonZ==rhs.IonZ && lhs.IonQ==rhs.IonQ;
+            && lhs.IonZ==rhs.IonZ && lhs.IonQ==rhs.IonQ
+            && lhs.SampleFreq==rhs.SampleFreq;
 }
 
 /** State for sim_type=MomentMatrix

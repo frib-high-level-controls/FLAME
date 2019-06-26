@@ -68,6 +68,9 @@ Basic format of the beam parameters are,
     * - | **IonEk**
       - | float
       - | Initial kinetic energy of the reference beam. [eV/u]
+    * - | **SampleFreq**
+      - | float
+      - | Sampling frequency. [Hz] (default is 80.5e6 [Hz])
     * - | **IonChargeStates**
       - | list of float
       - | List of charge to mass ratios of the all charge states. [1]

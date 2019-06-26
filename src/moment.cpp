@@ -89,7 +89,8 @@ MomentState::MomentState(const Config& c)
     bool have_ics = c.tryGet<std::vector<double> >("IonChargeStates", ics);
 
     ref.IonEs      = c.get<double>("IonEs", 0e0),
-    ref.IonEk      = c.get<double>("IonEk", 0e0);
+    ref.IonEk      = c.get<double>("IonEk", 0e0),
+    ref.SampleFreq = c.get<double>("SampleFreq", SampleFreqDefault);
     ref.recalc();
 
     if(!have_ics) {
@@ -421,6 +422,12 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
         Info.ndim = 0;
         return true;
     } else if(idx==I++) {
+        Info.name = "ref_SampleFreq";
+        Info.ptr = &ref.SampleFreq;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 0;
+        return true;
+    } else if(idx==I++) {
         Info.name = "ref_SampleIonK";
         Info.ptr = &ref.SampleIonK;
         Info.type = ArrayInfo::Double;
@@ -482,6 +489,14 @@ bool MomentState::getArray(unsigned idx, ArrayInfo& Info) {
     } else if(idx==I++) {
         Info.name = "bg";
         Info.ptr  = &real[0].bg;
+        Info.type = ArrayInfo::Double;
+        Info.ndim = 1;
+        Info.dim   [0] = real.size();
+        Info.stride[0] = sizeof(real[0]);
+        return true;
+    } else if(idx==I++) {
+        Info.name = "SampleFreq";
+        Info.ptr  = &real[0].SampleFreq;
         Info.type = ArrayInfo::Double;
         Info.ndim = 1;
         Info.dim   [0] = real.size();
@@ -756,7 +771,7 @@ namespace {
 struct ElementSource : public MomentElementBase
 {
     typedef ElementSource            self_t;
-    typedef MomentElementBase       base_t;
+    typedef MomentElementBase        base_t;
     typedef typename base_t::state_t state_t;
 
     ElementSource(const Config& c): base_t(c), istate(c) {}
@@ -841,7 +856,7 @@ struct ElementDrift : public MomentElementBase
             transfer[i](state_t::PS_X, state_t::PS_PX) = L;
             transfer[i](state_t::PS_Y, state_t::PS_PY) = L;
             transfer[i](state_t::PS_S, state_t::PS_PS) =
-                -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
         }
     }
 };
@@ -1015,7 +1030,7 @@ struct ElementSBend : public MomentElementBase
                            dip_gamma = (dip_Ek+ST.ref.IonEs)/ST.ref.IonEs,
                            dip_beta  = sqrt(1e0-1e0/sqr(dip_gamma)),
                            d         = (ST.ref.gamma-dip_gamma)/(sqr(dip_beta)*dip_gamma) - qmrel,
-                           dip_IonK  = 2e0*M_PI/(dip_beta*SampleLambda);
+                           dip_IonK  = 2e0*M_PI/(dip_beta*ST.ref.SampleLambda);
 
                     GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
                                    dip_beta, dip_gamma, d, dip_IonK, transfer[i]);
@@ -1068,7 +1083,7 @@ struct ElementQuad : public MomentElementBase
                     GetQuadMatrix(dL, -K, (unsigned)state_t::PS_Y, tmstep);
 
                     tmstep(state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
+                        -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
 
                     transfer[i] = prod(tmstep, transfer[i]);
                 }
@@ -1093,7 +1108,7 @@ struct ElementQuad : public MomentElementBase
                 // Longitudinal plane.
 
                 transfer[i](state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                        -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
                 get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
                 noalias(scratch)     = prod(transfer[i], misalign[i]);
@@ -1158,7 +1173,7 @@ struct ElementSext : public MomentElementBase
                 GetSextMatrix(dL,  K, Dx, Dy, D2x, D2y, D2xy, thinlens, dstkick, transfer[k]);
 
                 transfer[k](state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
+                        -2e0*M_PI/(ST.real[k].SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
 
                 get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
                 noalias(scratch)     = prod(transfer[k], misalign[k]);
@@ -1224,7 +1239,7 @@ struct ElementSolenoid : public MomentElementBase
                     GetSolMatrix(dL, K, tmstep);
 
                     tmstep(state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
+                        -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
 
                     transfer[i] = prod(tmstep, transfer[i]);
                 }
@@ -1244,7 +1259,7 @@ struct ElementSolenoid : public MomentElementBase
                 GetSolMatrix(L, K, transfer[i]);
 
                 transfer[i](state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                        -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
                 get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
@@ -1304,7 +1319,7 @@ struct ElementEDipole : public MomentElementBase
                    Ky          = spher/sqr(rho),
                    delta_K     = (Erho/Erho0 - 1e0) - (ST.real[i].IonEk - ST.ref.IonEk)/ST.real[i].IonEk,
                    delta_KZ    = ST.ref.IonZ/ST.real[i].IonZ - 1e0,
-                   SampleIonK  = 2e0*M_PI/(ST.real[i].beta*SampleLambda);
+                   SampleIonK  = 2e0*M_PI/(ST.real[i].beta*ST.real[i].SampleLambda);
 
             transfer[i] = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
 
@@ -1375,7 +1390,7 @@ struct ElementEQuad : public MomentElementBase
                     GetQuadMatrix(dL, -K, (unsigned)state_t::PS_Y, tmstep);
 
                     tmstep(state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
+                        -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*dL;
 
                     transfer[i] = prod(tmstep, transfer[i]);
                 }
@@ -1404,7 +1419,7 @@ struct ElementEQuad : public MomentElementBase
                 //        transfer(state_t::PS_S, state_t::PS_S) = L;
 
                 transfer[i](state_t::PS_S, state_t::PS_PS) =
-                        -2e0*M_PI/(SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
+                        -2e0*M_PI/(ST.real[i].SampleLambda*ST.real[i].IonEs/MeVtoeV*cube(ST.real[i].bg))*L;
 
                 get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
