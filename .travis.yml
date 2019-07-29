@@ -45,3 +45,9 @@ matrix:
     env: PROF=deb8 BTYPE=DEBUG
   - python: "3.4"
     env: PROF=deb8 BTYPE=RELEASE XTRA=-DCMAKE_CXX_FLAGS=-std=c++11
+  - python: "3.5"
+    env: PROF=deb9 BTYPE=RELEASE
+  - python: "3.5"
+    env: PROF=deb9 BTYPE=DEBUG
+  - python: "3.5"
+    env: PROF=deb9 BTYPE=RELEASE XTRA=-DCMAKE_CXX_FLAGS=-std=c++11
