@@ -1162,6 +1162,12 @@ struct ElementSext : public MomentElementBase
             double Brho = ST.real[k].Brho(),
                    K = B3/Brho/cube(MtoMM);
 
+            get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
+
+            ST.moment0[k] = prod(misalign[k], ST.moment0[k]);
+            scratch = prod(misalign[k], ST.moment1[k]);
+            ST.moment1[k] = prod(scratch, trans(misalign[k]));
+
             for(int i=0; i<step; i++){
                 double Dx = ST.moment0[k][state_t::PS_X],
                        Dy = ST.moment0[k][state_t::PS_Y],
@@ -1170,22 +1176,24 @@ struct ElementSext : public MomentElementBase
                        D2xy = ST.moment1[k](state_t::PS_X, state_t::PS_Y);
 
 
-                GetSextMatrix(dL,  K, Dx, Dy, D2x, D2y, D2xy, thinlens, dstkick, transfer[k]);
+                GetSextMatrix(dL, K, Dx, Dy, D2x, D2y, D2xy, thinlens, dstkick, transfer[k]);
 
                 transfer[k](state_t::PS_S, state_t::PS_PS) =
                         -2e0*M_PI/(ST.real[k].SampleLambda*ST.real[k].IonEs/MeVtoeV*cube(ST.real[k].bg))*dL;
 
-                get_misalign(ST, ST.real[k], misalign[k], misalign_inv[k]);
-                noalias(scratch)     = prod(transfer[k], misalign[k]);
-                noalias(transfer[k]) = prod(misalign_inv[k], scratch);
-
                 ST.moment0[k] = prod(transfer[k], ST.moment0[k]);
 
-                scratch  = prod(transfer[k], ST.moment1[k]);
+                scratch = prod(transfer[k], ST.moment1[k]);
                 ST.moment1[k] = prod(scratch, trans(transfer[k]));
 
                 ST.transmat[k] = prod(transfer[k], ST.transmat[k]);
             }
+            ST.moment0[k] = prod(misalign_inv[k], ST.moment0[k]);
+            scratch = prod(misalign_inv[k], ST.moment1[k]);
+            ST.moment1[k] = prod(scratch, trans(misalign_inv[k]));
+
+            scratch = prod(ST.transmat[k], misalign[k]);
+            ST.transmat[k] = prod(misalign_inv[k], scratch);
         }
 
         ST.recalc();
