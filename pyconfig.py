@@ -38,7 +38,7 @@ libdirs.reverse()
 incdirs.reverse()
 
 # location of extension modules relative to prefix (eg. "lib/python3/dist-packages")
-moddir = os.path.relpath(get_python_lib(), get_config_var('exec_prefix'))
+moddir = get_python_lib()
 
 print('set(Python_DEFINITIONS, "%s")'%get_config_var('BASECFLAGS'), file=out)
 
