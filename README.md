@@ -1,3 +1,7 @@
+User Guide
+==========
+Install via pip: `pip install flame-code`, libpython3.so is also needed, install `libpython3-dev` on Debian (and its derivatives), or `python3-devel` on RPM-based OS. See the following sections for developers' guide.
+
 Documentation
 =============
 
