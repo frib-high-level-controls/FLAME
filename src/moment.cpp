@@ -1010,7 +1010,7 @@ struct ElementSBend : public MomentElementBase
     virtual void recompute_matrix(state_t& ST)
     {
         // Re-initialize transport matrix.
-
+        bool   ver   = conf().get<double>("ver", 0e0) == 1.0;
         double L     = conf().get<double>("L")*MtoMM,
                phi   = conf().get<double>("phi")*M_PI/180e0,
                phi1  = conf().get<double>("phi1")*M_PI/180e0,
@@ -1037,6 +1037,24 @@ struct ElementSBend : public MomentElementBase
                 } else
                     GetSBendMatrix(L, phi, phi1, phi2, K, ST.ref.IonEs, ST.ref.gamma, qmrel,
                                    ST.ref.beta, ST.ref.gamma, - qmrel, ST.ref.SampleIonK, transfer[i]);
+
+                if (ver) {
+                    // Rotate transport matrix by 90 degrees.
+                    value_t
+                    R = boost::numeric::ublas::identity_matrix<double>(state_t::maxsize);
+                    R(state_t::PS_X,  state_t::PS_X)   =  0e0;
+                    R(state_t::PS_PX, state_t::PS_PX)  =  0e0;
+                    R(state_t::PS_Y,  state_t::PS_Y)   =  0e0;
+                    R(state_t::PS_PY, state_t::PS_PY)  =  0e0;
+                    R(state_t::PS_X,  state_t::PS_Y)   = -1e0;
+                    R(state_t::PS_PX, state_t::PS_PY)  = -1e0;
+                    R(state_t::PS_Y,  state_t::PS_X)   =  1e0;
+                    R(state_t::PS_PY,  state_t::PS_PX) =  1e0;
+
+                    noalias(scratch)     = prod(R, transfer[i]);
+                    noalias(transfer[i]) = prod(scratch, trans(R));
+                    //TODO: no-op code?  results are unconditionally overwritten
+                }
 
                 get_misalign(ST, ST.real[i], misalign[i], misalign_inv[i]);
 
@@ -1297,7 +1315,7 @@ struct ElementEDipole : public MomentElementBase
 
         //value_mat R;
 
-        bool   ver         = conf().get<double>("ver") == 1.0;
+        bool   ver         = conf().get<double>("ver", 0e0) == 1.0;
         double L           = conf().get<double>("L")*MtoMM,
                phi         = conf().get<double>("phi")*M_PI/180e0,
                // fit to TLM unit.

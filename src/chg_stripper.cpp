@@ -124,7 +124,11 @@ void ElementStripper::Stripper_GetMat(const Config &conf,
     // Estimate Zp stripper caused envelope increase.
     stdEkFoilVariation = sqrt(1e0/3e0)*Stripper_Para[1]/100e0*Stripper_Para[0]*Stripper_E0Para[2];
     ZpAfStr            = tmpmat(5, 5) + sqr(Stripper_E1Para) + sqr(stdEkFoilVariation);
-    growthRate         = sqrt(ZpAfStr/tmpmat(5, 5));
+    if (tmpmat(5, 5) != 0e0) {
+        growthRate         = sqrt(ZpAfStr/tmpmat(5, 5));
+    } else {
+        growthRate         = 1e0;
+    }
 
     for (k = 0; k < 6; k++) {
         tmpmat(k, 5) = tmpmat(k, 5)*growthRate;
