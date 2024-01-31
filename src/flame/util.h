@@ -85,7 +85,7 @@ struct numeric_table {
 
 class numeric_table_cache {
     struct Pvt;
-    std::auto_ptr<Pvt> pvt;
+    std::unique_ptr<Pvt> pvt;
 public:
     numeric_table_cache();
     ~numeric_table_cache();

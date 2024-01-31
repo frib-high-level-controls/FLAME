@@ -263,7 +263,7 @@ struct GLPSParser::Pvt {
 
     Config* fill_context(parse_context& ctxt, const bool lattice=true)
     {
-        std::auto_ptr<Config> ret(new Config);
+        std::unique_ptr<Config> ret(new Config);
         ret->reserve(ctxt.vars.size()+2);
 
         // copy ctxt.vars to top level Config

@@ -22,7 +22,7 @@ int PyMachine_init(PyObject *raw, PyObject *args, PyObject *kws)
     TRY {
         assert(!machine->weak);
 
-        std::auto_ptr<Config> C(PyGLPSParse2Config(raw, args, kws));
+        std::unique_ptr<Config> C(PyGLPSParse2Config(raw, args, kws));
 
         machine->machine = new Machine(*C);
 
@@ -36,7 +36,7 @@ static
 void PyMachine_free(PyObject *raw)
 {
     TRY {
-        std::auto_ptr<Machine> S(machine->machine);
+        std::unique_ptr<Machine> S(machine->machine);
         machine->machine = NULL;
 
         if(machine->weak)
@@ -105,7 +105,7 @@ PyObject *PyMachine_allocState(PyObject *raw, PyObject *args, PyObject *kws)
         } else {
             return PyErr_Format(PyExc_ValueError, "allocState() needs config=None or {}");
         }
-        std::auto_ptr<StateBase> state(machine->machine->allocState(C));
+        std::unique_ptr<StateBase> state(machine->machine->allocState(C));
         PyObject *ret = wrapstate(state.get());
         state.release();
         return ret;
@@ -122,7 +122,7 @@ struct PyStoreObserver : public Observer
     virtual void view(const ElementVoid* elem, const StateBase* state)
     {
         PyRef<> tuple(PyTuple_New(2));
-        std::auto_ptr<StateBase> tmpstate(state->clone());
+        std::unique_ptr<StateBase> tmpstate(state->clone());
         PyRef<> statecopy(wrapstate(tmpstate.get()));
         tmpstate.release();
 
@@ -262,6 +262,8 @@ Py_ssize_t PyMachine_len(PyObject *raw)
     }CATCH1(-1)
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 static PyMethodDef PyMachine_methods[] = {
     {"conf", (PyCFunction)&PyMachine_conf, METH_VARARGS|METH_KEYWORDS,
      "conf() -> {} Machine config\n"
@@ -289,6 +291,7 @@ static PyMethodDef PyMachine_methods[] = {
     "Return a list of element indices for element name or type matching the given string."},
     {NULL, NULL, 0, NULL}
 };
+#pragma GCC diagnostic pop
 
 static PySequenceMethods PyMachine_seq = {
     &PyMachine_len

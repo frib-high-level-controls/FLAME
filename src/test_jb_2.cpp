@@ -73,35 +73,35 @@ void prt_initial_cond(Machine &sim,
     PrtState(ST);
 }
 
-static
-void PrtOut(std::ofstream &outf1, std::ofstream &outf2, std::ofstream &outf3, const state_t& ST)
-{
-    outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.pos;
-    for (size_t j = 0; j < ST.size(); j++)
-        for (int k = 0; k < 6; k++)
-            outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.moment0[j][k];
-    for (int k = 0; k < 6; k++)
-        outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.moment0_env[k];
-    outf1 << "\n";
+// static
+// void PrtOut(std::ofstream &outf1, std::ofstream &outf2, std::ofstream &outf3, const state_t& ST)
+// {
+//     outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.pos;
+//     for (size_t j = 0; j < ST.size(); j++)
+//         for (int k = 0; k < 6; k++)
+//             outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.moment0[j][k];
+//     for (int k = 0; k < 6; k++)
+//         outf1 << std::scientific << std::setprecision(14) << std::setw(22) << ST.moment0_env[k];
+//     outf1 << "\n";
 
-    outf2 << std::scientific << std::setprecision(14) << std::setw(22) << ST.pos;
-    for (size_t j = 0; j < ST.size(); j++)
-        for (int k = 0; k < 6; k++)
-            outf2 << std::scientific << std::setprecision(14) << std::setw(22) << sqrt(ST.moment1[j](k, k));
-    for (int k = 0; k < 6; k++)
-        outf2 << std::scientific << std::setprecision(14) << std::setw(22) << sqrt(ST.moment1_env(k, k));
-    outf2 << "\n";
+//     outf2 << std::scientific << std::setprecision(14) << std::setw(22) << ST.pos;
+//     for (size_t j = 0; j < ST.size(); j++)
+//         for (int k = 0; k < 6; k++)
+//             outf2 << std::scientific << std::setprecision(14) << std::setw(22) << sqrt(ST.moment1[j](k, k));
+//     for (int k = 0; k < 6; k++)
+//         outf2 << std::scientific << std::setprecision(14) << std::setw(22) << sqrt(ST.moment1_env(k, k));
+//     outf2 << "\n";
 
-    outf3 << std::scientific << std::setprecision(14)
-          << std::setw(22) << ST.pos << std::setw(22) << ST.ref.phis << std::setw(22) << ST.ref.IonEk << "\n";
-}
+//     outf3 << std::scientific << std::setprecision(14)
+//           << std::setw(22) << ST.pos << std::setw(22) << ST.ref.phis << std::setw(22) << ST.ref.IonEk << "\n";
+// }
 
 static
 void propagate(const Config &conf)
 {
     // Propagate element-by-element for each charge state.
     Machine                  sim(conf);
-    std::auto_ptr<StateBase> state(sim.allocState());
+    std::unique_ptr<StateBase> state(sim.allocState());
     state_t                  *StatePtr = dynamic_cast<state_t*>(state.get());
     std::ofstream            outf1, outf2, outf3;
 
@@ -147,7 +147,7 @@ void propagate(const Config &conf)
 int main(int argc, char *argv[])
 {
     try {
-        std::auto_ptr<Config> conf;
+        std::unique_ptr<Config> conf;
 
         if(argc>2)
 

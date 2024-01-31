@@ -8,6 +8,8 @@
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL FLAME_PyArray_API
+
+#define NPY_NO_DEPRECATED_API NPY_1_6_API_VERSION
 #include <numpy/ndarrayobject.h>
 
 /** Translate python list of tuples to Config
@@ -151,7 +153,7 @@ Config* list2conf(PyObject *dict)
 {
     if(!PyList_Check(dict))
         throw std::invalid_argument("Not a list");
-    std::auto_ptr<Config> conf(new Config);
+    std::unique_ptr<Config> conf(new Config);
     List2Config(*conf, dict);
     return conf.release();
 }
@@ -228,7 +230,7 @@ Config* PyGLPSParse2Config(PyObject *, PyObject *args, PyObject *kws)
     }
 
     PyGetBuf buf;
-    std::auto_ptr<Config> C;
+    std::unique_ptr<Config> C;
 
     PyRef<> listref;
 

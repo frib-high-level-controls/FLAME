@@ -45,7 +45,7 @@ long measure_init_common(dbCommon *prec, const char *link)
         if(!boost::regex_match(link, M, linkpat))
             throw std::runtime_error("Bad link string");
 
-        std::auto_ptr<SimDevMeasScalar> priv(new SimDevMeasScalar);
+        std::unique_ptr<SimDevMeasScalar> priv(new SimDevMeasScalar);
         priv->prec = (dbCommon*)prec;
 
         if(!find(SimGlobal.sims, M.str(1), priv->sim))
@@ -77,7 +77,7 @@ long measure_init_common(dbCommon *prec, const char *link)
         unsigned idx;
         {
             Config empty;
-            std::auto_ptr<StateBase> state(priv->sim->machine->allocState(empty));
+            std::unique_ptr<StateBase> state(priv->sim->machine->allocState(empty));
 
             for(idx=0; true; idx++) {
                 StateBase::ArrayInfo info;
