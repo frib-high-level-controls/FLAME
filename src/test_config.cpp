@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(config_print_stmt)
     GLPSParser parse;
     parse.setPrinter(&strm);
 
-    std::auto_ptr<Config> conf(parse.parse_byte(config_print_stmt_input, sizeof(config_print_stmt_input)-1));
+    std::unique_ptr<Config> conf(parse.parse_byte(config_print_stmt_input, sizeof(config_print_stmt_input)-1));
 
     BOOST_CHECK_EQUAL(strm.str(), "On line 2 : 14\n" "On line 4 : \"test\"\n");
 }

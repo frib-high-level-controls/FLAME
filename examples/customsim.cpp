@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
     try {
         register1D();
 
-        std::auto_ptr<Config> conf;
+        std::unique_ptr<Config> conf;
         {
             GLPSParser parser;
             conf.reset(parser.parse_byte(lattice, sizeof(lattice)-1));
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 
         mymachine.set_trace(&std::cout); // print intermediates
 
-        std::auto_ptr<StateBase> thestate(mymachine.allocState());
+        std::unique_ptr<StateBase> thestate(mymachine.allocState());
 
         // propagate through the source element to initialize the state based on
         // values of "x" and "xv" from the lattice

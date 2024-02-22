@@ -20,7 +20,7 @@ void elem_init_common(dbCommon *prec, const char *link)
         if(!boost::regex_match(link, M, linkpat))
             throw std::runtime_error("Bad link string");
 
-        std::auto_ptr<SimDev> priv(new SimDev);
+        std::unique_ptr<SimDev> priv(new SimDev);
         priv->prec = (dbCommon*)prec;
 
         if(!find(SimGlobal.sims, M.str(1), priv->sim))

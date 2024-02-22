@@ -73,23 +73,20 @@ struct StateBase : public boost::noncopyable
         //! is the given index valid?
         bool inbounds(size_t* d) const {
             bool ret = true;
-            switch(ndim) {
-            case 3: ret &= d[2]<dim[2];
-            case 2: ret &= d[1]<dim[1];
-            case 1: ret &= d[0]<dim[0];
+            for (int i = ndim - 1; i >= 0; --i) {
+                    ret &= d[i] < dim[i];
             }
             return ret;
         }
 
         void *raw(size_t* d) {
             char *ret = (char*)ptr;
-            switch(ndim) {
-            case 3: ret += d[2]*stride[2];
-            case 2: ret += d[1]*stride[1];
-            case 1: ret += d[0]*stride[0];
+            for (int i = ndim - 1; i >= 0; --i) {
+                ret += d[i] * stride[i];
             }
             return ret;
         }
+
 
         //! Helper to fetch the pointer for a given index (assumed valid)
         template<typename E>
@@ -413,7 +410,7 @@ private:
         { return new Element(c); }
         void rebuild(ElementVoid *o, const Config& c, const size_t idx)
         {
-            std::auto_ptr<ElementVoid> N(build(c));
+            std::unique_ptr<ElementVoid> N(build(c));
             Element *m = dynamic_cast<Element*>(o);
             if(!m)
                 throw std::runtime_error("reconfigure() can't change element type");

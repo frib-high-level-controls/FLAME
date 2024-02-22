@@ -22,7 +22,7 @@ long setting_init_a(REC *prec, DBLINK *plink)
         if(!boost::regex_match(plink->value.instio.string, M, linkpat))
             throw std::runtime_error("Bad link string");
 
-        std::auto_ptr<SimDevSetting> priv(new SimDevSetting);
+        std::unique_ptr<SimDevSetting> priv(new SimDevSetting);
         priv->prec = (dbCommon*)prec;
 
         if(!find(SimGlobal.sims, M.str(1), priv->sim))

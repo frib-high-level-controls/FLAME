@@ -7,6 +7,8 @@
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL FLAME_PyArray_API
+
+#define NPY_NO_DEPRECATED_API NPY_1_6_API_VERSION
 #include <numpy/ndarrayobject.h>
 
 #if SIZE_MAX==NPY_MAX_UINT32
@@ -50,7 +52,7 @@ static
 void PyState_free(PyObject *raw)
 {
     TRY {
-        std::auto_ptr<StateBase> S(state->state);
+        std::unique_ptr<StateBase> S(state->state);
         state->state = NULL;
 
         if(state->weak)
@@ -291,7 +293,7 @@ static
 PyObject* PyState_clone(PyObject *raw, PyObject *unused)
 {
     TRY {
-        std::auto_ptr<StateBase> newstate(state->state->clone());
+        std::unique_ptr<StateBase> newstate(state->state->clone());
 
         PyObject *ret = wrapstate(newstate.get());
         newstate.release();
@@ -314,6 +316,8 @@ PyObject* PyState_show(PyObject *raw, PyObject *args, PyObject *kws)
     } CATCH()
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 static PyMethodDef PyState_methods[] = {
     {"clone", (PyCFunction)&PyState_clone, METH_NOARGS,
      "clone()\n\n"
@@ -324,6 +328,7 @@ static PyMethodDef PyState_methods[] = {
     },
     {NULL, NULL, 0, NULL}
 };
+#pragma GCC diagnostic pop
 
 static PyTypeObject PyStateType = {
 #if PY_MAJOR_VERSION >= 3

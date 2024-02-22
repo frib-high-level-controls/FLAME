@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
         //! [Register sim_types]
 
         //! [Parse lattice file]
-        std::auto_ptr<Config> conf;
+        std::unique_ptr<Config> conf;
         {
             GLPSParser parser;
             conf.reset(parser.parse_file(argv[1]));
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         mymachine.set_trace(&std::cout); // print intermediates
 
         //! [Allocate State]
-        std::auto_ptr<StateBase> thestate(mymachine.allocState());
+        std::unique_ptr<StateBase> thestate(mymachine.allocState());
         //! [Allocate State]
 
         std::cout<<"Initial state "<<*thestate<<"\n";

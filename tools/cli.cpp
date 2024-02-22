@@ -263,7 +263,7 @@ struct StreamObserver : public Observer
 
     struct Factory : public ObserverFactory
     {
-        std::auto_ptr<std::ostream> owned_strm;
+        std::unique_ptr<std::ostream> owned_strm;
         std::ostream *strm;
         int detail;
         Factory(const strvect& fmt) :strm(&std::cout), detail(1)
@@ -308,7 +308,7 @@ struct H5Observer : public Observer
     struct Factory : public ObserverFactory
     {
         virtual ~Factory() {}
-        std::auto_ptr<H5StateWriter> writer;
+        std::unique_ptr<H5StateWriter> writer;
         Factory(const strvect& fmt)
         {
             assert(!fmt.empty() && fmt[0]=="hdf5");
@@ -389,7 +389,7 @@ try {
     bool showtime = args.count("timeit")>0;
     Timer timeit;
 
-    std::auto_ptr<Config> conf;
+    std::unique_ptr<Config> conf;
 
     int verb = args["verbose"].as<int>();
     if(verb<=2)
@@ -469,7 +469,7 @@ try {
     registerLinear();
     registerMoment();
 
-    std::auto_ptr<ObserverFactory> ofact;
+    std::unique_ptr<ObserverFactory> ofact;
 
     {
         const std::string& ofactname = args["format"].as<std::string>();
@@ -561,7 +561,7 @@ try {
 
     if(showtime) timeit.showdelta("Setup 2");
 
-    std::auto_ptr<StateBase> state(sim.allocState());
+    std::unique_ptr<StateBase> state(sim.allocState());
     if(showtime) timeit.showdelta("Alloc State");
     sim.propagate(state.get(), 0, maxelem);
     if(showtime) {
