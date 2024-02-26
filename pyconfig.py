@@ -22,8 +22,8 @@ libdirs = [get_config_var('LIBDIR')]
 
 have_np='NO'
 try:
-    from numpy.distutils.misc_util import get_numpy_include_dirs
-    incdirs += get_numpy_include_dirs()
+    from numpy import get_include
+    incdirs += [get_include()]
     have_np='YES'
 except ImportError:
     pass

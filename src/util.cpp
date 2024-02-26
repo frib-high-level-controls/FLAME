@@ -5,7 +5,9 @@
 
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/thread/mutex.hpp>
+#ifndef BOOST_FILESYSTEM_DYN_LINK
 #define BOOST_FILESYSTEM_DYN_LINK
+#endif
 #include <boost/filesystem.hpp>
 
 #include "flame/util.h"
